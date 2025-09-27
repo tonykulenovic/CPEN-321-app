@@ -231,6 +231,6 @@ Target audience: university students who want an easy way to discover study spot
     -**Reason**: Live map updates, location tracking, and live recommendations using Socket.io
 
 ### **4.5. Dependencies Diagram**
-![Dependencies Diagram](images/dependencies_diagram.png)
+![Dependencies Diagram](images/dependency_diagram.png)
 
 
