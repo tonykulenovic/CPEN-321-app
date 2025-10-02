@@ -1,7 +1,7 @@
 import {
   sanitizeArgs,
   sanitizeInput,
-} from '../../core/utils/sanitizeInput.util';
+} from '../utils/sanitizeInput.util';
 
 const logger = {
   info: (message: string, ...args: unknown[]) => {

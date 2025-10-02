@@ -1,7 +1,7 @@
 import { NextFunction, Request, RequestHandler, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import mongoose from 'mongoose';
-import { userModel } from '../../features/user/user.model';
+import { userModel } from '../models/user.model';
 
 export const authenticateToken: RequestHandler = async (
   req: Request,

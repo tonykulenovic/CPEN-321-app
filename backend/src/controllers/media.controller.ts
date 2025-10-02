@@ -1,10 +1,10 @@
 import { NextFunction, Request, Response } from 'express';
 
-import logger from '../../core/utils/logger.util';
-import { MediaService } from '../../features/media/media.service';
-import { UploadImageRequest, UploadImageResponse } from './media.types';
-import { sanitizeInput } from '../../core/utils/sanitizeInput.util';
-import { userModel } from '../user/user.model'; // Add this import
+import logger from '../utils/logger.util';
+import { MediaService } from '../services/media.service';
+import { UploadImageRequest, UploadImageResponse } from '../types/media.types';
+import { sanitizeInput } from '../utils/sanitizeInput.util';
+import { userModel } from '../models/user.model'; // Add this import
 
 export class MediaController {
   async uploadImage(

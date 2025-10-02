@@ -6,8 +6,8 @@ import {
   GoogleUserInfo,
   IUser,
   updateProfileSchema,
-} from '../../features/user/user.types';
-import logger from '../../core/utils/logger.util';
+} from '../types/user.types';
+import logger from '../utils/logger.util';
 
 const userSchema = new Schema<IUser>(
   {

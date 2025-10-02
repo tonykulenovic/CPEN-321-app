@@ -2,12 +2,12 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 import express from 'express';
-import { connectDB } from './core/config/database';
+import { connectDB } from './config/database';
 import {
   errorHandler,
   notFoundHandler,
-} from './core/middleware/errorHandler.middleware';
-import router from './routes';
+} from './middleware/errorHandler.middleware';
+import router from './routes/routes';
 import path from 'path';
 
 const app = express();

@@ -3,10 +3,10 @@ import { NextFunction, Request, Response } from 'express';
 import {
   GetProfileResponse,
   UpdateProfileRequest,
-} from '../../features/user/user.types';
-import logger from '../../core/utils/logger.util';
-import { MediaService } from '../../features/media/media.service';
-import { userModel } from '../../features/user/user.model';
+} from '../types/user.types';
+import logger from '../utils/logger.util';
+import { MediaService } from '../services/media.service';
+import { userModel } from '../models/user.model';
 
 export class UserController {
   getProfile(req: Request, res: Response<GetProfileResponse>) {
