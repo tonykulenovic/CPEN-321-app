@@ -47,7 +47,7 @@ export class AuthService {
     });
   }
 
-  async signUpWithGoogle(idToken: string): Promise<AuthResult> {
+  async signUpWithGoogle(idToken: string, username: string): Promise<AuthResult> {
     try {
       const googleUserInfo = await this.verifyGoogleToken(idToken);
 
@@ -59,8 +59,18 @@ export class AuthService {
         throw new Error('User already exists');
       }
 
-      // Create new user
-      const user = await userModel.create(googleUserInfo);
+      // Check if username is already taken
+      const existingUsername = await userModel.findByUsername(username);
+      if (existingUsername) {
+        throw new Error('Username already taken');
+      }
+
+      // Create new user with provided username
+      const signUpData = {
+        ...googleUserInfo,
+        username,
+      };
+      const user = await userModel.create(signUpData);
       const token = this.generateAccessToken(user);
 
       return { token, user };

@@ -1,5 +1,6 @@
 import mongoose, { Document } from 'mongoose';
 import z from 'zod';
+import { PrivacySettings } from './friends.types';
 
 // User model
 // ------------------------------------------------------------
@@ -8,8 +9,13 @@ export interface IUser extends Document {
   googleId: string;
   email: string;
   name: string;
+  username: string; // unique username for search
   profilePicture?: string;
   bio?: string;
+  campus?: string;
+  privacy: PrivacySettings;
+  friendsCount: number;
+  badgesCount: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -19,15 +25,19 @@ export interface IUser extends Document {
 export const createUserSchema = z.object({
   email: z.string().email(),
   name: z.string().min(1),
+  username: z.string().min(1),
   googleId: z.string().min(1),
   profilePicture: z.string().optional(),
   bio: z.string().max(500).optional(),
+  campus: z.string().optional(),
 });
 
 export const updateProfileSchema = z.object({
   name: z.string().min(1).optional(),
+  username: z.string().min(1).optional(),
   bio: z.string().max(500).optional(),
   profilePicture: z.string().min(1).optional(),
+  campus: z.string().optional(),
 });
 
 // Request types
@@ -48,4 +58,8 @@ export type GoogleUserInfo = {
   email: string;
   name: string;
   profilePicture?: string;
+};
+
+export type SignUpRequest = GoogleUserInfo & {
+  username: string;
 };

@@ -3,20 +3,21 @@ import { NextFunction, Request, Response } from 'express';
 import { authService } from '../services/auth.service';
 import {
   AuthenticateUserRequest,
+  SignUpUserRequest,
   AuthenticateUserResponse,
 } from '../types/auth.types';
 import logger from '../utils/logger.util';
 
 export class AuthController {
   async signUp(
-    req: Request<unknown, unknown, AuthenticateUserRequest>,
+    req: Request<unknown, unknown, SignUpUserRequest>,
     res: Response<AuthenticateUserResponse>,
     next: NextFunction
   ) {
     try {
-      const { idToken } = req.body;
+      const { idToken, username } = req.body;
 
-      const data = await authService.signUpWithGoogle(idToken);
+      const data = await authService.signUpWithGoogle(idToken, username);
 
       return res.status(201).json({
         message: 'User signed up successfully',
@@ -35,6 +36,12 @@ export class AuthController {
         if (error.message === 'User already exists') {
           return res.status(409).json({
             message: 'User already exists, please sign in instead.',
+          });
+        }
+
+        if (error.message === 'Username already taken') {
+          return res.status(409).json({
+            message: 'Username already taken, please choose another.',
           });
         }
 
