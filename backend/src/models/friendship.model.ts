@@ -181,7 +181,12 @@ export class FriendshipModel {
     friendId: mongoose.Types.ObjectId
   ): Promise<void> {
     try {
-      await this.friendship.deleteOne({ userId, friendId });
+      await this.friendship.deleteMany({
+        $or: [
+          { userId, friendId },
+          { userId: friendId, friendId: userId }
+        ]
+      });
     } catch (error) {
       logger.error('Error deleting friendship:', error);
       throw new Error('Failed to delete friendship');
