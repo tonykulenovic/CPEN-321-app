@@ -143,16 +143,70 @@ export async function sendFriendRequest(req: Request, res: Response): Promise<vo
  */
 export async function listFriendRequests(req: Request, res: Response): Promise<void> {
   try {
-    // TODO: Implement list friend requests logic
     // 1. Validate query parameters
-    // 2. Get user ID from auth middleware
-    // 3. Fetch pending requests (inbox or outbox)
-    // 4. Format response data
-    // 5. Return paginated results
+    const validation = friendRequestsQuerySchema.safeParse(req.query);
+    if (!validation.success) {
+      res.status(400).json({
+        message: 'Invalid query parameters',
+        errors: validation.error.issues,
+      });
+      return;
+    }
 
-    res.status(501).json({
-      message: 'List friend requests not implemented yet',
+    const { inbox, limit } = validation.data;
+    const isInbox = inbox === 'true';
+    const requestLimit = limit ? parseInt(limit, 10) : 20; // Default limit of 20
+
+    // 2. Get user ID from auth middleware
+    const currentUser = req.user!;
+    const currentUserId = currentUser._id;
+
+    // 3. Fetch pending requests (inbox or outbox)
+    let friendRequests;
+    if (isInbox) {
+      // Incoming requests - where current user is the friendId (recipient)
+      friendRequests = await friendshipModel.findIncomingRequests(currentUserId, requestLimit);
+    } else {
+      // Outgoing requests - where current user is the userId (sender)
+      friendRequests = await friendshipModel.findOutgoingRequests(currentUserId, requestLimit);
+    }
+
+    // 4. Format response data
+    const formattedRequests = friendRequests.map((request) => {
+      if (isInbox) {
+        // For incoming requests, show the sender (userId)
+        const sender = request.userId as any; // populated by the model
+        return {
+          _id: request._id.toString(),
+          from: {
+            userId: sender._id.toString(),
+            displayName: sender.name || sender.username,
+            photoUrl: sender.profilePicture,
+          },
+          createdAt: request.createdAt.toISOString(),
+        };
+      } else {
+        // For outgoing requests, show the recipient (friendId)
+        const recipient = request.friendId as any; // populated by the model
+        return {
+          _id: request._id.toString(),
+          from: {
+            userId: recipient._id.toString(),
+            displayName: recipient.name || recipient.username,
+            photoUrl: recipient.profilePicture,
+          },
+          createdAt: request.createdAt.toISOString(),
+        };
+      }
     });
+
+    // 5. Return results
+    const response: FriendRequestsResponse = {
+      message: `${isInbox ? 'Incoming' : 'Outgoing'} friend requests retrieved successfully`,
+      data: formattedRequests,
+    };
+
+    res.status(200).json(response);
   } catch (error) {
     logger.error('Error in listFriendRequests:', error);
     res.status(500).json({
@@ -163,23 +217,76 @@ export async function listFriendRequests(req: Request, res: Response): Promise<v
 
 /**
  * POST /friends/requests/:id/accept — Accept request.
- * @param params.id string - Request id.
+ * @param params.id string - Friend Request id.
  * @return 200 { status: "accepted" }
  */
 export async function acceptFriendRequest(req: Request, res: Response): Promise<void> {
   try {
-    // TODO: Implement accept friend request logic
-    // 1. Validate request ID parameter
-    // 2. Get user ID from auth middleware
-    // 3. Find the pending friendship request
-    // 4. Verify user is the recipient
-    // 5. Update status to 'accepted'
-    // 6. Create reciprocal friendship record
-    // 7. Update friends count for both users
-    // 8. Return success response
+    // 1. Validate friend request ID parameter format (not checking database yet)
+    const requestId = req.params.id;
+    if (!requestId || !mongoose.Types.ObjectId.isValid(requestId)) {
+      res.status(400).json({
+        message: 'Invalid friend request ID format',
+      });
+      return;
+    }
 
-    res.status(501).json({
-      message: 'Accept friend request not implemented yet',
+    // 2. Get user ID from auth middleware
+    const currentUser = req.user!;
+    const currentUserId = currentUser._id;
+
+    // 3. Find the pending friendship request
+    const friendshipRequest = await friendshipModel.findById(new mongoose.Types.ObjectId(requestId));
+    
+    if (!friendshipRequest) {
+      res.status(404).json({
+        message: 'Friend request not found',
+      });
+      return;
+    }
+
+    // 4. Verify user is the recipient (friendId) and request is still pending
+    if (friendshipRequest.friendId.toString() !== currentUserId.toString()) {
+      res.status(403).json({
+        message: 'You are not authorized to accept this friend request',
+      });
+      return;
+    }
+
+    if (friendshipRequest.status !== 'pending') {
+      res.status(400).json({
+        message: `Friend request is already ${friendshipRequest.status}`,
+      });
+      return;
+    }
+
+    // 5. Update status to 'accepted'
+    await friendshipModel.updateStatus(friendshipRequest._id, 'accepted');
+
+    // 6. Create reciprocal friendship record
+    const reciprocalFriendshipData = {
+      userId: currentUserId,
+      friendId: friendshipRequest.userId,
+      status: 'accepted' as const,
+      requestedBy: friendshipRequest.requestedBy,
+      shareLocation: true,
+      closeFriend: false,
+    };
+
+    await friendshipModel.create(reciprocalFriendshipData);
+
+    // 7. Update friends count for both users
+    await Promise.all([
+      userModel.incrementFriendsCount(currentUserId, 1),
+      userModel.incrementFriendsCount(friendshipRequest.userId, 1),
+    ]);
+
+    // 8. Return success response
+    res.status(200).json({
+      message: 'Friend request accepted successfully',
+      data: {
+        status: 'accepted',
+      },
     });
   } catch (error) {
     logger.error('Error in acceptFriendRequest:', error);
