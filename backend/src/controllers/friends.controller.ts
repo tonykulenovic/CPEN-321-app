@@ -22,17 +22,110 @@ import logger from '../utils/logger.util';
  */
 export async function sendFriendRequest(req: Request, res: Response): Promise<void> {
   try {
-    // TODO: Implement send friend request logic
     // 1. Validate request body
-    // 2. Check if users exist
-    // 3. Check if friendship already exists
-    // 4. Check privacy settings (allowFriendRequestsFrom)
-    // 5. Create friendship record
-    // 6. Return response
+    const validation = sendFriendRequestSchema.safeParse(req.body);
+    if (!validation.success) {
+      res.status(400).json({
+        message: 'Invalid request body',
+        errors: validation.error.issues,
+      });
+      return;
+    }
 
-    res.status(501).json({
-      message: 'Send friend request not implemented yet',
-    });
+    const { toUserId } = validation.data;
+    const fromUser = req.user!; // Authenticated user from middleware
+    const fromUserId = fromUser._id;
+
+    // Check if user is trying to send request to themselves
+    if (fromUserId.toString() === toUserId) {
+      res.status(400).json({
+        message: 'Cannot send friend request to yourself',
+      });
+      return;
+    }
+
+    // 2. Check if target user exists
+    const targetUser = await userModel.findById(new mongoose.Types.ObjectId(toUserId));
+    if (!targetUser) {
+      res.status(404).json({
+        message: 'User not found',
+      });
+      return;
+    }
+
+    // 3. Check if friendship already exists
+    const existingFriendship = await friendshipModel.findByUserAndFriend(
+      fromUserId,
+      targetUser._id
+    );
+
+    if (existingFriendship) {
+      let message = 'Friend request already exists';
+      if (existingFriendship.status === 'accepted') {
+        message = 'You are already friends with this user';
+      } else if (existingFriendship.status === 'pending') {
+        message = 'Friend request already sent';
+      } else if (existingFriendship.status === 'declined') {
+        message = 'Friend request was previously declined';
+      } else if (existingFriendship.status === 'blocked') {
+        message = 'Unable to send friend request';
+      }
+      
+      res.status(409).json({ message });
+      return;
+    }
+
+    // Check for reverse friendship (if target user already sent a request)
+    const reverseFriendship = await friendshipModel.findByUserAndFriend(
+      targetUser._id,
+      fromUserId
+    );
+
+    if (reverseFriendship?.status === 'pending') {
+      res.status(409).json({
+        message: 'This user has already sent you a friend request',
+      });
+      return;
+    }
+
+    // 4. Check privacy settings (allowFriendRequestsFrom)
+    const { allowFriendRequestsFrom } = targetUser.privacy;
+    
+    if (allowFriendRequestsFrom === 'noOne') {
+      res.status(403).json({
+        message: 'This user is not accepting friend requests',
+      });
+      return;
+    }
+
+    if (allowFriendRequestsFrom === 'friendsOfFriends') {
+      // TODO: Implement mutual friends check when we have that logic
+      // For now, we'll allow all requests
+      logger.info('Friends of friends check not implemented yet, allowing request');
+    }
+
+    // 5. Create friendship record
+    const friendshipData = {
+      userId: fromUserId,
+      friendId: targetUser._id,
+      status: 'pending' as const,
+      requestedBy: fromUserId,
+      shareLocation: true,
+      closeFriend: false,
+    };
+
+    const newFriendship = await friendshipModel.create(friendshipData);
+
+    // 6. Return response
+    const response: SendFriendRequestResponse = {
+      message: 'Friend request sent successfully',
+      data: {
+        requestId: newFriendship._id.toString(),
+        status: 'pending',
+      },
+    };
+
+    res.status(201).json(response);
   } catch (error) {
     logger.error('Error in sendFriendRequest:', error);
     res.status(500).json({
