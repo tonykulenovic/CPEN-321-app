@@ -59,18 +59,21 @@ export class AuthService {
         throw new Error('User already exists');
       }
 
-      // Check if username is already taken
-      const existingUsername = await userModel.findByUsername(username);
-      if (existingUsername) {
-        throw new Error('Username already taken');
-      }
-
       // Create new user with provided username
       const signUpData = {
         ...googleUserInfo,
         username,
       };
-      const user = await userModel.create(signUpData);
+      let user;
+      try {
+        user = await userModel.create(signUpData);
+      } catch (err: any) {
+        // Handle duplicate key error (MongoDB)
+        if (err.code === 11000 && err.keyPattern && err.keyPattern.username) {
+          throw new Error('Username already taken');
+        }
+        throw err;
+      }
       const token = this.generateAccessToken(user);
 
       return { token, user };
