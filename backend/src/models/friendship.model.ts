@@ -201,6 +201,27 @@ export class FriendshipModel {
       throw new Error('Failed to delete friendship');
     }
   }
+
+  /**
+   * Check if two users are friends (both directions, status: accepted)
+   */
+  async areFriends(
+    userId1: mongoose.Types.ObjectId,
+    userId2: mongoose.Types.ObjectId
+  ): Promise<boolean> {
+    try {
+      const friendship = await this.friendship.findOne({
+        $or: [
+          { userId: userId1, friendId: userId2, status: 'accepted' },
+          { userId: userId2, friendId: userId1, status: 'accepted' },
+        ],
+      });
+      return !!friendship;
+    } catch (error) {
+      logger.error('Error checking friendship status:', error);
+      return false; // Default to not friends on error
+    }
+  }
 }
 
 export const friendshipModel = new FriendshipModel();

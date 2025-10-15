@@ -204,7 +204,7 @@ export class UserModel {
   async searchUsers(
     query: string,
     limit = 20
-  ): Promise<Pick<IUser, '_id' | 'username' | 'name' | 'profilePicture'>[]> {
+  ): Promise<Pick<IUser, '_id' | 'username' | 'name' | 'profilePicture' | 'privacy'>[]> {
     try {
       const users = await this.user
         .find(
@@ -215,7 +215,7 @@ export class UserModel {
               { email: { $regex: query, $options: 'i' } },
             ],
           },
-          '_id username name profilePicture'
+          '_id username name profilePicture privacy'
         )
         .limit(limit);
 
@@ -228,12 +228,36 @@ export class UserModel {
 
   async updatePrivacy(
     userId: mongoose.Types.ObjectId,
-    privacy: Partial<IUser['privacy']>
+    privacyUpdates: any
   ): Promise<IUser | null> {
     try {
+      // Handle partial updates with dot notation for nested objects
+      const updateObject: any = {};
+      
+      if (privacyUpdates.profileVisibleTo !== undefined) {
+        updateObject['privacy.profileVisibleTo'] = privacyUpdates.profileVisibleTo;
+      }
+      
+      if (privacyUpdates.showBadgesTo !== undefined) {
+        updateObject['privacy.showBadgesTo'] = privacyUpdates.showBadgesTo;
+      }
+      
+      if (privacyUpdates.allowFriendRequestsFrom !== undefined) {
+        updateObject['privacy.allowFriendRequestsFrom'] = privacyUpdates.allowFriendRequestsFrom;
+      }
+      
+      if (privacyUpdates.location) {
+        if (privacyUpdates.location.sharing !== undefined) {
+          updateObject['privacy.location.sharing'] = privacyUpdates.location.sharing;
+        }
+        if (privacyUpdates.location.precisionMeters !== undefined) {
+          updateObject['privacy.location.precisionMeters'] = privacyUpdates.location.precisionMeters;
+        }
+      }
+
       return await this.user.findByIdAndUpdate(
         userId,
-        { $set: { privacy } },
+        { $set: updateObject },
         { new: true }
       );
     } catch (error) {

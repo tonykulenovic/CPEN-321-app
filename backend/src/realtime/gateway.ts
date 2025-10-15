@@ -1,204 +1,382 @@
-// TODO: Install socket.io dependency: npm install socket.io @types/socket.io
-// import { Server, Socket } from 'socket.io';
+import { Server as HttpServer } from 'http';
+import { Server, Socket } from 'socket.io';
 import mongoose from 'mongoose';
 import jwt from 'jsonwebtoken';
-import * as userLocationService from '../services/userLocation.service';
+import { locationModel } from '../models/location.model';
+import { friendshipModel } from '../models/friendship.model';
+import { userModel } from '../models/user.model';
+import { LocationUpdateEvent, ILocation } from '../types/friends.types';
 import logger from '../utils/logger.util';
 
-// Placeholder types until socket.io is installed
-type Server = any;
-type Socket = any;
+// Location tracking subscription map
+const locationTrackers = new Map<string, Set<string>>(); // friendId -> Set<viewerIds>
+const socketToUser = new Map<string, mongoose.Types.ObjectId>(); // socketId -> userId
 
 /**
- * Initialize realtime namespace with JWT auth and user rooms.
- * @param io - Socket.io server.
- * @return void
+ * Location Gateway - Single source of truth for all location operations
  */
-export function initRealtime(io: Server): void {
-  const nsp = io.of('/realtime');
+export class LocationGateway {
+  private io: Server | null = null;
 
-  // Authentication middleware for socket connections
-  nsp.use(async (socket: any, next: any) => {
+  /**
+   * Initialize Socket.io server and location gateway
+   */
+  initialize(httpServer: HttpServer): void {
+    this.io = new Server(httpServer, {
+      cors: {
+        origin: "*", // Configure for production
+        methods: ["GET", "POST"]
+      }
+    });
+
+    this.setupSocketHandlers();
+  }
+
+  /**
+   * Report user location (from HTTP or Socket)
+   */
+  async reportLocation(
+    userId: mongoose.Types.ObjectId,
+    lat: number,
+    lng: number,
+    accuracyM = 0
+  ): Promise<{ shared: boolean; expiresAt: string }> {
     try {
-      // TODO: Implement socket authentication
-      // 1. Extract JWT from socket.handshake.auth.token
-      // 2. Verify JWT token
-      // 3. Attach userId to socket.data
-      // 4. Handle authentication errors
-
-      // Placeholder implementation
-      const token = socket.handshake.auth.token;
-      if (!token) {
-        return next(new Error('Authentication error: No token provided'));
+      // 1. Get user's privacy settings
+      const user = await userModel.findById(userId);
+      if (!user) {
+        throw new Error('User not found');
       }
 
-      // For now, just pass through - implement JWT verification
-      socket.data.userId = 'placeholder-user-id';
-      next();
+      const { location: locationPrivacy } = user.privacy;
+
+      // 2. Check if location sharing is off
+      if (locationPrivacy.sharing === 'off') {
+        return {
+          shared: false,
+          expiresAt: new Date().toISOString(),
+        };
+      }
+
+      // 3. Apply location approximation if needed
+      let finalLat = lat;
+      let finalLng = lng;
+      let finalAccuracyM = accuracyM;
+
+      if (locationPrivacy.sharing === 'approximate') {
+        // Apply approximation based on precisionMeters setting
+        const precision = locationPrivacy.precisionMeters;
+        finalAccuracyM = Math.max(accuracyM, precision);
+        
+        // Add some random offset within precision range
+        const offset = precision / 111000; // Convert meters to degrees (approximate)
+        finalLat += (Math.random() - 0.5) * offset;
+        finalLng += (Math.random() - 0.5) * offset;
+      }
+
+      // 4. Store location in database with TTL
+      const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days
+      const location = await locationModel.create(
+        userId,
+        finalLat,
+        finalLng,
+        finalAccuracyM,
+        true,
+        expiresAt
+      );
+
+      // 5. Broadcast to subscribed friends
+      await this.broadcastLocationUpdate(userId, {
+        lat: finalLat,
+        lng: finalLng,
+        accuracyM: finalAccuracyM,
+        ts: location.createdAt.toISOString(),
+      });
+
+      return {
+        shared: true,
+        expiresAt: expiresAt.toISOString(),
+      };
     } catch (error) {
-      logger.error('Socket authentication error:', error);
-      next(new Error('Authentication failed'));
+      logger.error('Error reporting location:', error);
+      throw error;
     }
-  });
+  }
 
-  nsp.on('connection', (socket: Socket) => {
-    const viewerId = socket.data.userId as string;
-    socket.join(`user:${viewerId}`);
+  /**
+   * Get friends' current locations for HTTP endpoints
+   */
+  async getFriendsLocations(userId: mongoose.Types.ObjectId): Promise<ILocation[]> {
+    try {
+      // 1. Get accepted friends with location sharing enabled
+      const friendships = await friendshipModel.findUserFriendships(userId, 'accepted');
+      const friendsWithLocationSharing = friendships.filter(f => f.shareLocation);
 
-    logger.info(`User ${viewerId} connected to realtime namespace`);
+      // 2. Get locations for those friends
+      const friendIds = friendsWithLocationSharing.map(f => f.friendId);
+      const locations = await locationModel.findFriendsLocations(friendIds);
 
-    /**
-     * Subscribe viewer to a friend's live location for a duration.
-     * @param payload.friendId - Friend id.
-     * @param payload.durationSec - Seconds to track (default 60).
-     * @return void (updates arrive via 'location:update')
-     */
-    socket.on(
-      'location:track',
-      async (payload: { friendId: string; durationSec?: number }) => {
+      // 3. Filter based on privacy settings and apply approximation
+      const filteredLocations: ILocation[] = [];
+      
+      for (const location of locations) {
+        const friend = await userModel.findById(location.userId);
+        if (!friend || friend.privacy.location.sharing === 'off') {
+          continue;
+        }
+
+        // Apply approximation if needed
+        if (friend.privacy.location.sharing === 'approximate') {
+          const precision = friend.privacy.location.precisionMeters;
+          const offset = precision / 111000;
+          location.lat += (Math.random() - 0.5) * offset;
+          location.lng += (Math.random() - 0.5) * offset;
+          location.accuracyM = Math.max(location.accuracyM, precision);
+        }
+
+        filteredLocations.push(location);
+      }
+
+      return filteredLocations;
+    } catch (error) {
+      logger.error('Error getting friends locations:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Subscribe to friend's location updates (real-time)
+   */
+  async trackFriendLocation(
+    viewerId: mongoose.Types.ObjectId,
+    friendId: mongoose.Types.ObjectId,
+    durationSec = 300
+  ): Promise<void> {
+    try {
+      // 1. Verify friendship and location sharing permission
+      const friendship = await friendshipModel.findByUserAndFriend(viewerId, friendId);
+      if (!friendship || friendship.status !== 'accepted' || !friendship.shareLocation) {
+        throw new Error('Not authorized to track this friend\'s location');
+      }
+
+      // 2. Check friend's privacy settings
+      const friend = await userModel.findById(friendId);
+      if (!friend || friend.privacy.location.sharing === 'off') {
+        throw new Error('Friend has location sharing disabled');
+      }
+
+      // 3. Add to tracking map
+      const friendIdStr = friendId.toString();
+      const viewerIdStr = viewerId.toString();
+      
+      if (!locationTrackers.has(friendIdStr)) {
+        locationTrackers.set(friendIdStr, new Set());
+      }
+      locationTrackers.get(friendIdStr)!.add(viewerIdStr);
+
+      // 4. Send current location if available
+      const currentLocation = await locationModel.findByUserId(friendId);
+      if (currentLocation) {
+        await this.sendLocationUpdate(viewerId, friendId, {
+          lat: currentLocation.lat,
+          lng: currentLocation.lng,
+          accuracyM: currentLocation.accuracyM,
+          ts: currentLocation.createdAt.toISOString(),
+        });
+      }
+
+      // 5. Auto-unsubscribe after duration
+      setTimeout(() => {
+        this.untrackFriendLocation(viewerId, friendId);
+      }, durationSec * 1000);
+
+    } catch (error) {
+      logger.error('Error tracking friend location:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Unsubscribe from friend's location updates
+   */
+  async untrackFriendLocation(
+    viewerId: mongoose.Types.ObjectId,
+    friendId: mongoose.Types.ObjectId
+  ): Promise<void> {
+    const friendIdStr = friendId.toString();
+    const viewerIdStr = viewerId.toString();
+    
+    const trackers = locationTrackers.get(friendIdStr);
+    if (trackers) {
+      trackers.delete(viewerIdStr);
+      if (trackers.size === 0) {
+        locationTrackers.delete(friendIdStr);
+      }
+    }
+  }
+
+  /**
+   * Broadcast location update to all subscribers
+   */
+  private async broadcastLocationUpdate(
+    userId: mongoose.Types.ObjectId,
+    locationData: { lat: number; lng: number; accuracyM: number; ts: string }
+  ): Promise<void> {
+    if (!this.io) return;
+
+    const userIdStr = userId.toString();
+    const trackers = locationTrackers.get(userIdStr);
+    
+    if (trackers && trackers.size > 0) {
+      const locationEvent: LocationUpdateEvent = {
+        type: 'location.update',
+        version: 1,
+        userId: userIdStr,
+        lat: locationData.lat,
+        lng: locationData.lng,
+        accuracyM: locationData.accuracyM,
+        ts: locationData.ts,
+        ttlSec: 1800, // 30 minutes
+        approx: false, // Will be determined by privacy settings
+        idempotencyKey: `${userIdStr}-${Date.now()}`,
+      };
+
+      // Send to each subscriber
+      for (const viewerId of trackers) {
+        await this.sendLocationUpdate(new mongoose.Types.ObjectId(viewerId), userId, locationData);
+      }
+    }
+  }
+
+  /**
+   * Send location update to specific user
+   */
+  private async sendLocationUpdate(
+    viewerId: mongoose.Types.ObjectId,
+    friendId: mongoose.Types.ObjectId,
+    locationData: { lat: number; lng: number; accuracyM: number; ts: string }
+  ): Promise<void> {
+    if (!this.io) return;
+
+    const nsp = this.io.of('/realtime');
+    nsp.to(`user:${viewerId.toString()}`).emit('location:update', {
+      friendId: friendId.toString(),
+      ...locationData,
+    });
+  }
+
+  /**
+   * Setup Socket.io event handlers
+   */
+  private setupSocketHandlers(): void {
+    if (!this.io) return;
+
+    const nsp = this.io.of('/realtime');
+
+    // Authentication middleware
+    nsp.use(async (socket: Socket, next) => {
+      try {
+        const token = socket.handshake.auth.token;
+        if (!token) {
+          return next(new Error('Authentication error: No token provided'));
+        }
+
+        // Verify JWT token
+        const decoded = jwt.verify(token, process.env.JWT_SECRET!) as any;
+        const userId = new mongoose.Types.ObjectId(decoded.userId);
+        
+        // Store user ID in socket data
+        socket.data.userId = userId;
+        socketToUser.set(socket.id, userId);
+        
+        next();
+      } catch (error) {
+        logger.error('Socket authentication error:', error);
+        next(new Error('Authentication failed'));
+      }
+    });
+
+    nsp.on('connection', (socket: Socket) => {
+      const userId = socket.data.userId as mongoose.Types.ObjectId;
+      socket.join(`user:${userId.toString()}`);
+
+      logger.info(`User ${userId} connected to realtime namespace`);
+
+      // Handle location tracking subscription
+      socket.on('location:track', async (payload: { friendId: string; durationSec?: number }) => {
         try {
-          // TODO: Implement location tracking
-          // 1. Validate payload
-          // 2. Convert string IDs to ObjectIds
-          // 3. Call userLocationService.trackLocation
-          // 4. Store unsubscribe function for cleanup
-          // 5. Handle errors
+          const friendId = new mongoose.Types.ObjectId(payload.friendId);
+          const duration = payload.durationSec || 300; // 5 minutes default
 
-          logger.info(`User ${viewerId} requested to track ${payload.friendId}`);
+          await this.trackFriendLocation(userId, friendId, duration);
           
-          const durationMs = Math.max(5, payload?.durationSec ?? 60) * 1000;
-          
-          // Placeholder - implement actual tracking
           socket.emit('location:track:ack', {
             friendId: payload.friendId,
             status: 'subscribed',
-            durationSec: payload.durationSec ?? 60,
+            durationSec: duration,
           });
         } catch (error) {
           logger.error('Error in location:track:', error);
           socket.emit('location:track:error', {
             friendId: payload.friendId,
-            error: 'Failed to subscribe to location updates',
+            error: error instanceof Error ? error.message : 'Failed to subscribe to location updates',
           });
         }
-      }
-    );
+      });
 
-    /**
-     * Unsubscribe from friend's live location.
-     * @param payload.friendId - Friend id.
-     */
-    socket.on('location:untrack', async (payload: { friendId: string }) => {
-      try {
-        // TODO: Implement location untracking
-        // 1. Validate payload
-        // 2. Find and call stored unsubscribe function
-        // 3. Remove from tracking map
-        // 4. Emit acknowledgment
-
-        logger.info(`User ${viewerId} unsubscribed from ${payload.friendId}`);
-        
-        socket.emit('location:untrack:ack', {
-          friendId: payload.friendId,
-          status: 'unsubscribed',
-        });
-      } catch (error) {
-        logger.error('Error in location:untrack:', error);
-        socket.emit('location:untrack:error', {
-          friendId: payload.friendId,
-          error: 'Failed to unsubscribe from location updates',
-        });
-      }
-    });
-
-    /**
-     * Receive location pings from this user (mobile client).
-     * @param payload { lat, lng, accuracyM? }
-     */
-    socket.on(
-      'location:ping',
-      async (payload: { lat: number; lng: number; accuracyM?: number }) => {
+      // Handle location tracking unsubscribe
+      socket.on('location:untrack', async (payload: { friendId: string }) => {
         try {
-          // TODO: Implement location ping handling
-          // 1. Validate payload coordinates
-          // 2. Rate limit pings (e.g., max once per 15 seconds)
-          // 3. Call userLocationService.reportLocation
-          // 4. Handle privacy settings
-          // 5. Emit acknowledgment
-
-          logger.info(`Location ping from user ${viewerId}:`, payload);
+          const friendId = new mongoose.Types.ObjectId(payload.friendId);
+          await this.untrackFriendLocation(userId, friendId);
           
-          // Placeholder response
-          socket.emit('location:ping:ack', {
-            shared: false, // Will be determined by privacy settings
-            expiresAt: new Date(Date.now() + 10 * 60 * 1000).toISOString(), // 10 minutes
+          socket.emit('location:untrack:ack', {
+            friendId: payload.friendId,
+            status: 'unsubscribed',
           });
+        } catch (error) {
+          logger.error('Error in location:untrack:', error);
+          socket.emit('location:untrack:error', {
+            friendId: payload.friendId,
+            error: error instanceof Error ? error.message : 'Failed to unsubscribe from location updates',
+          });
+        }
+      });
+
+      // Handle location updates from client
+      socket.on('location:ping', async (payload: { lat: number; lng: number; accuracyM?: number }) => {
+        try {
+          const { lat, lng, accuracyM = 0 } = payload;
+          
+          const result = await this.reportLocation(userId, lat, lng, accuracyM);
+          
+          socket.emit('location:ping:ack', result);
         } catch (error) {
           logger.error('Error in location:ping:', error);
           socket.emit('location:ping:error', {
-            error: 'Failed to update location',
+            error: error instanceof Error ? error.message : 'Failed to update location',
           });
         }
-      }
-    );
+      });
 
-    socket.on('disconnect', (reason: any) => {
-      logger.info(`User ${viewerId} disconnected from realtime namespace:`, reason);
-      
-      // TODO: Cleanup subscriptions
-      // 1. Get all active subscriptions for this socket
-      // 2. Call unsubscribe functions
-      // 3. Clean up tracking maps
-      
-      // Placeholder cleanup
-      if (socket.data.subs) {
-        for (const stop of socket.data.subs.values()) {
-          if (typeof stop === 'function') {
-            stop();
+      // Handle disconnect
+      socket.on('disconnect', (reason) => {
+        logger.info(`User ${userId} disconnected from realtime namespace:`, reason);
+        
+        // Clean up tracking subscriptions for this user
+        const userIdStr = userId.toString();
+        for (const [friendId, trackers] of locationTrackers.entries()) {
+          trackers.delete(userIdStr);
+          if (trackers.size === 0) {
+            locationTrackers.delete(friendId);
           }
         }
-        socket.data.subs.clear();
-      }
+        
+        socketToUser.delete(socket.id);
+      });
     });
-  });
+  }
 }
 
-/**
- * Emit location update to specific user.
- * @param io - Socket.io server instance.
- * @param userId - Target user id.
- * @param locationEvent - Location update event.
- */
-export function emitLocationUpdate(
-  io: Server,
-  userId: string,
-  locationEvent: any
-): void {
-  // TODO: Implement location update emission
-  // 1. Validate parameters
-  // 2. Emit to user's room
-  // 3. Handle delivery confirmation if needed
-  
-  const nsp = io.of('/realtime');
-  nsp.to(`user:${userId}`).emit('location:update', locationEvent);
-}
-
-/**
- * Emit friend request notification to specific user.
- * @param io - Socket.io server instance.
- * @param userId - Target user id.
- * @param friendRequest - Friend request data.
- */
-export function emitFriendRequest(
-  io: Server,
-  userId: string,
-  friendRequest: any
-): void {
-  // TODO: Implement friend request notification
-  // 1. Format friend request notification
-  // 2. Emit to user's room
-  // 3. Handle delivery confirmation if needed
-  
-  const nsp = io.of('/realtime');
-  nsp.to(`user:${userId}`).emit('friend:request', friendRequest);
-}
+// Create singleton instance
+export const locationGateway = new LocationGateway();

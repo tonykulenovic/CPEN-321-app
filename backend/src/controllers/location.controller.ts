@@ -1,40 +1,47 @@
 import { Request, Response } from 'express';
-import mongoose from 'mongoose';
 import {
   UpdateLocationRequest,
   updateLocationSchema,
-  UpdateLocationResponse,
   FriendsLocationsResponse,
 } from '../types/friends.types';
-import { locationModel } from '../models/location.model';
-import { friendshipModel } from '../models/friendship.model';
-import { userModel } from '../models/user.model';
+import { locationGateway } from '../realtime/gateway';
 import logger from '../utils/logger.util';
 
 /**
- * PUT /me/location — Upsert my location with TTL & sharing rules.
+ * POST /me/location — Create new location record with TTL & sharing rules.
  * @param body.lat number - Latitude.
  * @param body.lng number - Longitude.
  * @param body.accuracyM number? - Accuracy meters.
- * @return 200 { shared, expiresAt }
+ * @return 201 { shared, expiresAt }
  */
-export async function upsertMyLocation(req: Request, res: Response): Promise<void> {
+export async function createMyLocation(req: Request, res: Response): Promise<void> {
   try {
-    // TODO: Implement upsert location logic
     // 1. Validate request body
-    // 2. Get user ID from auth middleware
-    // 3. Get user's privacy settings
-    // 4. Apply privacy rules (off/live/approximate)
-    // 5. Calculate expiration time (TTL)
-    // 6. Upsert location in database
-    // 7. Emit real-time updates to friends if applicable
-    // 8. Return response with sharing status and expiration
+    const validation = updateLocationSchema.safeParse(req.body);
+    if (!validation.success) {
+      res.status(400).json({
+        message: 'Invalid request body',
+        errors: validation.error.issues,
+      });
+      return;
+    }
 
-    res.status(501).json({
-      message: 'Upsert location not implemented yet',
+    const { lat, lng, accuracyM = 0 } = validation.data;
+
+    // 2. Get user ID from auth middleware
+    const currentUser = req.user!;
+    const currentUserId = currentUser._id;
+
+    // 3. Use gateway to report location (handles all privacy, storage, and broadcasting)
+    const result = await locationGateway.reportLocation(currentUserId, lat, lng, accuracyM);
+
+    // 4. Return response
+    res.status(201).json({
+      message: 'Location updated successfully',
+      data: result,
     });
   } catch (error) {
-    logger.error('Error in upsertMyLocation:', error);
+    logger.error('Error in createMyLocation:', error);
     res.status(500).json({
       message: 'Internal server error',
     });
@@ -47,17 +54,28 @@ export async function upsertMyLocation(req: Request, res: Response): Promise<voi
  */
 export async function getFriendsLocations(req: Request, res: Response): Promise<void> {
   try {
-    // TODO: Implement get friends locations logic
     // 1. Get user ID from auth middleware
-    // 2. Find accepted friends with shareLocation=true
-    // 3. Get latest locations for those friends
-    // 4. Filter based on privacy settings
-    // 5. Format location data
-    // 6. Return friends' locations
+    const currentUser = req.user!;
+    const currentUserId = currentUser._id;
 
-    res.status(501).json({
-      message: 'Get friends locations not implemented yet',
-    });
+    // 2. Use gateway to get friends' locations (handles all privacy filtering)
+    const locations = await locationGateway.getFriendsLocations(currentUserId);
+
+    // 3. Format response
+    const friendLocations = locations.map(location => ({
+      userId: location.userId.toString(),
+      lat: location.lat,
+      lng: location.lng,
+      accuracyM: location.accuracyM,
+      ts: location.createdAt.toISOString(),
+    }));
+
+    const response: FriendsLocationsResponse = {
+      message: 'Friends locations retrieved successfully',
+      data: friendLocations,
+    };
+
+    res.status(200).json(response);
   } catch (error) {
     logger.error('Error in getFriendsLocations:', error);
     res.status(500).json({
