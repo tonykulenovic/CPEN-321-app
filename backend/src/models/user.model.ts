@@ -43,8 +43,18 @@ const userSchema = new Schema<IUser>(
   },
   {
     timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
   }
 );
+
+// Virtual field to get user badges
+userSchema.virtual('badges', {
+  ref: 'UserBadge',
+  localField: '_id',
+  foreignField: 'userId',
+  justOne: false,
+});
 
 export class UserModel {
   private user: mongoose.Model<IUser>;
@@ -125,6 +135,27 @@ export class UserModel {
     } catch (error) {
       console.error('Error finding user by Google ID:', error);
       throw new Error('Failed to find user');
+    }
+  }
+
+  async findByIdWithBadges(_id: mongoose.Types.ObjectId): Promise<IUser | null> {
+    try {
+      const user = await this.user.findById(_id).populate({
+        path: 'badges',
+        populate: {
+          path: 'badgeId',
+          model: 'Badge',
+        },
+      });
+
+      if (!user) {
+        return null;
+      }
+
+      return user;
+    } catch (error) {
+      console.error('Error finding user with badges:', error);
+      throw new Error('Failed to find user with badges');
     }
   }
 }
