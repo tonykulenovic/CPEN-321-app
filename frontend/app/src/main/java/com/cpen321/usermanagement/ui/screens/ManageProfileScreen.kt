@@ -66,13 +66,16 @@ import androidx.compose.runtime.SideEffect
 
 private data class ProfileFormState(
     val name: String = "",
+    val username: String = "",
     val email: String = "",
     val bio: String = "",
     val originalName: String = "",
+    val originalUsername: String = "",
     val originalBio: String = ""
 ) {
     fun hasChanges(): Boolean {
         return (name.isNotBlank() && name != originalName) ||
+                (username.isNotBlank() && username != originalUsername) ||
                 (bio != originalBio && bio.isNotBlank())
     }
 }
@@ -80,6 +83,7 @@ private data class ProfileFormState(
 private data class ManageProfileScreenActions(
     val onBackClick: () -> Unit,
     val onNameChange: (String) -> Unit,
+    val onUsernameChange: (String) -> Unit,
     val onBioChange: (String) -> Unit,
     val onEditPictureClick: () -> Unit,
     val onSaveClick: () -> Unit,
@@ -96,6 +100,7 @@ private data class ProfileFormData(
     val isLoadingPhoto: Boolean,
     val isSavingProfile: Boolean,
     val onNameChange: (String) -> Unit,
+    val onUsernameChange: (String) -> Unit,
     val onBioChange: (String) -> Unit,
     val onEditPictureClick: () -> Unit,
     val onSaveClick: () -> Unit,
@@ -106,6 +111,7 @@ private data class ProfileBodyData(
     val uiState: ProfileUiState,
     val formState: ProfileFormState,
     val onNameChange: (String) -> Unit,
+    val onUsernameChange: (String) -> Unit,
     val onBioChange: (String) -> Unit,
     val onEditPictureClick: () -> Unit,
     val onSaveClick: () -> Unit,
@@ -114,9 +120,11 @@ private data class ProfileBodyData(
 
 private data class ProfileFieldsData(
     val name: String,
+    val username: String,
     val email: String,
     val bio: String,
     val onNameChange: (String) -> Unit,
+    val onUsernameChange: (String) -> Unit,
     val onBioChange: (String) -> Unit
 )
 
@@ -157,9 +165,11 @@ fun ManageProfileScreen(
         uiState.user?.let { user ->
             formState = ProfileFormState(
                 name = user.name,
+                username = user.username,
                 email = user.email,
                 bio = user.bio ?: "",
                 originalName = user.name,
+                originalUsername = user.username,
                 originalBio = user.bio ?: ""
             )
         }
@@ -168,10 +178,11 @@ fun ManageProfileScreen(
     val actions = ManageProfileScreenActions(
         onBackClick = onBackClick,
         onNameChange = { formState = formState.copy(name = it) },
+        onUsernameChange = { formState = formState.copy(username = it) },
         onBioChange = { formState = formState.copy(bio = it) },
         onEditPictureClick = { showImagePickerDialog = true },
         onSaveClick = {
-            profileViewModel.updateProfile(formState.name, formState.bio)
+            profileViewModel.updateProfile(formState.name, formState.username, formState.bio)
         },
         onImagePickerDismiss = { showImagePickerDialog = false },
         onImageSelected = { uri ->
@@ -226,6 +237,7 @@ private fun ManageProfileContent(
                 uiState = uiState,
                 formState = formState,
                 onNameChange = actions.onNameChange,
+                onUsernameChange = actions.onUsernameChange,
                 onBioChange = actions.onBioChange,
                 onEditPictureClick = actions.onEditPictureClick,
                 onSaveClick = actions.onSaveClick,
@@ -299,6 +311,7 @@ private fun ProfileBody(
                         isLoadingPhoto = data.uiState.isLoadingPhoto,
                         isSavingProfile = data.uiState.isSavingProfile,
                         onNameChange = data.onNameChange,
+                        onUsernameChange = data.onUsernameChange,
                         onBioChange = data.onBioChange,
                         onEditPictureClick = data.onEditPictureClick,
                         onSaveClick = data.onSaveClick,
@@ -336,9 +349,11 @@ private fun ProfileForm(
         ProfileFields(
             data = ProfileFieldsData(
                 name = data.formState.name,
+                username = data.formState.username,
                 email = data.user.email,
                 bio = data.formState.bio,
                 onNameChange = data.onNameChange,
+                onUsernameChange = data.onUsernameChange,
                 onBioChange = data.onBioChange
             )
         )
@@ -488,6 +503,25 @@ private fun ProfileFields(
             value = data.name,
             onValueChange = data.onNameChange,
             label = { Text(stringResource(R.string.name), color = Color.White) },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true,
+            colors = androidx.compose.material3.TextFieldDefaults.colors(
+                focusedTextColor = Color.White,
+                unfocusedTextColor = Color.White,
+                focusedContainerColor = Color.Transparent,
+                unfocusedContainerColor = Color.Transparent,
+                focusedIndicatorColor = Color(0xFF4A90E2),
+                unfocusedIndicatorColor = Color.Gray,
+                cursorColor = Color.White
+            )
+        )
+        
+        // ADD THIS - Username field
+        OutlinedTextField(
+            value = data.username,
+            onValueChange = data.onUsernameChange,
+            label = { Text("Username", color = Color.White) },
+            prefix = { Text("@", color = Color(0xFF8B9DAF)) },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
             colors = androidx.compose.material3.TextFieldDefaults.colors(

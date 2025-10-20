@@ -113,6 +113,7 @@ fun ProfileCompletionScreen(
                     formState = formState.copy(hasSavedBio = true)
                     profileViewModel.updateProfile(
                         name = uiState.user?.name ?: "",
+                        username = uiState.user?.username ?: "",
                         bio = formState.bioText,
                         onSuccess = {
                             onProfileCompletedWithMessage(successfulBioUpdateMessage)

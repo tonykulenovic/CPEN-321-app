@@ -25,7 +25,7 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Divider
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -400,14 +400,15 @@ private fun ProfileMenuItems(
             .verticalScroll(scrollState),
         verticalArrangement = Arrangement.spacedBy(spacing.medium)
     ) {
-        // ADD THIS - Profile Header with user info
+        // Profile Header with user info and username
         ProfileHeader(
             userName = uiState.user?.name ?: "Loading...",
+            username = uiState.user?.username ?: "",  // ADD THIS
             profilePictureUrl = uiState.user?.profilePicture
         )
         
         // Visual separator
-        Divider(
+        HorizontalDivider(
             modifier = Modifier.padding(vertical = spacing.medium),
             color = Color(0xFF1A2332),
             thickness = 1.dp
@@ -428,6 +429,7 @@ private fun ProfileMenuItems(
 @Composable
 private fun ProfileHeader(
     userName: String,
+    username: String,  // ADD THIS PARAMETER
     profilePictureUrl: String?,
     modifier: Modifier = Modifier
 ) {
@@ -492,6 +494,18 @@ private fun ProfileHeader(
             textAlign = TextAlign.Center,
             fontSize = 24.sp
         )
+        
+        // ADD THIS - Username with @ symbol
+        if (username.isNotBlank()) {
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = "@$username",
+                style = MaterialTheme.typography.bodyLarge,
+                color = Color(0xFF8B9DAF),
+                textAlign = TextAlign.Center,
+                fontSize = 16.sp
+            )
+        }
     }
 }
 

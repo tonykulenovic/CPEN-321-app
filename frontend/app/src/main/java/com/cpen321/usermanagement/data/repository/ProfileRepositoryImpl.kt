@@ -58,29 +58,23 @@ class ProfileRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun updateProfile(name: String, bio: String): Result<User> {
+    override suspend fun updateProfile(name: String, username: String, bio: String): Result<User> {
         return try {
-            val updateRequest = UpdateProfileRequest(name = name, bio = bio)
-            val response = userInterface.updateProfile("", updateRequest) // Auth header is handled by interceptor
+            val request = UpdateProfileRequest(name = name, username = username, bio = bio)
+            val response = userInterface.updateProfile("", request)
+            
             if (response.isSuccessful && response.body()?.data != null) {
                 Result.success(response.body()!!.data!!.user)
             } else {
-                val errorBodyString = response.errorBody()?.string()
-                val errorMessage = parseErrorMessage(errorBodyString, "Failed to update profile.")
-                Log.e(TAG, "Failed to update profile: $errorMessage")
+                val errorMessage = parseErrorMessage(
+                    response.errorBody()?.string(),
+                    response.body()?.message ?: "Failed to update profile"
+                )
+                Log.e(TAG, "Update profile failed: $errorMessage")
                 Result.failure(Exception(errorMessage))
             }
-        } catch (e: java.net.SocketTimeoutException) {
-            Log.e(TAG, "Network timeout while updating profile", e)
-            Result.failure(e)
-        } catch (e: java.net.UnknownHostException) {
-            Log.e(TAG, "Network connection failed while updating profile", e)
-            Result.failure(e)
-        } catch (e: java.io.IOException) {
-            Log.e(TAG, "IO error while updating profile", e)
-            Result.failure(e)
-        } catch (e: retrofit2.HttpException) {
-            Log.e(TAG, "HTTP error while updating profile: ${e.code()}", e)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error updating profile", e)
             Result.failure(e)
         }
     }

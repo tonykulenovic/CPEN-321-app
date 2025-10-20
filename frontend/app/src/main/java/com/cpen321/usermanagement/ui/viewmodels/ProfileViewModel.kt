@@ -102,7 +102,7 @@ class ProfileViewModel @Inject constructor(
         }
     }
 
-    fun updateProfile(name: String, bio: String, onSuccess: () -> Unit = {}) {
+    fun updateProfile(name: String, username: String, bio: String, onSuccess: () -> Unit = {}) {
         viewModelScope.launch {
             _uiState.value =
                 _uiState.value.copy(
@@ -111,7 +111,7 @@ class ProfileViewModel @Inject constructor(
                     successMessage = null
                 )
 
-            val result = profileRepository.updateProfile(name, bio)
+            val result = profileRepository.updateProfile(name, username, bio)
             if (result.isSuccess) {
                 val updatedUser = result.getOrNull()!!
                 _uiState.value = _uiState.value.copy(
@@ -121,12 +121,9 @@ class ProfileViewModel @Inject constructor(
                 )
                 onSuccess()
             } else {
-                val error = result.exceptionOrNull()
-                Log.e(TAG, "Failed to update profile", error)
-                val errorMessage = error?.message ?: "Failed to update profile"
                 _uiState.value = _uiState.value.copy(
                     isSavingProfile = false,
-                    errorMessage = errorMessage
+                    errorMessage = result.exceptionOrNull()?.message ?: "Failed to update profile"
                 )
             }
         }
