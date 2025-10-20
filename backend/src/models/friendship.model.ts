@@ -181,12 +181,16 @@ export class FriendshipModel {
     friendId: mongoose.Types.ObjectId
   ): Promise<void> {
     try {
-      await this.friendship.deleteMany({
+      // Delete ALL friendship records between these two users, regardless of status
+      // This ensures clean deletion and allows re-adding without conflicts
+      const deleteResult = await this.friendship.deleteMany({
         $or: [
           { userId, friendId },
           { userId: friendId, friendId: userId }
         ]
       });
+      
+      logger.info(`Deleted ${deleteResult.deletedCount} friendship records between users ${userId} and ${friendId}`);
     } catch (error) {
       logger.error('Error deleting friendship:', error);
       throw new Error('Failed to delete friendship');
@@ -220,6 +224,26 @@ export class FriendshipModel {
     } catch (error) {
       logger.error('Error checking friendship status:', error);
       return false; // Default to not friends on error
+    }
+  }
+
+  /**
+   * Get all friendship records between two users (for debugging/admin)
+   */
+  async getAllRecordsBetweenUsers(
+    userId1: mongoose.Types.ObjectId,
+    userId2: mongoose.Types.ObjectId
+  ): Promise<IFriendship[]> {
+    try {
+      return await this.friendship.find({
+        $or: [
+          { userId: userId1, friendId: userId2 },
+          { userId: userId2, friendId: userId1 }
+        ]
+      }).populate('userId friendId', 'name username');
+    } catch (error) {
+      logger.error('Error getting records between users:', error);
+      throw new Error('Failed to get friendship records');
     }
   }
 }

@@ -60,19 +60,17 @@ export async function sendFriendRequest(req: Request, res: Response): Promise<vo
     );
 
     if (existingFriendship) {
-      let message = 'Friend request already exists';
       if (existingFriendship.status === 'accepted') {
-        message = 'You are already friends with this user';
+        res.status(409).json({ message: 'You are already friends with this user' });
+        return;
       } else if (existingFriendship.status === 'pending') {
-        message = 'Friend request already sent';
-      } else if (existingFriendship.status === 'declined') {
-        message = 'Friend request was previously declined';
-      } else if (existingFriendship.status === 'blocked') {
-        message = 'Unable to send friend request';
+        res.status(409).json({ message: 'Friend request already sent' });
+        return;
+      } else if (existingFriendship.status === 'declined' || existingFriendship.status === 'blocked') {
+        // Clean up old declined/blocked records to allow fresh start
+        logger.info(`Cleaning up old ${existingFriendship.status} friendship record between ${fromUserId} and ${targetUser._id}`);
+        await friendshipModel.deleteFriendship(fromUserId, targetUser._id);
       }
-      
-      res.status(409).json({ message });
-      return;
     }
 
     // Check for reverse friendship (if target user already sent a request)
@@ -86,6 +84,10 @@ export async function sendFriendRequest(req: Request, res: Response): Promise<vo
         message: 'This user has already sent you a friend request',
       });
       return;
+    } else if (reverseFriendship && (reverseFriendship.status === 'declined' || reverseFriendship.status === 'blocked')) {
+      // Clean up old reverse records as well
+      logger.info(`Cleaning up old reverse ${reverseFriendship.status} friendship record from ${targetUser._id} to ${fromUserId}`);
+      await friendshipModel.deleteFriendship(targetUser._id, fromUserId);
     }
 
     // 4. Check privacy settings (allowFriendRequestsFrom)
