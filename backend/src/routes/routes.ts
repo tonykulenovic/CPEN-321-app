@@ -9,6 +9,26 @@ import locationRoutes from '../routes/location.routes';
 
 const router = Router();
 
+// Health check endpoint - no auth required
+router.get('/health', (req, res) => {
+  res.status(200).json({
+    status: 'OK',
+    message: 'Server is running',
+    timestamp: new Date().toISOString(),
+    version: '1.0.0'
+  });
+});
+
+// Test endpoint - no auth required
+router.get('/test', (req, res) => {
+  res.status(200).json({
+    message: 'Test endpoint working!',
+    yourIP: req.ip,
+    userAgent: req.get('User-Agent'),
+    timestamp: new Date().toISOString()
+  });
+});
+
 router.use('/auth', authRoutes);
 
 router.use('/user', authenticateToken, usersRoutes);
