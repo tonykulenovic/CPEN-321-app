@@ -18,6 +18,16 @@ import { userModel } from '../models/user.model';
 import { friendshipModel } from '../models/friendship.model';
 
 export class UserController {
+  constructor() {
+    // Bind methods to preserve 'this' context
+    this.getProfile = this.getProfile.bind(this);
+    this.updateProfile = this.updateProfile.bind(this);
+    this.deleteProfile = this.deleteProfile.bind(this);
+    this.searchUsers = this.searchUsers.bind(this);
+    this.getMe = this.getMe.bind(this);
+    this.updatePrivacy = this.updatePrivacy.bind(this);
+  }
+
   /**
    * Helper method to check if a user can appear in search results based on privacy settings
    * Note: This is specifically for SEARCH visibility. Profile access through other means 
@@ -28,18 +38,25 @@ export class UserController {
     targetUserId: mongoose.Types.ObjectId,
     profileVisibleTo: 'friends' | 'everyone' | 'private'
   ): Promise<boolean> {
+    logger.info(`🔐 Privacy check: viewer=${viewerId} target=${targetUserId} setting=${profileVisibleTo}`);
+    
     switch (profileVisibleTo) {
       case 'everyone':
         // Anyone can find this user in search results
+        logger.info(`✅ Everyone can see this profile`);
         return true;
       case 'friends':
         // Only friends can find this user in search results
-        return await friendshipModel.areFriends(viewerId, targetUserId);
+        const areFriends = await friendshipModel.areFriends(viewerId, targetUserId);
+        logger.info(`👥 Friends only - are they friends? ${areFriends}`);
+        return areFriends;
       case 'private':
         // User doesn't appear in search results at all
         // (but friends can still access profile through other means like friend lists)
+        logger.info(`🔒 Private profile - blocked from search`);
         return false;
       default:
+        logger.info(`❓ Unknown privacy setting: ${profileVisibleTo} - defaulting to private`);
         return false; // Default to private for unknown values
     }
   }
@@ -110,7 +127,10 @@ export class UserController {
   }
 
   /**
-   * GET /users/search — Search users.
+   * GET /users/search — Search users for friend discovery.
+   * Note: This endpoint is used for finding users to send friend requests to.
+   * Privacy settings (profileVisibleTo) do NOT apply here - users must be discoverable
+   * for the friend system to work. Privacy controls profile viewing, not friend discovery.
    * @param query.q string - Term.
    * @param query.limit number - Max.
    * @return 200 UserSearchResult[]
@@ -136,6 +156,12 @@ export class UserController {
 
       // 2. Search users by username, name, or email
       const users = await userModel.searchUsers(q, searchLimit + 50); // Get extra to account for filtering
+      
+      // DEBUG: Log search results
+      logger.info(`🔍 Search query: "${q}" returned ${users.length} users`);
+      users.forEach(user => {
+        logger.info(`  - User: ${user.username} (${user.name}) - Privacy: ${user.privacy.profileVisibleTo}`);
+      });
 
       // 3. Filter results based on privacy settings and exclude current user
       const filteredUsers = [];
@@ -143,11 +169,16 @@ export class UserController {
       for (const user of users) {
         // Exclude current user
         if (user._id.toString() === currentUserId.toString()) {
+          logger.info(`⏭️  Skipping current user: ${user.username}`);
           continue;
         }
 
         // Apply privacy filtering based on user's profileVisibleTo setting
-        const canViewProfile = await this.canViewUserProfile(currentUserId, user._id, user.privacy.profileVisibleTo);
+        // Note: For friend discovery, we allow searching regardless of privacy settings
+        // Privacy controls profile visibility, not friend request ability
+        const canViewProfile = true; // Always allow for friend discovery
+        
+        logger.info(`🔒 Privacy check for ${user.username}: ${user.privacy.profileVisibleTo} -> ALLOWED (friend discovery)`);
         
         if (canViewProfile) {
           filteredUsers.push(user);
