@@ -9,6 +9,37 @@ import {
 } from '../types/user.types';
 import logger from '../utils/logger.util';
 
+import { PrivacySettings } from '../types/friends.types';
+
+const PrivacySchema = new Schema<PrivacySettings>(
+  {
+    profileVisibleTo: {
+      type: String,
+      enum: ['friends', 'everyone', 'private'],
+      default: 'friends',
+    },
+    showBadgesTo: {
+      type: String,
+      enum: ['friends', 'everyone', 'private'],
+      default: 'friends',
+    },
+    location: {
+      sharing: {
+        type: String,
+        enum: ['off', 'live', 'approximate'],
+        default: 'off',
+      },
+      precisionMeters: { type: Number, default: 30 },
+    },
+    allowFriendRequestsFrom: {
+      type: String,
+      enum: ['everyone', 'friendsOfFriends', 'noOne'],
+      default: 'everyone',
+    },
+  },
+  { _id: false }
+);
+
 const userSchema = new Schema<IUser>(
   {
     googleId: {
@@ -29,6 +60,13 @@ const userSchema = new Schema<IUser>(
       required: true,
       trim: true,
     },
+    username: {
+      type: String,
+      required: true,
+      unique: true,
+      trim: true,
+      index: true,
+    },
     profilePicture: {
       type: String,
       required: false,
@@ -40,11 +78,31 @@ const userSchema = new Schema<IUser>(
       trim: true,
       maxlength: 500,
     },
+    campus: {
+      type: String,
+      required: false,
+      trim: true,
+    },
+    privacy: {
+      type: PrivacySchema,
+      default: () => ({}),
+    },
+    friendsCount: {
+      type: Number,
+      default: 0,
+    },
+    badgesCount: {
+      type: Number,
+      default: 0,
+    },
   },
   {
     timestamps: true,
   }
 );
+
+// Text search index for username and name
+userSchema.index({ username: 'text', name: 'text' });
 
 export class UserModel {
   private user: mongoose.Model<IUser>;
@@ -125,6 +183,100 @@ export class UserModel {
     } catch (error) {
       console.error('Error finding user by Google ID:', error);
       throw new Error('Failed to find user');
+    }
+  }
+
+  async findByUsername(username: string): Promise<IUser | null> {
+    try {
+      const user = await this.user.findOne({ username });
+
+      if (!user) {
+        return null;
+      }
+
+      return user;
+    } catch (error) {
+      console.error('Error finding user by username:', error);
+      throw new Error('Failed to find user');
+    }
+  }
+
+  async searchUsers(
+    query: string,
+    limit = 20
+  ): Promise<Pick<IUser, '_id' | 'username' | 'name' | 'profilePicture' | 'privacy'>[]> {
+    try {
+      const users = await this.user
+        .find(
+          {
+            $or: [
+              { username: { $regex: query, $options: 'i' } },
+              { name: { $regex: query, $options: 'i' } },
+              { email: { $regex: query, $options: 'i' } },
+            ],
+          },
+          '_id username name profilePicture privacy'
+        )
+        .limit(limit);
+
+      return users;
+    } catch (error) {
+      logger.error('Error searching users:', error);
+      throw new Error('Failed to search users');
+    }
+  }
+
+  async updatePrivacy(
+    userId: mongoose.Types.ObjectId,
+    privacyUpdates: any
+  ): Promise<IUser | null> {
+    try {
+      // Handle partial updates with dot notation for nested objects
+      const updateObject: any = {};
+      
+      if (privacyUpdates.profileVisibleTo !== undefined) {
+        updateObject['privacy.profileVisibleTo'] = privacyUpdates.profileVisibleTo;
+      }
+      
+      if (privacyUpdates.showBadgesTo !== undefined) {
+        updateObject['privacy.showBadgesTo'] = privacyUpdates.showBadgesTo;
+      }
+      
+      if (privacyUpdates.allowFriendRequestsFrom !== undefined) {
+        updateObject['privacy.allowFriendRequestsFrom'] = privacyUpdates.allowFriendRequestsFrom;
+      }
+      
+      if (privacyUpdates.location) {
+        if (privacyUpdates.location.sharing !== undefined) {
+          updateObject['privacy.location.sharing'] = privacyUpdates.location.sharing;
+        }
+        if (privacyUpdates.location.precisionMeters !== undefined) {
+          updateObject['privacy.location.precisionMeters'] = privacyUpdates.location.precisionMeters;
+        }
+      }
+
+      return await this.user.findByIdAndUpdate(
+        userId,
+        { $set: updateObject },
+        { new: true }
+      );
+    } catch (error) {
+      logger.error('Error updating privacy settings:', error);
+      throw new Error('Failed to update privacy settings');
+    }
+  }
+
+  async incrementFriendsCount(
+    userId: mongoose.Types.ObjectId,
+    increment = 1
+  ): Promise<void> {
+    try {
+      await this.user.findByIdAndUpdate(userId, {
+        $inc: { friendsCount: increment },
+      });
+    } catch (error) {
+      logger.error('Error updating friends count:', error);
+      throw new Error('Failed to update friends count');
     }
   }
 }

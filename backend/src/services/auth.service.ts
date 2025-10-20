@@ -47,7 +47,7 @@ export class AuthService {
     });
   }
 
-  async signUpWithGoogle(idToken: string): Promise<AuthResult> {
+  async signUpWithGoogle(idToken: string, username: string): Promise<AuthResult> {
     try {
       const googleUserInfo = await this.verifyGoogleToken(idToken);
 
@@ -59,8 +59,21 @@ export class AuthService {
         throw new Error('User already exists');
       }
 
-      // Create new user
-      const user = await userModel.create(googleUserInfo);
+      // Create new user with provided username
+      const signUpData = {
+        ...googleUserInfo,
+        username,
+      };
+      let user;
+      try {
+        user = await userModel.create(signUpData);
+      } catch (err: any) {
+        // Handle duplicate key error (MongoDB)
+        if (err.code === 11000 && err.keyPattern && err.keyPattern.username) {
+          throw new Error('Username already taken');
+        }
+        throw err;
+      }
       const token = this.generateAccessToken(user);
 
       return { token, user };
@@ -85,6 +98,21 @@ export class AuthService {
       return { token, user };
     } catch (error) {
       logger.error('Sign in failed:', error);
+      throw error;
+    }
+  }
+
+  async checkGoogleAccountExists(idToken: string): Promise<boolean> {
+    try {
+      const googleUserInfo = await this.verifyGoogleToken(idToken);
+
+      const existingUser = await userModel.findByGoogleId(
+        googleUserInfo.googleId
+      );
+
+      return existingUser !== null;
+    } catch (error) {
+      logger.error('Check account failed:', error);
       throw error;
     }
   }

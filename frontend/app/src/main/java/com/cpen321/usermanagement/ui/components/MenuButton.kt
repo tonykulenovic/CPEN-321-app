@@ -26,11 +26,13 @@ fun MenuButton(
     val spacing = LocalSpacing.current
 
     val colors = ButtonDefaults.buttonColors(
-        containerColor = Color.White,
-        contentColor = Color.Black,
+        containerColor = Color(0xFF1A1A2E),
+        contentColor = Color.White,
+        disabledContainerColor = Color(0xFF1A1A2E).copy(alpha = 0.5f),
+        disabledContentColor = Color.White.copy(alpha = 0.5f)
     )
 
-    val border = BorderStroke(1.dp, Color.LightGray)
+    val border = BorderStroke(1.dp, Color(0xFF4A90E2))
 
     OutlinedButton(
         colors = colors,
@@ -64,11 +66,13 @@ fun MenuButtonItem(
         ) {
             Icon(
                 name = iconRes,
+                type = "light"
             )
             Text(
                 text = text,
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Medium,
+                color = Color.White,
                 modifier = Modifier.padding(start = spacing.medium)
             )
         }

@@ -3,19 +3,36 @@ package com.cpen321.usermanagement.ui.screens
 import Button
 import Icon
 import MenuButtonItem
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Group
+import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -25,30 +42,47 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import com.cpen321.usermanagement.R
+import com.cpen321.usermanagement.data.remote.api.RetrofitClient
 import com.cpen321.usermanagement.ui.components.MessageSnackbar
 import com.cpen321.usermanagement.ui.components.MessageSnackbarState
 import com.cpen321.usermanagement.ui.viewmodels.AuthViewModel
 import com.cpen321.usermanagement.ui.viewmodels.ProfileUiState
 import com.cpen321.usermanagement.ui.viewmodels.ProfileViewModel
 import com.cpen321.usermanagement.ui.theme.LocalSpacing
+import androidx.compose.foundation.layout.height
+import com.google.accompanist.systemuicontroller.rememberSystemUiController
+import androidx.compose.runtime.SideEffect
+import androidx.compose.material.icons.filled.EmojiEvents
+import coil.compose.SubcomposeAsyncImage
 
 private data class ProfileDialogState(
     val showDeleteDialog: Boolean = false
 )
 
 data class ProfileScreenActions(
-    val onBackClick: () -> Unit,
-    val onManageProfileClick: () -> Unit,
-    val onAccountDeleted: () -> Unit,
-    val onLogout: () -> Unit
+    val onBackClick: () -> Unit = {},
+    val onManageProfileClick: () -> Unit = {},
+    val onAccountDeleted: () -> Unit = {},
+    val onLogout: () -> Unit = {},
+    val onMapClick: () -> Unit = {},
+    val onFriendsClick: () -> Unit = {},
+    val onBadgesClick: () -> Unit = {}
 )
 
 private data class ProfileScreenCallbacks(
@@ -59,7 +93,10 @@ private data class ProfileScreenCallbacks(
     val onDeleteDialogConfirm: () -> Unit,
     val onLogoutClick: () -> Unit,
     val onSuccessMessageShown: () -> Unit,
-    val onErrorMessageShown: () -> Unit
+    val onErrorMessageShown: () -> Unit,
+    val onMapClick: () -> Unit,
+    val onFriendsClick: () -> Unit,
+    val onBadgesClick: () -> Unit
 )
 
 @Composable
@@ -71,13 +108,23 @@ fun ProfileScreen(
     val uiState by profileViewModel.uiState.collectAsState()
     val snackBarHostState = remember { SnackbarHostState() }
 
+    // Set status bar appearance
+    val systemUiController = rememberSystemUiController()
+    SideEffect {
+        systemUiController.setSystemBarsColor(
+            color = Color(0xFF1A1A2E),
+            darkIcons = false
+        )
+    }
+
     // Dialog state
     var dialogState by remember {
         mutableStateOf(ProfileDialogState())
     }
 
-    // Side effects
+    // Side effects - Load profile when screen appears
     LaunchedEffect(Unit) {
+        profileViewModel.loadProfile()  // ADD THIS - Load profile data
         profileViewModel.clearSuccessMessage()
         profileViewModel.clearError()
     }
@@ -105,7 +152,10 @@ fun ProfileScreen(
                 actions.onLogout()
             },
             onSuccessMessageShown = profileViewModel::clearSuccessMessage,
-            onErrorMessageShown = profileViewModel::clearError
+            onErrorMessageShown = profileViewModel::clearError,
+            onMapClick = actions.onMapClick,
+            onFriendsClick = actions.onFriendsClick,
+            onBadgesClick = actions.onBadgesClick
         )
     )
 }
@@ -119,11 +169,29 @@ private fun ProfileContent(
     callbacks: ProfileScreenCallbacks,
     modifier: Modifier = Modifier
 ) {
+    var selectedItem by remember { mutableIntStateOf(4) } // Profile is selected (index 4)
+    
     Scaffold(
         modifier = modifier,
         topBar = {
-            ProfileTopBar(onBackClick = callbacks.onBackClick)
+            ProfileTopBar()
         },
+        bottomBar = {
+            BottomNavigationBar(
+                selectedItem = selectedItem,
+                onItemSelected = { index ->
+                    selectedItem = index
+                    when (index) {
+                        0 -> callbacks.onMapClick() // Map button
+                        1 -> {} // Search - not implemented yet
+                        2 -> callbacks.onBadgesClick() // Badges button - ADD THIS
+                        3 -> callbacks.onFriendsClick() // Friends button
+                        4 -> { /* Already on profile */ }
+                    }
+                }
+            )
+        },
+        containerColor = Color(0xFF0F1419),
         snackbarHost = {
             MessageSnackbar(
                 hostState = snackBarHostState,
@@ -139,6 +207,7 @@ private fun ProfileContent(
         ProfileBody(
             paddingValues = paddingValues,
             isLoading = uiState.isLoadingProfile,
+            uiState = uiState,  // PASS THIS
             onManageProfileClick = callbacks.onManageProfileClick,
             onDeleteAccountClick = callbacks.onDeleteAccountClick,
             onLogoutClick = callbacks.onLogoutClick
@@ -153,29 +222,128 @@ private fun ProfileContent(
     }
 }
 
+@Composable
+private fun BottomNavigationBar(
+    selectedItem: Int,
+    onItemSelected: (Int) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    NavigationBar(
+        modifier = modifier.height(72.dp),
+        containerColor = Color(0xFF1A1A2E),
+        contentColor = Color.White
+    ) {
+        // Map button
+        NavigationBarItem(
+            selected = selectedItem == 0,
+            onClick = { onItemSelected(0) },
+            icon = {
+                Icon(
+                    imageVector = Icons.Filled.LocationOn,
+                    contentDescription = "Map",
+                    modifier = Modifier.size(30.dp)
+                )
+            },
+            colors = NavigationBarItemDefaults.colors(
+                selectedIconColor = Color(0xFF4A90E2),
+                unselectedIconColor = Color(0xFFB0B0B0),
+                indicatorColor = Color.Transparent
+            )
+        )
+        
+        // Search button
+        NavigationBarItem(
+            selected = selectedItem == 1,
+            onClick = { onItemSelected(1) },
+            icon = {
+                Icon(
+                    imageVector = Icons.Filled.Search,
+                    contentDescription = "Search",
+                    modifier = Modifier.size(30.dp)
+                )
+            },
+            colors = NavigationBarItemDefaults.colors(
+                selectedIconColor = Color(0xFF4A90E2),
+                unselectedIconColor = Color(0xFFB0B0B0),
+                indicatorColor = Color.Transparent
+            )
+        )
+        
+        // Badge button
+        NavigationBarItem(
+            selected = selectedItem == 2,
+            onClick = { onItemSelected(2) },
+            icon = {
+                Icon(
+                    imageVector = Icons.Filled.EmojiEvents,
+                    contentDescription = "Badges",
+                    modifier = Modifier.size(30.dp)
+                )
+            },
+            colors = NavigationBarItemDefaults.colors(
+                selectedIconColor = Color(0xFF4A90E2),
+                unselectedIconColor = Color(0xFFB0B0B0),
+                indicatorColor = Color.Transparent
+            )
+        )
+        
+        // Friends button
+        NavigationBarItem(
+            selected = selectedItem == 3,
+            onClick = { onItemSelected(3) },
+            icon = {
+                Icon(
+                    imageVector = Icons.Filled.Group,
+                    contentDescription = "Friends",
+                    modifier = Modifier.size(30.dp)
+                )
+            },
+            colors = NavigationBarItemDefaults.colors(
+                selectedIconColor = Color(0xFF4A90E2),
+                unselectedIconColor = Color(0xFFB0B0B0),
+                indicatorColor = Color.Transparent
+            )
+        )
+        
+        // Profile button
+        NavigationBarItem(
+            selected = selectedItem == 4,
+            onClick = { onItemSelected(4) },
+            icon = {
+                Icon(
+                    imageVector = Icons.Filled.Person,
+                    contentDescription = "Profile",
+                    modifier = Modifier.size(30.dp)
+                )
+            },
+            colors = NavigationBarItemDefaults.colors(
+                selectedIconColor = Color(0xFF4A90E2),
+                unselectedIconColor = Color(0xFFB0B0B0),
+                indicatorColor = Color.Transparent
+            )
+        )
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ProfileTopBar(
-    onBackClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     TopAppBar(
-        modifier = modifier,
+        modifier = modifier.height(98.dp),
         title = {
             Text(
                 text = stringResource(R.string.profile),
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Medium
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Start,
+                color = Color.White
             )
         },
-        navigationIcon = {
-            IconButton(onClick = onBackClick) {
-                Icon(name = R.drawable.ic_arrow_back)
-            }
-        },
         colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = MaterialTheme.colorScheme.surface,
-            titleContentColor = MaterialTheme.colorScheme.onSurface
+            containerColor = Color(0xFF1A1A2E),
+            titleContentColor = Color.White
         )
     )
 }
@@ -184,6 +352,7 @@ private fun ProfileTopBar(
 private fun ProfileBody(
     paddingValues: PaddingValues,
     isLoading: Boolean,
+    uiState: ProfileUiState,  // ADD THIS parameter
     onManageProfileClick: () -> Unit,
     onDeleteAccountClick: () -> Unit,
     onLogoutClick: () -> Unit,
@@ -203,6 +372,7 @@ private fun ProfileBody(
 
             else -> {
                 ProfileMenuItems(
+                    uiState = uiState,  // PASS THIS
                     onManageProfileClick = onManageProfileClick,
                     onDeleteAccountClick = onDeleteAccountClick,
                     onLogoutClick = onLogoutClick
@@ -214,6 +384,7 @@ private fun ProfileBody(
 
 @Composable
 private fun ProfileMenuItems(
+    uiState: ProfileUiState,  // ADD THIS parameter
     onManageProfileClick: () -> Unit,
     onDeleteAccountClick: () -> Unit,
     onLogoutClick: () -> Unit,
@@ -229,6 +400,19 @@ private fun ProfileMenuItems(
             .verticalScroll(scrollState),
         verticalArrangement = Arrangement.spacedBy(spacing.medium)
     ) {
+        // ADD THIS - Profile Header with user info
+        ProfileHeader(
+            userName = uiState.user?.name ?: "Loading...",
+            profilePictureUrl = uiState.user?.profilePicture
+        )
+        
+        // Visual separator
+        Divider(
+            modifier = Modifier.padding(vertical = spacing.medium),
+            color = Color(0xFF1A2332),
+            thickness = 1.dp
+        )
+
         ProfileSection(
             onManageProfileClick = onManageProfileClick
         )
@@ -236,6 +420,77 @@ private fun ProfileMenuItems(
         AccountSection(
             onDeleteAccountClick = onDeleteAccountClick,
             onLogoutClick = onLogoutClick
+        )
+    }
+}
+
+// ADD THIS NEW COMPOSABLE - Profile Header
+@Composable
+private fun ProfileHeader(
+    userName: String,
+    profilePictureUrl: String?,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(vertical = 16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        // Profile Picture WITHOUT Border
+        Box(
+            modifier = Modifier
+                .size(120.dp)
+                .clip(CircleShape)
+                .background(Color(0xFF1A2332)),
+            contentAlignment = Alignment.Center
+        ) {
+            if (profilePictureUrl.isNullOrBlank()) {
+                // Default avatar icon
+                Icon(
+                    imageVector = Icons.Default.Person,
+                    contentDescription = "Profile Picture",
+                    modifier = Modifier.size(60.dp),
+                    tint = Color(0xFF8B9DAF)
+                )
+            } else {
+                // Load profile picture from URL with proper error handling
+                SubcomposeAsyncImage(
+                    model = RetrofitClient.getPictureUri(profilePictureUrl),
+                    contentDescription = "Profile Picture",
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .clip(CircleShape),
+                    contentScale = ContentScale.Crop,
+                    loading = {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(30.dp),
+                            color = Color(0xFF00BCD4)
+                        )
+                    },
+                    error = {
+                        Icon(
+                            imageVector = Icons.Default.Person,
+                            contentDescription = "Profile Picture",
+                            modifier = Modifier.size(60.dp),
+                            tint = Color(0xFF8B9DAF)
+                        )
+                    }
+                )
+            }
+        }
+        
+        Spacer(modifier = Modifier.height(16.dp))
+        
+        // User Name
+        Text(
+            text = userName,
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.Bold,
+            color = Color.White,
+            textAlign = TextAlign.Center,
+            fontSize = 24.sp
         )
     }
 }

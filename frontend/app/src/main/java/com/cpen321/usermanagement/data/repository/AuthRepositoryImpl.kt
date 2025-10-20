@@ -14,6 +14,7 @@ import com.cpen321.usermanagement.data.remote.api.RetrofitClient
 import com.cpen321.usermanagement.data.remote.api.UserInterface
 import com.cpen321.usermanagement.data.remote.dto.AuthData
 import com.cpen321.usermanagement.data.remote.dto.GoogleLoginRequest
+import com.cpen321.usermanagement.data.remote.dto.GoogleSignUpRequest
 import com.cpen321.usermanagement.data.remote.dto.User
 import com.cpen321.usermanagement.utils.JsonUtils
 import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
@@ -117,10 +118,10 @@ class AuthRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun googleSignUp(tokenId: String): Result<AuthData> {
-        val googleLoginReq = GoogleLoginRequest(tokenId)
+    override suspend fun googleSignUp(tokenId: String, username: String): Result<AuthData> {
+        val googleSignUpReq = GoogleSignUpRequest(tokenId, username)
         return try {
-            val response = authInterface.googleSignUp(googleLoginReq)
+            val response = authInterface.googleSignUp(googleSignUpReq)
             if (response.isSuccessful && response.body()?.data != null) {
                 val authData = response.body()!!.data!!
                 tokenManager.saveToken(authData.token)
@@ -200,5 +201,26 @@ class AuthRepositoryImpl @Inject constructor(
             return getCurrentUser() != null
         }
         return false
+    }
+
+    override suspend fun checkGoogleAccountExists(tokenId: String): Result<Boolean> {
+        val googleLoginReq = GoogleLoginRequest(tokenId)
+        return try {
+            val response = authInterface.checkGoogleAccount(googleLoginReq)
+            if (response.isSuccessful && response.body()?.data != null) {
+                Result.success(response.body()!!.data!!.exists)
+            } else {
+                val errorBodyString = response.errorBody()?.string()
+                val errorMessage = JsonUtils.parseErrorMessage(
+                    errorBodyString,
+                    response.body()?.message ?: "Failed to check account."
+                )
+                Log.e(TAG, "Check account failed: $errorMessage")
+                Result.failure(Exception(errorMessage))
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error checking account", e)
+            Result.failure(e)
+        }
     }
 }

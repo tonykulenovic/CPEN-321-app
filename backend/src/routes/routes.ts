@@ -4,13 +4,40 @@ import { authenticateToken } from '../middleware/auth.middleware';
 import authRoutes from '../routes/auth.routes';
 import mediaRoutes from '../routes/media.routes';
 import usersRoutes from '../routes/user.routes';
+import friendsRoutes from '../routes/friends.routes';
+import locationRoutes from '../routes/location.routes';
 
 const router = Router();
+
+// Health check endpoint - no auth required
+router.get('/health', (req, res) => {
+  res.status(200).json({
+    status: 'OK',
+    message: 'Server is running',
+    timestamp: new Date().toISOString(),
+    version: '1.0.0'
+  });
+});
+
+// Test endpoint - no auth required
+router.get('/test', (req, res) => {
+  res.status(200).json({
+    message: 'Test endpoint working!',
+    yourIP: req.ip,
+    userAgent: req.get('User-Agent'),
+    timestamp: new Date().toISOString()
+  });
+});
 
 router.use('/auth', authRoutes);
 
 router.use('/user', authenticateToken, usersRoutes);
+router.use('/users', authenticateToken, usersRoutes); // Additional route for search
 
 router.use('/media', authenticateToken, mediaRoutes);
+
+router.use('/friends', friendsRoutes); // Authentication middleware applied within friends routes
+
+router.use('/me', locationRoutes); // Authentication middleware applied within location routes
 
 export default router;

@@ -16,6 +16,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -29,6 +30,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.focusProperties
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -40,6 +42,8 @@ import com.cpen321.usermanagement.ui.viewmodels.ProfileUiState
 import com.cpen321.usermanagement.ui.viewmodels.ProfileViewModel
 import com.cpen321.usermanagement.ui.theme.LocalFontSizes
 import com.cpen321.usermanagement.ui.theme.LocalSpacing
+import com.google.accompanist.systemuicontroller.rememberSystemUiController
+import androidx.compose.runtime.SideEffect
 
 private data class ProfileCompletionFormState(
     val bioText: String = "",
@@ -75,6 +79,15 @@ fun ProfileCompletionScreen(
     val uiState by profileViewModel.uiState.collectAsState()
     val snackBarHostState = remember { SnackbarHostState() }
     val successfulBioUpdateMessage = stringResource(R.string.successful_bio_update)
+
+    // Set status bar appearance
+    val systemUiController = rememberSystemUiController()
+    SideEffect {
+        systemUiController.setSystemBarsColor(
+            color = Color(0xFF0F1419),
+            darkIcons = false
+        )
+    }
 
     // Form state
     var formState by remember {
@@ -119,6 +132,7 @@ private fun ProfileCompletionContent(
 ) {
     Scaffold(
         modifier = modifier,
+        containerColor = Color(0xFF0F1419),
         snackbarHost = {
             MessageSnackbar(
                 hostState = data.snackBarHostState,
@@ -208,7 +222,7 @@ private fun WelcomeTitle(
         style = MaterialTheme.typography.headlineLarge,
         fontWeight = FontWeight.Bold,
         textAlign = TextAlign.Center,
-        color = MaterialTheme.colorScheme.primary,
+        color = Color.White,
         modifier = modifier
     )
 }
@@ -221,7 +235,7 @@ private fun BioDescription(
         text = stringResource(R.string.bio_description),
         style = MaterialTheme.typography.bodyLarge,
         textAlign = TextAlign.Center,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        color = Color(0xFF8B9DAF),
         modifier = modifier
     )
 }
@@ -238,13 +252,24 @@ private fun BioInputField(
     OutlinedTextField(
         value = bioText,
         onValueChange = onBioChange,
-        label = { Text(stringResource(R.string.bio)) },
-        placeholder = { Text(stringResource(R.string.bio_placeholder)) },
+        label = { Text(stringResource(R.string.bio), color = Color.White) },
+        placeholder = { Text(stringResource(R.string.bio_placeholder), color = Color(0xFF8B9DAF)) },
         modifier = modifier.fillMaxWidth(),
         minLines = 3,
         maxLines = 5,
-        shape = RoundedCornerShape(spacing.medium),
-        enabled = isEnabled
+        enabled = isEnabled,
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedTextColor = Color.White,
+            unfocusedTextColor = Color.White,
+            focusedContainerColor = Color.Transparent,
+            unfocusedContainerColor = Color.Transparent,
+            focusedBorderColor = Color(0xFF4A90E2),
+            unfocusedBorderColor = Color(0xFF4A90E2).copy(alpha = 0.5f),
+            cursorColor = Color(0xFF4A90E2),
+            disabledTextColor = Color(0xFFB0B0B0),
+            disabledBorderColor = Color.Gray
+        ),
+        shape = RoundedCornerShape(8.dp)
     )
 }
 
@@ -259,72 +284,41 @@ private fun ActionButtons(
     val spacing = LocalSpacing.current
 
     Row(
-        modifier = modifier,
+        modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(spacing.medium)
     ) {
-        SkipButton(
-            isEnabled = !isSavingProfile,
-            onClick = onSkipClick,
-            modifier = Modifier.weight(1f)
-        )
-
-        SaveButton(
-            isSaving = isSavingProfile,
-            isEnabled = isSaveEnabled && !isSavingProfile,
-            onClick = onSaveClick,
-            modifier = Modifier.weight(1f)
-        )
-    }
-}
-
-@Composable
-private fun SkipButton(
-    isEnabled: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val fontSizes = LocalFontSizes.current
-
-    Box(modifier = modifier) {
-        Button(
-            type = "secondary",
-            onClick = onClick,
-            enabled = isEnabled
-        ) {
-            Text(
-                text = stringResource(R.string.skip),
-                fontSize = fontSizes.medium,
-                fontWeight = FontWeight.Medium
-            )
-        }
-    }
-}
-
-@Composable
-private fun SaveButton(
-    isSaving: Boolean,
-    isEnabled: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val spacing = LocalSpacing.current
-
-    Box(modifier = modifier) {
-        Button(
-            onClick = onClick,
-            enabled = isEnabled
-        ) {
-            if (isSaving) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(spacing.medium),
-                    color = MaterialTheme.colorScheme.onPrimary,
-                    strokeWidth = 2.dp
-                )
-            } else {
+        Box(modifier = Modifier.weight(1f)) {
+            Button(
+                type = "secondary",
+                onClick = onSkipClick,
+                enabled = !isSavingProfile,
+                fullWidth = true
+            ) {
                 Text(
-                    text = stringResource(R.string.save),
-                    fontWeight = FontWeight.Medium
+                    text = stringResource(R.string.skip),
+                    color = Color.White
                 )
+            }
+        }
+
+        Box(modifier = Modifier.weight(1f)) {
+            Button(
+                onClick = onSaveClick,
+                enabled = isSaveEnabled && !isSavingProfile,
+                fullWidth = true
+            ) {
+                if (isSavingProfile) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(spacing.medium),
+                        color = Color.White,
+                        strokeWidth = 2.dp
+                    )
+                } else {
+                    Text(
+                        text = stringResource(R.string.save),
+                        color = Color.White
+                    )
+                }
             }
         }
     }

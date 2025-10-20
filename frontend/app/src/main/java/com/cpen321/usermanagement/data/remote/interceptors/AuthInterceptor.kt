@@ -17,14 +17,17 @@ class AuthInterceptor(private val tokenProvider: () -> String?) : Interceptor {
             .addHeader("Authorization", "Bearer $token")
             .build()
 
-        var response = chain.proceed(newRequest)
+        val response = chain.proceed(newRequest)
 
-        // Retry if error
-        if (response.code != 200) {
+        // Only retry on authentication failures (401) or server errors (5xx)
+        // Don't retry on client errors like 400, 409, etc. as those are valid responses
+        if (response.code == 401 || response.code >= 500) {
+            Log.d("AuthInterceptor", "Retrying request due to status: ${response.code}")
+            response.close() // Close the previous response
             val retryRequest = originalRequest.newBuilder()
                 .header("Authorization", "Bearer $token")
                 .build()
-            response = chain.proceed(retryRequest)
+            return chain.proceed(retryRequest)
         }
 
         return response
