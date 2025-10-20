@@ -24,4 +24,10 @@ router.post(
   authController.signIn
 );
 
+router.post(
+  '/check',
+  validateBody(authenticateUserSchema),
+  authController.checkGoogleAccount
+);
+
 export default router;
