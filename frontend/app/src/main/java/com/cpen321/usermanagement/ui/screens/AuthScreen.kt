@@ -25,6 +25,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -40,6 +42,14 @@ import com.cpen321.usermanagement.ui.viewmodels.AuthViewModel
 import com.cpen321.usermanagement.ui.viewmodels.ProfileViewModel
 import com.cpen321.usermanagement.ui.theme.LocalSpacing
 import kotlinx.coroutines.launch
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.OutlinedButton
+import com.google.accompanist.systemuicontroller.rememberSystemUiController
+import androidx.compose.runtime.SideEffect
 
 private data class AuthSnackbarData(
     val successMessage: String?,
@@ -63,6 +73,15 @@ fun AuthScreen(
     val context = LocalContext.current
     val uiState by authViewModel.uiState.collectAsState()
     val snackBarHostState = remember { SnackbarHostState() }
+
+    // Set status bar appearance
+    val systemUiController = rememberSystemUiController()
+    SideEffect {
+        systemUiController.setSystemBarsColor(
+            color = Color(0xFF0F1419),
+            darkIcons = false
+        )
+    }
 
     // Side effects
     LaunchedEffect(uiState.isAuthenticated) {
@@ -107,6 +126,7 @@ private fun AuthContent(
 ) {
     Scaffold(
         modifier = modifier,
+        containerColor = Color(0xFF0F1419), // Dark background to match app theme
         snackbarHost = {
             AuthSnackbarHost(
                 hostState = snackBarHostState,
@@ -189,14 +209,26 @@ private fun AuthHeader(
 private fun AppTitle(
     modifier: Modifier = Modifier
 ) {
-    Text(
-        text = stringResource(R.string.app_name),
-        style = MaterialTheme.typography.headlineLarge,
-        fontWeight = FontWeight.Bold,
-        textAlign = TextAlign.Center,
-        color = MaterialTheme.colorScheme.primary,
-        modifier = modifier
-    )
+    Row(
+        modifier = modifier,
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Center
+    ) {
+        Image(
+            painter = painterResource(id = R.drawable.universe_logo),
+            contentDescription = "Logo",
+            contentScale = ContentScale.Fit,
+            modifier = Modifier.size(80.dp)
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(
+            text = stringResource(R.string.app_name),
+            style = MaterialTheme.typography.headlineLarge,
+            fontWeight = FontWeight.Bold,
+            textAlign = TextAlign.Center,
+            color = Color.White,
+        )
+    }
 }
 
 @Composable
@@ -287,7 +319,10 @@ private fun GoogleButtonContent(
         ) {
             GoogleLogo()
             Spacer(modifier = Modifier.width(spacing.small))
-            ButtonText(text = text)
+            ButtonText(
+                text = text,
+                color = Color.White
+            )
         }
     }
 }
@@ -302,7 +337,7 @@ private fun ButtonLoadingIndicator(
     CircularProgressIndicator(
         modifier = modifier.size(spacing.large),
         color = if (showOnPrimaryColor) {
-            MaterialTheme.colorScheme.onPrimary
+            Color.White
         } else {
             MaterialTheme.colorScheme.primary
         },
@@ -326,10 +361,12 @@ private fun GoogleLogo(
 @Composable
 private fun ButtonText(
     text: String,
+    color: Color = Color.White,
     modifier: Modifier = Modifier
 ) {
     Text(
         text = text,
-        modifier = modifier
+        modifier = modifier,
+        color = color
     )
 }

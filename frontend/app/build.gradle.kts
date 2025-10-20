@@ -73,6 +73,11 @@ dependencies {
     // Google Sign-In
     implementation(libs.play.services.auth)
     
+    // Google Maps
+    implementation(libs.maps.compose)
+    implementation(libs.play.services.maps)
+    implementation("androidx.compose.material:material-icons-extended")
+    
     // HTTP client
     implementation(libs.retrofit)
     implementation(libs.converter.gson)
@@ -107,4 +112,10 @@ dependencies {
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
+
+    // System UI Controller for status bar
+    implementation("com.google.accompanist:accompanist-systemuicontroller:0.32.0")
+
+    // Accompanist Permissions
+    implementation("com.google.accompanist:accompanist-permissions:0.34.0")
 }

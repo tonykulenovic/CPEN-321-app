@@ -8,14 +8,26 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Group
+import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -25,13 +37,17 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
 import com.cpen321.usermanagement.R
 import com.cpen321.usermanagement.ui.components.MessageSnackbar
 import com.cpen321.usermanagement.ui.components.MessageSnackbarState
@@ -39,16 +55,23 @@ import com.cpen321.usermanagement.ui.viewmodels.AuthViewModel
 import com.cpen321.usermanagement.ui.viewmodels.ProfileUiState
 import com.cpen321.usermanagement.ui.viewmodels.ProfileViewModel
 import com.cpen321.usermanagement.ui.theme.LocalSpacing
+import androidx.compose.foundation.layout.height
+import com.google.accompanist.systemuicontroller.rememberSystemUiController
+import androidx.compose.runtime.SideEffect
+import androidx.compose.material.icons.filled.EmojiEvents
 
 private data class ProfileDialogState(
     val showDeleteDialog: Boolean = false
 )
 
 data class ProfileScreenActions(
-    val onBackClick: () -> Unit,
-    val onManageProfileClick: () -> Unit,
-    val onAccountDeleted: () -> Unit,
-    val onLogout: () -> Unit
+    val onBackClick: () -> Unit = {},
+    val onManageProfileClick: () -> Unit = {},
+    val onAccountDeleted: () -> Unit = {},
+    val onLogout: () -> Unit = {},
+    val onMapClick: () -> Unit = {},
+    val onFriendsClick: () -> Unit = {},
+    val onBadgesClick: () -> Unit = {}
 )
 
 private data class ProfileScreenCallbacks(
@@ -59,7 +82,10 @@ private data class ProfileScreenCallbacks(
     val onDeleteDialogConfirm: () -> Unit,
     val onLogoutClick: () -> Unit,
     val onSuccessMessageShown: () -> Unit,
-    val onErrorMessageShown: () -> Unit
+    val onErrorMessageShown: () -> Unit,
+    val onMapClick: () -> Unit,
+    val onFriendsClick: () -> Unit,
+    val onBadgesClick: () -> Unit
 )
 
 @Composable
@@ -70,6 +96,15 @@ fun ProfileScreen(
 ) {
     val uiState by profileViewModel.uiState.collectAsState()
     val snackBarHostState = remember { SnackbarHostState() }
+
+    // Set status bar appearance
+    val systemUiController = rememberSystemUiController()
+    SideEffect {
+        systemUiController.setSystemBarsColor(
+            color = Color(0xFF1A1A2E),
+            darkIcons = false
+        )
+    }
 
     // Dialog state
     var dialogState by remember {
@@ -105,7 +140,10 @@ fun ProfileScreen(
                 actions.onLogout()
             },
             onSuccessMessageShown = profileViewModel::clearSuccessMessage,
-            onErrorMessageShown = profileViewModel::clearError
+            onErrorMessageShown = profileViewModel::clearError,
+            onMapClick = actions.onMapClick,
+            onFriendsClick = actions.onFriendsClick,
+            onBadgesClick = actions.onBadgesClick
         )
     )
 }
@@ -119,11 +157,29 @@ private fun ProfileContent(
     callbacks: ProfileScreenCallbacks,
     modifier: Modifier = Modifier
 ) {
+    var selectedItem by remember { mutableIntStateOf(4) } // Profile is selected (index 4)
+    
     Scaffold(
         modifier = modifier,
         topBar = {
-            ProfileTopBar(onBackClick = callbacks.onBackClick)
+            ProfileTopBar()
         },
+        bottomBar = {
+            BottomNavigationBar(
+                selectedItem = selectedItem,
+                onItemSelected = { index ->
+                    selectedItem = index
+                    when (index) {
+                        0 -> callbacks.onMapClick() // Map button
+                        1 -> {} // Search - not implemented yet
+                        2 -> callbacks.onBadgesClick() // Badges button - ADD THIS
+                        3 -> callbacks.onFriendsClick() // Friends button
+                        4 -> { /* Already on profile */ }
+                    }
+                }
+            )
+        },
+        containerColor = Color(0xFF0F1419),
         snackbarHost = {
             MessageSnackbar(
                 hostState = snackBarHostState,
@@ -153,29 +209,128 @@ private fun ProfileContent(
     }
 }
 
+@Composable
+private fun BottomNavigationBar(
+    selectedItem: Int,
+    onItemSelected: (Int) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    NavigationBar(
+        modifier = modifier.height(72.dp),
+        containerColor = Color(0xFF1A1A2E),
+        contentColor = Color.White
+    ) {
+        // Map button
+        NavigationBarItem(
+            selected = selectedItem == 0,
+            onClick = { onItemSelected(0) },
+            icon = {
+                Icon(
+                    imageVector = Icons.Filled.LocationOn,
+                    contentDescription = "Map",
+                    modifier = Modifier.size(30.dp)
+                )
+            },
+            colors = NavigationBarItemDefaults.colors(
+                selectedIconColor = Color(0xFF4A90E2),
+                unselectedIconColor = Color(0xFFB0B0B0),
+                indicatorColor = Color.Transparent
+            )
+        )
+        
+        // Search button
+        NavigationBarItem(
+            selected = selectedItem == 1,
+            onClick = { onItemSelected(1) },
+            icon = {
+                Icon(
+                    imageVector = Icons.Filled.Search,
+                    contentDescription = "Search",
+                    modifier = Modifier.size(30.dp)
+                )
+            },
+            colors = NavigationBarItemDefaults.colors(
+                selectedIconColor = Color(0xFF4A90E2),
+                unselectedIconColor = Color(0xFFB0B0B0),
+                indicatorColor = Color.Transparent
+            )
+        )
+        
+        // Badge button
+        NavigationBarItem(
+            selected = selectedItem == 2,
+            onClick = { onItemSelected(2) },
+            icon = {
+                Icon(
+                    imageVector = Icons.Filled.EmojiEvents,
+                    contentDescription = "Badges",
+                    modifier = Modifier.size(30.dp)
+                )
+            },
+            colors = NavigationBarItemDefaults.colors(
+                selectedIconColor = Color(0xFF4A90E2),
+                unselectedIconColor = Color(0xFFB0B0B0),
+                indicatorColor = Color.Transparent
+            )
+        )
+        
+        // Friends button
+        NavigationBarItem(
+            selected = selectedItem == 3,
+            onClick = { onItemSelected(3) },
+            icon = {
+                Icon(
+                    imageVector = Icons.Filled.Group,
+                    contentDescription = "Friends",
+                    modifier = Modifier.size(30.dp)
+                )
+            },
+            colors = NavigationBarItemDefaults.colors(
+                selectedIconColor = Color(0xFF4A90E2),
+                unselectedIconColor = Color(0xFFB0B0B0),
+                indicatorColor = Color.Transparent
+            )
+        )
+        
+        // Profile button
+        NavigationBarItem(
+            selected = selectedItem == 4,
+            onClick = { onItemSelected(4) },
+            icon = {
+                Icon(
+                    imageVector = Icons.Filled.Person,
+                    contentDescription = "Profile",
+                    modifier = Modifier.size(30.dp)
+                )
+            },
+            colors = NavigationBarItemDefaults.colors(
+                selectedIconColor = Color(0xFF4A90E2),
+                unselectedIconColor = Color(0xFFB0B0B0),
+                indicatorColor = Color.Transparent
+            )
+        )
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ProfileTopBar(
-    onBackClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     TopAppBar(
-        modifier = modifier,
+        modifier = modifier.height(98.dp),
         title = {
             Text(
                 text = stringResource(R.string.profile),
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Medium
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Start,
+                color = Color.White
             )
         },
-        navigationIcon = {
-            IconButton(onClick = onBackClick) {
-                Icon(name = R.drawable.ic_arrow_back)
-            }
-        },
         colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = MaterialTheme.colorScheme.surface,
-            titleContentColor = MaterialTheme.colorScheme.onSurface
+            containerColor = Color(0xFF1A1A2E),
+            titleContentColor = Color.White
         )
     )
 }

@@ -1,28 +1,32 @@
 package com.cpen321.usermanagement.ui.navigation
 
 import android.util.Log
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.cpen321.usermanagement.R
 import com.cpen321.usermanagement.ui.screens.AuthScreen
+import com.cpen321.usermanagement.ui.screens.BadgesScreen
+import com.cpen321.usermanagement.ui.screens.FriendProfileScreen
+import com.cpen321.usermanagement.ui.screens.FriendsScreen
 import com.cpen321.usermanagement.ui.screens.LoadingScreen
 import com.cpen321.usermanagement.ui.screens.MainScreen
 import com.cpen321.usermanagement.ui.screens.ManageProfileScreen
-import com.cpen321.usermanagement.ui.screens.ProfileScreenActions
 import com.cpen321.usermanagement.ui.screens.ProfileCompletionScreen
 import com.cpen321.usermanagement.ui.screens.ProfileScreen
+import com.cpen321.usermanagement.ui.screens.ProfileScreenActions
 import com.cpen321.usermanagement.ui.viewmodels.AuthViewModel
 import com.cpen321.usermanagement.ui.viewmodels.MainViewModel
 import com.cpen321.usermanagement.ui.viewmodels.NavigationViewModel
 import com.cpen321.usermanagement.ui.viewmodels.ProfileViewModel
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 
 object NavRoutes {
     const val LOADING = "loading"
@@ -31,6 +35,12 @@ object NavRoutes {
     const val PROFILE = "profile"
     const val MANAGE_PROFILE = "manage_profile"
     const val PROFILE_COMPLETION = "profile_completion"
+    const val FRIENDS = "friends"
+    const val BADGES = "badges"
+    const val FRIEND_PROFILE = "friend_profile/{friendId}"
+
+    // Helper function to create route with parameter
+    fun friendProfile(friendId: String) = "friend_profile/$friendId"
 }
 
 @Composable
@@ -147,7 +157,12 @@ private fun AppNavHost(
 ) {
     NavHost(
         navController = navController,
-        startDestination = NavRoutes.LOADING
+        startDestination = NavRoutes.LOADING,
+        // ADD THESE to disable animations
+        enterTransition = { EnterTransition.None },
+        exitTransition = { ExitTransition.None },
+        popEnterTransition = { EnterTransition.None },
+        popExitTransition = { ExitTransition.None }
     ) {
         composable(NavRoutes.LOADING) {
             LoadingScreen(message = stringResource(R.string.checking_authentication))
@@ -171,6 +186,35 @@ private fun AppNavHost(
         composable(NavRoutes.MAIN) {
             MainScreen(
                 mainViewModel = mainViewModel,
+                onProfileClick = { navigationStateManager.navigateToProfile() },
+                onMapClick = { navController.navigate(NavRoutes.MAIN) {
+                    popUpTo(NavRoutes.MAIN) { inclusive = true }
+                } },
+                onFriendsClick = { navController.navigate(NavRoutes.FRIENDS) },
+                onBadgesClick = { navController.navigate(NavRoutes.BADGES) }
+            )
+        }
+
+        composable(NavRoutes.FRIENDS) {
+            FriendsScreen(
+                onMapClick = { navController.navigate(NavRoutes.MAIN) {
+                    popUpTo(NavRoutes.MAIN) { inclusive = true }
+                } },
+                onProfileClick = { navigationStateManager.navigateToProfile() },
+                onBadgesClick = { navController.navigate(NavRoutes.BADGES) },
+                onViewFriendProfile = { friendId ->
+                    navController.navigate(NavRoutes.friendProfile(friendId))
+                }
+            )
+        }
+
+        composable(NavRoutes.BADGES) {
+            BadgesScreen(
+                onMapClick = { navController.navigate(NavRoutes.MAIN) {
+                    popUpTo(NavRoutes.MAIN) { inclusive = true }
+                } },
+                onSearchClick = { /* TODO: Add search screen later */ },
+                onFriendsClick = { navController.navigate(NavRoutes.FRIENDS) },
                 onProfileClick = { navigationStateManager.navigateToProfile() }
             )
         }
@@ -183,7 +227,12 @@ private fun AppNavHost(
                     onBackClick = { navigationStateManager.navigateBack() },
                     onManageProfileClick = { navigationStateManager.navigateToManageProfile() },
                     onAccountDeleted = { navigationStateManager.handleAccountDeletion() },
-                    onLogout = { navigationStateManager.handleLogout() }
+                    onLogout = { navigationStateManager.handleLogout() },
+                    onMapClick = { navController.navigate(NavRoutes.MAIN) {
+                        popUpTo(NavRoutes.MAIN) { inclusive = true }
+                    } },
+                    onFriendsClick = { navController.navigate(NavRoutes.FRIENDS) },
+                    onBadgesClick = { navController.navigate(NavRoutes.BADGES) }
                 )
             )
         }
@@ -192,6 +241,19 @@ private fun AppNavHost(
             ManageProfileScreen(
                 profileViewModel = profileViewModel,
                 onBackClick = { navigationStateManager.navigateBack() }
+            )
+        }
+
+        composable(
+            route = NavRoutes.FRIEND_PROFILE,
+            arguments = listOf(
+                navArgument("friendId") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val friendId = backStackEntry.arguments?.getString("friendId") ?: ""
+            FriendProfileScreen(
+                friendId = friendId,
+                onBackClick = { navController.popBackStack() }
             )
         }
     }

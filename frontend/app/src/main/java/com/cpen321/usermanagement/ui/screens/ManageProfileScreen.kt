@@ -56,6 +56,9 @@ import com.cpen321.usermanagement.ui.components.MessageSnackbarState
 import com.cpen321.usermanagement.ui.viewmodels.ProfileUiState
 import com.cpen321.usermanagement.ui.viewmodels.ProfileViewModel
 import com.cpen321.usermanagement.ui.theme.LocalSpacing
+import androidx.compose.ui.graphics.Color
+import com.google.accompanist.systemuicontroller.rememberSystemUiController
+import androidx.compose.runtime.SideEffect
 
 private data class ProfileFormState(
     val name: String = "",
@@ -120,6 +123,15 @@ fun ManageProfileScreen(
 ) {
     val uiState by profileViewModel.uiState.collectAsState()
     val snackBarHostState = remember { SnackbarHostState() }
+
+    // Set status bar appearance
+    val systemUiController = rememberSystemUiController()
+    SideEffect {
+        systemUiController.setSystemBarsColor(
+            color = Color(0xFF1A1A2E),
+            darkIcons = false
+        )
+    }
 
     var showImagePickerDialog by remember { mutableStateOf(false) }
 
@@ -191,6 +203,7 @@ private fun ManageProfileContent(
         topBar = {
             ProfileTopBar(onBackClick = actions.onBackClick)
         },
+        containerColor = Color(0xFF0F1419),
         snackbarHost = {
             MessageSnackbar(
                 hostState = snackBarHostState,
@@ -232,22 +245,26 @@ private fun ProfileTopBar(
     modifier: Modifier = Modifier
 ) {
     TopAppBar(
-        modifier = modifier,
+        modifier = modifier.height(98.dp),
         title = {
             Text(
                 text = stringResource(R.string.manage_profile),
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Medium
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Medium,
+                color = Color.White
             )
         },
         navigationIcon = {
             IconButton(onClick = onBackClick) {
-                Icon(name = R.drawable.ic_arrow_back)
+                Icon(
+                    name = R.drawable.ic_arrow_back,
+                    type = "light"
+                )
             }
         },
         colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = MaterialTheme.colorScheme.surface,
-            titleContentColor = MaterialTheme.colorScheme.onSurface
+            containerColor = Color(0xFF1A1A2E),
+            titleContentColor = Color.White
         )
     )
 }
@@ -343,7 +360,7 @@ private fun ProfilePictureCard(
     Card(
         modifier = modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
+            containerColor = Color(0xFF1A1A2E)
         )
     ) {
         Column(
@@ -432,30 +449,54 @@ private fun ProfileFields(
         OutlinedTextField(
             value = data.name,
             onValueChange = data.onNameChange,
-            label = { Text(stringResource(R.string.name)) },
+            label = { Text(stringResource(R.string.name), color = Color.White) },
             modifier = Modifier.fillMaxWidth(),
-            singleLine = true
+            singleLine = true,
+            colors = androidx.compose.material3.TextFieldDefaults.colors(
+                focusedTextColor = Color.White,
+                unfocusedTextColor = Color.White,
+                focusedContainerColor = Color.Transparent,
+                unfocusedContainerColor = Color.Transparent,
+                focusedIndicatorColor = Color(0xFF4A90E2),
+                unfocusedIndicatorColor = Color.Gray,
+                cursorColor = Color.White
+            )
         )
 
         OutlinedTextField(
             value = data.email,
             onValueChange = { /* Read-only */ },
-            label = { Text(stringResource(R.string.email)) },
+            label = { Text(stringResource(R.string.email), color = Color.White) },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
-            enabled = false
+            enabled = false,
+            colors = androidx.compose.material3.TextFieldDefaults.colors(
+                disabledTextColor = Color(0xFFB0B0B0),
+                disabledContainerColor = Color.Transparent,
+                disabledIndicatorColor = Color.Gray,
+                disabledLabelColor = Color.Gray
+            )
         )
 
         Row {
             OutlinedTextField(
                 value = data.bio,
                 onValueChange = data.onBioChange,
-                label = { Text(stringResource(R.string.bio)) },
-                placeholder = { Text(stringResource(R.string.bio_placeholder)) },
+                label = { Text(stringResource(R.string.bio), color = Color.White) },
+                placeholder = { Text(stringResource(R.string.bio_placeholder), color = Color.Gray) },
                 modifier = Modifier.fillMaxWidth(),
                 minLines = 3,
                 maxLines = 5,
-                readOnly = false
+                readOnly = false,
+                colors = androidx.compose.material3.TextFieldDefaults.colors(
+                    focusedTextColor = Color.White,
+                    unfocusedTextColor = Color.White,
+                    focusedContainerColor = Color.Transparent,
+                    unfocusedContainerColor = Color.Transparent,
+                    focusedIndicatorColor = Color(0xFF4A90E2),
+                    unfocusedIndicatorColor = Color.Gray,
+                    cursorColor = Color.White
+                )
             )
         }
     }
