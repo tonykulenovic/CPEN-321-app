@@ -50,6 +50,15 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.OutlinedButton
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import androidx.compose.runtime.SideEffect
+import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.window.DialogProperties
+import androidx.compose.foundation.layout.Box
 
 private data class AuthSnackbarData(
     val successMessage: String?,
@@ -73,8 +82,12 @@ fun AuthScreen(
     val context = LocalContext.current
     val uiState by authViewModel.uiState.collectAsState()
     val snackBarHostState = remember { SnackbarHostState() }
+    
+    var showUsernameDialog by remember { mutableStateOf(false) }
+    var pendingCredential by remember { mutableStateOf<com.google.android.libraries.identity.googleid.GoogleIdTokenCredential?>(null) }
+    var isSubmittingUsername by remember { mutableStateOf(false) }
+    var isCheckingAccount by remember { mutableStateOf(false) }
 
-    // Set status bar appearance
     val systemUiController = rememberSystemUiController()
     SideEffect {
         systemUiController.setSystemBarsColor(
@@ -83,10 +96,19 @@ fun AuthScreen(
         )
     }
 
-    // Side effects
     LaunchedEffect(uiState.isAuthenticated) {
         if (uiState.isAuthenticated && !uiState.isCheckingAuth) {
             profileViewModel.loadProfile()
+        }
+    }
+    
+    LaunchedEffect(uiState.isSigningUp) {
+        if (!uiState.isSigningUp && isSubmittingUsername) {
+            isSubmittingUsername = false
+            if (uiState.isAuthenticated || uiState.errorMessage != null) {
+                showUsernameDialog = false
+                pendingCredential = null
+            }
         }
     }
 
@@ -103,15 +125,61 @@ fun AuthScreen(
         },
         onSignUpClick = {
             (context as? ComponentActivity)?.lifecycleScope?.launch {
+                isCheckingAccount = true
                 val result = authViewModel.signInWithGoogle(context)
                 result.onSuccess { credential ->
-                    authViewModel.handleGoogleSignUpResult(credential)
+                    authViewModel.checkAndProceedWithSignUp(
+                        credential = credential,
+                        onUserExists = {
+                            // User exists, error message already set, just reset state
+                            isCheckingAccount = false
+                            pendingCredential = null
+                        },
+                        onNewUser = {
+                            // New user, show username dialog
+                            isCheckingAccount = false
+                            pendingCredential = credential
+                            showUsernameDialog = true
+                        }
+                    )
+                }.onFailure {
+                    isCheckingAccount = false
                 }
             }
         },
         onSuccessMessageShown = authViewModel::clearSuccessMessage,
         onErrorMessageShown = authViewModel::clearError
     )
+    
+    if (showUsernameDialog && pendingCredential != null) {
+        UsernameInputDialog(
+            isLoading = isSubmittingUsername,
+            onDismiss = {
+                if (!isSubmittingUsername) {
+                    showUsernameDialog = false
+                    pendingCredential = null
+                }
+            },
+            onConfirm = { username ->
+                if (!isSubmittingUsername) {
+                    isSubmittingUsername = true
+                    authViewModel.handleGoogleSignUpResult(pendingCredential!!, username)
+                }
+            }
+        )
+    }
+    
+    // ADD THIS: Show loading overlay while checking
+    if (isCheckingAccount) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.5f)),
+            contentAlignment = Alignment.Center
+        ) {
+            CircularProgressIndicator(color = Color(0xFF00BCD4))
+        }
+    }
 }
 
 @Composable
@@ -369,4 +437,122 @@ private fun ButtonText(
         modifier = modifier,
         color = color
     )
+}
+
+@Composable
+private fun UsernameInputDialog(
+    isLoading: Boolean,
+    onDismiss: () -> Unit,
+    onConfirm: (String) -> Unit
+) {
+    var username by remember { mutableStateOf("") }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = Color(0xFF1A2332),
+        titleContentColor = Color.White,
+        textContentColor = Color.White,
+        title = {
+            Text(
+                text = "Choose a Username",
+                fontWeight = FontWeight.Bold,
+                color = Color.White
+            )
+        },
+        text = {
+            Column {
+                Text(
+                    text = "Enter a unique username (3-20 characters, letters, numbers, and underscores only)",
+                    color = Color(0xFF8B9DAF),
+                    style = MaterialTheme.typography.bodySmall
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                OutlinedTextField(
+                    value = username,
+                    onValueChange = {
+                        username = it
+                        errorMessage = validateUsername(it)
+                    },
+                    placeholder = { Text("username", color = Color(0xFF8B9DAF)) },
+                    isError = errorMessage != null,
+                    singleLine = true,
+                    enabled = !isLoading,
+                    colors = androidx.compose.material3.TextFieldDefaults.colors(
+                        focusedTextColor = Color.White,
+                        unfocusedTextColor = Color.White,
+                        disabledTextColor = Color(0xFF8B9DAF),
+                        focusedContainerColor = Color(0xFF0F1419),
+                        unfocusedContainerColor = Color(0xFF0F1419),
+                        disabledContainerColor = Color(0xFF0F1419),
+                        focusedIndicatorColor = Color(0xFF4A90E2),
+                        unfocusedIndicatorColor = Color(0xFF8B9DAF),
+                        disabledIndicatorColor = Color(0xFF8B9DAF)
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                )
+                if (errorMessage != null) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = errorMessage!!,
+                        color = Color(0xFFFF5252),
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    if (errorMessage == null && username.isNotBlank() && !isLoading) {
+                        onConfirm(username)
+                    }
+                },
+                enabled = errorMessage == null && username.isNotBlank() && !isLoading,
+                colors = ButtonDefaults.textButtonColors(
+                    contentColor = Color(0xFF00BCD4)
+                )
+            ) {
+                // CHANGED: Show loading indicator or text
+                if (isLoading) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(16.dp),
+                            color = Color(0xFF00BCD4),
+                            strokeWidth = 2.dp
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Creating...")
+                    }
+                } else {
+                    Text("Create Account")
+                }
+            }
+        },
+        dismissButton = {
+            TextButton(
+                onClick = onDismiss,
+                enabled = !isLoading,
+                colors = ButtonDefaults.textButtonColors(
+                    contentColor = Color(0xFF8B9DAF)
+                )
+            ) {
+                Text("Cancel")
+            }
+        },
+        properties = DialogProperties(dismissOnBackPress = !isLoading, dismissOnClickOutside = !isLoading)
+    )
+}
+
+private fun validateUsername(username: String): String? {
+    return when {
+        username.isBlank() -> "Username cannot be empty"
+        username.length < 3 -> "Username must be at least 3 characters"
+        username.length > 20 -> "Username must be at most 20 characters"
+        !username.matches(Regex("^[a-zA-Z0-9_]+$")) -> "Username can only contain letters, numbers, and underscores"
+        else -> null
+    }
 }

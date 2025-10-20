@@ -117,7 +117,8 @@ class AuthViewModel @Inject constructor(
     private fun handleGoogleAuthResult(
         credential: GoogleIdTokenCredential,
         isSignUp: Boolean,
-        authOperation: suspend (String) -> Result<AuthData>
+        username: String? = null,
+        authOperation: suspend (String, String?) -> Result<AuthData>
     ) {
         viewModelScope.launch {
             // Update loading state based on operation type
@@ -126,7 +127,7 @@ class AuthViewModel @Inject constructor(
                 isSigningUp = isSignUp
             )
 
-            authOperation(credential.idToken)
+            authOperation(credential.idToken, username)
                 .onSuccess { authData ->
                     val needsProfileCompletion =
                         authData.user.bio == null || authData.user.bio.isBlank()
@@ -160,14 +161,14 @@ class AuthViewModel @Inject constructor(
     }
 
     fun handleGoogleSignInResult(credential: GoogleIdTokenCredential) {
-        handleGoogleAuthResult(credential, isSignUp = false) { idToken ->
+        handleGoogleAuthResult(credential, isSignUp = false) { idToken, _ ->
             authRepository.googleSignIn(idToken)
         }
     }
 
-    fun handleGoogleSignUpResult(credential: GoogleIdTokenCredential) {
-        handleGoogleAuthResult(credential, isSignUp = true) { idToken ->
-            authRepository.googleSignUp(idToken)
+    fun handleGoogleSignUpResult(credential: GoogleIdTokenCredential, username: String) {
+        handleGoogleAuthResult(credential, isSignUp = true, username = username) { idToken, user ->
+            authRepository.googleSignUp(idToken, user!!)
         }
     }
 
@@ -219,5 +220,31 @@ class AuthViewModel @Inject constructor(
 
     fun clearSuccessMessage() {
         _uiState.value = _uiState.value.copy(successMessage = null)
+    }
+
+    fun checkAndProceedWithSignUp(
+        credential: GoogleIdTokenCredential,
+        onUserExists: () -> Unit,
+        onNewUser: () -> Unit
+    ) {
+        viewModelScope.launch {
+            authRepository.checkGoogleAccountExists(credential.idToken)
+                .onSuccess { exists ->
+                    if (exists) {
+                        _uiState.value = _uiState.value.copy(
+                            errorMessage = "User already exists, please sign in instead."
+                        )
+                        onUserExists()
+                    } else {
+                        onNewUser()
+                    }
+                }
+                .onFailure { error ->
+                    Log.e(TAG, "Failed to check account", error)
+                    _uiState.value = _uiState.value.copy(
+                        errorMessage = error.message ?: "Failed to verify account status"
+                    )
+                }
+        }
     }
 }

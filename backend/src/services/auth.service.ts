@@ -101,6 +101,21 @@ export class AuthService {
       throw error;
     }
   }
+
+  async checkGoogleAccountExists(idToken: string): Promise<boolean> {
+    try {
+      const googleUserInfo = await this.verifyGoogleToken(idToken);
+
+      const existingUser = await userModel.findByGoogleId(
+        googleUserInfo.googleId
+      );
+
+      return existingUser !== null;
+    } catch (error) {
+      logger.error('Check account failed:', error);
+      throw error;
+    }
+  }
 }
 
 export const authService = new AuthService();

@@ -96,4 +96,31 @@ export class AuthController {
       next(error);
     }
   }
+
+  async checkGoogleAccount(
+    req: Request<unknown, unknown, { idToken: string }>,
+    res: Response,
+    next: NextFunction
+  ) {
+    try {
+      const { idToken } = req.body;
+      
+      const exists = await authService.checkGoogleAccountExists(idToken);
+      
+      return res.status(200).json({
+        message: 'Check completed',
+        data: { exists }
+      });
+    } catch (error) {
+      logger.error('Google account check error:', error);
+      
+      if (error instanceof Error && error.message === 'Invalid Google token') {
+        return res.status(401).json({
+          message: 'Invalid Google token',
+        });
+      }
+      
+      next(error);
+    }
+  }
 }
