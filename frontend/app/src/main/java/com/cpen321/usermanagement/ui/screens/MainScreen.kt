@@ -16,8 +16,7 @@ import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Shield
-import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.AddLocation
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.SatelliteAlt
 import androidx.compose.material3.Card
@@ -64,7 +63,6 @@ import com.google.maps.android.compose.MapType
 import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.rememberCameraPositionState
 import androidx.compose.foundation.layout.height
-import androidx.compose.material.icons.filled.Add
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import androidx.compose.runtime.SideEffect
 import com.cpen321.usermanagement.ui.screens.BadgesScreen
@@ -498,7 +496,7 @@ private fun MapContent(
             contentColor = Color.White
         ) {
             Icon(
-                imageVector = Icons.Default.Add,
+                imageVector = Icons.Default.AddLocation,
                 contentDescription = "Create Pin",
                 modifier = Modifier.size(24.dp)
             )

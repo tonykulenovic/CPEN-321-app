@@ -4,6 +4,7 @@ import Button
 import Icon
 import android.net.Uri
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -20,6 +21,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -43,10 +46,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.focusProperties
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import coil.compose.AsyncImage
+import coil.compose.SubcomposeAsyncImage
 import com.cpen321.usermanagement.R
 import com.cpen321.usermanagement.data.remote.api.RetrofitClient
 import com.cpen321.usermanagement.data.remote.dto.User
@@ -387,45 +391,79 @@ private fun ProfilePictureWithEdit(
     onLoadingChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val spacing = LocalSpacing.current
-
     Box(
-        modifier = modifier.size(spacing.extraLarge5)
+        modifier = modifier.size(140.dp),
+        contentAlignment = Alignment.Center
     ) {
-        AsyncImage(
-            model = RetrofitClient.getPictureUri(profilePicture),
-            onLoading = { onLoadingChange(true) },
-            onSuccess = { onLoadingChange(false) },
-            onError = { onLoadingChange(false) },
-            contentDescription = stringResource(R.string.profile_picture),
+        // Profile Picture Container WITHOUT Border
+        Box(
             modifier = Modifier
-                .fillMaxSize()
+                .size(140.dp)
                 .clip(CircleShape)
-        )
-
-        if (isLoadingPhoto) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.surfaceVariant),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(spacing.large),
-                    color = MaterialTheme.colorScheme.primary,
-                    strokeWidth = 2.dp
+                .background(Color(0xFF1A2332)),
+            contentAlignment = Alignment.Center
+        ) {
+            if (profilePicture.isBlank()) {
+                // Default avatar icon
+                androidx.compose.material3.Icon(
+                    imageVector = Icons.Default.Person,
+                    contentDescription = "Profile Picture",
+                    modifier = Modifier.size(70.dp),
+                    tint = Color(0xFF8B9DAF)
                 )
+            } else {
+                // Load profile picture with proper error handling
+                SubcomposeAsyncImage(
+                    model = RetrofitClient.getPictureUri(profilePicture),
+                    contentDescription = stringResource(R.string.profile_picture),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .clip(CircleShape),
+                    contentScale = ContentScale.Crop,
+                    loading = {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(40.dp),
+                            color = Color(0xFF00BCD4),
+                            strokeWidth = 3.dp
+                        )
+                    },
+                    error = {
+                        androidx.compose.material3.Icon(
+                            imageVector = Icons.Default.Person,
+                            contentDescription = "Profile Picture",
+                            modifier = Modifier.size(70.dp),
+                            tint = Color(0xFF8B9DAF)
+                        )
+                    }
+                )
+            }
+            
+            // Loading overlay when uploading
+            if (isLoadingPhoto) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .clip(CircleShape)
+                        .background(Color.Black.copy(alpha = 0.6f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(40.dp),
+                        color = Color(0xFF00BCD4),
+                        strokeWidth = 3.dp
+                    )
+                }
             }
         }
 
+        // Edit Button in Bottom Right (removed border)
         IconButton(
             onClick = onEditClick,
             modifier = Modifier
                 .align(Alignment.BottomEnd)
-                .size(spacing.extraLarge)
+                .size(44.dp)
                 .background(
-                    color = MaterialTheme.colorScheme.primary,
+                    color = Color(0xFF4A90E2),
                     shape = CircleShape
                 )
         ) {

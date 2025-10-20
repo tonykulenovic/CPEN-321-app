@@ -82,6 +82,10 @@ import androidx.compose.material.icons.filled.PersonAddAlt
 import androidx.compose.material3.Badge
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.compose.runtime.collectAsState
+import com.cpen321.usermanagement.ui.viewmodels.FriendsViewModel
+import com.cpen321.usermanagement.data.remote.dto.UserSearchResult
 
 // Data class for friends
 data class Friend(
@@ -103,6 +107,7 @@ data class FriendRequest(
 
 @Composable
 fun FriendsScreen(
+    friendsViewModel: FriendsViewModel = hiltViewModel(),  // ADD ViewModel
     onMapClick: () -> Unit = {},
     onProfileClick: () -> Unit = {},
     onBadgesClick: () -> Unit = {},
@@ -111,36 +116,41 @@ fun FriendsScreen(
     var selectedItem by remember { mutableIntStateOf(3) } // Friends tab selected
     var searchQuery by remember { mutableStateOf("") }
     var showAddFriendSheet by remember { mutableStateOf(false) }
-    var showFriendRequestsSheet by remember { mutableStateOf(false) }  // ADD THIS
+    var showFriendRequestsSheet by remember { mutableStateOf(false) }
     
-    // Sample friends list (replace with real data later)
-    val friends = remember {
-        mutableStateOf(
-            listOf(
-                Friend("1", "Alice Johnson", "alice@example.com", true),
-                Friend("2", "Bob Smith", "bob@example.com", false),
-                Friend("3", "Carol White", "carol@example.com", true),
-                Friend("4", "David Brown", "david@example.com", false)
+    // Get state from ViewModel (CHANGED: Replace mock data)
+    val uiState by friendsViewModel.uiState.collectAsState()
+    
+    // Convert backend data to UI models
+    val friends = remember(uiState.friends) {
+        uiState.friends.map { friendSummary ->
+            Friend(
+                id = friendSummary.userId,
+                name = friendSummary.displayName,
+                email = friendSummary.bio ?: "", // Using bio as placeholder for email
+                isOnline = false, // TODO: Add real-time status from backend
+                profilePictureUrl = friendSummary.photoUrl
             )
-        )
+        }
     }
     
-    // Sample friend requests (replace with real data later)
-    val friendRequests = remember {
-        mutableStateOf(
-            listOf(
-                FriendRequest("req1", "Emma Wilson", "emma@example.com", requestedAt = "2 hours ago"),
-                FriendRequest("req2", "James Lee", "james@example.com", requestedAt = "1 day ago"),
-                FriendRequest("req3", "Sarah Miller", "sarah@example.com", requestedAt = "3 days ago")
+    val friendRequests = remember(uiState.friendRequests) {
+        uiState.friendRequests.map { requestSummary ->
+            FriendRequest(
+                id = requestSummary._id,
+                name = requestSummary.from.displayName,
+                email = "", // Not provided by backend
+                profilePictureUrl = requestSummary.from.photoUrl,
+                requestedAt = requestSummary.createdAt
             )
-        )
+        }
     }
     
-    val filteredFriends = remember(searchQuery, friends.value) {
+    val filteredFriends = remember(searchQuery, friends) {
         if (searchQuery.isBlank()) {
-            friends.value
+            friends
         } else {
-            friends.value.filter {
+            friends.filter {
                 it.name.contains(searchQuery, ignoreCase = true) ||
                 it.email.contains(searchQuery, ignoreCase = true)
             }
@@ -156,7 +166,7 @@ fun FriendsScreen(
             darkIcons = false
         )
         systemUiController.setNavigationBarColor(
-            color = Color(0xFF1A1A2E),  // ADD THIS - set navigation bar to purple/navy
+            color = Color(0xFF1A1A2E),
             darkIcons = false
         )
     }
@@ -165,8 +175,8 @@ fun FriendsScreen(
         containerColor = Color(0xFF0F1419),
         topBar = {
             FriendsTopBar(
-                onFriendRequestsClick = { showFriendRequestsSheet = true },  // ADD THIS
-                pendingRequestsCount = friendRequests.value.size  // ADD THIS
+                onFriendRequestsClick = { showFriendRequestsSheet = true },
+                pendingRequestsCount = friendRequests.size  // Use real count
             )
         },
         bottomBar = {
@@ -214,13 +224,13 @@ fun FriendsScreen(
             Spacer(modifier = Modifier.height(16.dp))
             
             // Friends List or Empty State
-            if (friends.value.isEmpty()) {
+            if (friends.isEmpty()) {
                 EmptyFriendsState(onFindFriendsClick = { showAddFriendSheet = true })
             } else {
                 FriendsList(
                     friends = filteredFriends,
                     onRemoveFriend = { friendId ->
-                        friends.value = friends.value.filter { it.id != friendId }
+                        friendsViewModel.removeFriend(friendId)  // CHANGED: Call ViewModel
                     },
                     onViewProfile = onViewFriendProfile
                 )
@@ -231,25 +241,23 @@ fun FriendsScreen(
         if (showAddFriendSheet) {
             AddFriendBottomSheet(
                 onDismiss = { showAddFriendSheet = false },
-                onSendRequest = { email ->
-                    // TODO: Implement send friend request
+                onSendRequest = { userId ->
+                    friendsViewModel.sendFriendRequest(userId)  // CHANGED: Call ViewModel
                     showAddFriendSheet = false
                 }
             )
         }
 
-        // Friend Requests Bottom Sheet - ADD THIS
+        // Friend Requests Bottom Sheet
         if (showFriendRequestsSheet) {
             FriendRequestsBottomSheet(
-                friendRequests = friendRequests.value,
+                friendRequests = friendRequests,  // Use real data
                 onDismiss = { showFriendRequestsSheet = false },
                 onAcceptRequest = { requestId ->
-                    // TODO: Implement accept request
-                    friendRequests.value = friendRequests.value.filter { it.id != requestId }
+                    friendsViewModel.acceptFriendRequest(requestId)  // CHANGED: Call ViewModel
                 },
                 onDeclineRequest = { requestId ->
-                    // TODO: Implement decline request
-                    friendRequests.value = friendRequests.value.filter { it.id != requestId }
+                    friendsViewModel.declineFriendRequest(requestId)  // CHANGED: Call ViewModel
                 }
             )
         }
@@ -259,8 +267,8 @@ fun FriendsScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun FriendsTopBar(
-    onFriendRequestsClick: () -> Unit,  // ADD THIS
-    pendingRequestsCount: Int,  // ADD THIS
+    onFriendRequestsClick: () -> Unit,
+    pendingRequestsCount: Int,
     modifier: Modifier = Modifier
 ) {
     TopAppBar(
@@ -279,7 +287,7 @@ private fun FriendsTopBar(
             Box {
                 IconButton(onClick = onFriendRequestsClick) {
                     Icon(
-                        imageVector = Icons.Default.PersonAddAlt,
+                        imageVector = Icons.Default.Notifications,
                         contentDescription = "Friend Requests",
                         tint = Color.White,
                         modifier = Modifier.size(28.dp)
@@ -544,28 +552,30 @@ private fun EmptyFriendsState(
 private fun AddFriendBottomSheet(
     onDismiss: () -> Unit,
     onSendRequest: (String) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    friendsViewModel: FriendsViewModel = hiltViewModel()  // ADD THIS
 ) {
     val sheetState = rememberModalBottomSheetState()
     val scope = rememberCoroutineScope()
-    var emailOrUsername by remember { mutableStateOf("") }
+    var searchQuery by remember { mutableStateOf("") }
+    
+    val uiState by friendsViewModel.uiState.collectAsState()
     
     // Use DisposableEffect instead of SideEffect for better persistence
     val systemUiController = rememberSystemUiController()
     DisposableEffect(Unit) {
         systemUiController.setSystemBarsColor(
             color = Color(0xFF1A1A2E),
-            darkIcons = false  // Force white icons
+            darkIcons = false
         )
         
-        // Also explicitly set status bar
         systemUiController.setStatusBarColor(
             color = Color(0xFF1A1A2E),
             darkIcons = false
         )
         
         onDispose {
-            // Restore when bottom sheet closes
+            friendsViewModel.clearSearchResults()
             systemUiController.setSystemBarsColor(
                 color = Color(0xFF1A1A2E),
                 darkIcons = false
@@ -574,11 +584,14 @@ private fun AddFriendBottomSheet(
     }
 
     ModalBottomSheet(
-        onDismissRequest = onDismiss,
+        onDismissRequest = {
+            friendsViewModel.clearSearchResults()
+            onDismiss()
+        },
         sheetState = sheetState,
         containerColor = Color(0xFF1A2332),
         contentColor = Color.White,
-        scrimColor = Color.Black.copy(alpha = 0.6f)  // ADD THIS - darker scrim prevents icon color change
+        scrimColor = Color.Black.copy(alpha = 0.6f)
     ) {
         Column(
             modifier = Modifier
@@ -595,15 +608,40 @@ private fun AddFriendBottomSheet(
             
             Spacer(modifier = Modifier.height(16.dp))
             
+            // Search TextField
             OutlinedTextField(
-                value = emailOrUsername,
-                onValueChange = { emailOrUsername = it },
+                value = searchQuery,
+                onValueChange = { newQuery ->
+                    searchQuery = newQuery
+                    friendsViewModel.searchUsers(newQuery)
+                },
                 modifier = Modifier.fillMaxWidth(),
                 placeholder = {
                     Text(
-                        "Enter email or username",
+                        "Search by username or name",
                         color = Color(0xFF8B9DAF)
                     )
+                },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.Search,
+                        contentDescription = "Search",
+                        tint = Color(0xFF8B9DAF)
+                    )
+                },
+                trailingIcon = {
+                    if (searchQuery.isNotEmpty()) {
+                        IconButton(onClick = { 
+                            searchQuery = ""
+                            friendsViewModel.clearSearchResults()
+                        }) {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "Clear",
+                                tint = Color(0xFF8B9DAF)
+                            )
+                        }
+                    }
                 },
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedContainerColor = Color(0xFF0F1419),
@@ -618,21 +656,156 @@ private fun AddFriendBottomSheet(
                 singleLine = true
             )
             
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(16.dp))
             
-            Button(
-                onClick = {
-                    scope.launch {
-                        sheetState.hide()
-                        onSendRequest(emailOrUsername)
+            // Search Results
+            if (uiState.isSearching) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(200.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    androidx.compose.material3.CircularProgressIndicator(
+                        color = Color(0xFF4A90E2)
+                    )
+                }
+            } else if (uiState.searchResults.isNotEmpty()) {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(300.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(uiState.searchResults.size) { index ->
+                        UserSearchResultCard(
+                            user = uiState.searchResults[index],
+                            onSendRequest = {
+                                scope.launch {
+                                    sheetState.hide()
+                                    onSendRequest(uiState.searchResults[index]._id)
+                                    friendsViewModel.clearSearchResults()
+                                }
+                            }
+                        )
                     }
-                },
-                enabled = emailOrUsername.isNotBlank()
-            ) {
-                Text("Send Request", color = Color.White)
+                }
+            } else if (searchQuery.isNotEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(150.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Search,
+                            contentDescription = null,
+                            tint = Color(0xFF8B9DAF),
+                            modifier = Modifier.size(48.dp)
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "No users found",
+                            color = Color(0xFF8B9DAF),
+                            fontSize = 14.sp
+                        )
+                    }
+                }
+            } else {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(150.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "Start typing to search for users",
+                        color = Color(0xFF8B9DAF),
+                        fontSize = 14.sp,
+                        textAlign = TextAlign.Center
+                    )
+                }
             }
             
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(16.dp))
+        }
+    }
+}
+
+// ADD THIS NEW COMPOSABLE
+@Composable
+private fun UserSearchResultCard(
+    user: UserSearchResult,
+    onSendRequest: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = Color(0xFF0F1419)
+        ),
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Profile Picture Placeholder
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .background(Color(0xFF4A90E2)),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = user.displayName.firstOrNull()?.toString() ?: "?",
+                    color = Color.White,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+            
+            Spacer(modifier = Modifier.width(12.dp))
+            
+            // User Info
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = user.displayName,
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 14.sp
+                )
+                Text(
+                    text = "@${user.username}",
+                    color = Color(0xFF8B9DAF),
+                    fontSize = 12.sp
+                )
+            }
+            
+            // Add Button
+            androidx.compose.material3.Button(
+                onClick = onSendRequest,
+                colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF4A90E2),
+                    contentColor = Color.White
+                ),
+                shape = RoundedCornerShape(8.dp),
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.PersonAdd,
+                    contentDescription = "Add Friend",
+                    modifier = Modifier.size(16.dp)
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Text("Add", fontSize = 12.sp)
+            }
         }
     }
 }
@@ -778,7 +951,7 @@ private fun FriendRequestCard(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 // Decline Button
-                androidx.compose.material3.Button(  // USE FULLY QUALIFIED NAME
+                androidx.compose.material3.Button(
                     onClick = onDecline,
                     modifier = Modifier.weight(1f),
                     colors = androidx.compose.material3.ButtonDefaults.buttonColors(
@@ -791,7 +964,7 @@ private fun FriendRequestCard(
                 }
                 
                 // Accept Button
-                androidx.compose.material3.Button(  // USE FULLY QUALIFIED NAME
+                androidx.compose.material3.Button(
                     onClick = onAccept,
                     modifier = Modifier.weight(1f),
                     colors = androidx.compose.material3.ButtonDefaults.buttonColors(
@@ -854,13 +1027,13 @@ private fun BottomNavigationBar(
             )
         )
         
-        // Badge button - REPLACE Icons.Filled.Shield with Icons.Filled.EmojiEvents
+        // Badge button
         NavigationBarItem(
             selected = selectedItem == 2,
             onClick = { onItemSelected(2) },
             icon = {
                 Icon(
-                    imageVector = Icons.Filled.EmojiEvents,  // CHANGE THIS
+                    imageVector = Icons.Filled.EmojiEvents,
                     contentDescription = "Badges",
                     modifier = Modifier.size(30.dp)
                 )

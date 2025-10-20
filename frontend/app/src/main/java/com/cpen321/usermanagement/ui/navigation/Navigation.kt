@@ -22,6 +22,7 @@ import com.cpen321.usermanagement.ui.screens.ProfileCompletionScreen
 import com.cpen321.usermanagement.ui.screens.ProfileScreen
 import com.cpen321.usermanagement.ui.screens.ProfileScreenActions
 import com.cpen321.usermanagement.ui.viewmodels.AuthViewModel
+import com.cpen321.usermanagement.ui.viewmodels.FriendsViewModel
 import com.cpen321.usermanagement.ui.viewmodels.MainViewModel
 import com.cpen321.usermanagement.ui.viewmodels.NavigationViewModel
 import com.cpen321.usermanagement.ui.viewmodels.ProfileViewModel
@@ -196,7 +197,9 @@ private fun AppNavHost(
         }
 
         composable(NavRoutes.FRIENDS) {
+            val friendsViewModel: FriendsViewModel = hiltViewModel()
             FriendsScreen(
+                friendsViewModel = friendsViewModel,
                 onMapClick = { navController.navigate(NavRoutes.MAIN) {
                     popUpTo(NavRoutes.MAIN) { inclusive = true }
                 } },
@@ -210,6 +213,7 @@ private fun AppNavHost(
 
         composable(NavRoutes.BADGES) {
             BadgesScreen(
+                profileViewModel = profileViewModel,
                 onMapClick = { navController.navigate(NavRoutes.MAIN) {
                     popUpTo(NavRoutes.MAIN) { inclusive = true }
                 } },

@@ -8,13 +8,13 @@ import { locationGateway } from '../realtime/gateway';
 import logger from '../utils/logger.util';
 
 /**
- * POST /me/location — Create new location record with TTL & sharing rules.
+ * PUT /location — Upsert location record with TTL & sharing rules.
  * @param body.lat number - Latitude.
  * @param body.lng number - Longitude.
  * @param body.accuracyM number? - Accuracy meters.
  * @return 201 { shared, expiresAt }
  */
-export async function createMyLocation(req: Request, res: Response): Promise<void> {
+export async function upsertMyLocation(req: Request, res: Response): Promise<void> {
   try {
     // 1. Validate request body
     const validation = updateLocationSchema.safeParse(req.body);
@@ -41,7 +41,7 @@ export async function createMyLocation(req: Request, res: Response): Promise<voi
       data: result,
     });
   } catch (error) {
-    logger.error('Error in createMyLocation:', error);
+    logger.error('Error in upsertMyLocation:', error);
     res.status(500).json({
       message: 'Internal server error',
     });

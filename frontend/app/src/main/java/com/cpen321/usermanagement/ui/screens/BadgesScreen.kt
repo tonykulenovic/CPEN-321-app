@@ -10,6 +10,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -18,10 +19,14 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.SubcomposeAsyncImage
+import com.cpen321.usermanagement.data.remote.api.RetrofitClient
+import com.cpen321.usermanagement.ui.viewmodels.ProfileViewModel
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 
 // Badge data class
@@ -44,15 +49,26 @@ enum class BadgeCategory {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BadgesScreen(
+    profileViewModel: ProfileViewModel,  // ADD THIS parameter
     onMapClick: () -> Unit = {},
     onSearchClick: () -> Unit = {},
     onFriendsClick: () -> Unit = {},
     onProfileClick: () -> Unit = {}
 ) {
-    var selectedItem by remember { mutableIntStateOf(2) } // Badges tab selected
+    var selectedItem by remember { mutableIntStateOf(2) }
     var showBadgeDetails by remember { mutableStateOf(false) }
     var selectedBadge by remember { mutableStateOf<Badge?>(null) }
     var showInfoModal by remember { mutableStateOf(false) }
+    
+    // Get user data from ViewModel
+    val uiState by profileViewModel.uiState.collectAsState()
+    
+    // Load profile if not already loaded
+    LaunchedEffect(Unit) {
+        if (uiState.user == null) {
+            profileViewModel.loadProfile()
+        }
+    }
     
     // Set status bar appearance
     val systemUiController = rememberSystemUiController()
@@ -63,8 +79,9 @@ fun BadgesScreen(
         )
     }
     
-    // Sample user data
-    val userName = "John Doe"
+    // Get real user data or use fallback
+    val userName = uiState.user?.name ?: "Loading..."
+    val userProfilePicture = uiState.user?.profilePicture
     val totalBadgesEarned = getSampleBadges().count { it.isUnlocked }
     
     Scaffold(
@@ -109,10 +126,12 @@ fun BadgesScreen(
         ) {
             Spacer(modifier = Modifier.height(16.dp))
             
-            // Profile Summary Section
+            // Profile Summary Section with real data
             ProfileSummaryCard(
                 userName = userName,
-                totalBadges = totalBadgesEarned
+                profilePictureUrl = userProfilePicture,
+                totalBadges = totalBadgesEarned,
+                isLoading = uiState.isLoadingProfile
             )
             
             Spacer(modifier = Modifier.height(24.dp))
@@ -178,7 +197,9 @@ private fun BadgesTopBar() {
 @Composable
 private fun ProfileSummaryCard(
     userName: String,
-    totalBadges: Int
+    profilePictureUrl: String?,
+    totalBadges: Int,
+    isLoading: Boolean
 ) {
     Card(
         modifier = Modifier
@@ -195,20 +216,54 @@ private fun ProfileSummaryCard(
                 .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Profile Picture Placeholder
+            // Profile Picture - Real or Placeholder
             Box(
                 modifier = Modifier
                     .size(48.dp)
                     .clip(CircleShape)
-                    .background(Color(0xFF00BCD4)),
+                    .background(Color(0xFF1A2332)),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    imageVector = Icons.Default.Person,
-                    contentDescription = "Profile",
-                    tint = Color.White,
-                    modifier = Modifier.size(28.dp)
-                )
+                if (isLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
+                        color = Color(0xFF00BCD4),
+                        strokeWidth = 2.dp
+                    )
+                } else if (profilePictureUrl.isNullOrBlank()) {
+                    // Default avatar icon
+                    Icon(
+                        imageVector = Icons.Default.Person,
+                        contentDescription = "Profile",
+                        tint = Color(0xFF8B9DAF),
+                        modifier = Modifier.size(28.dp)
+                    )
+                } else {
+                    // Load real profile picture
+                    SubcomposeAsyncImage(
+                        model = RetrofitClient.getPictureUri(profilePictureUrl),
+                        contentDescription = "Profile Picture",
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clip(CircleShape),
+                        contentScale = ContentScale.Crop,
+                        loading = {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(24.dp),
+                                color = Color(0xFF00BCD4),
+                                strokeWidth = 2.dp
+                            )
+                        },
+                        error = {
+                            Icon(
+                                imageVector = Icons.Default.Person,
+                                contentDescription = "Profile",
+                                tint = Color(0xFF8B9DAF),
+                                modifier = Modifier.size(28.dp)
+                            )
+                        }
+                    )
+                }
             }
             
             Spacer(modifier = Modifier.width(16.dp))
@@ -675,7 +730,7 @@ private fun getSampleBadges(): List<Badge> {
             id = "1",
             title = "Library Explorer",
             description = "Visited 5 study spots",
-            icon = Icons.Default.MenuBook,
+            icon = Icons.AutoMirrored.Filled.MenuBook,
             color = Color(0xFF4A90E2), // Blue
             isUnlocked = true,
             progress = 5,
