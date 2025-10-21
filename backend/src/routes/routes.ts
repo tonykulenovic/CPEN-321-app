@@ -7,6 +7,8 @@ import mediaRoutes from '../routes/media.routes';
 import usersRoutes from '../routes/user.routes';
 import friendsRoutes from '../routes/friends.routes';
 import locationRoutes from '../routes/location.routes';
+import pinsRoutes from '../routes/pins.routes';
+
 
 const router = Router();
 
@@ -42,5 +44,7 @@ router.use('/friends', friendsRoutes); // Authentication middleware applied with
 router.use('/me', locationRoutes); // Authentication middleware applied within location routes
 
 router.use('/badges', authenticateToken, badgeRoutes);
+
+router.use('/pins', pinsRoutes);
 
 export default router;
