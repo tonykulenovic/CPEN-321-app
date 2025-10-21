@@ -24,13 +24,19 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.SubcomposeAsyncImage
 import com.cpen321.usermanagement.data.remote.api.RetrofitClient
+import com.cpen321.usermanagement.data.remote.dto.Badge
+import com.cpen321.usermanagement.data.remote.dto.BadgeRarity
+import com.cpen321.usermanagement.data.remote.dto.UserBadge
+import com.cpen321.usermanagement.data.remote.dto.BadgeProgressItem
+import com.cpen321.usermanagement.ui.viewmodels.BadgeViewModel
 import com.cpen321.usermanagement.ui.viewmodels.ProfileViewModel
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 
-// Badge data class
-data class Badge(
+// Helper data class for displaying badges
+data class BadgeDisplayItem(
     val id: String,
     val title: String,
     val description: String,
@@ -39,17 +45,14 @@ data class Badge(
     val isUnlocked: Boolean,
     val progress: Int = 0,
     val maxProgress: Int = 0,
-    val category: BadgeCategory
+    val category: String
 )
-
-enum class BadgeCategory {
-    STUDY, SOCIAL, EVENT, SPECIAL
-}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BadgesScreen(
-    profileViewModel: ProfileViewModel,  // ADD THIS parameter
+    badgeViewModel: BadgeViewModel = hiltViewModel(),
+    profileViewModel: ProfileViewModel = hiltViewModel(),
     onMapClick: () -> Unit = {},
     onSearchClick: () -> Unit = {},
     onFriendsClick: () -> Unit = {},
@@ -57,16 +60,36 @@ fun BadgesScreen(
 ) {
     var selectedItem by remember { mutableIntStateOf(2) }
     var showBadgeDetails by remember { mutableStateOf(false) }
-    var selectedBadge by remember { mutableStateOf<Badge?>(null) }
+    var selectedBadgeItem by remember { mutableStateOf<BadgeDisplayItem?>(null) }
     var showInfoModal by remember { mutableStateOf(false) }
     
-    // Get user data from ViewModel
-    val uiState by profileViewModel.uiState.collectAsState()
+    // Get user data from ProfileViewModel
+    val profileUiState by profileViewModel.uiState.collectAsState()
+    
+    // Get badge data from BadgeViewModel
+    val badgeUiState by badgeViewModel.uiState.collectAsState()
     
     // Load profile if not already loaded
     LaunchedEffect(Unit) {
-        if (uiState.user == null) {
+        if (profileUiState.user == null) {
             profileViewModel.loadProfile()
+        }
+    }
+    
+    // Show snackbar for messages
+    val snackbarHostState = remember { SnackbarHostState() }
+    
+    LaunchedEffect(badgeUiState.error) {
+        badgeUiState.error?.let { error ->
+            snackbarHostState.showSnackbar(error)
+            badgeViewModel.clearError()
+        }
+    }
+    
+    LaunchedEffect(badgeUiState.successMessage) {
+        badgeUiState.successMessage?.let { message ->
+            snackbarHostState.showSnackbar(message)
+            badgeViewModel.clearSuccessMessage()
         }
     }
     
@@ -80,12 +103,20 @@ fun BadgesScreen(
     }
     
     // Get real user data or use fallback
-    val userName = uiState.user?.name ?: "Loading..."
-    val userProfilePicture = uiState.user?.profilePicture
-    val totalBadgesEarned = getSampleBadges().count { it.isUnlocked }
+    val userName = profileUiState.user?.name ?: "Loading..."
+    val userProfilePicture = profileUiState.user?.profilePicture
+    val totalBadgesEarned = badgeUiState.earnedBadges.size
+    
+    // Convert backend data to display format - show ALL badges
+    val displayBadges = convertToDisplayBadges(
+        earnedBadges = badgeUiState.earnedBadges,
+        availableBadges = badgeUiState.availableBadges,
+        progressItems = badgeUiState.badgeProgressItems
+    )
     
     Scaffold(
         containerColor = Color(0xFF0A1929),
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         topBar = {
             BadgesTopBar()
         },
@@ -131,20 +162,24 @@ fun BadgesScreen(
                 userName = userName,
                 profilePictureUrl = userProfilePicture,
                 totalBadges = totalBadgesEarned,
-                isLoading = uiState.isLoadingProfile
+                isLoading = profileUiState.isLoadingProfile || badgeUiState.isLoading
             )
             
             Spacer(modifier = Modifier.height(24.dp))
             
-            // Badges Grid
-            val badges = getSampleBadges()
-            if (badges.isEmpty() || badges.all { !it.isUnlocked }) {
-                EmptyBadgesState()
+            // Badges Grid - Always show all badges
+            if (badgeUiState.isLoading && displayBadges.isEmpty()) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(color = Color(0xFF00BCD4))
+                }
             } else {
                 BadgesGrid(
-                    badges = badges,
+                    badges = displayBadges,
                     onBadgeClick = { badge ->
-                        selectedBadge = badge
+                        selectedBadgeItem = badge
                         showBadgeDetails = true
                     }
                 )
@@ -153,9 +188,9 @@ fun BadgesScreen(
     }
     
     // Badge Details Bottom Sheet
-    if (showBadgeDetails && selectedBadge != null) {
+    if (showBadgeDetails && selectedBadgeItem != null) {
         BadgeDetailsBottomSheet(
-            badge = selectedBadge!!,
+            badge = selectedBadgeItem!!,
             onDismiss = { showBadgeDetails = false }
         )
     }
@@ -288,8 +323,8 @@ private fun ProfileSummaryCard(
 
 @Composable
 private fun BadgesGrid(
-    badges: List<Badge>,
-    onBadgeClick: (Badge) -> Unit
+    badges: List<BadgeDisplayItem>,
+    onBadgeClick: (BadgeDisplayItem) -> Unit
 ) {
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
@@ -307,14 +342,13 @@ private fun BadgesGrid(
 
 @Composable
 private fun BadgeCard(
-    badge: Badge,
+    badge: BadgeDisplayItem,
     onClick: () -> Unit
 ) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .height(180.dp)  // Increase height slightly to accommodate progress bar
-            .alpha(if (badge.isUnlocked) 1f else 0.4f)
+            .height(180.dp)
             .clickable { onClick() },
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
@@ -328,14 +362,15 @@ private fun BadgeCard(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            // Badge Icon
+            // Badge Icon - greyed for locked, colored for unlocked
             Box(
                 modifier = Modifier
                     .size(56.dp)
                     .clip(CircleShape)
                     .background(
                         if (badge.isUnlocked) badge.color else Color(0xFF3D4E5E)
-                    ),
+                    )
+                    .alpha(if (badge.isUnlocked) 1f else 0.5f),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
@@ -348,12 +383,12 @@ private fun BadgeCard(
             
             Spacer(modifier = Modifier.height(12.dp))
             
-            // Badge Title
+            // Badge Title - greyed for locked, white for unlocked
             Text(
                 text = badge.title,
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Bold,
-                color = if (badge.isUnlocked) Color.White else Color(0xFF8B9DAF),
+                color = if (badge.isUnlocked) Color.White else Color(0xFF6B7B8F),
                 textAlign = TextAlign.Center,
                 maxLines = 1
             )
@@ -364,14 +399,14 @@ private fun BadgeCard(
             Text(
                 text = badge.description,
                 fontSize = 11.sp,
-                color = Color(0xFF8B9DAF),
+                color = if (badge.isUnlocked) Color(0xFF8B9DAF) else Color(0xFF5B6B7F),
                 textAlign = TextAlign.Center,
                 maxLines = 2,
                 lineHeight = 14.sp
             )
             
-            // ADD PROGRESS INDICATOR FOR LOCKED BADGES
-            if (!badge.isUnlocked && badge.maxProgress > 0) {
+            // Show progress bar for ALL badges (locked and unlocked)
+            if (badge.maxProgress > 0) {
                 Spacer(modifier = Modifier.height(8.dp))
                 
                 Column(
@@ -382,7 +417,7 @@ private fun BadgeCard(
                     Text(
                         text = "${badge.progress}/${badge.maxProgress}",
                         fontSize = 10.sp,
-                        color = Color(0xFF00BCD4),
+                        color = if (badge.isUnlocked) Color(0xFF66BB6A) else Color(0xFF00BCD4),
                         fontWeight = FontWeight.Bold
                     )
                     
@@ -390,20 +425,26 @@ private fun BadgeCard(
                     
                     // Progress bar
                     LinearProgressIndicator(
-                        progress = { badge.progress.toFloat() / badge.maxProgress.toFloat() },
+                        progress = { 
+                            if (badge.maxProgress > 0) {
+                                badge.progress.toFloat() / badge.maxProgress.toFloat()
+                            } else {
+                                0f
+                            }
+                        },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(4.dp)
                             .clip(RoundedCornerShape(2.dp)),
-                        color = Color(0xFF00BCD4),
+                        color = if (badge.isUnlocked) Color(0xFF66BB6A) else Color(0xFF00BCD4),
                         trackColor = Color(0xFF3D4E5E)
                     )
                 }
             }
             
-            // For unlocked badges, show a checkmark or "Unlocked" text
-            if (badge.isUnlocked && badge.maxProgress > 0) {
-                Spacer(modifier = Modifier.height(6.dp))
+            // Show status indicator
+            if (badge.isUnlocked) {
+                Spacer(modifier = Modifier.height(4.dp))
                 
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -411,15 +452,36 @@ private fun BadgeCard(
                 ) {
                     Icon(
                         imageVector = Icons.Default.CheckCircle,
-                        contentDescription = "Completed",
+                        contentDescription = "Unlocked",
                         tint = Color(0xFF66BB6A),
-                        modifier = Modifier.size(14.dp)
+                        modifier = Modifier.size(12.dp)
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
                         text = "Unlocked",
-                        fontSize = 10.sp,
+                        fontSize = 9.sp,
                         color = Color(0xFF66BB6A),
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            } else {
+                Spacer(modifier = Modifier.height(4.dp))
+                
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Lock,
+                        contentDescription = "Locked",
+                        tint = Color(0xFF6B7B8F),
+                        modifier = Modifier.size(12.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = "Locked",
+                        fontSize = 9.sp,
+                        color = Color(0xFF6B7B8F),
                         fontWeight = FontWeight.Bold
                     )
                 }
@@ -431,7 +493,7 @@ private fun BadgeCard(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun BadgeDetailsBottomSheet(
-    badge: Badge,
+    badge: BadgeDisplayItem,
     onDismiss: () -> Unit
 ) {
     ModalBottomSheet(
@@ -445,12 +507,13 @@ private fun BadgeDetailsBottomSheet(
                 .padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Large Badge Icon
+            // Large Badge Icon - greyed if locked
             Box(
                 modifier = Modifier
                     .size(96.dp)
                     .clip(CircleShape)
-                    .background(badge.color),
+                    .background(if (badge.isUnlocked) badge.color else Color(0xFF3D4E5E))
+                    .alpha(if (badge.isUnlocked) 1f else 0.5f),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
@@ -468,16 +531,38 @@ private fun BadgeDetailsBottomSheet(
                 text = badge.title,
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color.White
+                color = if (badge.isUnlocked) Color.White else Color(0xFF6B7B8F)
             )
             
             Spacer(modifier = Modifier.height(8.dp))
+            
+            // Badge Status
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Icon(
+                    imageVector = if (badge.isUnlocked) Icons.Default.CheckCircle else Icons.Default.Lock,
+                    contentDescription = if (badge.isUnlocked) "Unlocked" else "Locked",
+                    tint = if (badge.isUnlocked) Color(0xFF66BB6A) else Color(0xFF6B7B8F),
+                    modifier = Modifier.size(16.dp)
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    text = if (badge.isUnlocked) "Unlocked" else "Locked",
+                    fontSize = 14.sp,
+                    color = if (badge.isUnlocked) Color(0xFF66BB6A) else Color(0xFF6B7B8F),
+                    fontWeight = FontWeight.Bold
+                )
+            }
+            
+            Spacer(modifier = Modifier.height(12.dp))
             
             // Badge Description
             Text(
                 text = badge.description,
                 fontSize = 14.sp,
-                color = Color(0xFF8B9DAF),
+                color = if (badge.isUnlocked) Color(0xFF8B9DAF) else Color(0xFF5B6B7F),
                 textAlign = TextAlign.Center
             )
             
@@ -501,7 +586,7 @@ private fun BadgeDetailsBottomSheet(
                         Text(
                             text = "${badge.progress}/${badge.maxProgress}",
                             fontSize = 14.sp,
-                            color = Color(0xFF00BCD4),
+                            color = if (badge.isUnlocked) Color(0xFF66BB6A) else Color(0xFF00BCD4),
                             fontWeight = FontWeight.Bold
                         )
                     }
@@ -509,12 +594,18 @@ private fun BadgeDetailsBottomSheet(
                     Spacer(modifier = Modifier.height(8.dp))
                     
                     LinearProgressIndicator(
-                        progress = { badge.progress.toFloat() / badge.maxProgress.toFloat() },
+                        progress = { 
+                            if (badge.maxProgress > 0) {
+                                badge.progress.toFloat() / badge.maxProgress.toFloat()
+                            } else {
+                                0f
+                            }
+                        },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(8.dp)
                             .clip(RoundedCornerShape(4.dp)),
-                        color = Color(0xFF00BCD4),
+                        color = if (badge.isUnlocked) Color(0xFF66BB6A) else Color(0xFF00BCD4),
                         trackColor = Color(0xFF3D4E5E)
                     )
                 }
@@ -559,6 +650,8 @@ private fun BadgeInfoDialog(
         text = {
             Text(
                 text = "Earn badges by studying, attending events, or exploring campus!\n\n" +
+                        "• Locked badges: Shown in grey with progress bars\n" +
+                        "• Unlocked badges: Shown in color when completed\n" +
                         "• Study-related badges: Visit study spots\n" +
                         "• Social badges: Connect with friends\n" +
                         "• Event badges: Attend campus events\n" +
@@ -578,52 +671,6 @@ private fun BadgeInfoDialog(
             }
         }
     )
-}
-
-@Composable
-private fun EmptyBadgesState() {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(32.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Box(
-            modifier = Modifier
-                .size(120.dp)
-                .clip(CircleShape)
-                .background(Color(0xFF1A2332)),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                imageVector = Icons.Default.EmojiEvents,
-                contentDescription = "No badges",
-                tint = Color(0xFF8B9DAF),
-                modifier = Modifier.size(64.dp)
-            )
-        }
-        
-        Spacer(modifier = Modifier.height(24.dp))
-        
-        Text(
-            text = "You haven't earned any badges yet.",
-            fontSize = 18.sp,
-            fontWeight = FontWeight.Bold,
-            color = Color.White,
-            textAlign = TextAlign.Center
-        )
-        
-        Spacer(modifier = Modifier.height(8.dp))
-        
-        Text(
-            text = "Start exploring and engaging with UniVerse\nto unlock your first badge!",
-            fontSize = 14.sp,
-            color = Color(0xFF8B9DAF),
-            textAlign = TextAlign.Center,
-            lineHeight = 20.sp
-        )
-    }
 }
 
 @Composable
@@ -723,74 +770,85 @@ private fun BottomNavigationBar(
     }
 }
 
-// Sample data for testing
-private fun getSampleBadges(): List<Badge> {
-    return listOf(
-        Badge(
-            id = "1",
-            title = "Library Explorer",
-            description = "Visited 5 study spots",
-            icon = Icons.AutoMirrored.Filled.MenuBook,
-            color = Color(0xFF4A90E2), // Blue
-            isUnlocked = true,
-            progress = 5,
-            maxProgress = 5,
-            category = BadgeCategory.STUDY
-        ),
-        Badge(
-            id = "2",
-            title = "Early Riser",
-            description = "Studied before 8 AM",
-            icon = Icons.Default.WbSunny,
-            color = Color(0xFFFFA726), // Orange
-            isUnlocked = true,
-            progress = 3,
-            maxProgress = 3,
-            category = BadgeCategory.STUDY
-        ),
-        Badge(
-            id = "3",
-            title = "Social Butterfly",
-            description = "Added 10 friends",
-            icon = Icons.Default.Group,
-            color = Color(0xFF66BB6A), // Green
-            isUnlocked = false,
-            progress = 5,
-            maxProgress = 10,
-            category = BadgeCategory.SOCIAL
-        ),
-        Badge(
-            id = "4",
-            title = "Event Enthusiast",
-            description = "Attended 5 events",
-            icon = Icons.Default.Event,
-            color = Color(0xFFFF7043), // Orange-Red
-            isUnlocked = false,
-            progress = 2,
-            maxProgress = 5,
-            category = BadgeCategory.EVENT
-        ),
-        Badge(
-            id = "5",
-            title = "Campus Legend",
-            description = "Unlock all badges",
-            icon = Icons.Default.EmojiEvents,
-            color = Color(0xFFAB47BC), // Purple
-            isUnlocked = false,
-            progress = 2,
-            maxProgress = 10,
-            category = BadgeCategory.SPECIAL
-        ),
-        Badge(
-            id = "6",
-            title = "Coffee Connoisseur",
-            description = "Visited 3 cafes",
-            icon = Icons.Default.Coffee,
-            color = Color(0xFF8D6E63), // Brown
-            isUnlocked = true,
-            progress = 3,
-            maxProgress = 3,
-            category = BadgeCategory.STUDY
+// Helper function to convert backend badges to display format - shows ALL badges
+@Composable
+private fun convertToDisplayBadges(
+    earnedBadges: List<UserBadge>,
+    availableBadges: List<Badge>,
+    progressItems: List<BadgeProgressItem>
+): List<BadgeDisplayItem> {
+    val displayBadges = mutableListOf<BadgeDisplayItem>()
+    val earnedBadgeIds = earnedBadges.map { it.badgeId.id }.toSet()
+    
+    // Create a map of badge ID to progress for quick lookup
+    val progressMap = progressItems.associate { it.badge.id to it.progress }
+    
+    // Add earned badges (unlocked, colored)
+    earnedBadges.forEach { userBadge ->
+        displayBadges.add(
+            BadgeDisplayItem(
+                id = userBadge.badgeId.id,
+                title = userBadge.badgeId.name,
+                description = userBadge.badgeId.description,
+                icon = mapIconToImageVector(userBadge.badgeId.icon),
+                color = mapRarityToColor(userBadge.badgeId.rarity),
+                isUnlocked = true,
+                progress = userBadge.progress?.current ?: userBadge.badgeId.requirements.target,
+                maxProgress = userBadge.progress?.target ?: userBadge.badgeId.requirements.target,
+                category = userBadge.badgeId.category.value
+            )
         )
-    )
+    }
+    
+    // Add ALL available badges (locked, greyed) with progress
+    availableBadges.forEach { badge ->
+        // Skip if already earned
+        if (!earnedBadgeIds.contains(badge.id)) {
+            val progress = progressMap[badge.id]
+            displayBadges.add(
+                BadgeDisplayItem(
+                    id = badge.id,
+                    title = badge.name,
+                    description = badge.description,
+                    icon = mapIconToImageVector(badge.icon),
+                    color = mapRarityToColor(badge.rarity),
+                    isUnlocked = false,
+                    progress = progress?.current ?: 0,
+                    maxProgress = progress?.target ?: badge.requirements.target,
+                    category = badge.category.value
+                )
+            )
+        }
+    }
+    
+    return displayBadges
+}
+
+// Map backend icon string to ImageVector
+@Composable
+private fun mapIconToImageVector(icon: String): ImageVector {
+    return when (icon.lowercase()) {
+        "library", "book", "library_explorer" -> Icons.AutoMirrored.Filled.MenuBook
+        "sun", "sunny", "early_riser" -> Icons.Default.WbSunny
+        "group", "social", "friends" -> Icons.Default.Group
+        "event", "calendar" -> Icons.Default.Event
+        "trophy", "achievement", "legend" -> Icons.Default.EmojiEvents
+        "coffee", "cafe" -> Icons.Default.Coffee
+        "star" -> Icons.Default.Star
+        "favorite", "heart" -> Icons.Default.Favorite
+        "explore" -> Icons.Default.Explore
+        "login", "person" -> Icons.Default.Person
+        else -> Icons.Default.EmojiEvents // Default trophy icon
+    }
+}
+
+// Map badge rarity to color
+private fun mapRarityToColor(rarity: BadgeRarity): Color {
+    return when (rarity) {
+        BadgeRarity.COMMON -> Color(0xFF8B9DAF) // Gray
+        BadgeRarity.UNCOMMON -> Color(0xFF66BB6A) // Green
+        BadgeRarity.RARE -> Color(0xFF4A90E2) // Blue
+        BadgeRarity.EPIC -> Color(0xFFAB47BC) // Purple
+        BadgeRarity.LEGENDARY -> Color(0xFFFFA726) // Gold
+    }
 }

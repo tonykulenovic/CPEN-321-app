@@ -11,6 +11,7 @@ import {
 import router from './routes/routes';
 import path from 'path';
 import { locationGateway } from './realtime/gateway';
+import { BadgeService } from './services/badge.service';
 
 const app = express();
 const httpServer = createServer(app);
@@ -26,7 +27,18 @@ app.use(errorHandler);
 // Initialize location gateway with Socket.io
 locationGateway.initialize(httpServer);
 
-connectDB();
+// Connect to database and initialize badges
+connectDB().then(() => {
+  // Initialize badges after database connection is established
+  BadgeService.initializeDefaultBadges()
+    .then(() => {
+      console.log('✅ Badge system initialized');
+    })
+    .catch(err => {
+      console.error('⚠️  Failed to initialize badges:', err);
+    });
+});
+
 httpServer.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`📡 Socket.io enabled for real-time location updates`);

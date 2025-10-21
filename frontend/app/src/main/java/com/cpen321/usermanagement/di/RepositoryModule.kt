@@ -6,6 +6,10 @@ import com.cpen321.usermanagement.data.repository.ProfileRepository
 import com.cpen321.usermanagement.data.repository.ProfileRepositoryImpl
 import com.cpen321.usermanagement.data.repository.FriendsRepository
 import com.cpen321.usermanagement.data.repository.FriendsRepositoryImpl
+import com.cpen321.usermanagement.data.remote.api.BadgeInterface
+import com.cpen321.usermanagement.data.remote.api.RetrofitClient
+import com.cpen321.usermanagement.data.repository.BadgeRepository
+import com.cpen321.usermanagement.data.repository.BadgeRepositoryImpl
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -38,5 +42,17 @@ object RepositoryModule {
         friendsRepositoryImpl: FriendsRepositoryImpl
     ): FriendsRepository {
         return friendsRepositoryImpl
+    }
+
+    @Provides
+    @Singleton
+    fun provideBadgeInterface(): BadgeInterface {
+        return RetrofitClient.badgeInterface
+    }
+    
+    @Provides
+    @Singleton
+    fun provideBadgeRepository(badgeInterface: BadgeInterface): BadgeRepository {
+        return BadgeRepositoryImpl(badgeInterface)
     }
 }
