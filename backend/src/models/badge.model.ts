@@ -44,7 +44,7 @@ const badgeSchema = new Schema<IBadge>(
       required: true,
     },
     requirements: {
-      type: {
+      type: new Schema({
         type: {
           type: String,
           enum: Object.values(BadgeRequirementType),
@@ -63,7 +63,7 @@ const badgeSchema = new Schema<IBadge>(
           type: Schema.Types.Mixed,
           required: false,
         },
-      },
+      }, { _id: false }),
       required: true,
     },
     isActive: {

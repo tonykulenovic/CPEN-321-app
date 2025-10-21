@@ -195,29 +195,15 @@ export class UserModel {
     }
   }
 
-<<<<<<< HEAD
   async findByUsername(username: string): Promise<IUser | null> {
     try {
       const user = await this.user.findOne({ username });
-=======
-  async findByIdWithBadges(_id: mongoose.Types.ObjectId): Promise<IUser | null> {
-    try {
-      const user = await this.user.findById(_id).populate({
-        path: 'badges',
-        populate: {
-          path: 'badgeId',
-          model: 'Badge',
-        },
-      });
->>>>>>> 80b216d (Badge endpoints added)
-
       if (!user) {
         return null;
       }
 
       return user;
     } catch (error) {
-<<<<<<< HEAD
       console.error('Error finding user by username:', error);
       throw new Error('Failed to find user');
     }
@@ -299,10 +285,27 @@ export class UserModel {
     } catch (error) {
       logger.error('Error updating friends count:', error);
       throw new Error('Failed to update friends count');
-=======
+    };
+  }
+
+  async findByIdWithBadges(_id: mongoose.Types.ObjectId): Promise<IUser | null> {
+    try {
+      const user = await this.user.findById(_id).populate({
+        path: 'badges',
+        populate: {
+          path: 'badgeId',
+          model: 'Badge',
+        },
+      });
+
+      if (!user) {
+        return null;
+      }
+
+      return user;
+    } catch (error) {
       console.error('Error finding user with badges:', error);
       throw new Error('Failed to find user with badges');
->>>>>>> 80b216d (Badge endpoints added)
     }
   }
 }
