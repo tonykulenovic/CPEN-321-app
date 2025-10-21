@@ -283,7 +283,7 @@ export class LocationGateway {
 
         // Verify JWT token
         const decoded = jwt.verify(token, process.env.JWT_SECRET!) as any;
-        const userId = new mongoose.Types.ObjectId(decoded.userId);
+        const userId = new mongoose.Types.ObjectId(decoded.id);
         
         // Store user ID in socket data
         socket.data.userId = userId;

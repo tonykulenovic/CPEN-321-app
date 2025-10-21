@@ -98,11 +98,20 @@ const userSchema = new Schema<IUser>(
   },
   {
     timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
   }
 );
 
 // Text search index for username and name
 userSchema.index({ username: 'text', name: 'text' });
+// Virtual field to get user badges
+userSchema.virtual('badges', {
+  ref: 'UserBadge',
+  localField: '_id',
+  foreignField: 'userId',
+  justOne: false,
+});
 
 export class UserModel {
   private user: mongoose.Model<IUser>;
@@ -189,7 +198,6 @@ export class UserModel {
   async findByUsername(username: string): Promise<IUser | null> {
     try {
       const user = await this.user.findOne({ username });
-
       if (!user) {
         return null;
       }
@@ -277,6 +285,27 @@ export class UserModel {
     } catch (error) {
       logger.error('Error updating friends count:', error);
       throw new Error('Failed to update friends count');
+    };
+  }
+
+  async findByIdWithBadges(_id: mongoose.Types.ObjectId): Promise<IUser | null> {
+    try {
+      const user = await this.user.findById(_id).populate({
+        path: 'badges',
+        populate: {
+          path: 'badgeId',
+          model: 'Badge',
+        },
+      });
+
+      if (!user) {
+        return null;
+      }
+
+      return user;
+    } catch (error) {
+      console.error('Error finding user with badges:', error);
+      throw new Error('Failed to find user with badges');
     }
   }
 }
