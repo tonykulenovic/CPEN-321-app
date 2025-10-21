@@ -71,15 +71,22 @@ import androidx.compose.runtime.LaunchedEffect
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
+import com.google.maps.android.compose.Marker
+import com.google.maps.android.compose.MarkerState
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
+import com.cpen321.usermanagement.data.remote.dto.PinCategory
+import com.cpen321.usermanagement.ui.viewmodels.PinViewModel
 
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun MainScreen(
     mainViewModel: MainViewModel,
+    pinViewModel: PinViewModel,
     onProfileClick: () -> Unit,
     onMapClick: () -> Unit = {},
     onFriendsClick: () -> Unit = {},
-    onBadgesClick: () -> Unit = {}
+    onBadgesClick: () -> Unit = {},
+    onCreatePinClick: () -> Unit = {}
 ) {
     val uiState by mainViewModel.uiState.collectAsState()
     val snackBarHostState = remember { SnackbarHostState() }
@@ -106,11 +113,13 @@ fun MainScreen(
 
     MainContent(
         uiState = uiState,
+        pinViewModel = pinViewModel,
         snackBarHostState = snackBarHostState,
         onProfileClick = onProfileClick,
         onMapClick = onMapClick,
         onFriendsClick = onFriendsClick,
         onBadgesClick = onBadgesClick,
+        onCreatePinClick = onCreatePinClick,
         onSuccessMessageShown = mainViewModel::clearSuccessMessage,
         hasLocationPermission = locationPermissionState.status.isGranted
     )
@@ -119,11 +128,13 @@ fun MainScreen(
 @Composable
 private fun MainContent(
     uiState: MainUiState,
+    pinViewModel: PinViewModel,
     snackBarHostState: SnackbarHostState,
     onProfileClick: () -> Unit,
     onMapClick: () -> Unit,
     onFriendsClick: () -> Unit,
     onBadgesClick: () -> Unit,
+    onCreatePinClick: () -> Unit,
     onSuccessMessageShown: () -> Unit,
     hasLocationPermission: Boolean,
     modifier: Modifier = Modifier
@@ -163,7 +174,9 @@ private fun MainContent(
         }
     ) { paddingValues ->
         MapContent(
+            pinViewModel = pinViewModel,
             hasLocationPermission = hasLocationPermission,
+            onCreatePinClick = onCreatePinClick,
             modifier = Modifier.padding(paddingValues)
         )
     }
@@ -311,9 +324,18 @@ private fun MainTopBar(
 
 @Composable
 private fun MapContent(
+    pinViewModel: PinViewModel,
     hasLocationPermission: Boolean,
+    onCreatePinClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val pinUiState by pinViewModel.uiState.collectAsState()
+    
+    // Load pins when screen opens
+    LaunchedEffect(Unit) {
+        pinViewModel.loadPins()
+    }
+    
     var isSatelliteView by remember { mutableStateOf(false) }
     
     // UBC Vancouver coordinates
@@ -466,7 +488,29 @@ private fun MapContent(
             cameraPositionState = cameraPositionState,
             properties = mapProperties,
             uiSettings = uiSettings
-        )
+        ) {
+            // Display pin markers
+            pinUiState.pins.forEach { pin ->
+                Marker(
+                    state = MarkerState(
+                        position = LatLng(
+                            pin.location.latitude,
+                            pin.location.longitude
+                        )
+                    ),
+                    title = pin.name,
+                    snippet = pin.description,
+                    icon = BitmapDescriptorFactory.defaultMarker(
+                        when (pin.category) {
+                            PinCategory.STUDY -> BitmapDescriptorFactory.HUE_BLUE
+                            PinCategory.EVENTS -> BitmapDescriptorFactory.HUE_RED
+                            PinCategory.CHILL -> BitmapDescriptorFactory.HUE_GREEN
+                            PinCategory.SHOPS_SERVICES -> BitmapDescriptorFactory.HUE_ORANGE
+                        }
+                    )
+                )
+            }
+        }
         
         // Map type toggle button in top-right corner - smaller and refined
         FloatingActionButton(
@@ -488,7 +532,7 @@ private fun MapContent(
         
         // Create Pin button in bottom-right corner
         FloatingActionButton(
-            onClick = { /* TODO: Implement create pin functionality */ },
+            onClick = { onCreatePinClick() },  // ADD THIS CALLBACK
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .padding(bottom = 16.dp, end = 16.dp),

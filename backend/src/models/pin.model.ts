@@ -62,7 +62,15 @@ export class PinModel {
     try {
       const validatedData = createPinSchema.parse(pinData);
       const pin = await this.pin.create({ ...validatedData, createdBy: userId, status: PinStatus.ACTIVE });
-      return pin;
+      
+      // Populate the createdBy field before returning
+      const populatedPin = await this.pin.findById(pin._id).populate('createdBy', 'name profilePicture');
+      
+      if (!populatedPin) {
+        throw new Error('Failed to retrieve created pin');
+      }
+      
+      return populatedPin;
     } catch (error) {
       if (error instanceof z.ZodError) {
         logger.error('Validation error:', error.issues);

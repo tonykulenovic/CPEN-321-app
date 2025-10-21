@@ -10,6 +10,8 @@ import com.cpen321.usermanagement.data.remote.api.BadgeInterface
 import com.cpen321.usermanagement.data.remote.api.RetrofitClient
 import com.cpen321.usermanagement.data.repository.BadgeRepository
 import com.cpen321.usermanagement.data.repository.BadgeRepositoryImpl
+import com.cpen321.usermanagement.data.repository.PinRepository
+import com.cpen321.usermanagement.data.repository.PinRepositoryImpl
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -54,5 +56,11 @@ object RepositoryModule {
     @Singleton
     fun provideBadgeRepository(badgeInterface: BadgeInterface): BadgeRepository {
         return BadgeRepositoryImpl(badgeInterface)
+    }
+
+    @Provides
+    @Singleton
+    fun providePinRepository(): PinRepository {
+        return PinRepositoryImpl()
     }
 }

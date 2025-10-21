@@ -13,9 +13,11 @@ import androidx.navigation.navArgument
 import com.cpen321.usermanagement.R
 import com.cpen321.usermanagement.ui.screens.AuthScreen
 import com.cpen321.usermanagement.ui.screens.BadgesScreen
+import com.cpen321.usermanagement.ui.screens.CreatePinScreen
 import com.cpen321.usermanagement.ui.screens.FriendProfileScreen
 import com.cpen321.usermanagement.ui.screens.FriendsScreen
 import com.cpen321.usermanagement.ui.screens.LoadingScreen
+import com.cpen321.usermanagement.ui.screens.LocationPickerScreen
 import com.cpen321.usermanagement.ui.screens.MainScreen
 import com.cpen321.usermanagement.ui.screens.ManageProfileScreen
 import com.cpen321.usermanagement.ui.screens.ProfileCompletionScreen
@@ -26,9 +28,11 @@ import com.cpen321.usermanagement.ui.viewmodels.BadgeViewModel
 import com.cpen321.usermanagement.ui.viewmodels.FriendsViewModel
 import com.cpen321.usermanagement.ui.viewmodels.MainViewModel
 import com.cpen321.usermanagement.ui.viewmodels.NavigationViewModel
+import com.cpen321.usermanagement.ui.viewmodels.PinViewModel
 import com.cpen321.usermanagement.ui.viewmodels.ProfileViewModel
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
+import com.google.android.gms.maps.model.LatLng
 
 object NavRoutes {
     const val LOADING = "loading"
@@ -40,6 +44,8 @@ object NavRoutes {
     const val FRIENDS = "friends"
     const val BADGES = "badges"
     const val FRIEND_PROFILE = "friend_profile/{friendId}"
+    const val CREATE_PIN = "create_pin"
+    const val PICK_LOCATION = "pick_location"
 
     // Helper function to create route with parameter
     fun friendProfile(friendId: String) = "friend_profile/$friendId"
@@ -186,14 +192,17 @@ private fun AppNavHost(
         }
 
         composable(NavRoutes.MAIN) {
+            val pinViewModel: PinViewModel = hiltViewModel()
             MainScreen(
                 mainViewModel = mainViewModel,
+                pinViewModel = pinViewModel,
                 onProfileClick = { navigationStateManager.navigateToProfile() },
                 onMapClick = { navController.navigate(NavRoutes.MAIN) {
                     popUpTo(NavRoutes.MAIN) { inclusive = true }
                 } },
                 onFriendsClick = { navController.navigate(NavRoutes.FRIENDS) },
-                onBadgesClick = { navController.navigate(NavRoutes.BADGES) }
+                onBadgesClick = { navController.navigate(NavRoutes.BADGES) },
+                onCreatePinClick = { navController.navigate(NavRoutes.CREATE_PIN) }
             )
         }
 
@@ -261,6 +270,54 @@ private fun AppNavHost(
             FriendProfileScreen(
                 friendId = friendId,
                 onBackClick = { navController.popBackStack() }
+            )
+        }
+
+        composable(NavRoutes.CREATE_PIN) {
+            val pinViewModel: PinViewModel = hiltViewModel()
+            val navBackStackEntry = remember { navController.getBackStackEntry(NavRoutes.CREATE_PIN) }
+            val savedStateHandle = navBackStackEntry.savedStateHandle
+            
+            // Get location from saved state
+            val selectedLat = savedStateHandle.get<Double>("selected_lat")
+            val selectedLng = savedStateHandle.get<Double>("selected_lng")
+            val currentLocation = if (selectedLat != null && selectedLng != null) {
+                Pair(selectedLat, selectedLng)
+            } else null
+            
+            CreatePinScreen(
+                pinViewModel = pinViewModel,
+                currentLocation = currentLocation,
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
+                onPickLocationClick = {
+                    navController.navigate(NavRoutes.PICK_LOCATION)
+                }
+            )
+        }
+
+        composable(NavRoutes.PICK_LOCATION) {
+            val createPinBackStackEntry = remember { navController.getBackStackEntry(NavRoutes.CREATE_PIN) }
+            val savedStateHandle = createPinBackStackEntry.savedStateHandle
+            
+            // Get initial location if already selected
+            val initialLat = savedStateHandle.get<Double>("selected_lat")
+            val initialLng = savedStateHandle.get<Double>("selected_lng")
+            val initialLocation = if (initialLat != null && initialLng != null) {
+                LatLng(initialLat, initialLng)
+            } else null
+            
+            LocationPickerScreen(
+                initialLocation = initialLocation,
+                onLocationSelected = { latLng ->
+                    // Save to CreatePin screen's saved state
+                    savedStateHandle["selected_lat"] = latLng.latitude
+                    savedStateHandle["selected_lng"] = latLng.longitude
+                },
+                onNavigateBack = {
+                    navController.popBackStack()
+                }
             )
         }
     }
