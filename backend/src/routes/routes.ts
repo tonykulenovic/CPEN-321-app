@@ -2,6 +2,7 @@ import { Router } from 'express';
 
 import { authenticateToken } from '../middleware/auth.middleware';
 import authRoutes from '../routes/auth.routes';
+import badgeRoutes from '../routes/badge.routes';
 import mediaRoutes from '../routes/media.routes';
 import usersRoutes from '../routes/user.routes';
 import friendsRoutes from '../routes/friends.routes';
@@ -39,5 +40,7 @@ router.use('/media', authenticateToken, mediaRoutes);
 router.use('/friends', friendsRoutes); // Authentication middleware applied within friends routes
 
 router.use('/me', locationRoutes); // Authentication middleware applied within location routes
+
+router.use('/badges', authenticateToken, badgeRoutes);
 
 export default router;
