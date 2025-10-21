@@ -86,6 +86,14 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.compose.runtime.collectAsState
 import com.cpen321.usermanagement.ui.viewmodels.FriendsViewModel
 import com.cpen321.usermanagement.data.remote.dto.UserSearchResult
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.runtime.LaunchedEffect
+import com.cpen321.usermanagement.ui.components.MessageSnackbar
+import com.cpen321.usermanagement.ui.components.MessageSnackbarState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.material.icons.filled.Schedule
 
 // Data class for friends
 data class Friend(
@@ -117,9 +125,25 @@ fun FriendsScreen(
     var searchQuery by remember { mutableStateOf("") }
     var showAddFriendSheet by remember { mutableStateOf(false) }
     var showFriendRequestsSheet by remember { mutableStateOf(false) }
+    val snackBarHostState = remember { SnackbarHostState() }  // ADD THIS
     
     // Get state from ViewModel (CHANGED: Replace mock data)
     val uiState by friendsViewModel.uiState.collectAsState()
+    
+    // ADD THIS - Show snackbar for success/error messages
+    LaunchedEffect(uiState.successMessage) {
+        uiState.successMessage?.let {
+            snackBarHostState.showSnackbar(it)
+            friendsViewModel.clearSuccessMessage()
+        }
+    }
+    
+    LaunchedEffect(uiState.error) {
+        uiState.error?.let {
+            snackBarHostState.showSnackbar(it)
+            friendsViewModel.clearError()
+        }
+    }
     
     // Convert backend data to UI models
     val friends = remember(uiState.friends) {
@@ -205,6 +229,17 @@ fun FriendsScreen(
                     contentDescription = "Add Friend"
                 )
             }
+        },
+        snackbarHost = {  // ADD THIS
+            MessageSnackbar(
+                hostState = snackBarHostState,
+                messageState = MessageSnackbarState(
+                    successMessage = null,
+                    errorMessage = null,
+                    onSuccessMessageShown = {},
+                    onErrorMessageShown = {}
+                )
+            )
         }
     ) { paddingValues ->
         Column(
@@ -678,12 +713,14 @@ private fun AddFriendBottomSheet(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     items(uiState.searchResults.size) { index ->
+                        val user = uiState.searchResults[index]
                         UserSearchResultCard(
-                            user = uiState.searchResults[index],
+                            user = user,
+                            isPending = user._id in uiState.pendingRequestUserIds,  // ADD THIS
                             onSendRequest = {
                                 scope.launch {
                                     sheetState.hide()
-                                    onSendRequest(uiState.searchResults[index]._id)
+                                    onSendRequest(user._id)
                                     friendsViewModel.clearSearchResults()
                                 }
                             }
@@ -739,9 +776,18 @@ private fun AddFriendBottomSheet(
 @Composable
 private fun UserSearchResultCard(
     user: UserSearchResult,
+    isPending: Boolean,  // ADD THIS PARAMETER
     onSendRequest: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    // Animation state
+    var isPressed by remember { mutableStateOf(false) }
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) 0.95f else 1f,
+        animationSpec = tween(durationMillis = 100),
+        label = "button_scale"
+    )
+    
     Card(
         modifier = modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
@@ -752,60 +798,112 @@ private fun UserSearchResultCard(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(12.dp),
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Profile Picture Placeholder
-            Box(
-                modifier = Modifier
-                    .size(40.dp)
-                    .clip(CircleShape)
-                    .background(Color(0xFF4A90E2)),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = user.displayName.firstOrNull()?.toString() ?: "?",
-                    color = Color.White,
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold
-                )
-            }
-            
-            Spacer(modifier = Modifier.width(12.dp))
-            
             // User Info
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = user.displayName,
-                    color = Color.White,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 14.sp
-                )
-                Text(
-                    text = "@${user.username}",
-                    color = Color(0xFF8B9DAF),
-                    fontSize = 12.sp
-                )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.weight(1f)
+            ) {
+                // Profile Picture Placeholder
+                Box(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clip(CircleShape)
+                        .background(Color(0xFF1A2332)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Person,
+                        contentDescription = "Profile",
+                        tint = Color(0xFF8B9DAF),
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+                
+                Spacer(modifier = Modifier.width(12.dp))
+                
+                Column {
+                    Text(
+                        text = user.displayName,
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp
+                    )
+                    Text(
+                        text = "@${user.username}",
+                        color = Color(0xFF8B9DAF),
+                        fontSize = 14.sp
+                    )
+                }
             }
             
-            // Add Button
-            androidx.compose.material3.Button(
-                onClick = onSendRequest,
-                colors = androidx.compose.material3.ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF4A90E2),
-                    contentColor = Color.White
-                ),
-                shape = RoundedCornerShape(8.dp),
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.PersonAdd,
-                    contentDescription = "Add Friend",
-                    modifier = Modifier.size(16.dp)
-                )
-                Spacer(modifier = Modifier.width(4.dp))
-                Text("Add", fontSize = 12.sp)
+            // UPDATED - Conditional button based on pending status
+            if (isPending) {
+                // Pending state - disabled button
+                androidx.compose.material3.Button(
+                    onClick = { }, // No action when pending
+                    enabled = false,
+                    colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                        disabledContainerColor = Color(0xFF2A3A4A).copy(alpha = 0.5f),
+                        disabledContentColor = Color(0xFF8B9DAF)
+                    ),
+                    shape = RoundedCornerShape(8.dp),
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Schedule,  // Clock/pending icon
+                        contentDescription = "Pending",
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = "Pending",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+            } else {
+                // Active state - enabled button with animation
+                androidx.compose.material3.Button(
+                    onClick = {
+                        isPressed = true
+                        onSendRequest()
+                    },
+                    colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF4A90E2),
+                        contentColor = Color.White
+                    ),
+                    shape = RoundedCornerShape(8.dp),
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                    modifier = Modifier.graphicsLayer {
+                        scaleX = scale
+                        scaleY = scale
+                    }
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.PersonAdd,
+                        contentDescription = "Add Friend",
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = "Add",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
             }
+        }
+    }
+    
+    // Reset animation after delay
+    LaunchedEffect(isPressed) {
+        if (isPressed) {
+            kotlinx.coroutines.delay(100)
+            isPressed = false
         }
     }
 }

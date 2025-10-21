@@ -17,6 +17,7 @@ data class FriendsUiState(
     val friends: List<FriendSummary> = emptyList(),
     val friendRequests: List<FriendRequestSummary> = emptyList(),
     val searchResults: List<UserSearchResult> = emptyList(),
+    val pendingRequestUserIds: Set<String> = emptySet(),  // ADD THIS - Track pending sent requests
     val isLoading: Boolean = false,
     val isSearching: Boolean = false,
     val error: String? = null,
@@ -74,8 +75,11 @@ class FriendsViewModel @Inject constructor(
             
             friendsRepository.sendFriendRequest(userId)
                 .onSuccess {
+                    // ADD THIS - Add userId to pending set
+                    val updatedPending = _uiState.value.pendingRequestUserIds + userId
                     _uiState.value = _uiState.value.copy(
-                        successMessage = "Friend request sent!"
+                        successMessage = "Friend request sent!",
+                        pendingRequestUserIds = updatedPending
                     )
                 }
                 .onFailure { error ->
@@ -174,5 +178,10 @@ class FriendsViewModel @Inject constructor(
     
     fun clearSuccessMessage() {
         _uiState.value = _uiState.value.copy(successMessage = null)
+    }
+
+    // ADD THIS NEW FUNCTION - Check if user has pending request
+    fun isPendingRequest(userId: String): Boolean {
+        return userId in _uiState.value.pendingRequestUserIds
     }
 }
