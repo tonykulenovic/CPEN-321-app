@@ -93,8 +93,20 @@ export class PinModel {
   async update(pinId: mongoose.Types.ObjectId, userId: mongoose.Types.ObjectId, updates: UpdatePinRequest): Promise<IPin | null> {
     try {
       const validatedData = updatePinSchema.parse(updates);
-      const pin = await this.pin.findOneAndUpdate({ _id: pinId, createdBy: userId }, { $set: validatedData }, { new: true });
-      return pin;
+      const pin = await this.pin.findOneAndUpdate(
+        { _id: pinId, createdBy: userId }, 
+        { $set: validatedData }, 
+        { new: true }
+      );
+      
+      if (!pin) {
+        return null;
+      }
+      
+      // Populate the createdBy field before returning
+      const populatedPin = await this.pin.findById(pin._id).populate('createdBy', 'name profilePicture');
+      
+      return populatedPin;
     } catch (error) {
       if (error instanceof z.ZodError) {
         logger.error('Validation error:', error.issues);
