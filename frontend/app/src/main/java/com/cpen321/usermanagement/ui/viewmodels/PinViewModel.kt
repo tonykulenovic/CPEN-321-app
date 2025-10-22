@@ -17,6 +17,7 @@ data class PinUiState(
     val isLoading: Boolean = false,
     val isSearching: Boolean = false,
     val isCreating: Boolean = false,
+    val isUpdating: Boolean = false,
     val error: String? = null,
     val successMessage: String? = null,
     val totalPins: Int = 0,
@@ -101,7 +102,11 @@ class PinViewModel @Inject constructor(
     
     fun getPin(pinId: String) {
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+            _uiState.value = _uiState.value.copy(
+                currentPin = null,  // Clear old pin immediately
+                isLoading = true, 
+                error = null
+            )
             
             pinRepository.getPin(pinId)
                 .onSuccess { pin ->
@@ -165,6 +170,28 @@ class PinViewModel @Inject constructor(
                 .onFailure { error ->
                     _uiState.value = _uiState.value.copy(
                         error = error.message ?: "Failed to delete pin"
+                    )
+                }
+        }
+    }
+
+    fun updatePin(pinId: String, request: UpdatePinRequest) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isUpdating = true, error = null)
+            
+            pinRepository.updatePin(pinId, request)
+                .onSuccess { updatedPin ->
+                    _uiState.value = _uiState.value.copy(
+                        successMessage = "Pin updated successfully!",
+                        currentPin = updatedPin,
+                        isUpdating = false
+                    )
+                    loadPins() // Refresh pin list
+                }
+                .onFailure { error ->
+                    _uiState.value = _uiState.value.copy(
+                        error = error.message ?: "Failed to update pin",
+                        isUpdating = false
                     )
                 }
         }

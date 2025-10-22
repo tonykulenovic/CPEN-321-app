@@ -76,6 +76,10 @@ import com.google.maps.android.compose.MarkerState
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.cpen321.usermanagement.data.remote.dto.PinCategory
 import com.cpen321.usermanagement.ui.viewmodels.PinViewModel
+import com.cpen321.usermanagement.ui.viewmodels.ProfileViewModel
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.cpen321.usermanagement.data.remote.dto.Pin
+import androidx.compose.ui.draw.clip
 
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
@@ -86,10 +90,14 @@ fun MainScreen(
     onMapClick: () -> Unit = {},
     onFriendsClick: () -> Unit = {},
     onBadgesClick: () -> Unit = {},
-    onCreatePinClick: () -> Unit = {}
+    onCreatePinClick: () -> Unit = {},
+    onEditPinClick: (String) -> Unit = {}
 ) {
     val uiState by mainViewModel.uiState.collectAsState()
     val snackBarHostState = remember { SnackbarHostState() }
+    
+    // State for pin details bottom sheet
+    var selectedPinId by remember { mutableStateOf<String?>(null) }
     
     // Request location permission
     val locationPermissionState = rememberPermissionState(
@@ -121,7 +129,11 @@ fun MainScreen(
         onBadgesClick = onBadgesClick,
         onCreatePinClick = onCreatePinClick,
         onSuccessMessageShown = mainViewModel::clearSuccessMessage,
-        hasLocationPermission = locationPermissionState.status.isGranted
+        hasLocationPermission = locationPermissionState.status.isGranted,
+        onPinClick = { pinId -> selectedPinId = pinId },
+        selectedPinId = selectedPinId,
+        onDismissPinDetails = { selectedPinId = null },
+        onEditPinClick = onEditPinClick
     )
 }
 
@@ -137,48 +149,65 @@ private fun MainContent(
     onCreatePinClick: () -> Unit,
     onSuccessMessageShown: () -> Unit,
     hasLocationPermission: Boolean,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onPinClick: (String) -> Unit,
+    selectedPinId: String?,
+    onDismissPinDetails: () -> Unit,
+    onEditPinClick: (String) -> Unit
 ) {
     var selectedItem by remember { mutableIntStateOf(0) }
     
-    Scaffold(
-        modifier = modifier,
-        topBar = {
-            MainTopBar()
-        },
-        bottomBar = {
-            BottomNavigationBar(
-                selectedItem = selectedItem,
-                onItemSelected = { index ->
-                    selectedItem = index
-                    when (index) {
-                        0 -> onMapClick() // Map button
-                        1 -> {} // Search button - not implemented yet
-                        2 -> onBadgesClick() // Badge button
-                        3 -> onFriendsClick() // Friends button
-                        4 -> onProfileClick() // Profile button
+    Box(modifier = modifier.fillMaxSize()) {
+        Scaffold(
+            modifier = Modifier.fillMaxSize(),
+            topBar = {
+                MainTopBar()
+            },
+            bottomBar = {
+                BottomNavigationBar(
+                    selectedItem = selectedItem,
+                    onItemSelected = { index ->
+                        selectedItem = index
+                        when (index) {
+                            0 -> onMapClick() // Map button
+                            1 -> {} // Search button - not implemented yet
+                            2 -> onBadgesClick() // Badge button
+                            3 -> onFriendsClick() // Friends button
+                            4 -> onProfileClick() // Profile button
+                        }
                     }
-                }
-            )
-        },
-        snackbarHost = {
-            MessageSnackbar(
-                hostState = snackBarHostState,
-                messageState = MessageSnackbarState(
-                    successMessage = uiState.successMessage,
-                    errorMessage = null,
-                    onSuccessMessageShown = onSuccessMessageShown,
-                    onErrorMessageShown = { /* No error handling needed */ }
                 )
+            },
+            snackbarHost = {
+                MessageSnackbar(
+                    hostState = snackBarHostState,
+                    messageState = MessageSnackbarState(
+                        successMessage = uiState.successMessage,
+                        errorMessage = null,
+                        onSuccessMessageShown = onSuccessMessageShown,
+                        onErrorMessageShown = { /* No error handling needed */ }
+                    )
+                )
+            }
+        ) { paddingValues ->
+            MapContent(
+                pinViewModel = pinViewModel,
+                hasLocationPermission = hasLocationPermission,
+                onCreatePinClick = onCreatePinClick,
+                onPinClick = onPinClick,
+                modifier = Modifier.padding(paddingValues)
             )
         }
-    ) { paddingValues ->
-        MapContent(
-            pinViewModel = pinViewModel,
-            hasLocationPermission = hasLocationPermission,
-            onCreatePinClick = onCreatePinClick,
-            modifier = Modifier.padding(paddingValues)
-        )
+        
+        // Pin Details Bottom Sheet Overlay
+        if (selectedPinId != null) {
+            PinDetailsBottomSheet(
+                pinId = selectedPinId,
+                pinViewModel = pinViewModel,
+                onDismiss = onDismissPinDetails,
+                onEditClick = onEditPinClick
+            )
+        }
     }
 }
 
@@ -327,6 +356,7 @@ private fun MapContent(
     pinViewModel: PinViewModel,
     hasLocationPermission: Boolean,
     onCreatePinClick: () -> Unit,
+    onPinClick: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val pinUiState by pinViewModel.uiState.collectAsState()
@@ -507,7 +537,11 @@ private fun MapContent(
                             PinCategory.CHILL -> BitmapDescriptorFactory.HUE_GREEN
                             PinCategory.SHOPS_SERVICES -> BitmapDescriptorFactory.HUE_ORANGE
                         }
-                    )
+                    ),
+                    onClick = {
+                        onPinClick(pin.id)
+                        true // Consume the click event
+                    }
                 )
             }
         }
@@ -522,7 +556,7 @@ private fun MapContent(
             containerColor = Color(0xFF1A1A2E),
             contentColor = Color.White
         ) {
-            Icon(
+    Icon(
                 imageVector = if (isSatelliteView) Icons.Default.Map else Icons.Default.SatelliteAlt,
                 contentDescription = if (isSatelliteView) "Switch to Map" else "Switch to Satellite",
                 tint = Color.White,
@@ -532,7 +566,7 @@ private fun MapContent(
         
         // Create Pin button in bottom-right corner
         FloatingActionButton(
-            onClick = { onCreatePinClick() },  // ADD THIS CALLBACK
+            onClick = { onCreatePinClick() },
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .padding(bottom = 16.dp, end = 16.dp),
@@ -546,4 +580,24 @@ private fun MapContent(
             )
         }
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun PinDetailsBottomSheet(
+    pinId: String,
+    pinViewModel: PinViewModel,
+    onDismiss: () -> Unit,
+    onEditClick: (String) -> Unit
+) {
+    val profileViewModel: ProfileViewModel = hiltViewModel()
+    
+    // Simply render the PinDetailsScreen which is already a bottom sheet
+    PinDetailsScreen(
+        pinId = pinId,
+        pinViewModel = pinViewModel,
+        profileViewModel = profileViewModel,
+        onNavigateBack = onDismiss,
+        onEditClick = onEditClick
+    )
 }

@@ -14,6 +14,7 @@ import com.cpen321.usermanagement.R
 import com.cpen321.usermanagement.ui.screens.AuthScreen
 import com.cpen321.usermanagement.ui.screens.BadgesScreen
 import com.cpen321.usermanagement.ui.screens.CreatePinScreen
+import com.cpen321.usermanagement.ui.screens.EditPinScreen
 import com.cpen321.usermanagement.ui.screens.FriendProfileScreen
 import com.cpen321.usermanagement.ui.screens.FriendsScreen
 import com.cpen321.usermanagement.ui.screens.LoadingScreen
@@ -46,9 +47,11 @@ object NavRoutes {
     const val FRIEND_PROFILE = "friend_profile/{friendId}"
     const val CREATE_PIN = "create_pin"
     const val PICK_LOCATION = "pick_location"
+    const val EDIT_PIN = "edit_pin/{pinId}"
 
     // Helper function to create route with parameter
     fun friendProfile(friendId: String) = "friend_profile/$friendId"
+    fun editPin(pinId: String) = "edit_pin/$pinId"
 }
 
 @Composable
@@ -192,17 +195,17 @@ private fun AppNavHost(
         }
 
         composable(NavRoutes.MAIN) {
+            val mainViewModel: MainViewModel = hiltViewModel()
             val pinViewModel: PinViewModel = hiltViewModel()
+            
             MainScreen(
                 mainViewModel = mainViewModel,
                 pinViewModel = pinViewModel,
-                onProfileClick = { navigationStateManager.navigateToProfile() },
-                onMapClick = { navController.navigate(NavRoutes.MAIN) {
-                    popUpTo(NavRoutes.MAIN) { inclusive = true }
-                } },
+                onProfileClick = { navController.navigate(NavRoutes.PROFILE) },
                 onFriendsClick = { navController.navigate(NavRoutes.FRIENDS) },
                 onBadgesClick = { navController.navigate(NavRoutes.BADGES) },
-                onCreatePinClick = { navController.navigate(NavRoutes.CREATE_PIN) }
+                onCreatePinClick = { navController.navigate(NavRoutes.CREATE_PIN) },
+                onEditPinClick = { pinId -> navController.navigate(NavRoutes.editPin(pinId)) }
             )
         }
 
@@ -318,6 +321,21 @@ private fun AppNavHost(
                 onNavigateBack = {
                     navController.popBackStack()
                 }
+            )
+        }
+
+        // Edit Pin Screen
+        composable(
+            route = NavRoutes.EDIT_PIN,
+            arguments = listOf(navArgument("pinId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val pinId = backStackEntry.arguments?.getString("pinId") ?: return@composable
+            val pinViewModel: PinViewModel = hiltViewModel()
+            
+            EditPinScreen(
+                pinId = pinId,
+                pinViewModel = pinViewModel,
+                onNavigateBack = { navController.popBackStack() }
             )
         }
     }
