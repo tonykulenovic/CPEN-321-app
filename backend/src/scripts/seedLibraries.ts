@@ -9,8 +9,8 @@ const UBC_LIBRARIES = [
     category: PinCategory.STUDY,
     description: "Main learning centre with Chapman Learning Commons, collaborative areas, and technology-enabled study rooms. Houses Music, Art & Architecture Library, Rare Books & Special Collections, and University Archives.",
     location: {
-      latitude: 49.2674,
-      longitude: -123.2528,
+      latitude: 49.267627,
+      longitude: -123.252686,
       address: "1961 East Mall, Vancouver, BC"
     },
     metadata: {
@@ -25,8 +25,8 @@ const UBC_LIBRARIES = [
     category: PinCategory.STUDY,
     description: "Main library with extensive study spaces, group rooms, and 24/7 access during exams. Great for quiet individual study. Note: Education Library collections are being relocated here.",
     location: {
-      latitude: 49.26669,
-      longitude: -123.25522,
+      latitude: 49.266639,
+      longitude: -123.255191,
       address: "1958 Main Mall, Vancouver, BC"
     },
     metadata: {
