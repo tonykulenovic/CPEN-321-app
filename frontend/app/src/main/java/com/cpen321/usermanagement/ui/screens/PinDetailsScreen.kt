@@ -41,9 +41,9 @@ fun PinDetailsScreen(
         skipPartiallyExpanded = false
     )
     
-    // Load pin details
+    // Load pin details (cache-first for instant loading)
     LaunchedEffect(pinId) {
-        pinViewModel.getPin(pinId)
+        pinViewModel.getPinFromCacheOrFetch(pinId)
         profileViewModel.loadProfile()
     }
     

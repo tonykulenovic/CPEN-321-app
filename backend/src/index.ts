@@ -12,6 +12,7 @@ import router from './routes/routes';
 import path from 'path';
 import { locationGateway } from './realtime/gateway';
 import { BadgeService } from './services/badge.service';
+import { seedLibraries } from './scripts/seedLibraries';
 
 const app = express();
 const httpServer = createServer(app);
@@ -27,7 +28,7 @@ app.use(errorHandler);
 // Initialize location gateway with Socket.io
 locationGateway.initialize(httpServer);
 
-// Connect to database and initialize badges
+// Connect to database and initialize system data
 connectDB().then(() => {
   // Initialize badges after database connection is established
   BadgeService.initializeDefaultBadges()
@@ -36,6 +37,12 @@ connectDB().then(() => {
     })
     .catch(err => {
       console.error('⚠️  Failed to initialize badges:', err);
+    });
+  
+  // Seed UBC libraries (only runs once if libraries don't exist)
+  seedLibraries()
+    .catch(err => {
+      console.error('⚠️  Failed to seed libraries:', err);
     });
 });
 

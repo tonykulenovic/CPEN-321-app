@@ -124,6 +124,24 @@ class PinViewModel @Inject constructor(
         }
     }
     
+    // Cache-first approach: try to get pin from already loaded pins list first
+    fun getPinFromCacheOrFetch(pinId: String) {
+        // Check if pin is already in the loaded pins list
+        val cachedPin = _uiState.value.pins.find { it.id == pinId }
+        
+        if (cachedPin != null) {
+            // Use cached data for instant loading
+            _uiState.value = _uiState.value.copy(
+                currentPin = cachedPin,
+                isLoading = false,
+                error = null
+            )
+        } else {
+            // Pin not in cache, fetch from network (e.g., deep link or expired cache)
+            getPin(pinId)
+        }
+    }
+    
     fun ratePin(pinId: String, voteType: String) {
         viewModelScope.launch {
             pinRepository.ratePin(pinId, voteType)

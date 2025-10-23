@@ -80,6 +80,11 @@ import com.cpen321.usermanagement.ui.viewmodels.ProfileViewModel
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.cpen321.usermanagement.data.remote.dto.Pin
 import androidx.compose.ui.draw.clip
+import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import androidx.compose.ui.platform.LocalContext
+import com.google.android.gms.maps.model.BitmapDescriptor
 
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
@@ -360,10 +365,20 @@ private fun MapContent(
     modifier: Modifier = Modifier
 ) {
     val pinUiState by pinViewModel.uiState.collectAsState()
+    val context = LocalContext.current
+    
+    // Create scaled library icon (48dp size for map markers) - nullable until map loads
+    var libraryIcon by remember { mutableStateOf<BitmapDescriptor?>(null) }
     
     // Load pins when screen opens
     LaunchedEffect(Unit) {
         pinViewModel.loadPins()
+    }
+    
+    // Create library icon after a short delay to ensure GoogleMap is initialized
+    LaunchedEffect(Unit) {
+        kotlinx.coroutines.delay(500) // Wait for map to initialize
+        libraryIcon = context.createScaledBitmapDescriptor(R.drawable.ic_library, 48)
     }
     
     var isSatelliteView by remember { mutableStateOf(false) }
@@ -530,14 +545,20 @@ private fun MapContent(
                     ),
                     title = pin.name,
                     snippet = pin.description,
-                    icon = BitmapDescriptorFactory.defaultMarker(
-                        when (pin.category) {
-                            PinCategory.STUDY -> BitmapDescriptorFactory.HUE_BLUE
-                            PinCategory.EVENTS -> BitmapDescriptorFactory.HUE_RED
-                            PinCategory.CHILL -> BitmapDescriptorFactory.HUE_GREEN
-                            PinCategory.SHOPS_SERVICES -> BitmapDescriptorFactory.HUE_ORANGE
-                        }
-                    ),
+                    icon = if (pin.isPreSeeded) {
+                        // Use scaled library icon for pre-seeded pins (fallback to violet while loading)
+                        libraryIcon ?: BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_VIOLET)
+                    } else {
+                        // Regular colored markers for user-created pins
+                        BitmapDescriptorFactory.defaultMarker(
+                            when (pin.category) {
+                                PinCategory.STUDY -> BitmapDescriptorFactory.HUE_BLUE
+                                PinCategory.EVENTS -> BitmapDescriptorFactory.HUE_RED
+                                PinCategory.CHILL -> BitmapDescriptorFactory.HUE_GREEN
+                                PinCategory.SHOPS_SERVICES -> BitmapDescriptorFactory.HUE_ORANGE
+                            }
+                        )
+                    },
                     onClick = {
                         onPinClick(pin.id)
                         true // Consume the click event
@@ -600,4 +621,17 @@ private fun PinDetailsBottomSheet(
         onNavigateBack = onDismiss,
         onEditClick = onEditClick
     )
+}
+
+// Helper function to create a scaled bitmap descriptor for map markers
+private fun Context.createScaledBitmapDescriptor(resourceId: Int, sizeDp: Int): BitmapDescriptor {
+    val bitmap = BitmapFactory.decodeResource(resources, resourceId)
+    
+    // Convert dp to pixels
+    val sizePixels = (sizeDp * resources.displayMetrics.density).toInt()
+    
+    // Scale bitmap to desired size
+    val scaledBitmap = Bitmap.createScaledBitmap(bitmap, sizePixels, sizePixels, false)
+    
+    return BitmapDescriptorFactory.fromBitmap(scaledBitmap)
 }
