@@ -407,7 +407,7 @@ private fun MapContent(
                 [
                   {
                     "elementType": "geometry",
-                    "stylers": [{"color": "#1d2c4d"}]
+                    "stylers": [{"color": "#2a3d5c"}]
                   },
                   {
                     "elementType": "labels.text.fill",
@@ -423,29 +423,19 @@ private fun MapContent(
                     "stylers": [{"color": "#4b6878"}]
                   },
                   {
-                    "featureType": "landscape.man_made",
+                    "featureType": "landscape.man_made.building",
                     "elementType": "geometry.fill",
-                    "stylers": [{"color": "#3d5265"}]
+                    "stylers": [{"color": "#556b7e"}]
                   },
                   {
-                    "featureType": "landscape.man_made",
+                    "featureType": "landscape.man_made.building",
                     "elementType": "geometry.stroke",
-                    "stylers": [{"color": "#4a90e2"}, {"weight": 1}]
+                    "stylers": [{"color": "#3a4d5f"}]
                   },
                   {
                     "featureType": "poi",
                     "elementType": "labels",
                     "stylers": [{"visibility": "off"}]
-                  },
-                  {
-                    "featureType": "poi",
-                    "elementType": "geometry",
-                    "stylers": [{"color": "#3d5265"}]
-                  },
-                  {
-                    "featureType": "poi",
-                    "elementType": "geometry.stroke",
-                    "stylers": [{"color": "#4a90e2"}, {"weight": 1.5}]
                   },
                   {
                     "featureType": "poi.business",
@@ -464,12 +454,12 @@ private fun MapContent(
                   {
                     "featureType": "road",
                     "elementType": "geometry",
-                    "stylers": [{"color": "#38414e"}]
+                    "stylers": [{"color": "#3d4857"}]
                   },
                   {
                     "featureType": "road",
                     "elementType": "geometry.stroke",
-                    "stylers": [{"color": "#212a37"}]
+                    "stylers": [{"color": "#1a2332"}]
                   },
                   {
                     "featureType": "road",
