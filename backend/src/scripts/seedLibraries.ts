@@ -41,8 +41,8 @@ const UBC_LIBRARIES = [
     category: PinCategory.STUDY,
     description: "Specialized collection focusing on East Asian materials. Excellent quiet study space with unique resources.",
     location: {
-      latitude: 49.266320,
-      longitude: -123.256928,
+      latitude: 49.266765,
+      longitude: -123.258728,
       address: "1871 West Mall, Asian Centre, Vancouver, BC"
     },
     metadata: {
@@ -73,8 +73,8 @@ const UBC_LIBRARIES = [
     category: PinCategory.STUDY,
     description: "First Nations House of Learning library with Indigenous collections, resources, and culturally supportive study space.",
     location: {
-      latitude: 49.26544,
-      longitude: -123.25643,
+      latitude: 49.265557,
+      longitude: -123.25696,
       address: "1985 West Mall, First Nations Longhouse, Vancouver, BC"
     },
     metadata: {
@@ -85,28 +85,12 @@ const UBC_LIBRARIES = [
     }
   },
   {
-    name: "David Lam Management Research Library",
-    category: PinCategory.STUDY,
-    description: "Business library at Sauder School with management research resources, case studies, and business databases.",
-    location: {
-      latitude: 49.2645,
-      longitude: -123.2536,
-      address: "2053 Main Mall, Henry Angus Building, Vancouver, BC"
-    },
-    metadata: {
-      capacity: 120,
-      openingHours: "Mon-Fri: 8am-9pm, Sat-Sun: 10am-6pm",
-      amenities: ["WiFi", "Business Resources", "Case Studies", "Group Study", "Databases"],
-      crowdLevel: "moderate"
-    }
-  },
-  {
     name: "Law Library",
     category: PinCategory.STUDY,
     description: "Peter A. Allard School of Law library with extensive legal collections, study carrels, and research support.",
     location: {
-      latitude: 49.2688,
-      longitude: -123.2529,
+      latitude: 49.270013,
+      longitude: -123.253306,
       address: "1822 East Mall, Allard Hall, Vancouver, BC"
     },
     metadata: {
@@ -114,22 +98,6 @@ const UBC_LIBRARIES = [
       openingHours: "Mon-Fri: 8am-11pm, Sat-Sun: 10am-10pm",
       amenities: ["WiFi", "Legal Collections", "Study Carrels", "Research Support", "Silent Study"],
       crowdLevel: "moderate"
-    }
-  },
-  {
-    name: "Biomedical Branch Library (VGH)",
-    category: PinCategory.STUDY,
-    description: "Off-campus biomedical library at VGH Diamond Health Care Centre. 24/7 access for authorized users with specialized medical resources.",
-    location: {
-      latitude: 49.2624,
-      longitude: -123.1225,
-      address: "2775 Laurel St, Diamond Health Care Centre, Vancouver, BC"
-    },
-    metadata: {
-      capacity: 50,
-      openingHours: "24/7 for authorized users",
-      amenities: ["WiFi", "Medical Collections", "24/7 Access", "Clinical Resources"],
-      crowdLevel: "quiet"
     }
   }
 ];
@@ -145,7 +113,7 @@ export async function seedLibraries() {
     const existingLibraries = await pinModel['pin'].countDocuments({ isPreSeeded: true });
 
     if (existingLibraries > 0) {
-      logger.info(`♻️  Found ${existingLibraries} existing libraries. Updating with latest data...`);
+      logger.info(`♻️  Found ${existingLibraries} existing libraries. Syncing with latest data...`);
     } else {
       logger.info(`🆕 No existing libraries found. Creating new library pins...`);
     }
@@ -163,6 +131,17 @@ export async function seedLibraries() {
         bio: 'Official UBC library locations',
         googleId: 'system'
       });
+    }
+
+    // Clean up pre-seeded libraries that are no longer in the UBC_LIBRARIES array
+    const currentLibraryNames = UBC_LIBRARIES.map(lib => lib.name);
+    const deleteResult = await pinModel['pin'].deleteMany({
+      isPreSeeded: true,
+      name: { $nin: currentLibraryNames } // Delete if name is NOT in current list
+    });
+
+    if (deleteResult.deletedCount > 0) {
+      logger.info(`🗑️  Removed ${deleteResult.deletedCount} outdated library pins`);
     }
 
     // Upsert library pins (update if exists, create if not)
@@ -203,10 +182,9 @@ export async function seedLibraries() {
       }
     }
 
-    logger.info(`🎉 Library seeding complete! Created: ${createdCount}, Updated: ${updatedCount}, Total: ${UBC_LIBRARIES.length}`);
+    logger.info(`🎉 Library seeding complete! Created: ${createdCount}, Updated: ${updatedCount}, Deleted: ${deleteResult.deletedCount}, Total: ${UBC_LIBRARIES.length}`);
     
   } catch (error) {
     logger.error('❌ Library seeding failed:', error);
   }
 }
-
