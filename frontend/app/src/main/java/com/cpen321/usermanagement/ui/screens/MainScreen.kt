@@ -101,8 +101,16 @@ fun MainScreen(
     val uiState by mainViewModel.uiState.collectAsState()
     val snackBarHostState = remember { SnackbarHostState() }
     
+    // Get ProfileViewModel to pre-load user data
+    val profileViewModel: ProfileViewModel = hiltViewModel()
+    
     // State for pin details bottom sheet
     var selectedPinId by remember { mutableStateOf<String?>(null) }
+    
+    // Pre-load profile data once when screen opens (for fast pin ownership checks)
+    LaunchedEffect(Unit) {
+        profileViewModel.loadProfile()
+    }
     
     // Request location permission
     val locationPermissionState = rememberPermissionState(
@@ -127,6 +135,7 @@ fun MainScreen(
     MainContent(
         uiState = uiState,
         pinViewModel = pinViewModel,
+        profileViewModel = profileViewModel,
         snackBarHostState = snackBarHostState,
         onProfileClick = onProfileClick,
         onMapClick = onMapClick,
@@ -146,6 +155,7 @@ fun MainScreen(
 private fun MainContent(
     uiState: MainUiState,
     pinViewModel: PinViewModel,
+    profileViewModel: ProfileViewModel,
     snackBarHostState: SnackbarHostState,
     onProfileClick: () -> Unit,
     onMapClick: () -> Unit,
@@ -209,6 +219,7 @@ private fun MainContent(
             PinDetailsBottomSheet(
                 pinId = selectedPinId,
                 pinViewModel = pinViewModel,
+                profileViewModel = profileViewModel,
                 onDismiss = onDismissPinDetails,
                 onEditClick = onEditPinClick
             )
@@ -598,11 +609,10 @@ private fun MapContent(
 private fun PinDetailsBottomSheet(
     pinId: String,
     pinViewModel: PinViewModel,
+    profileViewModel: ProfileViewModel,
     onDismiss: () -> Unit,
     onEditClick: (String) -> Unit
 ) {
-    val profileViewModel: ProfileViewModel = hiltViewModel()
-    
     // Simply render the PinDetailsScreen which is already a bottom sheet
     PinDetailsScreen(
         pinId = pinId,

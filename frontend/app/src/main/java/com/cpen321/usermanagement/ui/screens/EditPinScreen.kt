@@ -50,6 +50,7 @@ fun EditPinScreen(
     // Form state - initialize with pin data when loaded
     var name by rememberSaveable { mutableStateOf("") }
     var description by rememberSaveable { mutableStateOf("") }
+    var selectedVisibility by rememberSaveable { mutableStateOf(PinVisibility.PUBLIC) }
     var capacity by rememberSaveable { mutableStateOf("") }
     var openingHours by rememberSaveable { mutableStateOf("") }
     var amenitiesText by rememberSaveable { mutableStateOf("") }
@@ -61,6 +62,7 @@ fun EditPinScreen(
         pin?.let {
             name = it.name
             description = it.description
+            selectedVisibility = it.visibility
             capacity = it.metadata?.capacity?.toString() ?: ""
             openingHours = it.metadata?.openingHours ?: ""
             amenitiesText = it.metadata?.amenities?.joinToString(", ") ?: ""
@@ -184,6 +186,46 @@ fun EditPinScreen(
                         cursorColor = Color(0xFF4A90E2)
                     )
                 )
+                
+                // Visibility Selection
+                Text(
+                    "Who can see this pin? *",
+                    color = Color.White,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Medium
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    VisibilityChip(
+                        visibility = PinVisibility.PUBLIC,
+                        icon = Icons.Default.Public,
+                        label = "Public",
+                        isSelected = selectedVisibility == PinVisibility.PUBLIC,
+                        onClick = { selectedVisibility = PinVisibility.PUBLIC },
+                        modifier = Modifier.weight(1f)
+                    )
+                    VisibilityChip(
+                        visibility = PinVisibility.FRIENDS_ONLY,
+                        icon = Icons.Default.Group,
+                        label = "Friends",
+                        isSelected = selectedVisibility == PinVisibility.FRIENDS_ONLY,
+                        onClick = { selectedVisibility = PinVisibility.FRIENDS_ONLY },
+                        modifier = Modifier.weight(1f)
+                    )
+                    VisibilityChip(
+                        visibility = PinVisibility.PRIVATE,
+                        icon = Icons.Default.Lock,
+                        label = "Private",
+                        isSelected = selectedVisibility == PinVisibility.PRIVATE,
+                        onClick = { selectedVisibility = PinVisibility.PRIVATE },
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+                
+                Spacer(modifier = Modifier.height(16.dp))
                 
                 // Optional Metadata Toggle
                 Row(
@@ -317,6 +359,7 @@ fun EditPinScreen(
                         val request = UpdatePinRequest(
                             name = name,
                             description = description,
+                            visibility = selectedVisibility,
                             metadata = metadata
                         )
                         
@@ -375,6 +418,47 @@ private fun CrowdLevelChip(
                 color = if (isSelected) Color.White else Color(0xFF4A90E2),
                 fontSize = 14.sp,
                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+            )
+        }
+    }
+}
+
+@Composable
+private fun VisibilityChip(
+    visibility: PinVisibility,
+    icon: ImageVector,
+    label: String,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier
+            .height(60.dp)
+            .clickable(onClick = onClick),
+        colors = CardDefaults.cardColors(
+            containerColor = if (isSelected) Color(0xFF4A90E2) else Color(0xFF1A1A2E)
+        ),
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = label,
+                tint = if (isSelected) Color.White else Color(0xFF4A90E2),
+                modifier = Modifier.size(20.dp)
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = label,
+                color = if (isSelected) Color.White else Color(0xFF4A90E2),
+                fontSize = 12.sp
             )
         }
     }

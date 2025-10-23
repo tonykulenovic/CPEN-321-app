@@ -93,6 +93,7 @@ export class PinsController {
     next: NextFunction
   ) {
     try {
+      const userId = req.user?._id; // Get userId from auth middleware
       const { pins, total } = await pinModel.search({
         category: req.query.category,
         latitude: req.query.latitude,
@@ -101,6 +102,7 @@ export class PinsController {
         search: req.query.search,
         page: req.query.page,
         limit: req.query.limit,
+        userId: userId, // Pass userId for visibility filtering
       });
       res.status(200).json({ message: 'Pins fetched successfully', data: { pins, total, page: req.query.page || 1, limit: req.query.limit || 20 } });
     } catch (error) {

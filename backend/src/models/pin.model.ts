@@ -4,6 +4,7 @@ import {
   IPin,
   PinCategory,
   PinStatus,
+  PinVisibility,
   CreatePinRequest,
   UpdatePinRequest,
   createPinSchema,
@@ -41,6 +42,7 @@ const pinSchema = new Schema<IPin>(
       },
     ],
     status: { type: String, enum: Object.values(PinStatus), default: PinStatus.ACTIVE, index: true },
+    visibility: { type: String, enum: Object.values(PinVisibility), default: PinVisibility.PUBLIC, index: true },
     isPreSeeded: { type: Boolean, default: false },
     expiresAt: { type: Date, index: true },
     imageUrl: { type: String, trim: true },
@@ -135,6 +137,7 @@ export class PinModel {
     search?: string;
     page?: number;
     limit?: number;
+    userId?: mongoose.Types.ObjectId;
   }): Promise<{ pins: IPin[]; total: number }> {
     try {
       const query: any = { status: PinStatus.ACTIVE };
@@ -155,6 +158,62 @@ export class PinModel {
         .sort({ createdAt: -1 })
         .limit(limit)
         .skip(skip);
+
+      logger.info(`Search pins: Found ${pins.length} pins. UserId: ${filters.userId || 'NOT PROVIDED'}`);
+
+      // Apply visibility filtering
+      if (filters.userId) {
+        logger.info(`Applying visibility filtering for user: ${filters.userId}`);
+        const friendshipModel = mongoose.model('Friendship');
+        
+        const filteredPins = await Promise.all(
+          pins.map(async (pin) => {
+            // Pre-seeded pins are always visible
+            if (pin.isPreSeeded) {
+              logger.info(`Pin "${pin.name}" is pre-seeded, showing to all users`);
+              return pin;
+            }
+            
+            // User can always see their own pins
+            if (pin.createdBy._id.equals(filters.userId!)) {
+              logger.info(`Pin "${pin.name}" belongs to current user, showing`);
+              return pin;
+            }
+            
+            // Default to PUBLIC if visibility is not set (for backward compatibility)
+            const visibility = pin.visibility || PinVisibility.PUBLIC;
+            logger.info(`Pin "${pin.name}" visibility: ${visibility}, creator: ${pin.createdBy._id}`);
+            
+            // Check visibility
+            if (visibility === PinVisibility.PRIVATE) {
+              logger.info(`Pin "${pin.name}" is PRIVATE, hiding from other users`);
+              return null; // Hide private pins from others
+            }
+            
+            if (visibility === PinVisibility.FRIENDS_ONLY) {
+              // Check if they are friends (Friendship schema uses userId/friendId, not user1/user2)
+              const areFriends = await friendshipModel.exists({
+                $or: [
+                  { userId: filters.userId, friendId: pin.createdBy._id, status: 'accepted' },
+                  { userId: pin.createdBy._id, friendId: filters.userId, status: 'accepted' },
+                ],
+              });
+              
+              if (!areFriends) {
+                logger.info(`Pin "${pin.name}" is FRIENDS_ONLY and users are not friends, hiding`);
+                return null; // Hide friends-only pins from non-friends
+              }
+              logger.info(`Pin "${pin.name}" is FRIENDS_ONLY and users are friends, showing`);
+            }
+            
+            // Public pins are visible to everyone
+            return pin;
+          })
+        );
+        
+        pins = filteredPins.filter((p) => p !== null) as typeof pins;
+        logger.info(`Visibility filtering complete. Original: ${filteredPins.length}, Visible: ${pins.length}`);
+      }
 
       if (filters.latitude && filters.longitude && filters.radius) {
         pins = pins.filter(p => this.calculateDistance(filters.latitude!, filters.longitude!, p.location.latitude, p.location.longitude) <= filters.radius!);

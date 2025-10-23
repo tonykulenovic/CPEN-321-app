@@ -47,6 +47,7 @@ fun CreatePinScreen(
     var name by rememberSaveable { mutableStateOf("") }
     var description by rememberSaveable { mutableStateOf("") }
     var selectedCategory by rememberSaveable { mutableStateOf(PinCategory.STUDY) }
+    var selectedVisibility by rememberSaveable { mutableStateOf(PinVisibility.PUBLIC) }
     var latitude by rememberSaveable { mutableStateOf(currentLocation?.first?.toString() ?: "") }
     var longitude by rememberSaveable { mutableStateOf(currentLocation?.second?.toString() ?: "") }
     var address by rememberSaveable { mutableStateOf("") }
@@ -194,6 +195,46 @@ fun CreatePinScreen(
                     label = "Shops",
                     isSelected = selectedCategory == PinCategory.SHOPS_SERVICES,
                     onClick = { selectedCategory = PinCategory.SHOPS_SERVICES },
+                    modifier = Modifier.weight(1f)
+                )
+            }
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            // Visibility Selection
+            Text(
+                "Who can see this pin? *",
+                color = Color.White,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Medium
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                VisibilityChip(
+                    visibility = PinVisibility.PUBLIC,
+                    icon = Icons.Default.Public,
+                    label = "Public",
+                    isSelected = selectedVisibility == PinVisibility.PUBLIC,
+                    onClick = { selectedVisibility = PinVisibility.PUBLIC },
+                    modifier = Modifier.weight(1f)
+                )
+                VisibilityChip(
+                    visibility = PinVisibility.FRIENDS_ONLY,
+                    icon = Icons.Default.Group,
+                    label = "Friends",
+                    isSelected = selectedVisibility == PinVisibility.FRIENDS_ONLY,
+                    onClick = { selectedVisibility = PinVisibility.FRIENDS_ONLY },
+                    modifier = Modifier.weight(1f)
+                )
+                VisibilityChip(
+                    visibility = PinVisibility.PRIVATE,
+                    icon = Icons.Default.Lock,
+                    label = "Private",
+                    isSelected = selectedVisibility == PinVisibility.PRIVATE,
+                    onClick = { selectedVisibility = PinVisibility.PRIVATE },
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -456,6 +497,7 @@ fun CreatePinScreen(
                             longitude = lngDouble,
                             address = address.ifBlank { null }
                         ),
+                        visibility = selectedVisibility,
                         metadata = metadata
                     )
                     
@@ -557,6 +599,47 @@ private fun CrowdLevelChip(
                 text = label,
                 color = if (isSelected) Color.White else Color(0xFF4A90E2),
                 fontSize = 14.sp
+            )
+        }
+    }
+}
+
+@Composable
+private fun VisibilityChip(
+    visibility: PinVisibility,
+    icon: ImageVector,
+    label: String,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier
+            .height(60.dp)
+            .clickable(onClick = onClick),
+        colors = CardDefaults.cardColors(
+            containerColor = if (isSelected) Color(0xFF4A90E2) else Color(0xFF1A1A2E)
+        ),
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = label,
+                tint = if (isSelected) Color.White else Color(0xFF4A90E2),
+                modifier = Modifier.size(20.dp)
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = label,
+                color = if (isSelected) Color.White else Color(0xFF4A90E2),
+                fontSize = 12.sp
             )
         }
     }

@@ -14,6 +14,12 @@ export enum PinStatus {
   HIDDEN = 'hidden',
 }
 
+export enum PinVisibility {
+  PUBLIC = 'public',
+  FRIENDS_ONLY = 'friends',
+  PRIVATE = 'private',
+}
+
 export interface IPin {
   _id: mongoose.Types.ObjectId;
   name: string;
@@ -42,6 +48,7 @@ export interface IPin {
     timestamp: Date;
   }>;
   status: PinStatus;
+  visibility: PinVisibility;
   isPreSeeded: boolean;
   expiresAt?: Date;
   imageUrl?: string;
@@ -66,6 +73,7 @@ export const createPinSchema = z.object({
     longitude: z.number().min(-180).max(180),
     address: z.string().optional(),
   }),
+  visibility: z.nativeEnum(PinVisibility).default(PinVisibility.PUBLIC),
   metadata: z
     .object({
       capacity: z.number().min(0).optional(),
@@ -81,6 +89,7 @@ export const createPinSchema = z.object({
 export const updatePinSchema = z.object({
   name: z.string().min(1).max(100).optional(),
   description: z.string().min(10).max(500).optional(),
+  visibility: z.nativeEnum(PinVisibility).optional(),
   metadata: z
     .object({
       capacity: z.number().min(0).optional(),

@@ -42,9 +42,9 @@ fun PinDetailsScreen(
     )
     
     // Load pin details (cache-first for instant loading)
+    // Note: Profile is pre-loaded in MainScreen for instant ownership checks
     LaunchedEffect(pinId) {
         pinViewModel.getPinFromCacheOrFetch(pinId)
-        profileViewModel.loadProfile()
     }
     
     // Show delete confirmation dialog
@@ -254,29 +254,61 @@ private fun PinDetailsContent(
             color = Color.White
         )
         
-        // Category Badge
-        Surface(
-            shape = RoundedCornerShape(8.dp),
-            color = getCategoryColor(pin.category).copy(alpha = 0.2f),
-            modifier = Modifier.wrapContentSize()
+        // Category and Visibility Badges
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(
-                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            // Category Badge
+            Surface(
+                shape = RoundedCornerShape(8.dp),
+                color = getCategoryColor(pin.category).copy(alpha = 0.2f),
+                modifier = Modifier.wrapContentSize()
             ) {
-                Icon(
-                    imageVector = getCategoryIcon(pin.category),
-                    contentDescription = null,
-                    tint = getCategoryColor(pin.category),
-                    modifier = Modifier.size(16.dp)
-                )
-                Text(
-                    text = pin.category.name.replace("_", " ").lowercase().replaceFirstChar { it.uppercase() },
-                    color = getCategoryColor(pin.category),
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Medium
-                )
+                Row(
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Icon(
+                        imageVector = getCategoryIcon(pin.category),
+                        contentDescription = null,
+                        tint = getCategoryColor(pin.category),
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Text(
+                        text = pin.category.name.replace("_", " ").lowercase().replaceFirstChar { it.uppercase() },
+                        color = getCategoryColor(pin.category),
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+            }
+            
+            // Visibility Badge
+            Surface(
+                shape = RoundedCornerShape(8.dp),
+                color = getVisibilityColor(pin.visibility).copy(alpha = 0.2f),
+                modifier = Modifier.wrapContentSize()
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Icon(
+                        imageVector = getVisibilityIcon(pin.visibility),
+                        contentDescription = null,
+                        tint = getVisibilityColor(pin.visibility),
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Text(
+                        text = getVisibilityLabel(pin.visibility),
+                        color = getVisibilityColor(pin.visibility),
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
             }
         }
         
@@ -557,5 +589,29 @@ private fun getCategoryColor(category: PinCategory): Color {
         PinCategory.EVENTS -> Color(0xFFE74C3C)
         PinCategory.CHILL -> Color(0xFF2ECC71)
         PinCategory.SHOPS_SERVICES -> Color(0xFFF39C12)
+    }
+}
+
+private fun getVisibilityIcon(visibility: PinVisibility): androidx.compose.ui.graphics.vector.ImageVector {
+    return when (visibility) {
+        PinVisibility.PUBLIC -> Icons.Default.Public
+        PinVisibility.FRIENDS_ONLY -> Icons.Default.Group
+        PinVisibility.PRIVATE -> Icons.Default.Lock
+    }
+}
+
+private fun getVisibilityColor(visibility: PinVisibility): Color {
+    return when (visibility) {
+        PinVisibility.PUBLIC -> Color(0xFF2ECC71) // Green
+        PinVisibility.FRIENDS_ONLY -> Color(0xFF4A90E2) // Blue
+        PinVisibility.PRIVATE -> Color(0xFFF39C12) // Orange
+    }
+}
+
+private fun getVisibilityLabel(visibility: PinVisibility): String {
+    return when (visibility) {
+        PinVisibility.PUBLIC -> "Public"
+        PinVisibility.FRIENDS_ONLY -> "Friends Only"
+        PinVisibility.PRIVATE -> "Private"
     }
 }

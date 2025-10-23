@@ -16,6 +16,12 @@ enum class PinStatus {
     @SerializedName("hidden") HIDDEN
 }
 
+enum class PinVisibility {
+    @SerializedName("public") PUBLIC,
+    @SerializedName("friends") FRIENDS_ONLY,
+    @SerializedName("private") PRIVATE
+}
+
 enum class CrowdLevel {
     @SerializedName("quiet") QUIET,
     @SerializedName("moderate") MODERATE,
@@ -65,6 +71,7 @@ data class Pin(
     @SerializedName("rating") val rating: PinRating = PinRating(),
     @SerializedName("reports") val reports: List<PinReport> = emptyList(),
     @SerializedName("status") val status: PinStatus = PinStatus.ACTIVE,
+    @SerializedName("visibility") val visibility: PinVisibility = PinVisibility.PUBLIC,
     @SerializedName("isPreSeeded") val isPreSeeded: Boolean = false,
     @SerializedName("expiresAt") val expiresAt: String? = null,
     @SerializedName("imageUrl") val imageUrl: String? = null,
@@ -78,6 +85,7 @@ data class CreatePinRequest(
     @SerializedName("category") val category: PinCategory,
     @SerializedName("description") val description: String,
     @SerializedName("location") val location: PinLocation,
+    @SerializedName("visibility") val visibility: PinVisibility = PinVisibility.PUBLIC,
     @SerializedName("metadata") val metadata: PinMetadata? = null,
     @SerializedName("expiresAt") val expiresAt: String? = null,
     @SerializedName("imageUrl") val imageUrl: String? = null
@@ -86,6 +94,7 @@ data class CreatePinRequest(
 data class UpdatePinRequest(
     @SerializedName("name") val name: String? = null,
     @SerializedName("description") val description: String? = null,
+    @SerializedName("visibility") val visibility: PinVisibility? = null,
     @SerializedName("metadata") val metadata: PinMetadata? = null,
     @SerializedName("imageUrl") val imageUrl: String? = null
 )

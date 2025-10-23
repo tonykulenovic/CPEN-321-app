@@ -160,7 +160,8 @@ export async function seedLibraries() {
               ...libraryData,
               createdBy: systemUser._id,
               isPreSeeded: true,
-              status: 'active'
+              status: 'active',
+              visibility: 'public'
             }
           },
           { 

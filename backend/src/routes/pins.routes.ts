@@ -12,11 +12,11 @@ import {
 
 const router = Router();
 
-router.get('/search', validateQuery(searchPinsSchema), pinsController.searchPins);
-router.get('/:id', pinsController.getPin);
-
+// Apply authentication to all pin routes for visibility filtering
 router.use(authenticateToken);
 
+router.get('/search', validateQuery(searchPinsSchema), pinsController.searchPins);
+router.get('/:id', pinsController.getPin);
 router.post('/', validateBody(createPinSchema), pinsController.createPin);
 router.put('/:id', validateBody(updatePinSchema), pinsController.updatePin);
 router.delete('/:id', pinsController.deletePin);
