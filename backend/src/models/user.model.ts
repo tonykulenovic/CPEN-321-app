@@ -95,6 +95,7 @@ const userSchema = new Schema<IUser>(
       type: Number,
       default: 0,
     },
+
     isAdmin: {
       type: Boolean,
       default: false,
@@ -104,6 +105,24 @@ const userSchema = new Schema<IUser>(
       type: Boolean,
       default: false,
       index: true,
+    },
+    stats: {
+      pinsCreated: {
+        type: Number,
+        default: 0,
+      },
+      pinsVisited: {
+        type: Number,
+        default: 0,
+      },
+      reportsMade: {
+        type: Number,
+        default: 0,
+      },
+      locationsExplored: {
+        type: Number,
+        default: 0,
+      },
     },
   },
   {

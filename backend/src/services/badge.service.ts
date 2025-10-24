@@ -10,6 +10,7 @@ import {
   IUserBadge,
 } from '../types/badge.types';
 import { badgeModel } from '../models/badge.model';
+import { pinModel } from '../models/pin.model';
 import logger from '../utils/logger.util';
 
 export class BadgeService {
@@ -64,13 +65,13 @@ export class BadgeService {
     },
     {
       name: 'Pin Master',
-      description: 'Create 50 pins',
+      description: 'Create 25 pins',
       icon: 'pin_master',
       category: BadgeCategory.EXPLORATION,
       rarity: 'epic' as any,
       requirements: {
         type: BadgeRequirementType.PINS_CREATED,
-        target: 50,
+        target: 25,
       },
     },
     {
@@ -126,6 +127,34 @@ export class BadgeService {
       requirements: {
         type: BadgeRequirementType.REPORTS_MADE,
         target: 3,
+      },
+    },
+    {
+      name: 'Bookworm',
+      description: 'Visit 3 libraries',
+      icon: 'library',
+      category: BadgeCategory.EXPLORATION,
+      rarity: 'uncommon' as any,
+      requirements: {
+        type: BadgeRequirementType.LOCATIONS_EXPLORED,
+        target: 3,
+        conditions: {
+          pinType: 'library',
+        },
+      },
+    },
+    {
+      name: 'Caffeine Addict',
+      description: 'Visit 3 coffee shops',
+      icon: 'coffee',
+      category: BadgeCategory.EXPLORATION,
+      rarity: 'uncommon' as any,
+      requirements: {
+        type: BadgeRequirementType.LOCATIONS_EXPLORED,
+        target: 3,
+        conditions: {
+          pinType: 'cafe',
+        },
       },
     },
   ];
@@ -248,10 +277,16 @@ export class BadgeService {
    * Check pins created requirement
    */
   private static async checkPinsCreated(userId: mongoose.Types.ObjectId, target: number): Promise<boolean> {
-    // This would need to be implemented based on your pin system
-    // You might want to query a pins collection or track this in user stats
-    logger.info(`Checking pins created for user ${userId}, target: ${target}`);
-    return false; // Placeholder - implement based on your pin system
+    try {
+      const User = mongoose.model('User');
+      const user = await User.findById(userId).select('stats.pinsCreated');
+      const count = user?.stats?.pinsCreated || 0;
+      logger.info(`User ${userId} has created ${count} pins (cumulative), target: ${target}`);
+      return count >= target;
+    } catch (error) {
+      logger.error('Error checking pins created:', error);
+      return false;
+    }
   }
 
   /**
@@ -300,6 +335,66 @@ export class BadgeService {
   }
 
   /**
+   * Calculate current progress for a badge
+   */
+  private static async calculateBadgeProgress(
+    userId: mongoose.Types.ObjectId,
+    badge: IBadge
+  ): Promise<BadgeProgress | null> {
+    try {
+      let current = 0;
+      const target = badge.requirements.target;
+
+      // Get user stats for cumulative tracking
+      const User = mongoose.model('User');
+      const user = await User.findById(userId).select('stats');
+
+      switch (badge.requirements.type) {
+        case BadgeRequirementType.PINS_CREATED:
+          current = user?.stats?.pinsCreated || 0;
+          break;
+        
+        case BadgeRequirementType.PINS_VISITED:
+          current = user?.stats?.pinsVisited || 0;
+          break;
+        
+        case BadgeRequirementType.FRIENDS_ADDED:
+          // Use friendsCount for now, can track cumulative later
+          current = user?.friendsCount || 0;
+          break;
+        
+        case BadgeRequirementType.REPORTS_MADE:
+          current = user?.stats?.reportsMade || 0;
+          break;
+        
+        case BadgeRequirementType.LOCATIONS_EXPLORED:
+          current = user?.stats?.locationsExplored || 0;
+          break;
+        
+        case BadgeRequirementType.LOGIN_STREAK:
+          // TODO: Implement when login tracking is added
+          current = 0;
+          break;
+        
+        default:
+          current = 0;
+      }
+
+      const percentage = target > 0 ? Math.min((current / target) * 100, 100) : 0;
+
+      return {
+        current: Math.min(current, target),
+        target,
+        percentage,
+        lastUpdated: new Date(),
+      };
+    } catch (error) {
+      logger.error('Error calculating badge progress:', error);
+      return null;
+    }
+  }
+
+  /**
    * Get user's badge progress for all available badges
    */
   static async getUserBadgeProgress(userId: mongoose.Types.ObjectId): Promise<{
@@ -313,10 +408,16 @@ export class BadgeService {
         badgeModel.getAvailableBadges(userId),
       ]);
 
-      const progress = available.map(badge => ({
-        badge,
-        progress: null, // This would need to be calculated based on current user activity
-      }));
+      // Calculate progress for each available badge
+      const progressPromises = available.map(async badge => {
+        const currentProgress = await this.calculateBadgeProgress(userId, badge);
+        return {
+          badge,
+          progress: currentProgress,
+        };
+      });
+
+      const progress = await Promise.all(progressPromises);
 
       return { earned, available, progress };
     } catch (error) {

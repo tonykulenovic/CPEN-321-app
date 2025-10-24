@@ -12,6 +12,8 @@ import {
   PinsListResponse,
 } from '../types/pins.types';
 import logger from '../utils/logger.util';
+import { BadgeService } from '../services/badge.service';
+import { BadgeRequirementType } from '../types/badge.types';
 
 export class PinsController {
   async createPin(
@@ -22,6 +24,38 @@ export class PinsController {
     try {
       const userId = req.user!._id;
       const pin = await pinModel.create(userId, req.body);
+      
+      // Increment user's cumulative pins created counter
+      try {
+        const User = mongoose.model('User');
+        await User.findByIdAndUpdate(userId, {
+          $inc: { 'stats.pinsCreated': 1 },
+        });
+      } catch (statsError) {
+        logger.error('Error updating user stats:', statsError);
+      }
+      
+      // Process badge event for pin creation
+      try {
+        const earnedBadges = await BadgeService.processBadgeEvent({
+          userId: userId.toString(),
+          eventType: BadgeRequirementType.PINS_CREATED,
+          value: 1,
+          timestamp: new Date(),
+          metadata: {
+            pinId: pin._id.toString(),
+            category: pin.category,
+          },
+        });
+        
+        if (earnedBadges.length > 0) {
+          logger.info(`User ${userId} earned ${earnedBadges.length} badge(s) from creating a pin`);
+        }
+      } catch (badgeError) {
+        // Log badge processing error but don't fail the pin creation
+        logger.error('Error processing badge event for pin creation:', badgeError);
+      }
+      
       res.status(201).json({ message: 'Pin created successfully', data: { pin } });
     } catch (error) {
       logger.error('Failed to create pin:', error as Error);

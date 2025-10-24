@@ -18,6 +18,13 @@ export interface IUser extends Document {
   badgesCount: number;
   isAdmin: boolean;
   isSuspended: boolean;
+
+  stats: {
+    pinsCreated: number;
+    pinsVisited: number;
+    reportsMade: number;
+    locationsExplored: number;
+  };
   createdAt: Date;
   updatedAt: Date;
 }
