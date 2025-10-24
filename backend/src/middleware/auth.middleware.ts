@@ -20,6 +20,35 @@ export const authenticateToken: RequestHandler = async (
       return;
     }
 
+    // Development bypass with dev token
+    const devToken = process.env.DEV_AUTH_TOKEN;
+    const devUserId = req.headers['x-dev-user-id'] as string;
+    
+    if (devToken && token === devToken && devUserId && process.env.NODE_ENV !== 'production') {
+      console.log(`[DEV] Using dev token bypass for user ID: ${devUserId}`);
+      
+      if (!mongoose.Types.ObjectId.isValid(devUserId)) {
+        res.status(400).json({
+          error: 'Invalid dev user ID',
+          message: 'x-dev-user-id header must be a valid ObjectId',
+        });
+        return;
+      }
+
+      const user = await userModel.findById(new mongoose.Types.ObjectId(devUserId));
+      if (!user) {
+        res.status(404).json({
+          error: 'Dev user not found',
+          message: 'User specified in x-dev-user-id header does not exist',
+        });
+        return;
+      }
+
+      req.user = user;
+      next();
+      return;
+    }
+
     const decoded = jwt.verify(token, process.env.JWT_SECRET!) as {
       id: mongoose.Types.ObjectId;
     };

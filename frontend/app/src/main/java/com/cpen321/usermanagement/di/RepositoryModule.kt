@@ -6,6 +6,8 @@ import com.cpen321.usermanagement.data.repository.ProfileRepository
 import com.cpen321.usermanagement.data.repository.ProfileRepositoryImpl
 import com.cpen321.usermanagement.data.repository.FriendsRepository
 import com.cpen321.usermanagement.data.repository.FriendsRepositoryImpl
+import com.cpen321.usermanagement.data.repository.LocationRepository
+import com.cpen321.usermanagement.data.repository.LocationRepositoryImpl
 import com.cpen321.usermanagement.data.remote.api.BadgeInterface
 import com.cpen321.usermanagement.data.remote.api.RetrofitClient
 import com.cpen321.usermanagement.data.repository.BadgeRepository
@@ -77,5 +79,13 @@ object RepositoryModule {
     @Singleton
     fun provideAdminRepository(adminInterface: AdminInterface): AdminRepository {
         return AdminRepositoryImpl(adminInterface)
+    }
+
+    @Provides
+    @Singleton
+    fun provideLocationRepository(
+        locationRepositoryImpl: LocationRepositoryImpl
+    ): LocationRepository {
+        return locationRepositoryImpl
     }
 }

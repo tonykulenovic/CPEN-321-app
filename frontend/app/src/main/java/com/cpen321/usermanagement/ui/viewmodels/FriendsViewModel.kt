@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.cpen321.usermanagement.data.remote.dto.FriendRequestSummary
 import com.cpen321.usermanagement.data.remote.dto.FriendSummary
+import com.cpen321.usermanagement.data.remote.dto.FriendLocation
 import com.cpen321.usermanagement.data.remote.dto.UserSearchResult
 import com.cpen321.usermanagement.data.repository.FriendsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -17,9 +18,11 @@ data class FriendsUiState(
     val friends: List<FriendSummary> = emptyList(),
     val friendRequests: List<FriendRequestSummary> = emptyList(),
     val searchResults: List<UserSearchResult> = emptyList(),
-    val pendingRequestUserIds: Set<String> = emptySet(),  // ADD THIS - Track pending sent requests
+    val friendLocations: List<FriendLocation> = emptyList(),
+    val pendingRequestUserIds: Set<String> = emptySet(),
     val isLoading: Boolean = false,
     val isSearching: Boolean = false,
+    val isLoadingLocations: Boolean = false,
     val error: String? = null,
     val successMessage: String? = null
 )
@@ -180,7 +183,27 @@ class FriendsViewModel @Inject constructor(
         _uiState.value = _uiState.value.copy(successMessage = null)
     }
 
-    // ADD THIS NEW FUNCTION - Check if user has pending request
+    fun loadFriendsLocations() {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoadingLocations = true)
+            
+            friendsRepository.getFriendsLocations()
+                .onSuccess { locations ->
+                    _uiState.value = _uiState.value.copy(
+                        friendLocations = locations,
+                        isLoadingLocations = false
+                    )
+                }
+                .onFailure { error ->
+                    _uiState.value = _uiState.value.copy(
+                        isLoadingLocations = false
+                        // Don't show error for locations - they're optional
+                    )
+                }
+        }
+    }
+
+    // Check if user has pending request
     fun isPendingRequest(userId: String): Boolean {
         return userId in _uiState.value.pendingRequestUserIds
     }

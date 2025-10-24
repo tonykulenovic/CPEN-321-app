@@ -10,4 +10,5 @@ interface FriendsRepository {
     suspend fun declineFriendRequest(requestId: String): Result<Unit>
     suspend fun removeFriend(friendId: String): Result<Unit>
     suspend fun searchUsers(query: String): Result<List<UserSearchResult>>
+    suspend fun getFriendsLocations(): Result<List<FriendLocation>>
 }
