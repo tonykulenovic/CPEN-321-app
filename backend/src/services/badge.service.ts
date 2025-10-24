@@ -266,11 +266,16 @@ export class BadgeService {
    * Check login streak requirement
    */
   private static async checkLoginStreak(userId: mongoose.Types.ObjectId, target: number): Promise<boolean> {
-    // This would need to be implemented based on your login tracking system
-    // For now, we'll use a placeholder implementation
-    // You might want to track login dates in a separate collection or user model
-    logger.info(`Checking login streak for user ${userId}, target: ${target}`);
-    return false; // Placeholder - implement based on your login tracking
+    try {
+      const User = mongoose.model('User');
+      const user = await User.findById(userId).select('loginTracking');
+      const currentStreak = user?.loginTracking?.currentStreak || 0;
+      logger.info(`User ${userId} login streak: ${currentStreak} days, target: ${target}`);
+      return currentStreak >= target;
+    } catch (error) {
+      logger.error('Error checking login streak:', error);
+      return false;
+    }
   }
 
   /**
@@ -347,7 +352,7 @@ export class BadgeService {
 
       // Get user stats for cumulative tracking
       const User = mongoose.model('User');
-      const user = await User.findById(userId).select('stats');
+      const user = await User.findById(userId).select('stats loginTracking friendsCount');
 
       switch (badge.requirements.type) {
         case BadgeRequirementType.PINS_CREATED:
@@ -372,8 +377,7 @@ export class BadgeService {
           break;
         
         case BadgeRequirementType.LOGIN_STREAK:
-          // TODO: Implement when login tracking is added
-          current = 0;
+          current = user?.loginTracking?.currentStreak || 0;
           break;
         
         default:

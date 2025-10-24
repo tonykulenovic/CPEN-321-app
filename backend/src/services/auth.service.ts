@@ -5,6 +5,8 @@ import type { AuthResult } from '../types/auth.types';
 import type { GoogleUserInfo, IUser } from '../types/user.types';
 import logger from '../utils/logger.util';
 import { userModel } from '../models/user.model';
+import { BadgeService } from './badge.service';
+import { BadgeRequirementType } from '../types/badge.types';
 
 export class AuthService {
   private googleClient: OAuth2Client;
@@ -115,6 +117,25 @@ export class AuthService {
       // Check if user is suspended
       if (user.isSuspended) {
         throw new Error('Your account has been suspended. Please contact support for assistance.');
+      }
+
+      // Update login streak
+      try {
+        const currentStreak = await userModel.updateLoginStreak(user._id);
+        
+        // Process badge event for login streak
+        await BadgeService.processBadgeEvent({
+          userId: user._id.toString(),
+          eventType: BadgeRequirementType.LOGIN_STREAK,
+          value: currentStreak,
+          timestamp: new Date(),
+          metadata: {
+            currentStreak,
+          },
+        });
+      } catch (streakError) {
+        // Log error but don't fail the login
+        logger.error('Error updating login streak:', streakError);
       }
 
       const token = this.generateAccessToken(user);

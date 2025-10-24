@@ -348,7 +348,7 @@ private fun BadgeCard(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .height(180.dp)
+            .height(170.dp)
             .clickable { onClick() },
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
@@ -369,7 +369,7 @@ private fun BadgeCard(
             // Badge Icon - greyed for locked, colored for unlocked
             Box(
                 modifier = Modifier
-                    .size(56.dp)
+                    .size(52.dp)
                     .clip(CircleShape)
                     .background(
                         if (badge.isUnlocked) badge.color else Color(0xFF3D4E5E)
@@ -381,7 +381,7 @@ private fun BadgeCard(
                     imageVector = badge.icon,
                     contentDescription = badge.title,
                     tint = Color.White,
-                    modifier = Modifier.size(32.dp)
+                    modifier = Modifier.size(30.dp)
                 )
             }
             
@@ -397,21 +397,9 @@ private fun BadgeCard(
                 maxLines = 1
             )
             
-            Spacer(modifier = Modifier.height(4.dp))
-            
-            // Badge Description
-            Text(
-                text = badge.description,
-                fontSize = 11.sp,
-                color = if (badge.isUnlocked) Color(0xFF8B9DAF) else Color(0xFF5B6B7F),
-                textAlign = TextAlign.Center,
-                maxLines = 2,
-                lineHeight = 14.sp
-            )
-            
             // Show progress bar for ALL badges (locked and unlocked)
             if (badge.maxProgress > 0) {
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(2.dp))
                 
                 Column(
                     modifier = Modifier.fillMaxWidth(),
@@ -425,7 +413,7 @@ private fun BadgeCard(
                         fontWeight = FontWeight.Bold
                     )
                     
-                    Spacer(modifier = Modifier.height(4.dp))
+                    Spacer(modifier = Modifier.height(2.dp))
                     
                     // Progress bar
                     LinearProgressIndicator(
@@ -438,7 +426,7 @@ private fun BadgeCard(
                         },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(4.dp)
+                            .height(3.dp)
                             .clip(RoundedCornerShape(2.dp)),
                         color = if (badge.isUnlocked) Color(0xFF66BB6A) else Color(0xFF00BCD4),
                         trackColor = Color(0xFF3D4E5E)
@@ -448,7 +436,7 @@ private fun BadgeCard(
             
             // Show status indicator
             if (badge.isUnlocked) {
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(3.dp))
                 
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -469,7 +457,7 @@ private fun BadgeCard(
                     )
                 }
             } else {
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(3.dp))
                 
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -791,7 +779,7 @@ private fun convertToDisplayBadges(
     // Create a map of badge ID to progress for quick lookup
     val progressMap = progressItems.associate { it.badge.id to it.progress }
     
-    // Add earned badges (unlocked, colored)
+    // Add earned badges (unlocked, colored) - always show full progress
     earnedBadges.forEach { userBadge ->
         displayBadges.add(
             BadgeDisplayItem(
@@ -801,8 +789,8 @@ private fun convertToDisplayBadges(
                 icon = mapIconToImageVector(userBadge.badgeId.icon),
                 color = mapRarityToColor(userBadge.badgeId.rarity),
                 isUnlocked = true,
-                progress = userBadge.progress?.current ?: userBadge.badgeId.requirements.target,
-                maxProgress = userBadge.progress?.target ?: userBadge.badgeId.requirements.target,
+                progress = userBadge.badgeId.requirements.target,
+                maxProgress = userBadge.badgeId.requirements.target,
                 category = userBadge.badgeId.category.value
             )
         )
@@ -868,7 +856,7 @@ private fun getLightenedColor(color: Color): Color {
     val baseG = 0x23 / 255f
     val baseB = 0x32 / 255f
     
-    val mixRatio = 0.25f // 25% badge color, 75% base color
+    val mixRatio = 0.4f // 40% badge color, 60% base color (brighter!)
     
     val r = (color.red * mixRatio + baseR * (1 - mixRatio))
     val g = (color.green * mixRatio + baseG * (1 - mixRatio))

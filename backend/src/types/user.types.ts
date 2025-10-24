@@ -25,6 +25,11 @@ export interface IUser extends Document {
     reportsMade: number;
     locationsExplored: number;
   };
+  loginTracking: {
+    lastLoginDate: Date | null;
+    currentStreak: number;
+    longestStreak: number;
+  };
   createdAt: Date;
   updatedAt: Date;
 }
