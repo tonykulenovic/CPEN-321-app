@@ -8,7 +8,6 @@
     "dev": "nodemon --exec ts-node src/index.ts",
     "migrate:visibility": "ts-node src/scripts/migratePinVisibility.ts",
     "simulate:users": "ts-node src/scripts/simulateMovingUsers.ts",
-    "list:users": "ts-node src/scripts/listUsers.ts",
     "format": "prettier --check \"src/**/*.{ts,js,json}\"",
     "format:fix": "prettier --write \"src/**/*.{ts,js,json}\""
   },

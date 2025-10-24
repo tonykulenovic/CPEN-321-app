@@ -1,7 +1,11 @@
 import mongoose from 'mongoose';
 import axios from 'axios';
+import dotenv from 'dotenv';
 import { userModel } from '../models/user.model';
 import logger from '../utils/logger.util';
+
+// Load environment variables
+dotenv.config();
 
 // Configuration
 const DEV_TOKEN = process.env.DEV_AUTH_TOKEN || 'dev-token-12345';
@@ -47,9 +51,19 @@ class LocationSimulator {
           continue;
         }
 
-        const user = await userModel.findById(new mongoose.Types.ObjectId(userId));
+        const objectId = new mongoose.Types.ObjectId(userId);
+        console.log(`🔍 Looking for user with ObjectId: ${objectId}`);
+        
+        const user = await userModel.findById(objectId);
+        console.log(`🔍 Query result:`, user ? `Found user: ${user.name}` : 'No user found');
+        
         if (!user) {
           console.error(`❌ User not found: ${userId}`);
+          console.log(`🔍 Trying alternative search by string ID...`);
+          
+          // Try direct query to see if there's a format issue
+          const directUser = await mongoose.model('User').findById(userId);
+          console.log(`🔍 Direct query result:`, directUser ? `Found user: ${directUser.name}` : 'Still no user found');
           continue;
         }
 
@@ -116,8 +130,8 @@ class LocationSimulator {
 
   private async updateUserLocation(user: SimulatedUser): Promise<void> {
     try {
-      const response = await axios.post(
-        `${BASE_URL}/location/my-location`,
+      const response = await axios.put(
+        `${BASE_URL}/me/location`,
         {
           lat: user.currentLocation.lat,
           lng: user.currentLocation.lng,
@@ -133,7 +147,7 @@ class LocationSimulator {
         }
       );
 
-      if (response.status === 201) {
+      if (response.status === 200 || response.status === 201) {
         console.log(`📍 ${user.username}: (${user.currentLocation.lat.toFixed(4)}, ${user.currentLocation.lng.toFixed(4)})`);
       }
     } catch (error: any) {
@@ -276,8 +290,23 @@ async function main() {
   try {
     // Connect to database
     if (!mongoose.connection.readyState) {
-      await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/cpen321');
-      console.log('✅ Connected to MongoDB');
+      const mongoUri = process.env.MONGODB_URI;
+      if (!mongoUri) {
+        throw new Error('MONGODB_URI environment variable not found');
+      }
+      
+      await mongoose.connect(mongoUri);
+      console.log('✅ Connected to MongoDB Atlas');
+      console.log(`🔍 Database name: ${mongoose.connection.db?.databaseName}`);
+    }
+
+    // Check if there are any users in the database at all
+    const totalUsers = await mongoose.model('User').countDocuments();
+    console.log(`🔍 Total users in database: ${totalUsers}`);
+    
+    if (totalUsers > 0) {
+      const sampleUser = await mongoose.model('User').findOne();
+      console.log(`🔍 Sample user:`, sampleUser ? `${sampleUser.name} (${sampleUser._id})` : 'None found');
     }
 
     await simulator.initialize(userIds);
