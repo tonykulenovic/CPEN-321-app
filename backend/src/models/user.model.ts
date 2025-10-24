@@ -95,6 +95,24 @@ const userSchema = new Schema<IUser>(
       type: Number,
       default: 0,
     },
+    stats: {
+      pinsCreated: {
+        type: Number,
+        default: 0,
+      },
+      pinsVisited: {
+        type: Number,
+        default: 0,
+      },
+      reportsMade: {
+        type: Number,
+        default: 0,
+      },
+      locationsExplored: {
+        type: Number,
+        default: 0,
+      },
+    },
   },
   {
     timestamps: true,

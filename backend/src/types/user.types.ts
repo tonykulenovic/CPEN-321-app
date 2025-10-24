@@ -16,6 +16,12 @@ export interface IUser extends Document {
   privacy: PrivacySettings;
   friendsCount: number;
   badgesCount: number;
+  stats: {
+    pinsCreated: number;
+    pinsVisited: number;
+    reportsMade: number;
+    locationsExplored: number;
+  };
   createdAt: Date;
   updatedAt: Date;
 }

@@ -352,7 +352,11 @@ private fun BadgeCard(
             .clickable { onClick() },
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
-            containerColor = Color(0xFF1A2332)
+            containerColor = if (badge.isUnlocked) {
+                getLightenedColor(badge.color)
+            } else {
+                Color(0xFF1A2332)
+            }
         )
     ) {
         Column(
@@ -498,7 +502,11 @@ private fun BadgeDetailsBottomSheet(
 ) {
     ModalBottomSheet(
         onDismissRequest = onDismiss,
-        containerColor = Color(0xFF1A2332),
+        containerColor = if (badge.isUnlocked) {
+            getLightenedColor(badge.color)
+        } else {
+            Color(0xFF1A2332)
+        },
         contentColor = Color.White
     ) {
         Column(
@@ -507,7 +515,7 @@ private fun BadgeDetailsBottomSheet(
                 .padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Large Badge Icon - greyed if locked
+            // Large Badge Icon - greyed if locked, colored if unlocked
             Box(
                 modifier = Modifier
                     .size(96.dp)
@@ -851,4 +859,20 @@ private fun mapRarityToColor(rarity: BadgeRarity): Color {
         BadgeRarity.EPIC -> Color(0xFFAB47BC) // Purple
         BadgeRarity.LEGENDARY -> Color(0xFFFFA726) // Gold
     }
+}
+
+// Create a lighter tint of the badge color for backgrounds
+private fun getLightenedColor(color: Color): Color {
+    // Mix the color with dark background color to create a tinted shade
+    val baseR = 0x1A / 255f
+    val baseG = 0x23 / 255f
+    val baseB = 0x32 / 255f
+    
+    val mixRatio = 0.25f // 25% badge color, 75% base color
+    
+    val r = (color.red * mixRatio + baseR * (1 - mixRatio))
+    val g = (color.green * mixRatio + baseG * (1 - mixRatio))
+    val b = (color.blue * mixRatio + baseB * (1 - mixRatio))
+    
+    return Color(r, g, b, 1f)
 }
