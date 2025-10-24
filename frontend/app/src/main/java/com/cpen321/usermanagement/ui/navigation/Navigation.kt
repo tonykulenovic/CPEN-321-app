@@ -22,6 +22,7 @@ import com.cpen321.usermanagement.ui.screens.FriendProfileScreen
 import com.cpen321.usermanagement.ui.screens.FriendsScreen
 import com.cpen321.usermanagement.ui.screens.LoadingScreen
 import com.cpen321.usermanagement.ui.screens.LocationPickerScreen
+import com.cpen321.usermanagement.data.realtime.LocationTrackingService
 import com.cpen321.usermanagement.ui.screens.MainScreen
 import com.cpen321.usermanagement.ui.screens.ManageProfileScreen
 import com.cpen321.usermanagement.ui.screens.ProfileCompletionScreen
@@ -248,6 +249,7 @@ private fun AppNavHost(
         composable(NavRoutes.MAIN) {
             val mainViewModel: MainViewModel = hiltViewModel()
             val pinViewModel: PinViewModel = hiltViewModel()
+
             
             MainScreen(
                 mainViewModel = mainViewModel,

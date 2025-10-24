@@ -68,3 +68,34 @@ data class UserSearchResponse(
     val message: String,
     val data: List<UserSearchResult>? = null
 )
+
+// Friend Location DTOs
+data class FriendLocation(
+    val userId: String,
+    val lat: Double,
+    val lng: Double,
+    val accuracyM: Double,
+    val ts: String
+)
+
+data class FriendsLocationsResponse(
+    val message: String,
+    val data: List<FriendLocation>? = null
+)
+
+// Location Update DTOs
+data class LocationUpdateRequest(
+    val lat: Double,
+    val lng: Double,
+    val accuracyM: Double = 0.0
+)
+
+data class LocationUpdateResponse(
+    val message: String,
+    val data: LocationUpdateData? = null
+)
+
+data class LocationUpdateData(
+    val shared: Boolean,
+    val expiresAt: String
+)

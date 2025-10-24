@@ -144,20 +144,6 @@ export class LocationModel {
         },
         {
           $replaceRoot: { newRoot: '$latestLocation' }
-        },
-        {
-          $lookup: {
-            from: 'users',
-            localField: 'userId',
-            foreignField: '_id',
-            as: 'userId',
-            pipeline: [
-              { $project: { name: 1, username: 1 } }
-            ]
-          }
-        },
-        {
-          $unwind: '$userId'
         }
       ]);
     } catch (error) {

@@ -83,6 +83,9 @@ dependencies {
     implementation(libs.converter.gson)
     implementation(libs.logging.interceptor)
     
+    // Socket.io for real-time updates
+    implementation(libs.socket.io.client)
+    
     // Image loading
     implementation(libs.coil.compose)
     

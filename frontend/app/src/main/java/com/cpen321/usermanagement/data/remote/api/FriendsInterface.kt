@@ -36,10 +36,14 @@ interface FriendsInterface {
         @Path("friendId") friendId: String
     ): Response<FriendActionResponse>
     
-    // ADD THIS - User search endpoint
+    // User search endpoint
     @GET("users/search")
     suspend fun searchUsers(
         @Query("q") query: String,
         @Query("limit") limit: Int? = null
     ): Response<UserSearchResponse>
+    
+    // Friends locations endpoint
+    @GET("friends/locations")
+    suspend fun getFriendsLocations(): Response<FriendsLocationsResponse>
 }

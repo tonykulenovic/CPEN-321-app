@@ -27,4 +27,6 @@ object DataModule {
     fun provideNavigationStateManager(): NavigationStateManager {
         return NavigationStateManager()
     }
+
+
 }

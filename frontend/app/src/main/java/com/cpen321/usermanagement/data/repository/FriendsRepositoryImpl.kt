@@ -147,4 +147,23 @@ class FriendsRepositoryImpl @Inject constructor() : FriendsRepository {
             Result.failure(e)
         }
     }
+
+    override suspend fun getFriendsLocations(): Result<List<FriendLocation>> {
+        return try {
+            val response = friendsInterface.getFriendsLocations()
+            if (response.isSuccessful && response.body()?.data != null) {
+                Result.success(response.body()!!.data!!)
+            } else {
+                val errorMessage = JsonUtils.parseErrorMessage(
+                    response.errorBody()?.string(),
+                    response.body()?.message ?: "Failed to get friends locations"
+                )
+                Log.e(TAG, "Get friends locations failed: $errorMessage")
+                Result.failure(Exception(errorMessage))
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error getting friends locations", e)
+            Result.failure(e)
+        }
+    }
 }
