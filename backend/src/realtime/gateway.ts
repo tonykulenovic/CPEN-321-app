@@ -119,16 +119,18 @@ export class LocationGateway {
       const friendships = await friendshipModel.findUserFriendships(userId, 'accepted');
       const friendsWithLocationSharing = friendships.filter(f => f.shareLocation);
 
-      // 2. Get locations for those friends
+      // 2. Get fresh locations for those friends (within last 5 minutes)
       const friendIds = friendsWithLocationSharing.map(f => 
         f.friendId._id || f.friendId
       );
-      const locations = await locationModel.findFriendsLocations(friendIds);
+      const freshLocations = await locationModel.findFriendsLocations(friendIds);
+
+      logger.info(`Found ${freshLocations.length} fresh friend locations (within 5 minutes)`);
 
       // 3. Filter based on privacy settings and apply approximation
       const filteredLocations: ILocation[] = [];
       
-      for (const location of locations) {
+      for (const location of freshLocations) {
         const friend = await userModel.findById(location.userId);
         if (!friend) {
           continue;

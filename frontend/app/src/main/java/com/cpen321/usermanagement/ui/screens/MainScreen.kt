@@ -861,7 +861,7 @@ private fun MapContent(
             Spacer(modifier = Modifier.height(8.dp))
 
             // Enhanced friends status indicator
-            if (friendsUiState.friends.isNotEmpty()) {
+            if (friendsUiState.friendLocations.isNotEmpty()) {
                 Column(
                     horizontalAlignment = Alignment.End
                 ) {
@@ -883,7 +883,7 @@ private fun MapContent(
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
-                            text = "${friendsUiState.friends.size} friends nearby",
+                            text = "${friendsUiState.friendLocations.size} friends nearby",
                             color = Color.White,
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Medium

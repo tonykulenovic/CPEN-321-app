@@ -3,6 +3,8 @@ package com.cpen321.usermanagement.di
 import android.content.Context
 import com.cpen321.usermanagement.data.local.preferences.TokenManager
 import com.cpen321.usermanagement.ui.navigation.NavigationStateManager
+import com.cpen321.usermanagement.data.realtime.LocationTrackingService
+import com.cpen321.usermanagement.data.repository.LocationRepository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -28,5 +30,12 @@ object DataModule {
         return NavigationStateManager()
     }
 
+    @Provides
+    @Singleton
+    fun provideLocationTrackingService(
+        locationRepository: LocationRepository
+    ): LocationTrackingService {
+        return LocationTrackingService(locationRepository)
+    }
 
 }

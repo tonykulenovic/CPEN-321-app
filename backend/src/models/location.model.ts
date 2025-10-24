@@ -109,9 +109,12 @@ export class LocationModel {
 
   async findByUserId(userId: mongoose.Types.ObjectId): Promise<ILocation | null> {
     try {
+      const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+      
       return await this.location.findOne({ 
         userId, 
         expiresAt: { $gt: new Date() },
+        createdAt: { $gt: fiveMinutesAgo }, // Only locations within last 5 minutes
         shared: true 
       }).sort({ createdAt: -1 }); // Get the latest location
     } catch (error) {
@@ -125,11 +128,14 @@ export class LocationModel {
   ): Promise<ILocation[]> {
     try {
       // Use aggregation to get the latest location for each friend
+      const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+      
       return await this.location.aggregate([
         {
           $match: {
             userId: { $in: friendIds },
             expiresAt: { $gt: new Date() },
+            createdAt: { $gt: fiveMinutesAgo }, // Only locations within last 5 minutes
             shared: true,
           }
         },
