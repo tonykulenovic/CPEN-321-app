@@ -83,6 +83,8 @@ import androidx.compose.ui.draw.clip
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Canvas
+import androidx.core.content.ContextCompat
 import androidx.compose.ui.platform.LocalContext
 import com.google.android.gms.maps.model.BitmapDescriptor
 
@@ -378,18 +380,20 @@ private fun MapContent(
     val pinUiState by pinViewModel.uiState.collectAsState()
     val context = LocalContext.current
     
-    // Create scaled library icon (48dp size for map markers) - nullable until map loads
+    // Create scaled custom icons (48dp size for map markers) - nullable until map loads
     var libraryIcon by remember { mutableStateOf<BitmapDescriptor?>(null) }
+    var cafeIcon by remember { mutableStateOf<BitmapDescriptor?>(null) }
     
     // Load pins when screen opens
     LaunchedEffect(Unit) {
         pinViewModel.loadPins()
     }
     
-    // Create library icon after a short delay to ensure GoogleMap is initialized
+    // Create custom icons after a short delay to ensure GoogleMap is initialized
     LaunchedEffect(Unit) {
         kotlinx.coroutines.delay(500) // Wait for map to initialize
-        libraryIcon = context.createScaledBitmapDescriptor(R.drawable.ic_library, 48)
+        libraryIcon = context.createScaledBitmapFromPng(R.drawable.ic_library, 48)
+        cafeIcon = context.createScaledBitmapFromPng(R.drawable.ic_coffee, 48)
     }
     
     var isSatelliteView by remember { mutableStateOf(false) }
@@ -547,8 +551,21 @@ private fun MapContent(
                     title = pin.name,
                     snippet = pin.description,
                     icon = if (pin.isPreSeeded) {
-                        // Use scaled library icon for pre-seeded pins (fallback to violet while loading)
-                        libraryIcon ?: BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_VIOLET)
+                        // Use custom icons for pre-seeded pins based on category
+                        when (pin.category) {
+                            PinCategory.STUDY -> {
+                                // Libraries use library icon (fallback to blue while loading)
+                                libraryIcon ?: BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE)
+                            }
+                            PinCategory.SHOPS_SERVICES -> {
+                                // Cafes use coffee icon (fallback to orange while loading)
+                                cafeIcon ?: BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE)
+                            }
+                            else -> {
+                                // Fallback for any other pre-seeded category
+                                BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_VIOLET)
+                            }
+                        }
                     } else {
                         // Regular colored markers for user-created pins
                         BitmapDescriptorFactory.defaultMarker(
@@ -623,15 +640,21 @@ private fun PinDetailsBottomSheet(
     )
 }
 
-// Helper function to create a scaled bitmap descriptor for map markers
-private fun Context.createScaledBitmapDescriptor(resourceId: Int, sizeDp: Int): BitmapDescriptor {
-    val bitmap = BitmapFactory.decodeResource(resources, resourceId)
-    
-    // Convert dp to pixels
+// Helper function to create a scaled bitmap descriptor from PNG for map markers
+private fun Context.createScaledBitmapFromPng(resourceId: Int, sizeDp: Int): BitmapDescriptor {
     val sizePixels = (sizeDp * resources.displayMetrics.density).toInt()
-    
-    // Scale bitmap to desired size
+    val bitmap = BitmapFactory.decodeResource(resources, resourceId)
     val scaledBitmap = Bitmap.createScaledBitmap(bitmap, sizePixels, sizePixels, false)
-    
     return BitmapDescriptorFactory.fromBitmap(scaledBitmap)
+}
+
+// Helper function to create a scaled bitmap descriptor from vector drawable for map markers
+private fun Context.createScaledBitmapFromVector(resourceId: Int, sizeDp: Int): BitmapDescriptor {
+    val sizePixels = (sizeDp * resources.displayMetrics.density).toInt()
+    val drawable = ContextCompat.getDrawable(this, resourceId)!!
+    val bitmap = Bitmap.createBitmap(sizePixels, sizePixels, Bitmap.Config.ARGB_8888)
+    val canvas = Canvas(bitmap)
+    drawable.setBounds(0, 0, canvas.width, canvas.height)
+    drawable.draw(canvas)
+    return BitmapDescriptorFactory.fromBitmap(bitmap)
 }

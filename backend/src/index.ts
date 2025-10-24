@@ -13,6 +13,7 @@ import path from 'path';
 import { locationGateway } from './realtime/gateway';
 import { BadgeService } from './services/badge.service';
 import { seedLibraries } from './scripts/seedLibraries';
+import { seedCafes } from './scripts/seedCafes';
 
 const app = express();
 const httpServer = createServer(app);
@@ -39,10 +40,16 @@ connectDB().then(() => {
       console.error('⚠️  Failed to initialize badges:', err);
     });
   
-  // Seed UBC libraries (only runs once if libraries don't exist)
+  // Seed UBC libraries
   seedLibraries()
     .catch(err => {
       console.error('⚠️  Failed to seed libraries:', err);
+    });
+  
+  // Seed cafes near UBC using Google Places API
+  seedCafes()
+    .catch(err => {
+      console.error('⚠️  Failed to seed cafes:', err);
     });
 });
 

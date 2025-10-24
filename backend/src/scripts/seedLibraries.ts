@@ -137,6 +137,7 @@ export async function seedLibraries() {
     const currentLibraryNames = UBC_LIBRARIES.map(lib => lib.name);
     const deleteResult = await pinModel['pin'].deleteMany({
       isPreSeeded: true,
+      category: PinCategory.STUDY, // Only delete STUDY category (libraries)
       name: { $nin: currentLibraryNames } // Delete if name is NOT in current list
     });
 

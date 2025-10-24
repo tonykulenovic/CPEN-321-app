@@ -160,11 +160,15 @@ export class PinModel {
       let pins = await this.pin
         .find(query)
         .populate('createdBy', 'name profilePicture')
-        .sort({ createdAt: -1 })
+        .sort({ isPreSeeded: -1, createdAt: -1 }) // Pre-seeded pins first, then by date
         .limit(limit)
         .skip(skip);
 
       logger.info(`Search pins: Found ${pins.length} pins. UserId: ${filters.userId || 'NOT PROVIDED'}`);
+      // Log pin details for debugging
+      pins.forEach(pin => {
+        logger.info(`  - Pin: "${pin.name}" | Category: ${pin.category} | PreSeeded: ${pin.isPreSeeded}`);
+      });
 
       // Apply visibility filtering
       if (filters.userId) {

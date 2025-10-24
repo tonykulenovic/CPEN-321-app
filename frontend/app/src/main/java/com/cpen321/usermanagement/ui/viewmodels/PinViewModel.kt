@@ -58,7 +58,7 @@ class PinViewModel @Inject constructor(
                 radius = radius,
                 search = search,
                 page = page,
-                limit = 20
+                limit = 100 // Increased to show more pins (libraries + cafes)
             )
                 .onSuccess { data ->
                     _uiState.value = _uiState.value.copy(
