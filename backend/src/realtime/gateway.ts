@@ -42,16 +42,21 @@ export class LocationGateway {
     accuracyM = 0
   ): Promise<{ shared: boolean; expiresAt: string }> {
     try {
+      logger.info(`📍 reportLocation called for user ${userId}: lat=${lat}, lng=${lng}`);
+      
       // 1. Get user's privacy settings
       const user = await userModel.findById(userId);
       if (!user) {
         throw new Error('User not found');
       }
 
-      const { location: locationPrivacy } = user.privacy;
+      const locationPrivacy = user.privacy.location || { sharing: 'off', precisionMeters: 30 };
+      logger.info(`🔒 User ${userId} privacy settings: sharing=${locationPrivacy.sharing}`);
 
       // 2. Check if location sharing is off
+      // Handle legacy "on" value as equivalent to "live"
       if (locationPrivacy.sharing === 'off') {
+        logger.warn(`🔴 User ${userId} has location sharing OFF, not sharing location`);
         return {
           shared: false,
           expiresAt: new Date().toISOString(),
@@ -86,6 +91,7 @@ export class LocationGateway {
       );
 
       // 5. Broadcast to subscribed friends
+      logger.info(`📡 Broadcasting location update for user ${userId} to subscribed friends`);
       await this.broadcastLocationUpdate(userId, {
         lat: finalLat,
         lng: finalLng,
@@ -93,6 +99,7 @@ export class LocationGateway {
         ts: location.createdAt.toISOString(),
       });
 
+      logger.info(`✅ Location successfully reported and shared for user ${userId}`);
       return {
         shared: true,
         expiresAt: expiresAt.toISOString(),
@@ -112,27 +119,41 @@ export class LocationGateway {
       const friendships = await friendshipModel.findUserFriendships(userId, 'accepted');
       const friendsWithLocationSharing = friendships.filter(f => f.shareLocation);
 
-      // 2. Get locations for those friends
-      const friendIds = friendsWithLocationSharing.map(f => f.friendId);
-      const locations = await locationModel.findFriendsLocations(friendIds);
+      // 2. Get fresh locations for those friends (within last 5 minutes)
+      const friendIds = friendsWithLocationSharing.map(f => 
+        f.friendId._id || f.friendId
+      );
+      const freshLocations = await locationModel.findFriendsLocations(friendIds);
+
+      logger.info(`Found ${freshLocations.length} fresh friend locations (within 5 minutes)`);
 
       // 3. Filter based on privacy settings and apply approximation
       const filteredLocations: ILocation[] = [];
       
-      for (const location of locations) {
+      for (const location of freshLocations) {
         const friend = await userModel.findById(location.userId);
-        if (!friend || friend.privacy.location.sharing === 'off') {
+        if (!friend) {
+          continue;
+        }
+
+        // Handle both old and new privacy format
+        const locationSharing = friend.privacy.location?.sharing || 'off';
+        
+        // Skip if location sharing is explicitly disabled
+        // Handle legacy "on" value as "live"
+        if (locationSharing === 'off') {
           continue;
         }
 
         // Apply approximation if needed
-        if (friend.privacy.location.sharing === 'approximate') {
-          const precision = friend.privacy.location.precisionMeters;
+        if (locationSharing === 'approximate') {
+          const precision = friend.privacy.location?.precisionMeters || 30;
           const offset = precision / 111000;
           location.lat += (Math.random() - 0.5) * offset;
           location.lng += (Math.random() - 0.5) * offset;
           location.accuracyM = Math.max(location.accuracyM, precision);
         }
+        // For legacy "on" or "live" values, use exact location (no approximation needed)
 
         filteredLocations.push(location);
       }
@@ -161,7 +182,8 @@ export class LocationGateway {
 
       // 2. Check friend's privacy settings
       const friend = await userModel.findById(friendId);
-      if (!friend || friend.privacy.location.sharing === 'off') {
+      const locationSharing = friend?.privacy.location?.sharing || 'off';
+      if (!friend || locationSharing === 'off') {
         throw new Error('Friend has location sharing disabled');
       }
 
@@ -227,7 +249,10 @@ export class LocationGateway {
     const userIdStr = userId.toString();
     const trackers = locationTrackers.get(userIdStr);
     
+    logger.info(`📡 Checking trackers for user ${userIdStr}: ${trackers ? trackers.size : 0} subscribers`);
+    
     if (trackers && trackers.size > 0) {
+      logger.info(`📡 Broadcasting to ${trackers.size} friends tracking user ${userIdStr}`);
       const locationEvent: LocationUpdateEvent = {
         type: 'location.update',
         version: 1,
@@ -281,6 +306,30 @@ export class LocationGateway {
           return next(new Error('Authentication error: No token provided'));
         }
 
+        // Development bypass with dev token
+        const devToken = process.env.DEV_AUTH_TOKEN;
+        const devUserId = socket.handshake.headers['x-dev-user-id'] as string;
+        
+        if (devToken && token === devToken && devUserId && process.env.NODE_ENV !== 'production') {
+          console.log(`[DEV] Socket.io using dev token bypass for user ID: ${devUserId}`);
+          
+          if (!mongoose.Types.ObjectId.isValid(devUserId)) {
+            return next(new Error('Invalid dev user ID'));
+          }
+
+          const user = await userModel.findById(new mongoose.Types.ObjectId(devUserId));
+          if (!user) {
+            return next(new Error('Dev user not found'));
+          }
+
+          // Store user ID in socket data
+          socket.data.userId = new mongoose.Types.ObjectId(devUserId);
+          socketToUser.set(socket.id, new mongoose.Types.ObjectId(devUserId));
+          
+          next();
+          return;
+        }
+
         // Verify JWT token
         const decoded = jwt.verify(token, process.env.JWT_SECRET!) as any;
         const userId = new mongoose.Types.ObjectId(decoded.id);
@@ -300,7 +349,7 @@ export class LocationGateway {
       const userId = socket.data.userId as mongoose.Types.ObjectId;
       socket.join(`user:${userId.toString()}`);
 
-      logger.info(`User ${userId} connected to realtime namespace`);
+      logger.info(`🟢 User ${userId} connected to realtime namespace (Socket ID: ${socket.id})`);
 
       // Handle location tracking subscription
       socket.on('location:track', async (payload: { friendId: string; durationSec?: number }) => {
@@ -348,11 +397,14 @@ export class LocationGateway {
         try {
           const { lat, lng, accuracyM = 0 } = payload;
           
+          logger.info(`📍 location:ping received from user ${userId}: lat=${lat}, lng=${lng}, accuracy=${accuracyM}`);
+          
           const result = await this.reportLocation(userId, lat, lng, accuracyM);
           
+          logger.info(`✅ location:ping processed for user ${userId}, shared=${result.shared}`);
           socket.emit('location:ping:ack', result);
         } catch (error) {
-          logger.error('Error in location:ping:', error);
+          logger.error(`❌ Error in location:ping for user ${userId}:`, error);
           socket.emit('location:ping:error', {
             error: error instanceof Error ? error.message : 'Failed to update location',
           });
