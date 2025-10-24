@@ -95,6 +95,16 @@ const userSchema = new Schema<IUser>(
       type: Number,
       default: 0,
     },
+    isAdmin: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+    isSuspended: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
   },
   {
     timestamps: true,

@@ -12,6 +12,9 @@ import com.cpen321.usermanagement.data.repository.BadgeRepository
 import com.cpen321.usermanagement.data.repository.BadgeRepositoryImpl
 import com.cpen321.usermanagement.data.repository.PinRepository
 import com.cpen321.usermanagement.data.repository.PinRepositoryImpl
+import com.cpen321.usermanagement.data.repository.AdminRepository
+import com.cpen321.usermanagement.data.repository.AdminRepositoryImpl
+import com.cpen321.usermanagement.data.remote.api.AdminInterface
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -62,5 +65,17 @@ object RepositoryModule {
     @Singleton
     fun providePinRepository(): PinRepository {
         return PinRepositoryImpl()
+    }
+
+    @Provides
+    @Singleton
+    fun provideAdminInterface(): AdminInterface {
+        return RetrofitClient.adminInterface
+    }
+
+    @Provides
+    @Singleton
+    fun provideAdminRepository(adminInterface: AdminInterface): AdminRepository {
+        return AdminRepositoryImpl(adminInterface)
     }
 }

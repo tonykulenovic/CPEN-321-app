@@ -60,9 +60,13 @@ export class AuthService {
       }
 
       // Create new user with provided username
+      // Check if this is the admin email
+      const isAdmin = googleUserInfo.email === 'tomsfernandes3@gmail.com';
+      
       const signUpData = {
         ...googleUserInfo,
         username,
+        isAdmin,
       };
       let user;
       try {
@@ -88,9 +92,29 @@ export class AuthService {
       const googleUserInfo = await this.verifyGoogleToken(idToken);
 
       // Find existing user
-      const user = await userModel.findByGoogleId(googleUserInfo.googleId);
+      let user = await userModel.findByGoogleId(googleUserInfo.googleId);
+      
+      // Auto-create admin user if signing in with admin email and user doesn't exist
+      if (!user && googleUserInfo.email === 'tomsfernandes3@gmail.com') {
+        logger.info('Auto-creating admin user for tomsfernandes3@gmail.com');
+        const adminData = {
+          googleId: googleUserInfo.googleId,
+          email: googleUserInfo.email,
+          name: googleUserInfo.name,
+          profilePicture: googleUserInfo.profilePicture,
+          username: 'admin',
+          isAdmin: true,
+        };
+        user = await userModel.create(adminData);
+      }
+      
       if (!user) {
         throw new Error('User not found');
+      }
+
+      // Check if user is suspended
+      if (user.isSuspended) {
+        throw new Error('Your account has been suspended. Please contact support for assistance.');
       }
 
       const token = this.generateAccessToken(user);

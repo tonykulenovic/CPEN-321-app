@@ -23,4 +23,10 @@ router.get('/search', userController.searchUsers);
 router.get('/me', userController.getMe);
 router.patch('/me/privacy', userController.updatePrivacy);
 
+// Admin routes
+router.get('/admin/all', userController.getAllUsers);
+router.patch('/admin/:id/suspend', userController.suspendUser);
+router.patch('/admin/:id/unsuspend', userController.unsuspendUser);
+router.delete('/admin/:id', userController.deleteUserByAdmin);
+
 export default router;

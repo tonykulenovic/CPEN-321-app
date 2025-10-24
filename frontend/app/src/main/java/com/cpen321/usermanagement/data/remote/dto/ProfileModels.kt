@@ -18,6 +18,8 @@ data class User(
     val username: String,
     val bio: String?,
     val profilePicture: String,
+    val isAdmin: Boolean = false,
+    val isSuspended: Boolean = false,
     val createdAt: String? = null,
     val updatedAt: String? = null
 )

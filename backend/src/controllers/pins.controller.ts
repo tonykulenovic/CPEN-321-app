@@ -75,7 +75,8 @@ export class PinsController {
     try {
       const pinId = new mongoose.Types.ObjectId(req.params.id);
       const userId = req.user!._id;
-      const deleted = await pinModel.delete(pinId, userId);
+      const isAdmin = req.user!.isAdmin || false;
+      const deleted = await pinModel.delete(pinId, userId, isAdmin);
       if (!deleted) return res.status(404).json({ message: 'Pin not found or unauthorized' });
       res.status(200).json({ message: 'Pin deleted successfully' });
     } catch (error) {

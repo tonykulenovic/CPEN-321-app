@@ -16,6 +16,8 @@ export interface IUser extends Document {
   privacy: PrivacySettings;
   friendsCount: number;
   badgesCount: number;
+  isAdmin: boolean;
+  isSuspended: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -30,6 +32,7 @@ export const createUserSchema = z.object({
   profilePicture: z.string().optional(),
   bio: z.string().max(500).optional(),
   campus: z.string().optional(),
+  isAdmin: z.boolean().optional(),
 });
 
 export const updateProfileSchema = z.object({

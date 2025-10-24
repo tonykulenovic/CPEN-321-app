@@ -119,9 +119,14 @@ export class PinModel {
     }
   }
 
-  async delete(pinId: mongoose.Types.ObjectId, userId: mongoose.Types.ObjectId): Promise<boolean> {
+  async delete(pinId: mongoose.Types.ObjectId, userId: mongoose.Types.ObjectId, isAdmin: boolean = false): Promise<boolean> {
     try {
-      const result = await this.pin.deleteOne({ _id: pinId, createdBy: userId });
+      // Admins can delete any pin, regular users can only delete their own pins
+      const query = isAdmin 
+        ? { _id: pinId } 
+        : { _id: pinId, createdBy: userId };
+      
+      const result = await this.pin.deleteOne(query);
       return result.deletedCount > 0;
     } catch (error) {
       logger.error('Error deleting pin:', error);
@@ -172,6 +177,12 @@ export class PinModel {
             if (pin.isPreSeeded) {
               logger.info(`Pin "${pin.name}" is pre-seeded, showing to all users`);
               return pin;
+            }
+            
+            // Check if createdBy is populated
+            if (!pin.createdBy || !pin.createdBy._id) {
+              logger.warn(`Pin "${pin.name}" has no creator, hiding it`);
+              return null;
             }
             
             // User can always see their own pins

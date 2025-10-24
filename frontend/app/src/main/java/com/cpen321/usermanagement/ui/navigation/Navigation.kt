@@ -11,6 +11,9 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.cpen321.usermanagement.R
+import com.cpen321.usermanagement.ui.screens.AdminDashboardScreen
+import com.cpen321.usermanagement.ui.screens.AdminManagePinsScreen
+import com.cpen321.usermanagement.ui.screens.AdminManageUsersScreen
 import com.cpen321.usermanagement.ui.screens.AuthScreen
 import com.cpen321.usermanagement.ui.screens.BadgesScreen
 import com.cpen321.usermanagement.ui.screens.CreatePinScreen
@@ -24,6 +27,7 @@ import com.cpen321.usermanagement.ui.screens.ManageProfileScreen
 import com.cpen321.usermanagement.ui.screens.ProfileCompletionScreen
 import com.cpen321.usermanagement.ui.screens.ProfileScreen
 import com.cpen321.usermanagement.ui.screens.ProfileScreenActions
+import com.cpen321.usermanagement.ui.viewmodels.AdminViewModel
 import com.cpen321.usermanagement.ui.viewmodels.AuthViewModel
 import com.cpen321.usermanagement.ui.viewmodels.BadgeViewModel
 import com.cpen321.usermanagement.ui.viewmodels.FriendsViewModel
@@ -38,6 +42,9 @@ import com.google.android.gms.maps.model.LatLng
 object NavRoutes {
     const val LOADING = "loading"
     const val AUTH = "auth"
+    const val ADMIN_DASHBOARD = "admin_dashboard"
+    const val ADMIN_MANAGE_PINS = "admin_manage_pins"
+    const val ADMIN_MANAGE_USERS = "admin_manage_users"
     const val MAIN = "main"
     const val PROFILE = "profile"
     const val MANAGE_PROFILE = "manage_profile"
@@ -117,6 +124,13 @@ private fun handleNavigationEvent(
             navigationStateManager.clearNavigationEvent()
         }
 
+        is NavigationEvent.NavigateToAdminDashboard -> {
+            navController.navigate(NavRoutes.ADMIN_DASHBOARD) {
+                popUpTo(0) { inclusive = true }
+            }
+            navigationStateManager.clearNavigationEvent()
+        }
+
         is NavigationEvent.NavigateToMainWithMessage -> {
             mainViewModel.setSuccessMessage(navigationEvent.message)
             navController.navigate(NavRoutes.MAIN) {
@@ -181,6 +195,43 @@ private fun AppNavHost(
 
         composable(NavRoutes.AUTH) {
             AuthScreen(authViewModel = authViewModel, profileViewModel = profileViewModel)
+        }
+
+        composable(NavRoutes.ADMIN_DASHBOARD) {
+            AdminDashboardScreen(
+                onLogout = {
+                    authViewModel.handleLogout()
+                    navController.navigate(NavRoutes.AUTH) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                },
+                onManagePinsClick = {
+                    navController.navigate(NavRoutes.ADMIN_MANAGE_PINS)
+                },
+                onManageUsersClick = {
+                    navController.navigate(NavRoutes.ADMIN_MANAGE_USERS)
+                }
+            )
+        }
+
+        composable(NavRoutes.ADMIN_MANAGE_PINS) {
+            val pinViewModel: PinViewModel = hiltViewModel()
+            AdminManagePinsScreen(
+                pinViewModel = pinViewModel,
+                onBackClick = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        composable(NavRoutes.ADMIN_MANAGE_USERS) {
+            val adminViewModel: AdminViewModel = hiltViewModel()
+            AdminManageUsersScreen(
+                adminViewModel = adminViewModel,
+                onBackClick = {
+                    navController.popBackStack()
+                }
+            )
         }
 
         composable(NavRoutes.PROFILE_COMPLETION) {

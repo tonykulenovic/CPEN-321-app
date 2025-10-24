@@ -26,6 +26,11 @@ export class UserController {
     this.searchUsers = this.searchUsers.bind(this);
     this.getMe = this.getMe.bind(this);
     this.updatePrivacy = this.updatePrivacy.bind(this);
+    // Admin methods
+    this.getAllUsers = this.getAllUsers.bind(this);
+    this.suspendUser = this.suspendUser.bind(this);
+    this.unsuspendUser = this.unsuspendUser.bind(this);
+    this.deleteUserByAdmin = this.deleteUserByAdmin.bind(this);
   }
 
   /**
@@ -287,6 +292,150 @@ export class UserController {
       res.status(500).json({
         message: 'Internal server error',
       });
+    }
+  }
+
+  // ==================== ADMIN METHODS ====================
+  
+  /**
+   * GET /users/admin/all — Get all users (admin only).
+   * @return 200 Users list
+   */
+  async getAllUsers(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      // Check if user is admin
+      if (!req.user?.isAdmin) {
+        res.status(403).json({ message: 'Unauthorized: Admin access required' });
+        return;
+      }
+
+      const users = await userModel['user']
+        .find({})
+        .select('-__v')
+        .sort({ createdAt: -1 })
+        .lean();
+
+      res.status(200).json({
+        message: 'Users fetched successfully',
+        data: { users, total: users.length },
+      });
+    } catch (error) {
+      logger.error('Error in getAllUsers:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  }
+
+  /**
+   * PATCH /users/admin/:id/suspend — Suspend a user (admin only).
+   * @param id string - User ID to suspend
+   * @return 200 Success
+   */
+  async suspendUser(req: Request<{ id: string }>, res: Response, next: NextFunction): Promise<void> {
+    try {
+      // Check if user is admin
+      if (!req.user?.isAdmin) {
+        res.status(403).json({ message: 'Unauthorized: Admin access required' });
+        return;
+      }
+
+      const userId = new mongoose.Types.ObjectId(req.params.id);
+      
+      // Prevent admin from suspending themselves
+      if (userId.equals(req.user._id)) {
+        res.status(400).json({ message: 'Cannot suspend your own account' });
+        return;
+      }
+
+      const user = await userModel['user'].findByIdAndUpdate(
+        userId,
+        { isSuspended: true },
+        { new: true }
+      );
+
+      if (!user) {
+        res.status(404).json({ message: 'User not found' });
+        return;
+      }
+
+      res.status(200).json({
+        message: 'User suspended successfully',
+        data: { user },
+      });
+    } catch (error) {
+      logger.error('Error in suspendUser:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  }
+
+  /**
+   * PATCH /users/admin/:id/unsuspend — Unsuspend a user (admin only).
+   * @param id string - User ID to unsuspend
+   * @return 200 Success
+   */
+  async unsuspendUser(req: Request<{ id: string }>, res: Response, next: NextFunction): Promise<void> {
+    try {
+      // Check if user is admin
+      if (!req.user?.isAdmin) {
+        res.status(403).json({ message: 'Unauthorized: Admin access required' });
+        return;
+      }
+
+      const userId = new mongoose.Types.ObjectId(req.params.id);
+
+      const user = await userModel['user'].findByIdAndUpdate(
+        userId,
+        { isSuspended: false },
+        { new: true }
+      );
+
+      if (!user) {
+        res.status(404).json({ message: 'User not found' });
+        return;
+      }
+
+      res.status(200).json({
+        message: 'User unsuspended successfully',
+        data: { user },
+      });
+    } catch (error) {
+      logger.error('Error in unsuspendUser:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  }
+
+  /**
+   * DELETE /users/admin/:id — Delete a user (admin only).
+   * @param id string - User ID to delete
+   * @return 200 Success
+   */
+  async deleteUserByAdmin(req: Request<{ id: string }>, res: Response, next: NextFunction): Promise<void> {
+    try {
+      // Check if user is admin
+      if (!req.user?.isAdmin) {
+        res.status(403).json({ message: 'Unauthorized: Admin access required' });
+        return;
+      }
+
+      const userId = new mongoose.Types.ObjectId(req.params.id);
+      
+      // Prevent admin from deleting themselves
+      if (userId.equals(req.user._id)) {
+        res.status(400).json({ message: 'Cannot delete your own account' });
+        return;
+      }
+
+      // Delete user's media
+      await MediaService.deleteAllUserImages(userId.toString());
+
+      // Delete user
+      await userModel.delete(userId);
+
+      res.status(200).json({
+        message: 'User deleted successfully',
+      });
+    } catch (error) {
+      logger.error('Error in deleteUserByAdmin:', error);
+      res.status(500).json({ message: 'Internal server error' });
     }
   }
 }

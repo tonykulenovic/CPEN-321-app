@@ -42,6 +42,15 @@ export const authenticateToken: RequestHandler = async (
       return;
     }
 
+    // Check if user is suspended
+    if (user.isSuspended) {
+      res.status(403).json({
+        error: 'Account suspended',
+        message: 'Your account has been suspended. Please contact support for assistance.',
+      });
+      return;
+    }
+
     req.user = user;
 
     next();

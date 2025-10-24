@@ -9,6 +9,7 @@ import javax.inject.Singleton
 sealed class NavigationEvent {
     object NavigateToAuth : NavigationEvent()
     object NavigateToMain : NavigationEvent()
+    object NavigateToAdminDashboard : NavigationEvent()
     object NavigateToProfileCompletion : NavigationEvent()
     object NavigateToProfile : NavigationEvent()
     object NavigateToManageProfile : NavigationEvent()
@@ -22,6 +23,7 @@ sealed class NavigationEvent {
 data class NavigationState(
     val currentRoute: String = NavRoutes.LOADING,
     val isAuthenticated: Boolean = false,
+    val isAdmin: Boolean = false,
     val needsProfileCompletion: Boolean = false,
     val isLoading: Boolean = true,
     val isNavigating: Boolean = false
@@ -41,11 +43,13 @@ class NavigationStateManager @Inject constructor() {
     fun updateAuthenticationState(
         isAuthenticated: Boolean,
         needsProfileCompletion: Boolean,
+        isAdmin: Boolean = false,
         isLoading: Boolean = false,
         currentRoute: String = _navigationState.value.currentRoute
     ) {
         val newState = _navigationState.value.copy(
             isAuthenticated = isAuthenticated,
+            isAdmin = isAdmin,
             needsProfileCompletion = needsProfileCompletion,
             isLoading = isLoading,
             currentRoute = currentRoute
@@ -54,7 +58,7 @@ class NavigationStateManager @Inject constructor() {
 
         // Trigger navigation based on state
         if (!isLoading) {
-            handleAuthenticationNavigation(currentRoute, isAuthenticated, needsProfileCompletion)
+            handleAuthenticationNavigation(currentRoute, isAuthenticated, isAdmin, needsProfileCompletion)
         }
     }
 
@@ -64,13 +68,17 @@ class NavigationStateManager @Inject constructor() {
     private fun handleAuthenticationNavigation(
         currentRoute: String,
         isAuthenticated: Boolean,
+        isAdmin: Boolean,
         needsProfileCompletion: Boolean
     ) {
         when {
             // From loading screen after auth check
             currentRoute == NavRoutes.LOADING -> {
                 if (isAuthenticated) {
-                    if (needsProfileCompletion) {
+                    if (isAdmin) {
+                        // Admins skip onboarding and go directly to admin dashboard
+                        navigateToAdminDashboard()
+                    } else if (needsProfileCompletion) {
                         navigateToProfileCompletion()
                     } else {
                         navigateToMain()
@@ -81,7 +89,10 @@ class NavigationStateManager @Inject constructor() {
             }
             // From auth screen after successful login
             currentRoute.startsWith(NavRoutes.AUTH) && isAuthenticated -> {
-                if (needsProfileCompletion) {
+                if (isAdmin) {
+                    // Admins skip onboarding and go directly to admin dashboard
+                    navigateToAdminDashboard()
+                } else if (needsProfileCompletion) {
                     navigateToProfileCompletion()
                 } else {
                     navigateToMain()
@@ -112,6 +123,14 @@ class NavigationStateManager @Inject constructor() {
     fun navigateToMain() {
         _navigationEvent.value = NavigationEvent.NavigateToMain
         _navigationState.value = _navigationState.value.copy(currentRoute = NavRoutes.MAIN)
+    }
+
+    /**
+     * Navigate to admin dashboard
+     */
+    fun navigateToAdminDashboard() {
+        _navigationEvent.value = NavigationEvent.NavigateToAdminDashboard
+        _navigationState.value = _navigationState.value.copy(currentRoute = NavRoutes.ADMIN_DASHBOARD)
     }
 
     /**

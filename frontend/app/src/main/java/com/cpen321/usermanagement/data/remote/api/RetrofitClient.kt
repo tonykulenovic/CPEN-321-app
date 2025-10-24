@@ -40,6 +40,7 @@ object RetrofitClient {
     val friendsInterface: FriendsInterface = retrofit.create(FriendsInterface::class.java)
     val badgeInterface: BadgeInterface = retrofit.create(BadgeInterface::class.java)
     val pinInterface: PinInterface = retrofit.create(PinInterface::class.java)
+    val adminInterface: AdminInterface = retrofit.create(AdminInterface::class.java)
 
     fun setAuthToken(token: String?) {
         authToken = token

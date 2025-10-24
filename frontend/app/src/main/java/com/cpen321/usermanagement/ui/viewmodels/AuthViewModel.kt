@@ -64,6 +64,7 @@ class AuthViewModel @Inject constructor(
 
                 val isAuthenticated = authRepository.isUserAuthenticated()
                 val user = if (isAuthenticated) authRepository.getCurrentUser() else null
+                val isAdmin = user?.isAdmin ?: false
                 val needsProfileCompletion = false
 
                 _uiState.value = _uiState.value.copy(
@@ -75,6 +76,7 @@ class AuthViewModel @Inject constructor(
                 updateNavigationState(
                     isAuthenticated = isAuthenticated,
                     needsProfileCompletion = needsProfileCompletion,
+                    isAdmin = isAdmin,
                     isLoading = false
                 )
             } catch (e: java.net.SocketTimeoutException) {
@@ -90,11 +92,13 @@ class AuthViewModel @Inject constructor(
     private fun updateNavigationState(
         isAuthenticated: Boolean = false,
         needsProfileCompletion: Boolean = false,
+        isAdmin: Boolean = false,
         isLoading: Boolean = false
     ) {
         navigationStateManager.updateAuthenticationState(
             isAuthenticated = isAuthenticated,
             needsProfileCompletion = needsProfileCompletion,
+            isAdmin = isAdmin,
             isLoading = isLoading,
             currentRoute = NavRoutes.LOADING
         )
@@ -129,6 +133,7 @@ class AuthViewModel @Inject constructor(
 
             authOperation(credential.idToken, username)
                 .onSuccess { authData ->
+                    val isAdmin = authData.user.isAdmin
                     val needsProfileCompletion =
                         authData.user.bio == null || authData.user.bio.isBlank()
 
@@ -141,9 +146,11 @@ class AuthViewModel @Inject constructor(
                     )
 
                     // Trigger navigation through NavigationStateManager
+                    // Admins skip onboarding and go directly to admin dashboard
                     navigationStateManager.updateAuthenticationState(
                         isAuthenticated = true,
-                        needsProfileCompletion = needsProfileCompletion,
+                        needsProfileCompletion = if (isAdmin) false else needsProfileCompletion,
+                        isAdmin = isAdmin,
                         isLoading = false,
                         currentRoute = NavRoutes.AUTH
                     )
