@@ -184,19 +184,35 @@ Target audience: university students who want an easy way to discover study spot
 ### **4.1. Main Components**
 1. **Authentication Service**
    - **Purpose**: Handles Google OAuth login for all users.  
-   - **Rationale**: Using Google OAuth avoids building a custom authentication system and leverages an external trusted identity provider.  
+   - **Rationale**: Using Google OAuth avoids building a custom authentication system and leverages an external trusted identity provider.
+   - **Interfaces**: 
+      1. ...
+         - **Purpose**: ...
+      2. ...
 
 2. **Pin Manager**
    - **Purpose**: Manages CRUD operations for pins (create, update, delete, view).  
    - **Rationale**: Pins are the central content of the app, and isolating them in a component makes it easier to manage validation, reports, and updates.  
+   - **Interfaces**: 
+      1. ...
+         - **Purpose**: ...
+      2. ...
 
 3. **Badge Manager**
    - **Purpose**: Assigns badges based on user activity (logins, time spent at locations, reports).  
    - **Rationale**: A separate manager for badges allows us to implement custom logic and computations beyond simple CRUD, supporting gamification.  
+   - **Interfaces**: 
+      1. ...
+         - **Purpose**: ...
+      2. ...
 
 4. **Recommendation Engine**
    - **Purpose**: Fetches nearby food spots using Google Places API and applies time-of-day rules.  
    - **Rationale**: Encapsulating recommendation logic separately allows us to combine external API data with custom filters (e.g., lunch vs. dinner).  
+   - **Interfaces**: 
+      1. ...
+         - **Purpose**: ...
+      2. ...
 
 ---
 
@@ -222,15 +238,31 @@ Target audience: university students who want an easy way to discover study spot
 
 ### **4.4. Frameworks**
 
-4. **Node.js + Express**  
+1. **Node.js + Express**  
    - **Purpose**: Backend REST API server.  
    - **Reason**: Lightweight, integrates well with MongoDB and external APIs.
 
-5. **Socket.io**
+2. **Socket.io**
     -**Purpose**:Web sockets for live updates
     -**Reason**: Live map updates, location tracking, and live recommendations using Socket.io
+
+3. **NEED TO UPDATE WITH MORE**  
+
+---
 
 ### **4.5. Dependencies Diagram**
 ![Dependencies Diagram](images/dependency_diagram.png)
 
+---
 
+### **4.6. Use Case Sequence Diagram (5 Most Major Use Cases)**
+1. [**[WRITE_NAME_HERE]**](#uc1)\
+[SEQUENCE_DIAGRAM_HERE]
+2. ...
+
+---
+
+### **4.7. Design of Non-Functional Requirements**
+1. [**[WRITE_NAME_HERE]**](#nfr1)
+    - **Implementation**: ...
+2. ...
