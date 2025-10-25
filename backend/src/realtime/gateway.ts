@@ -5,7 +5,10 @@ import jwt from 'jsonwebtoken';
 import { locationModel } from '../models/location.model';
 import { friendshipModel } from '../models/friendship.model';
 import { userModel } from '../models/user.model';
+import { pinModel } from '../models/pin.model';
 import { LocationUpdateEvent, ILocation } from '../types/friends.types';
+import { BadgeService } from '../services/badge.service';
+import { BadgeRequirementType } from '../types/badge.types';
 import logger from '../utils/logger.util';
 
 // Location tracking subscription map
@@ -89,6 +92,14 @@ export class LocationGateway {
         true,
         expiresAt
       );
+
+      // 4.5. Check for nearby pins and auto-visit (use original coordinates, not approximated)
+      try {
+        await this.checkAndVisitNearbyPins(userId, lat, lng);
+      } catch (error) {
+        logger.error('Error checking nearby pins:', error);
+        // Don't fail the location update if pin checking fails
+      }
 
       // 5. Broadcast to subscribed friends
       logger.info(`📡 Broadcasting location update for user ${userId} to subscribed friends`);
@@ -427,6 +438,166 @@ export class LocationGateway {
         socketToUser.delete(socket.id);
       });
     });
+  }
+
+  /**
+   * Calculate distance between two coordinates using Haversine formula
+   * @returns distance in meters
+   */
+  private calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+    const R = 6371e3; // Earth's radius in meters
+    const φ1 = (lat1 * Math.PI) / 180;
+    const φ2 = (lat2 * Math.PI) / 180;
+    const Δφ = ((lat2 - lat1) * Math.PI) / 180;
+    const Δλ = ((lon2 - lon1) * Math.PI) / 180;
+
+    const a =
+      Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+      Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+    return R * c; // Distance in meters
+  }
+
+  /**
+   * Check for nearby pins and automatically visit them if within 10m
+   */
+  private async checkAndVisitNearbyPins(
+    userId: mongoose.Types.ObjectId,
+    userLat: number,
+    userLng: number
+  ): Promise<void> {
+    try {
+      // Get user's visited pins to avoid re-checking
+      const User = mongoose.model('User');
+      const user = await User.findById(userId).select('visitedPins');
+      if (!user) return;
+
+      const visitedPinIds = new Set(user.visitedPins.map((id: mongoose.Types.ObjectId) => id.toString()));
+
+      // Search for pins within a reasonable radius (100m to be safe)
+      const nearbyPins = await pinModel.search({
+        latitude: userLat,
+        longitude: userLng,
+        radius: 100, // Search within 100m
+        page: 1,
+        limit: 50,
+      });
+
+      logger.info(`🔍 Checking ${nearbyPins.pins.length} nearby pins for visits. Already visited: ${visitedPinIds.size} pins.`);
+
+      // Check each pin for exact proximity (50m)
+      for (const pin of nearbyPins.pins) {
+        // Skip if already visited
+        if (visitedPinIds.has(pin._id.toString())) {
+          continue;
+        }
+
+        // Calculate exact distance
+        const distance = this.calculateDistance(
+          userLat,
+          userLng,
+          pin.location.latitude,
+          pin.location.longitude
+        );
+
+        // If within 50 meters, mark as visited
+        if (distance <= 50) {
+          logger.info(`📍 User ${userId} is within ${distance.toFixed(2)}m of pin ${pin._id} (${pin.name}). Auto-visiting...`);
+
+          // Prepare increments based on pin category
+          const increments: any = { 'stats.pinsVisited': 1 };
+          
+          // Track category-specific visits (only for pre-seeded pins)
+          if (pin.isPreSeeded) {
+            if (pin.category === 'study') {
+              increments['stats.librariesVisited'] = 1;
+              logger.info(`📚 Incrementing library visit count (pre-seeded)`);
+            } else if (pin.category === 'shops_services') {
+              increments['stats.cafesVisited'] = 1;
+              logger.info(`☕ Incrementing cafe visit count (pre-seeded)`);
+            }
+          }
+
+          // Add pin to visited list and increment counters
+          await User.findByIdAndUpdate(userId, {
+            $push: { visitedPins: pin._id },
+            $inc: increments,
+          });
+
+          // Process badge events for pin visit
+          try {
+            let allEarnedBadges: any[] = [];
+
+            // General pin visit event
+            const visitBadges = await BadgeService.processBadgeEvent({
+              userId: userId.toString(),
+              eventType: BadgeRequirementType.PINS_VISITED,
+              value: 1,
+              timestamp: new Date(),
+              metadata: {
+                pinId: pin._id.toString(),
+                pinName: pin.name,
+                category: pin.category,
+                distance: distance,
+              },
+            });
+            allEarnedBadges = allEarnedBadges.concat(visitBadges);
+
+            // Category-specific badge events (only for pre-seeded pins)
+            if (pin.isPreSeeded) {
+              if (pin.category === 'study') {
+                const libraryBadges = await BadgeService.processBadgeEvent({
+                  userId: userId.toString(),
+                  eventType: BadgeRequirementType.LIBRARIES_VISITED,
+                  value: 1,
+                  timestamp: new Date(),
+                  metadata: {
+                    pinId: pin._id.toString(),
+                    pinName: pin.name,
+                  },
+                });
+                allEarnedBadges = allEarnedBadges.concat(libraryBadges);
+              } else if (pin.category === 'shops_services') {
+                const cafeBadges = await BadgeService.processBadgeEvent({
+                  userId: userId.toString(),
+                  eventType: BadgeRequirementType.CAFES_VISITED,
+                  value: 1,
+                  timestamp: new Date(),
+                  metadata: {
+                    pinId: pin._id.toString(),
+                    pinName: pin.name,
+                  },
+                });
+                allEarnedBadges = allEarnedBadges.concat(cafeBadges);
+              }
+            }
+
+            if (allEarnedBadges.length > 0) {
+              logger.info(`🏆 User ${userId} earned ${allEarnedBadges.length} badge(s) from visiting pin ${pin.name}!`);
+              
+              // Emit badge earned event to user if they're connected
+              if (this.io) {
+                const nsp = this.io.of('/realtime');
+                nsp.to(`user:${userId.toString()}`).emit('badge:earned', {
+                  badges: allEarnedBadges,
+                  trigger: 'pin_visit',
+                  pinName: pin.name,
+                });
+              }
+            }
+          } catch (badgeError) {
+            logger.error('Error processing badge event for pin visit:', badgeError);
+          }
+
+          // Add to visited set to avoid re-processing in this check
+          visitedPinIds.add(pin._id.toString());
+        }
+      }
+    } catch (error) {
+      logger.error('Error in checkAndVisitNearbyPins:', error);
+      throw error;
+    }
   }
 }
 

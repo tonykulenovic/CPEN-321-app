@@ -60,6 +60,8 @@ export enum BadgeRequirementType {
   TIME_SPENT = 'time_spent',
   REPORTS_MADE = 'reports_made',
   LOCATIONS_EXPLORED = 'locations_explored',
+  LIBRARIES_VISITED = 'libraries_visited',
+  CAFES_VISITED = 'cafes_visited',
   DAILY_ACTIVE = 'daily_active',
   WEEKLY_ACTIVE = 'weekly_active',
   MONTHLY_ACTIVE = 'monthly_active'

@@ -24,6 +24,14 @@ export interface IUser extends Document {
     pinsVisited: number;
     reportsMade: number;
     locationsExplored: number;
+    librariesVisited: number;
+    cafesVisited: number;
+  };
+  visitedPins: mongoose.Types.ObjectId[];
+  loginTracking: {
+    lastLoginDate: Date | null;
+    currentStreak: number;
+    longestStreak: number;
   };
   createdAt: Date;
   updatedAt: Date;

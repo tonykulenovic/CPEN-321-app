@@ -27,6 +27,7 @@ router.put('/:id', validateBody(updatePinSchema), pinsController.updatePin);
 router.delete('/:id', pinsController.deletePin);
 router.post('/:id/rate', validateBody(ratePinSchema), pinsController.ratePin);
 router.post('/:id/report', validateBody(reportPinSchema), pinsController.reportPin);
+router.post('/:id/visit', pinsController.visitPin);
 
 export default router;
 

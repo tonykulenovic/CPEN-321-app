@@ -115,11 +115,37 @@ const userSchema = new Schema<IUser>(
         type: Number,
         default: 0,
       },
+      librariesVisited: {
+        type: Number,
+        default: 0,
+      },
+      cafesVisited: {
+        type: Number,
+        default: 0,
+      },
       reportsMade: {
         type: Number,
         default: 0,
       },
       locationsExplored: {
+        type: Number,
+        default: 0,
+      },
+    },
+    visitedPins: [{
+      type: Schema.Types.ObjectId,
+      ref: 'Pin',
+    }],
+    loginTracking: {
+      lastLoginDate: {
+        type: Date,
+        default: null,
+      },
+      currentStreak: {
+        type: Number,
+        default: 0,
+      },
+      longestStreak: {
         type: Number,
         default: 0,
       },
@@ -335,6 +361,52 @@ export class UserModel {
     } catch (error) {
       console.error('Error finding user with badges:', error);
       throw new Error('Failed to find user with badges');
+    }
+  }
+
+  async updateLoginStreak(userId: mongoose.Types.ObjectId): Promise<number> {
+    try {
+      const user = await this.user.findById(userId);
+      if (!user) {
+        throw new Error('User not found');
+      }
+
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      
+      let newStreak = 1;
+      
+      if (user.loginTracking?.lastLoginDate) {
+        const lastLogin = new Date(user.loginTracking.lastLoginDate);
+        const lastLoginDate = new Date(lastLogin.getFullYear(), lastLogin.getMonth(), lastLogin.getDate());
+        
+        const daysDiff = Math.floor((today.getTime() - lastLoginDate.getTime()) / (1000 * 60 * 60 * 24));
+        
+        if (daysDiff === 0) {
+          // Same day, don't update streak
+          return user.loginTracking.currentStreak || 0;
+        } else if (daysDiff === 1) {
+          // Consecutive day, increment streak
+          newStreak = (user.loginTracking.currentStreak || 0) + 1;
+        }
+        // daysDiff > 1: streak broken, newStreak = 1 (already set)
+      }
+      
+      const longestStreak = Math.max(newStreak, user.loginTracking?.longestStreak || 0);
+      
+      await this.user.findByIdAndUpdate(userId, {
+        $set: {
+          'loginTracking.lastLoginDate': now,
+          'loginTracking.currentStreak': newStreak,
+          'loginTracking.longestStreak': longestStreak,
+        },
+      });
+      
+      logger.info(`User ${userId} login streak updated: ${newStreak} days`);
+      return newStreak;
+    } catch (error) {
+      logger.error('Error updating login streak:', error);
+      throw new Error('Failed to update login streak');
     }
   }
 }
