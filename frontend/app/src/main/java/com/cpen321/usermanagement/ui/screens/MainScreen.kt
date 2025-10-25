@@ -16,6 +16,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.LocationOn
@@ -31,6 +33,8 @@ import androidx.compose.material.icons.filled.DirectionsRun
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -890,6 +894,14 @@ private fun MapContent(
             }
         }
         
+        // Category Filter Buttons
+        CategoryFilterButtons(
+            pinViewModel = pinViewModel,
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .padding(top = 8.dp)
+        )
+        
         // Top-right controls
         Column(
             modifier = Modifier
@@ -1157,6 +1169,80 @@ private fun LocationDetailRow(
                 style = MaterialTheme.typography.bodyLarge,
                 fontWeight = FontWeight.Medium
             )
+        }
+    }
+}
+
+@Composable
+private fun CategoryFilterButtons(
+    pinViewModel: PinViewModel,
+    modifier: Modifier = Modifier
+) {
+    val pinUiState by pinViewModel.uiState.collectAsState()
+    var selectedCategories by remember { mutableStateOf(setOf<PinCategory>()) }
+    
+    val categories = listOf(
+        PinCategory.STUDY to "Study",
+        PinCategory.EVENTS to "Events", 
+        PinCategory.CHILL to "Chill",
+        PinCategory.SHOPS_SERVICES to "Shops"
+    )
+    
+    Card(
+        modifier = modifier,
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF1A1A2E)),
+        shape = RoundedCornerShape(20.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .padding(horizontal = 8.dp, vertical = 4.dp)
+                .horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            // Clear filters button
+            FilterChip(
+                onClick = {
+                    selectedCategories = emptySet()
+                    pinViewModel.loadPins()
+                },
+                label = { Text("All", color = Color.White) },
+                selected = selectedCategories.isEmpty(),
+                colors = FilterChipDefaults.filterChipColors(
+                    selectedContainerColor = Color(0xFF4A90E2),
+                    containerColor = Color(0xFF2A2A2A)
+                )
+            )
+            
+            // Category filter chips
+            categories.forEach { (category, label) ->
+                FilterChip(
+                    onClick = {
+                        selectedCategories = if (selectedCategories.contains(category)) {
+                            selectedCategories - category
+                        } else {
+                            selectedCategories + category
+                        }
+                        
+                        // Apply filter
+                        if (selectedCategories.isEmpty()) {
+                            pinViewModel.loadPins()
+                        } else {
+                            pinViewModel.loadPins(category = selectedCategories.first())
+                        }
+                    },
+                    label = { Text(label, color = Color.White) },
+                    selected = selectedCategories.contains(category),
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = when (category) {
+                            PinCategory.STUDY -> Color(0xFF4A90E2)
+                            PinCategory.EVENTS -> Color(0xFFE74C3C)
+                            PinCategory.CHILL -> Color(0xFF2ECC71)
+                            PinCategory.SHOPS_SERVICES -> Color(0xFFF39C12)
+                        },
+                        containerColor = Color(0xFF2A2A2A)
+                    )
+                )
+            }
         }
     }
 }

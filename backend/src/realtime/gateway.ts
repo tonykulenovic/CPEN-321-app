@@ -299,7 +299,7 @@ export class LocationGateway {
     const nsp = this.io.of('/realtime');
 
     // Authentication middleware
-    nsp.use(async (socket: Socket, next) => {
+    nsp.use(async (socket: Socket, next: (err?: Error) => void) => {
       try {
         const token = socket.handshake.auth.token;
         if (!token) {
@@ -412,7 +412,7 @@ export class LocationGateway {
       });
 
       // Handle disconnect
-      socket.on('disconnect', (reason) => {
+      socket.on('disconnect', (reason: string) => {
         logger.info(`User ${userId} disconnected from realtime namespace:`, reason);
         
         // Clean up tracking subscriptions for this user
