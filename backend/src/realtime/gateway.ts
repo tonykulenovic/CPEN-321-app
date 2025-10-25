@@ -14,6 +14,7 @@ import logger from '../utils/logger.util';
 // Location tracking subscription map
 const locationTrackers = new Map<string, Set<string>>(); // friendId -> Set<viewerIds>
 const socketToUser = new Map<string, mongoose.Types.ObjectId>(); // socketId -> userId
+const userHeartbeats = new Map<string, NodeJS.Timeout>(); // userId -> heartbeat interval
 
 /**
  * Location Gateway - Single source of truth for all location operations
@@ -358,9 +359,27 @@ export class LocationGateway {
 
     nsp.on('connection', (socket: Socket) => {
       const userId = socket.data.userId as mongoose.Types.ObjectId;
-      socket.join(`user:${userId.toString()}`);
+      const userIdStr = userId.toString();
+      socket.join(`user:${userIdStr}`);
 
       logger.info(`🟢 User ${userId} connected to realtime namespace (Socket ID: ${socket.id})`);
+
+      // Update lastActiveAt immediately on connection
+      userModel.updateLastActiveAt(userId).catch(error => {
+        logger.error('Error updating lastActiveAt on connect:', error);
+      });
+
+      // Set up heartbeat to update lastActiveAt every 5 minutes
+      const heartbeatInterval = setInterval(async () => {
+        try {
+          await userModel.updateLastActiveAt(userId);
+          logger.debug(`💓 Heartbeat: Updated lastActiveAt for user ${userId}`);
+        } catch (error) {
+          logger.error('Error in heartbeat update:', error);
+        }
+      }, 5 * 60 * 1000); // 5 minutes
+
+      userHeartbeats.set(userIdStr, heartbeatInterval);
 
       // Handle location tracking subscription
       socket.on('location:track', async (payload: { friendId: string; durationSec?: number }) => {
@@ -425,9 +444,15 @@ export class LocationGateway {
       // Handle disconnect
       socket.on('disconnect', (reason: string) => {
         logger.info(`User ${userId} disconnected from realtime namespace:`, reason);
-        
+
+        // Clean up heartbeat
+        const heartbeat = userHeartbeats.get(userIdStr);
+        if (heartbeat) {
+          clearInterval(heartbeat);
+          userHeartbeats.delete(userIdStr);
+        }
+
         // Clean up tracking subscriptions for this user
-        const userIdStr = userId.toString();
         for (const [friendId, trackers] of locationTrackers.entries()) {
           trackers.delete(userIdStr);
           if (trackers.size === 0) {
@@ -507,7 +532,7 @@ export class LocationGateway {
 
           // Prepare increments based on pin category
           const increments: any = { 'stats.pinsVisited': 1 };
-          
+
           // Track category-specific visits (only for pre-seeded pins)
           if (pin.isPreSeeded) {
             if (pin.category === 'study') {
@@ -575,7 +600,7 @@ export class LocationGateway {
 
             if (allEarnedBadges.length > 0) {
               logger.info(`🏆 User ${userId} earned ${allEarnedBadges.length} badge(s) from visiting pin ${pin.name}!`);
-              
+
               // Emit badge earned event to user if they're connected
               if (this.io) {
                 const nsp = this.io.of('/realtime');
