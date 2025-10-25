@@ -153,7 +153,7 @@ fun FriendsScreen(
                 id = friendSummary.userId,
                 name = friendSummary.displayName,
                 email = friendSummary.bio ?: "", // Using bio as placeholder for email
-                isOnline = false, // TODO: Add real-time status from backend
+                isOnline = friendSummary.isOnline, // Real online status from backend
                 profilePictureUrl = friendSummary.photoUrl
             )
         }

@@ -917,9 +917,9 @@ private fun MapContent(
                         onClick = {
                             // Create metadata map for the bottom sheet
                             val metadata = mapOf(
-                                "location" to "Lat: ${String.format("%.4f", friendLocation.lat)}, Lng: ${String.format("%.4f", friendLocation.lng)}",
-                                "activity" to if (friend.shareLocation) "Location sharing" else "Location visible",
-                                "duration" to "Updated ${if (minutesAgo < 1) "now" else "${minutesAgo}m ago"}",
+                                "location" to "Near UBC Campus", // More user-friendly location
+                                "activity" to if (friend.isOnline) "Online" else "Offline",
+                                "duration" to if (minutesAgo < 1) "now" else "${minutesAgo}m ago",
                                 "lastSeen" to lastSeen,
                                 "isLiveSharing" to friend.shareLocation.toString(),
                                 "accuracy" to "±${friendLocation.accuracyM.toInt()}m"
@@ -1132,17 +1132,15 @@ private fun FriendDetailsBottomSheet(
 
                 LocationDetailRow(
                     icon = Icons.Default.AccessTime,
-                    title = "Duration",
-                    value = "Here for ${metadata["duration"] ?: "unknown time"}"
+                    title = "Last seen",
+                    value = metadata["duration"] ?: "unknown time"
                 )
 
-                if (metadata["isLiveSharing"] == "true") {
-                    LocationDetailRow(
-                        icon = Icons.Default.TrackChanges,
-                        title = "Live Sharing",
-                        value = "Location updates in real-time"
-                    )
-                }
+                LocationDetailRow(
+                    icon = Icons.Default.TrackChanges,
+                    title = "Sharing",
+                    value = if (metadata["isLiveSharing"] == "true") "Live location" else "Location visible"
+                )
 
                 Spacer(modifier = Modifier.height(16.dp))
 

@@ -10,6 +10,7 @@ import com.cpen321.usermanagement.data.repository.AuthRepository
 import com.cpen321.usermanagement.data.repository.ProfileRepository
 import com.cpen321.usermanagement.ui.navigation.NavRoutes
 import com.cpen321.usermanagement.ui.navigation.NavigationStateManager
+import com.cpen321.usermanagement.utils.FCMTokenManager
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -40,7 +41,8 @@ data class AuthUiState(
 class AuthViewModel @Inject constructor(
     private val authRepository: AuthRepository,
     private val profileRepository: ProfileRepository,
-    private val navigationStateManager: NavigationStateManager
+    private val navigationStateManager: NavigationStateManager,
+    private val fcmTokenManager: FCMTokenManager
 ) : ViewModel() {
 
     companion object {
@@ -72,6 +74,11 @@ class AuthViewModel @Inject constructor(
                     user = user,
                     isCheckingAuth = false
                 )
+
+                // Register FCM token if user is already authenticated
+                if (isAuthenticated) {
+                    fcmTokenManager.registerFCMToken()
+                }
 
                 updateNavigationState(
                     isAuthenticated = isAuthenticated,
@@ -144,6 +151,9 @@ class AuthViewModel @Inject constructor(
                         user = authData.user,
                         errorMessage = null
                     )
+
+                    // Register FCM token after successful authentication
+                    fcmTokenManager.registerFCMToken()
 
                     // Trigger navigation through NavigationStateManager
                     // Admins skip onboarding and go directly to admin dashboard

@@ -20,6 +20,7 @@ class TokenManager(private val context: Context) {
     }
 
     private val tokenKey = stringPreferencesKey("auth_token")
+    private val fcmTokenKey = stringPreferencesKey("fcm_token")
 
     suspend fun saveToken(token: String) {
         try {
@@ -72,6 +73,51 @@ class TokenManager(private val context: Context) {
             throw e
         } catch (e: SecurityException) {
             Log.e(TAG, "Permission denied to clear token", e)
+            throw e
+        }
+    }
+
+    // FCM Token management
+    suspend fun saveFcmToken(token: String) {
+        try {
+            context.dataStore.edit { preferences ->
+                preferences[fcmTokenKey] = token
+            }
+            Log.d(TAG, "🔥 FCM token saved successfully")
+        } catch (e: java.io.IOException) {
+            Log.e(TAG, "IO error while saving FCM token", e)
+            throw e
+        } catch (e: SecurityException) {
+            Log.e(TAG, "Permission denied to save FCM token", e)
+            throw e
+        }
+    }
+
+    suspend fun getFcmToken(): String? {
+        return try {
+            val token = context.dataStore.data.first()[fcmTokenKey]
+            Log.d(TAG, "🔥 FCM token retrieved: ${if (token != null) "exists" else "null"}")
+            token
+        } catch (e: java.io.IOException) {
+            Log.e(TAG, "IO error while getting FCM token synchronously", e)
+            null
+        } catch (e: SecurityException) {
+            Log.e(TAG, "Permission denied to get FCM token synchronously", e)
+            null
+        }
+    }
+
+    suspend fun clearFcmToken() {
+        try {
+            context.dataStore.edit { preferences ->
+                preferences.remove(fcmTokenKey)
+            }
+            Log.d(TAG, "🔥 FCM token cleared")
+        } catch (e: java.io.IOException) {
+            Log.e(TAG, "IO error while clearing FCM token", e)
+            throw e
+        } catch (e: SecurityException) {
+            Log.e(TAG, "Permission denied to clear FCM token", e)
             throw e
         }
     }

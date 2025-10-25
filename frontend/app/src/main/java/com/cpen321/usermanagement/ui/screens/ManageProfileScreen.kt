@@ -87,6 +87,7 @@ private data class ManageProfileScreenActions(
     val onBioChange: (String) -> Unit,
     val onEditPictureClick: () -> Unit,
     val onSaveClick: () -> Unit,
+    val onPrivacySettingsClick: () -> Unit,
     val onImagePickerDismiss: () -> Unit,
     val onImageSelected: (Uri) -> Unit,
     val onLoadingPhotoChange: (Boolean) -> Unit,
@@ -104,6 +105,7 @@ private data class ProfileFormData(
     val onBioChange: (String) -> Unit,
     val onEditPictureClick: () -> Unit,
     val onSaveClick: () -> Unit,
+    val onPrivacySettingsClick: () -> Unit,
     val onLoadingPhotoChange: (Boolean) -> Unit
 )
 
@@ -115,6 +117,7 @@ private data class ProfileBodyData(
     val onBioChange: (String) -> Unit,
     val onEditPictureClick: () -> Unit,
     val onSaveClick: () -> Unit,
+    val onPrivacySettingsClick: () -> Unit,
     val onLoadingPhotoChange: (Boolean) -> Unit
 )
 
@@ -131,7 +134,8 @@ private data class ProfileFieldsData(
 @Composable
 fun ManageProfileScreen(
     profileViewModel: ProfileViewModel,
-    onBackClick: () -> Unit
+    onBackClick: () -> Unit,
+    onPrivacySettingsClick: () -> Unit = {}
 ) {
     val uiState by profileViewModel.uiState.collectAsState()
     val snackBarHostState = remember { SnackbarHostState() }
@@ -184,6 +188,7 @@ fun ManageProfileScreen(
         onSaveClick = {
             profileViewModel.updateProfile(formState.name, formState.username, formState.bio)
         },
+        onPrivacySettingsClick = onPrivacySettingsClick,
         onImagePickerDismiss = { showImagePickerDialog = false },
         onImageSelected = { uri ->
             showImagePickerDialog = false
@@ -241,6 +246,7 @@ private fun ManageProfileContent(
                 onBioChange = actions.onBioChange,
                 onEditPictureClick = actions.onEditPictureClick,
                 onSaveClick = actions.onSaveClick,
+                onPrivacySettingsClick = actions.onPrivacySettingsClick,
                 onLoadingPhotoChange = actions.onLoadingPhotoChange
             )
         )
@@ -315,6 +321,7 @@ private fun ProfileBody(
                         onBioChange = data.onBioChange,
                         onEditPictureClick = data.onEditPictureClick,
                         onSaveClick = data.onSaveClick,
+                        onPrivacySettingsClick = data.onPrivacySettingsClick,
                         onLoadingPhotoChange = data.onLoadingPhotoChange
                     )
                 )
@@ -357,6 +364,22 @@ private fun ProfileForm(
                 onBioChange = data.onBioChange
             )
         )
+
+        // Privacy Settings Button
+        Button(
+            onClick = data.onPrivacySettingsClick,
+            modifier = Modifier.fillMaxWidth(),
+            colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                containerColor = Color(0xFF2A2A3E),
+                contentColor = Color.White
+            )
+        ) {
+            Text(
+                text = "Privacy Settings",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Medium
+            )
+        }
 
         SaveButton(
             isSaving = data.isSavingProfile,
