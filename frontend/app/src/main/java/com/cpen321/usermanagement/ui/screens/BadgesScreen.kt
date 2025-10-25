@@ -93,6 +93,14 @@ fun BadgesScreen(
         }
     }
     
+    // Periodic badge refresh to catch pin visits and progress updates
+    LaunchedEffect(Unit) {
+        while (true) {
+            kotlinx.coroutines.delay(10000) // Refresh every 10 seconds
+            badgeViewModel.loadBadgeProgress()
+        }
+    }
+    
     // Set status bar appearance
     val systemUiController = rememberSystemUiController()
     SideEffect {

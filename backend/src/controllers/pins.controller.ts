@@ -188,6 +188,134 @@ export class PinsController {
       next(error);
     }
   }
+
+  async visitPin(
+    req: Request<{ id: string }>,
+    res: Response,
+    next: NextFunction
+  ) {
+    try {
+      const pinId = new mongoose.Types.ObjectId(req.params.id);
+      const userId = req.user!._id;
+
+      // Verify pin exists
+      const pin = await pinModel.findById(pinId);
+      if (!pin) {
+        return res.status(404).json({ message: 'Pin not found' });
+      }
+
+      // Check if user has already visited this pin
+      const User = mongoose.model('User');
+      const user = await User.findById(userId).select('visitedPins');
+      
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+
+      const alreadyVisited = user.visitedPins.some((id: mongoose.Types.ObjectId) => 
+        id.toString() === pinId.toString()
+      );
+
+      if (alreadyVisited) {
+        return res.status(200).json({ 
+          message: 'Pin already visited',
+          data: { alreadyVisited: true }
+        });
+      }
+
+      // Prepare increments based on pin category
+      const increments: any = { 'stats.pinsVisited': 1 };
+      
+      // Track category-specific visits (only for pre-seeded pins)
+      if (pin.isPreSeeded) {
+        if (pin.category === 'study') {
+          increments['stats.librariesVisited'] = 1;
+          logger.info(`📚 User ${userId} visited pre-seeded library: ${pin.name}`);
+        } else if (pin.category === 'shops_services') {
+          increments['stats.cafesVisited'] = 1;
+          logger.info(`☕ User ${userId} visited pre-seeded cafe: ${pin.name}`);
+        }
+      }
+
+      // Add pin to visited list and increment counters
+      await User.findByIdAndUpdate(userId, {
+        $push: { visitedPins: pinId },
+        $inc: increments,
+      });
+
+      // Process badge events for pin visit
+      try {
+        let allEarnedBadges: any[] = [];
+
+        // General pin visit event
+        const visitBadges = await BadgeService.processBadgeEvent({
+          userId: userId.toString(),
+          eventType: BadgeRequirementType.PINS_VISITED,
+          value: 1,
+          timestamp: new Date(),
+          metadata: {
+            pinId: pinId.toString(),
+            pinName: pin.name,
+            category: pin.category,
+          },
+        });
+        allEarnedBadges = allEarnedBadges.concat(visitBadges);
+
+        // Category-specific badge events (only for pre-seeded pins)
+        if (pin.isPreSeeded) {
+          if (pin.category === 'study') {
+            const libraryBadges = await BadgeService.processBadgeEvent({
+              userId: userId.toString(),
+              eventType: BadgeRequirementType.LIBRARIES_VISITED,
+              value: 1,
+              timestamp: new Date(),
+              metadata: {
+                pinId: pinId.toString(),
+                pinName: pin.name,
+              },
+            });
+            allEarnedBadges = allEarnedBadges.concat(libraryBadges);
+          } else if (pin.category === 'shops_services') {
+            const cafeBadges = await BadgeService.processBadgeEvent({
+              userId: userId.toString(),
+              eventType: BadgeRequirementType.CAFES_VISITED,
+              value: 1,
+              timestamp: new Date(),
+              metadata: {
+                pinId: pinId.toString(),
+                pinName: pin.name,
+              },
+            });
+            allEarnedBadges = allEarnedBadges.concat(cafeBadges);
+          }
+        }
+
+        if (allEarnedBadges.length > 0) {
+          logger.info(`User ${userId} earned ${allEarnedBadges.length} badge(s) from visiting a pin`);
+          return res.status(200).json({ 
+            message: 'Pin visited successfully', 
+            data: { 
+              earnedBadges: allEarnedBadges,
+              alreadyVisited: false 
+            }
+          });
+        }
+      } catch (badgeError) {
+        logger.error('Error processing badge event for pin visit:', badgeError);
+      }
+
+      res.status(200).json({ 
+        message: 'Pin visited successfully',
+        data: { alreadyVisited: false }
+      });
+    } catch (error) {
+      logger.error('Failed to visit pin:', error as Error);
+      if (error instanceof Error) {
+        return res.status(500).json({ message: error.message || 'Failed to visit pin' });
+      }
+      next(error);
+    }
+  }
 }
 
 export const pinsController = new PinsController();

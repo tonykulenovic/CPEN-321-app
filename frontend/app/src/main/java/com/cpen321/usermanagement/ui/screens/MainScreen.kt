@@ -177,18 +177,13 @@ fun MainScreen(
                         locationTrackingService.trackFriend(friend.userId)
                     }
 
-                    // Start sharing own location (simulate Maka's location near UBC)
+                    // Start sharing own location with real GPS tracking
                     android.util.Log.d("MainScreen", "📍 ENABLING location sharing for current user...")
                     locationTrackingService.startLocationSharing()
 
-                    // For development: simulate periodic location updates near UBC
-                    // In production, this would be replaced with actual GPS location updates
-                    android.util.Log.d("MainScreen", "🔄 STARTING periodic location updates (15 second intervals)...")
-                    locationTrackingService.startPeriodicLocationUpdates(
-                        lat = 49.2606, // UBC area
-                        lng = -123.2460,
-                        intervalMs = 15000L // Update every 15 seconds
-                    )
+                    // Start real GPS-based location tracking
+                    android.util.Log.d("MainScreen", "🌍 STARTING real GPS location tracking...")
+                    locationTrackingService.startRealGPSTracking()
 
                     // Log the current state for debugging
                     locationTrackingService.logCurrentState()

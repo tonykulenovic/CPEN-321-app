@@ -1,7 +1,18 @@
 package com.cpen321.usermanagement.data.realtime
 
+import android.annotation.SuppressLint
+import android.content.Context
+import android.location.Location
+import android.os.Looper
 import android.util.Log
 import com.cpen321.usermanagement.data.repository.LocationRepository
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationCallback
+import com.google.android.gms.location.LocationRequest
+import com.google.android.gms.location.LocationResult
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.Priority
+import dagger.hilt.android.qualifiers.ApplicationContext
 import io.socket.client.IO
 import io.socket.client.Socket
 import kotlinx.coroutines.CoroutineScope
@@ -29,6 +40,7 @@ data class UserLocation(
 
 @Singleton
 class LocationTrackingService @Inject constructor(
+    @ApplicationContext private val context: Context,
     private val locationRepository: LocationRepository
 ) {
     
@@ -43,6 +55,10 @@ class LocationTrackingService @Inject constructor(
     private var locationSharingEnabled = false
     private var locationUpdateJob: Job? = null
     private val serviceScope = CoroutineScope(Dispatchers.IO)
+    
+    // GPS location tracking
+    private val fusedLocationClient: FusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(context)
+    private var locationCallback: LocationCallback? = null
     
     private val _friendLocations = MutableStateFlow<Map<String, UserLocation>>(emptyMap())
     val friendLocations: StateFlow<Map<String, UserLocation>> = _friendLocations.asStateFlow()
@@ -318,8 +334,69 @@ class LocationTrackingService @Inject constructor(
     }
     
     /**
-     * Start periodic location updates (for testing/simulation)
+     * Start real GPS-based location tracking
      */
+    @SuppressLint("MissingPermission")
+    fun startRealGPSTracking() {
+        if (!locationSharingEnabled) {
+            Log.w(TAG, "🔴 Location sharing DISABLED, not starting GPS tracking")
+            return
+        }
+        
+        Log.d(TAG, "🌍 STARTING real GPS location tracking for user: $currentUserId")
+        
+        // Stop any existing tracking
+        stopRealGPSTracking()
+        
+        // Create location request
+        val locationRequest = LocationRequest.Builder(
+            Priority.PRIORITY_HIGH_ACCURACY,
+            15000L // Update every 15 seconds
+        ).apply {
+            setMinUpdateIntervalMillis(10000L) // Min 10 seconds between updates
+            setMaxUpdateDelayMillis(30000L) // Max 30 seconds delay
+        }.build()
+        
+        // Create location callback
+        locationCallback = object : LocationCallback() {
+            override fun onLocationResult(locationResult: LocationResult) {
+                locationResult.lastLocation?.let { location ->
+                    Log.d(TAG, "📍 GPS Location received: lat=${location.latitude}, lng=${location.longitude}, accuracy=${location.accuracy}m")
+                    reportLocation(location.latitude, location.longitude, location.accuracy.toDouble())
+                }
+            }
+        }
+        
+        // Request location updates
+        try {
+            fusedLocationClient.requestLocationUpdates(
+                locationRequest,
+                locationCallback!!,
+                Looper.getMainLooper()
+            )
+            Log.d(TAG, "✅ GPS location tracking started successfully")
+        } catch (e: SecurityException) {
+            Log.e(TAG, "❌ Location permission not granted", e)
+        } catch (e: Exception) {
+            Log.e(TAG, "❌ Error starting GPS tracking", e)
+        }
+    }
+    
+    /**
+     * Stop real GPS tracking
+     */
+    fun stopRealGPSTracking() {
+        locationCallback?.let {
+            fusedLocationClient.removeLocationUpdates(it)
+            locationCallback = null
+            Log.d(TAG, "GPS location tracking stopped")
+        }
+    }
+    
+    /**
+     * Start periodic location updates (for testing/simulation) - DEPRECATED
+     */
+    @Deprecated("Use startRealGPSTracking() instead")
     fun startPeriodicLocationUpdates(lat: Double, lng: Double, intervalMs: Long = 10000L) {
         if (!locationSharingEnabled) {
             Log.w(TAG, "🔴 Location sharing DISABLED, not starting periodic updates for user: $currentUserId")

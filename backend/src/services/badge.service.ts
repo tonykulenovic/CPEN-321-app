@@ -136,11 +136,8 @@ export class BadgeService {
       category: BadgeCategory.EXPLORATION,
       rarity: 'uncommon' as any,
       requirements: {
-        type: BadgeRequirementType.LOCATIONS_EXPLORED,
+        type: BadgeRequirementType.LIBRARIES_VISITED,
         target: 3,
-        conditions: {
-          pinType: 'library',
-        },
       },
     },
     {
@@ -150,11 +147,8 @@ export class BadgeService {
       category: BadgeCategory.EXPLORATION,
       rarity: 'uncommon' as any,
       requirements: {
-        type: BadgeRequirementType.LOCATIONS_EXPLORED,
+        type: BadgeRequirementType.CAFES_VISITED,
         target: 3,
-        conditions: {
-          pinType: 'cafe',
-        },
       },
     },
   ];
@@ -252,6 +246,12 @@ export class BadgeService {
         case BadgeRequirementType.LOCATIONS_EXPLORED:
           return await this.checkLocationsExplored(userId, badge.requirements.target);
         
+        case BadgeRequirementType.LIBRARIES_VISITED:
+          return await this.checkLibrariesVisited(userId, badge.requirements.target);
+        
+        case BadgeRequirementType.CAFES_VISITED:
+          return await this.checkCafesVisited(userId, badge.requirements.target);
+        
         default:
           logger.warn(`Unknown badge requirement type: ${badge.requirements.type}`);
           return false;
@@ -298,9 +298,16 @@ export class BadgeService {
    * Check pins visited requirement
    */
   private static async checkPinsVisited(userId: mongoose.Types.ObjectId, target: number): Promise<boolean> {
-    // This would need to be implemented based on your pin visit tracking
-    logger.info(`Checking pins visited for user ${userId}, target: ${target}`);
-    return false; // Placeholder - implement based on your visit tracking
+    try {
+      const User = mongoose.model('User');
+      const user = await User.findById(userId).select('stats.pinsVisited');
+      const count = user?.stats?.pinsVisited || 0;
+      logger.info(`User ${userId} has visited ${count} pins (cumulative), target: ${target}`);
+      return count >= target;
+    } catch (error) {
+      logger.error('Error checking pins visited:', error);
+      return false;
+    }
   }
 
   /**
@@ -340,6 +347,38 @@ export class BadgeService {
   }
 
   /**
+   * Check libraries visited requirement
+   */
+  private static async checkLibrariesVisited(userId: mongoose.Types.ObjectId, target: number): Promise<boolean> {
+    try {
+      const User = mongoose.model('User');
+      const user = await User.findById(userId).select('stats.librariesVisited');
+      const count = user?.stats?.librariesVisited || 0;
+      logger.info(`User ${userId} has visited ${count} libraries (cumulative), target: ${target}`);
+      return count >= target;
+    } catch (error) {
+      logger.error('Error checking libraries visited:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Check cafes visited requirement
+   */
+  private static async checkCafesVisited(userId: mongoose.Types.ObjectId, target: number): Promise<boolean> {
+    try {
+      const User = mongoose.model('User');
+      const user = await User.findById(userId).select('stats.cafesVisited');
+      const count = user?.stats?.cafesVisited || 0;
+      logger.info(`User ${userId} has visited ${count} cafes (cumulative), target: ${target}`);
+      return count >= target;
+    } catch (error) {
+      logger.error('Error checking cafes visited:', error);
+      return false;
+    }
+  }
+
+  /**
    * Calculate current progress for a badge
    */
   private static async calculateBadgeProgress(
@@ -374,6 +413,14 @@ export class BadgeService {
         
         case BadgeRequirementType.LOCATIONS_EXPLORED:
           current = user?.stats?.locationsExplored || 0;
+          break;
+        
+        case BadgeRequirementType.LIBRARIES_VISITED:
+          current = user?.stats?.librariesVisited || 0;
+          break;
+        
+        case BadgeRequirementType.CAFES_VISITED:
+          current = user?.stats?.cafesVisited || 0;
           break;
         
         case BadgeRequirementType.LOGIN_STREAK:

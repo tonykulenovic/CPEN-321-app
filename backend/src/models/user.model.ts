@@ -115,6 +115,14 @@ const userSchema = new Schema<IUser>(
         type: Number,
         default: 0,
       },
+      librariesVisited: {
+        type: Number,
+        default: 0,
+      },
+      cafesVisited: {
+        type: Number,
+        default: 0,
+      },
       reportsMade: {
         type: Number,
         default: 0,
@@ -124,6 +132,10 @@ const userSchema = new Schema<IUser>(
         default: 0,
       },
     },
+    visitedPins: [{
+      type: Schema.Types.ObjectId,
+      ref: 'Pin',
+    }],
     loginTracking: {
       lastLoginDate: {
         type: Date,

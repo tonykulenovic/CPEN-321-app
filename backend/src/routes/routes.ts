@@ -22,16 +22,6 @@ router.get('/health', (req, res) => {
   });
 });
 
-// Test endpoint - no auth required
-router.get('/test', (req, res) => {
-  res.status(200).json({
-    message: 'Test endpoint working!',
-    yourIP: req.ip,
-    userAgent: req.get('User-Agent'),
-    timestamp: new Date().toISOString()
-  });
-});
-
 router.use('/auth', authRoutes);
 
 router.use('/user', authenticateToken, usersRoutes);

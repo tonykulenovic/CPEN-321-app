@@ -33,9 +33,10 @@ object DataModule {
     @Provides
     @Singleton
     fun provideLocationTrackingService(
+        @ApplicationContext context: Context,
         locationRepository: LocationRepository
     ): LocationTrackingService {
-        return LocationTrackingService(locationRepository)
+        return LocationTrackingService(context, locationRepository)
     }
 
 }
