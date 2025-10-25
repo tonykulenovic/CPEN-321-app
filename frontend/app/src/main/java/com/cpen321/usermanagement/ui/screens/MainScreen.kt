@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.horizontalScroll
@@ -291,12 +292,30 @@ private fun MainContent(
     onDismissFriendDetails: () -> Unit
 ) {
     var selectedItem by remember { mutableIntStateOf(0) }
+    val pinUiState by pinViewModel.uiState.collectAsState()
+    
+    // Satellite view toggle state (moved outside map)
+    var isSatelliteView by remember { mutableStateOf(false) }
+    
+    // Show pin success messages in snackbar
+    LaunchedEffect(pinUiState.successMessage) {
+        pinUiState.successMessage?.let { message ->
+            // Show messages except "deleted" (which closes the bottom sheet)
+            if (!message.contains("deleted", ignoreCase = true)) {
+                snackBarHostState.showSnackbar(message)
+                pinViewModel.clearSuccessMessage()
+            }
+        }
+    }
     
     Box(modifier = modifier.fillMaxSize()) {
         Scaffold(
             modifier = Modifier.fillMaxSize(),
             topBar = {
-                MainTopBar()
+                MainTopBar(
+                    isSatelliteView = isSatelliteView,
+                    onToggleSatelliteView = { isSatelliteView = !isSatelliteView }
+                )
             },
             bottomBar = {
                 BottomNavigationBar(
@@ -329,6 +348,7 @@ private fun MainContent(
                 pinViewModel = pinViewModel,
                 friendsUiState = friendsUiState,
                 hasLocationPermission = hasLocationPermission,
+                isSatelliteView = isSatelliteView,
                 initialSelectedPinId = initialSelectedPinId,
                 onClearSelectedPin = onClearSelectedPin,
                 onCreatePinClick = onCreatePinClick,
@@ -466,6 +486,8 @@ private fun BottomNavigationBar(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun MainTopBar(
+    isSatelliteView: Boolean = false,
+    onToggleSatelliteView: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     TopAppBar(
@@ -493,6 +515,16 @@ private fun MainTopBar(
                 )
             }
         },
+        actions = {
+            androidx.compose.material3.IconButton(onClick = onToggleSatelliteView) {
+                Icon(
+                    imageVector = if (isSatelliteView) Icons.Default.Map else Icons.Default.SatelliteAlt,
+                    contentDescription = if (isSatelliteView) "Switch to Map" else "Switch to Satellite",
+                    tint = Color.White,
+                    modifier = Modifier.size(28.dp)
+                )
+            }
+        },
         colors = TopAppBarDefaults.topAppBarColors(
             containerColor = Color(0xFF1A1A2E),
             titleContentColor = Color.White
@@ -505,6 +537,7 @@ private fun MapContent(
     pinViewModel: PinViewModel,
     friendsUiState: com.cpen321.usermanagement.ui.viewmodels.FriendsUiState,
     hasLocationPermission: Boolean,
+    isSatelliteView: Boolean,
     onCreatePinClick: () -> Unit,
     onPinClick: (String) -> Unit,
     onFriendClick: (com.cpen321.usermanagement.data.remote.dto.FriendSummary, Map<String, String>) -> Unit,
@@ -515,6 +548,18 @@ private fun MapContent(
     val pinUiState by pinViewModel.uiState.collectAsState()
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
+    
+    // Local category filter state for instant filtering (no network calls)
+    var selectedCategories by remember { mutableStateOf(setOf<PinCategory>()) }
+    
+    // Filter pins locally in memory - INSTANT performance
+    val filteredPins = remember(pinUiState.pins, selectedCategories) {
+        if (selectedCategories.isEmpty()) {
+            pinUiState.pins
+        } else {
+            pinUiState.pins.filter { pin -> pin.category in selectedCategories }
+        }
+    }
     
     // Create scaled custom icons (48dp size for map markers) - nullable until map loads
     var libraryIcon by remember { mutableStateOf<BitmapDescriptor?>(null) }
@@ -531,8 +576,6 @@ private fun MapContent(
         libraryIcon = context.createScaledBitmapFromPng(R.drawable.ic_library, 48)
         cafeIcon = context.createScaledBitmapFromPng(R.drawable.ic_coffee, 48)
     }
-    
-    var isSatelliteView by remember { mutableStateOf(false) }
     
     // UBC Vancouver coordinates
     val ubcLocation = LatLng(49.2606, -123.2460)
@@ -551,6 +594,7 @@ private fun MapContent(
                 attempts++
             }
             
+            // Use original pins list for search selection (not filtered)
             val selectedPin = pinUiState.pins.find { it.id == initialSelectedPinId }
             selectedPin?.let { pin ->
                 // Trigger bottom sheet to open
@@ -704,8 +748,8 @@ private fun MapContent(
             properties = mapProperties,
             uiSettings = uiSettings
         ) {
-            // Display pin markers
-            pinUiState.pins.forEach { pin ->
+            // Display filtered pin markers (instant local filtering)
+            filteredPins.forEach { pin ->
                 Marker(
                     state = MarkerState(
                         position = LatLng(
@@ -894,12 +938,13 @@ private fun MapContent(
             }
         }
         
-        // Category Filter Buttons
+        // Category Filter Buttons (top left)
         CategoryFilterButtons(
-            pinViewModel = pinViewModel,
+            selectedCategories = selectedCategories,
+            onCategoryFilterChange = { selectedCategories = it },
             modifier = Modifier
-                .align(Alignment.TopCenter)
-                .padding(top = 8.dp)
+                .align(Alignment.TopStart)
+                .padding(top = 8.dp, start = 8.dp)
         )
         
         // Top-right controls
@@ -909,23 +954,6 @@ private fun MapContent(
                 .padding(top = 8.dp, end = 8.dp),
             horizontalAlignment = Alignment.End
         ) {
-            // Map type toggle button
-            FloatingActionButton(
-                onClick = { isSatelliteView = !isSatelliteView },
-                modifier = Modifier.size(48.dp),
-                containerColor = Color(0xFF1A1A2E),
-                contentColor = Color.White
-            ) {
-                Icon(
-                    imageVector = if (isSatelliteView) Icons.Default.Map else Icons.Default.SatelliteAlt,
-                    contentDescription = if (isSatelliteView) "Switch to Map" else "Switch to Satellite",
-                    tint = Color.White,
-                    modifier = Modifier.size(24.dp)
-                )
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
             // Enhanced friends status indicator
             if (friendsUiState.friendLocations.isNotEmpty()) {
                 Column(
@@ -1175,11 +1203,11 @@ private fun LocationDetailRow(
 
 @Composable
 private fun CategoryFilterButtons(
-    pinViewModel: PinViewModel,
+    selectedCategories: Set<PinCategory>,
+    onCategoryFilterChange: (Set<PinCategory>) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val pinUiState by pinViewModel.uiState.collectAsState()
-    var selectedCategories by remember { mutableStateOf(setOf<PinCategory>()) }
+    var isExpanded by remember { mutableStateOf(false) } // Start collapsed
     
     val categories = listOf(
         PinCategory.STUDY to "Study",
@@ -1188,58 +1216,179 @@ private fun CategoryFilterButtons(
         PinCategory.SHOPS_SERVICES to "Shops"
     )
     
+    // Auto-collapse when a category is selected (only if currently expanded)
+    LaunchedEffect(selectedCategories) {
+        if (selectedCategories.isNotEmpty() && isExpanded) {
+            isExpanded = false
+        }
+    }
+    
     Card(
-        modifier = modifier,
+        modifier = modifier.clickable {
+            // Toggle expansion when clicking the card
+            isExpanded = !isExpanded
+        },
         colors = CardDefaults.cardColors(containerColor = Color(0xFF1A1A2E)),
-        shape = RoundedCornerShape(20.dp)
+        shape = RoundedCornerShape(12.dp),
+        border = androidx.compose.foundation.BorderStroke(0.5.dp, Color(0xFF2A2A2A))
     ) {
-        Row(
+        Column(
             modifier = Modifier
-                .padding(horizontal = 8.dp, vertical = 4.dp)
-                .horizontalScroll(rememberScrollState()),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                .padding(horizontal = 4.dp, vertical = 4.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
-            // Clear filters button
-            FilterChip(
-                onClick = {
-                    selectedCategories = emptySet()
-                    pinViewModel.loadPins()
-                },
-                label = { Text("All", color = Color.White) },
-                selected = selectedCategories.isEmpty(),
-                colors = FilterChipDefaults.filterChipColors(
-                    selectedContainerColor = Color(0xFF4A90E2),
-                    containerColor = Color(0xFF2A2A2A)
-                )
-            )
-            
-            // Category filter chips
-            categories.forEach { (category, label) ->
+            if (selectedCategories.isEmpty() && !isExpanded) {
+                // Show compact "Filters" button when collapsed with no selections
                 FilterChip(
-                    onClick = {
-                        selectedCategories = if (selectedCategories.contains(category)) {
-                            selectedCategories - category
-                        } else {
-                            selectedCategories + category
-                        }
-                        
-                        // Apply filter
-                        if (selectedCategories.isEmpty()) {
-                            pinViewModel.loadPins()
-                        } else {
-                            pinViewModel.loadPins(category = selectedCategories.first())
+                    onClick = { isExpanded = true },
+                    modifier = Modifier
+                        .height(28.dp)
+                        .wrapContentWidth(),
+                    label = { 
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center,
+                            modifier = Modifier.padding(horizontal = 0.dp, vertical = 0.dp)
+                        ) {
+                            Text("Filters", color = Color.White, fontSize = 13.sp)
+                            Spacer(modifier = Modifier.width(2.dp))
+                            Text("▼", color = Color.White, fontSize = 10.sp)
                         }
                     },
-                    label = { Text(label, color = Color.White) },
-                    selected = selectedCategories.contains(category),
+                    selected = false,
                     colors = FilterChipDefaults.filterChipColors(
-                        selectedContainerColor = when (category) {
-                            PinCategory.STUDY -> Color(0xFF4A90E2)
-                            PinCategory.EVENTS -> Color(0xFFE74C3C)
-                            PinCategory.CHILL -> Color(0xFF2ECC71)
-                            PinCategory.SHOPS_SERVICES -> Color(0xFFF39C12)
-                        },
+                        selectedContainerColor = Color(0xFF4A90E2),
                         containerColor = Color(0xFF2A2A2A)
+                    ),
+                    border = FilterChipDefaults.filterChipBorder(
+                        enabled = true,
+                        selected = false,
+                        borderColor = Color.Transparent,
+                        selectedBorderColor = Color.Transparent,
+                        disabledBorderColor = Color.Transparent,
+                        disabledSelectedBorderColor = Color.Transparent,
+                        borderWidth = 0.dp
+                    )
+                )
+            } else if (selectedCategories.isEmpty() || isExpanded) {
+                // Show all filters when expanded or "All" is selected
+                
+                // Clear filters button
+                FilterChip(
+                    onClick = {
+                        onCategoryFilterChange(emptySet())
+                        isExpanded = false // Collapse after clearing
+                    },
+                    modifier = Modifier.height(28.dp),
+                    label = { Text("All", color = Color.White, fontSize = 13.sp) },
+                    selected = selectedCategories.isEmpty(),
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = Color(0xFF4A90E2),
+                        containerColor = Color(0xFF2A2A2A)
+                    ),
+                    border = FilterChipDefaults.filterChipBorder(
+                        enabled = true,
+                        selected = selectedCategories.isEmpty(),
+                        borderColor = Color.Transparent,
+                        selectedBorderColor = Color.Transparent,
+                        disabledBorderColor = Color.Transparent,
+                        disabledSelectedBorderColor = Color.Transparent,
+                        borderWidth = 0.dp
+                    )
+                )
+                
+                // Category filter chips
+                categories.forEach { (category, label) ->
+                    FilterChip(
+                        onClick = {
+                            val newSelection = if (selectedCategories.contains(category)) {
+                                selectedCategories - category
+                            } else {
+                                selectedCategories + category
+                            }
+                            onCategoryFilterChange(newSelection)
+                        },
+                        modifier = Modifier.height(28.dp),
+                        label = { Text(label, color = Color.White, fontSize = 13.sp) },
+                        selected = selectedCategories.contains(category),
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = when (category) {
+                                PinCategory.STUDY -> Color(0xFF4A90E2)
+                                PinCategory.EVENTS -> Color(0xFFE74C3C)
+                                PinCategory.CHILL -> Color(0xFF2ECC71)
+                                PinCategory.SHOPS_SERVICES -> Color(0xFFF39C12)
+                            },
+                            containerColor = Color(0xFF2A2A2A)
+                        ),
+                        border = FilterChipDefaults.filterChipBorder(
+                            enabled = true,
+                            selected = selectedCategories.contains(category),
+                            borderColor = Color.Transparent,
+                            selectedBorderColor = Color.Transparent,
+                            disabledBorderColor = Color.Transparent,
+                            disabledSelectedBorderColor = Color.Transparent,
+                            borderWidth = 0.dp
+                        )
+                    )
+                }
+            } else {
+                // Show only selected categories when collapsed
+                selectedCategories.forEach { category ->
+                    val label = categories.find { it.first == category }?.second ?: "Unknown"
+                    FilterChip(
+                        onClick = {
+                            // Clicking removes the filter
+                            onCategoryFilterChange(selectedCategories - category)
+                            // Don't auto-expand when removing last filter (stay collapsed)
+                        },
+                        modifier = Modifier.height(28.dp),
+                        label = { 
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(label, color = Color.White, fontSize = 13.sp)
+                                Spacer(modifier = Modifier.width(3.dp))
+                                Text("×", color = Color.White, fontSize = 16.sp)
+                            }
+                        },
+                        selected = true,
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = when (category) {
+                                PinCategory.STUDY -> Color(0xFF4A90E2)
+                                PinCategory.EVENTS -> Color(0xFFE74C3C)
+                                PinCategory.CHILL -> Color(0xFF2ECC71)
+                                PinCategory.SHOPS_SERVICES -> Color(0xFFF39C12)
+                            },
+                            containerColor = Color(0xFF2A2A2A)
+                        ),
+                        border = FilterChipDefaults.filterChipBorder(
+                            enabled = true,
+                            selected = true,
+                            borderColor = Color.Transparent,
+                            selectedBorderColor = Color.Transparent,
+                            disabledBorderColor = Color.Transparent,
+                            disabledSelectedBorderColor = Color.Transparent,
+                            borderWidth = 0.dp
+                        )
+                    )
+                }
+                
+                // Expand button
+                FilterChip(
+                    onClick = { isExpanded = true },
+                    modifier = Modifier.height(28.dp),
+                    label = { Text("+", color = Color.White, fontSize = 16.sp) },
+                    selected = false,
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = Color(0xFF4A90E2),
+                        containerColor = Color(0xFF2A2A2A)
+                    ),
+                    border = FilterChipDefaults.filterChipBorder(
+                        enabled = true,
+                        selected = false,
+                        borderColor = Color.Transparent,
+                        selectedBorderColor = Color.Transparent,
+                        disabledBorderColor = Color.Transparent,
+                        disabledSelectedBorderColor = Color.Transparent,
+                        borderWidth = 0.dp
                     )
                 )
             }

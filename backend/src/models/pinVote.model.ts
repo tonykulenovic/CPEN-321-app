@@ -1,6 +1,5 @@
 import mongoose, { Schema } from 'mongoose';
 import { IPinVote } from '../types/pins.types';
-import { pinModel } from './pin.model';
 import logger from '../utils/logger.util';
 
 const pinVoteSchema = new Schema<IPinVote>(
@@ -25,7 +24,7 @@ export class PinVoteModel {
     userId: mongoose.Types.ObjectId,
     pinId: mongoose.Types.ObjectId,
     voteType: 'upvote' | 'downvote'
-  ): Promise<boolean> {
+  ): Promise<{ success: boolean; action: 'added' | 'removed' | 'changed'; upvotes: number; downvotes: number }> {
     const session = await mongoose.startSession();
     session.startTransaction();
 
@@ -34,11 +33,24 @@ export class PinVoteModel {
 
       let upvoteChange = 0;
       let downvoteChange = 0;
+      let action: 'added' | 'removed' | 'changed' = 'added';
 
       if (existingVote) {
-        if (existingVote.voteType !== voteType) {
+        if (existingVote.voteType === voteType) {
+          // User clicked the same vote button - remove the vote (undo)
+          await this.voteCollection.deleteOne({ userId, pinId }, { session });
+          
+          if (voteType === 'upvote') {
+            upvoteChange = -1;
+          } else {
+            downvoteChange = -1;
+          }
+          action = 'removed';
+        } else {
+          // User switched vote type
           existingVote.voteType = voteType;
           await existingVote.save({ session });
+          
           if (voteType === 'upvote') {
             upvoteChange = 1;
             downvoteChange = -1;
@@ -46,32 +58,48 @@ export class PinVoteModel {
             upvoteChange = -1;
             downvoteChange = 1;
           }
+          action = 'changed';
         }
       } else {
+        // New vote
         await this.voteCollection.create([{ userId, pinId, voteType }], { session });
+        
         if (voteType === 'upvote') {
           upvoteChange = 1;
         } else {
           downvoteChange = 1;
         }
+        action = 'added';
       }
 
-      if (upvoteChange !== 0 || downvoteChange !== 0) {
-        // Access the underlying model to update rating
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const pinCollection = (pinModel as any)['pin'] as mongoose.Model<any>;
-        await pinCollection.findByIdAndUpdate(
-          pinId,
-          {
-            $inc: { 'rating.upvotes': upvoteChange, 'rating.downvotes': downvoteChange },
-            $addToSet: { 'rating.voters': userId },
-          },
-          { session }
-        );
+      // Access the Pin model directly to avoid circular dependency
+      const pinCollection = mongoose.model('Pin');
+      
+      const updateOperations: any = {
+        $inc: { 'rating.upvotes': upvoteChange, 'rating.downvotes': downvoteChange }
+      };
+
+      // Add or remove user from voters list
+      if (action === 'removed') {
+        updateOperations.$pull = { 'rating.voters': userId };
+      } else if (action === 'added') {
+        updateOperations.$addToSet = { 'rating.voters': userId };
       }
+
+      const updatedPin = await pinCollection.findByIdAndUpdate(
+        pinId,
+        updateOperations,
+        { session, new: true }
+      );
 
       await session.commitTransaction();
-      return true;
+      
+      return {
+        success: true,
+        action,
+        upvotes: updatedPin.rating.upvotes,
+        downvotes: updatedPin.rating.downvotes
+      };
     } catch (error) {
       await session.abortTransaction();
       logger.error('Error voting on pin:', error);
@@ -79,6 +107,14 @@ export class PinVoteModel {
     } finally {
       session.endSession();
     }
+  }
+
+  async getUserVote(
+    userId: mongoose.Types.ObjectId,
+    pinId: mongoose.Types.ObjectId
+  ): Promise<'upvote' | 'downvote' | null> {
+    const vote = await this.voteCollection.findOne({ userId, pinId });
+    return vote ? vote.voteType : null;
   }
 }
 

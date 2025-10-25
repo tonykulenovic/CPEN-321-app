@@ -73,7 +73,8 @@ export class PinsController {
   ) {
     try {
       const pinId = new mongoose.Types.ObjectId(req.params.id);
-      const pin = await pinModel.findById(pinId);
+      const userId = req.user?._id; // Get current user's ID
+      const pin = await pinModel.findById(pinId, userId);
       if (!pin) return res.status(404).json({ message: 'Pin not found' });
       res.status(200).json({ message: 'Pin fetched successfully', data: { pin } });
     } catch (error) {
@@ -158,12 +159,52 @@ export class PinsController {
       const pinId = new mongoose.Types.ObjectId(req.params.id);
       const userId = req.user!._id;
       const { voteType } = req.body;
-      await pinVoteModel.vote(userId, pinId, voteType);
-      res.status(200).json({ message: `Pin ${voteType}d successfully` });
+      
+      const result = await pinVoteModel.vote(userId, pinId, voteType);
+      
+      // Get the user's current vote status after the action
+      const currentVote = await pinVoteModel.getUserVote(userId, pinId);
+      
+      res.status(200).json({ 
+        message: result.action === 'removed' 
+          ? `${voteType} removed successfully` 
+          : `Pin ${voteType}d successfully`,
+        data: {
+          action: result.action,
+          upvotes: result.upvotes,
+          downvotes: result.downvotes,
+          userVote: currentVote
+        }
+      });
     } catch (error) {
       logger.error('Failed to rate pin:', error as Error);
       if (error instanceof Error) {
         return res.status(500).json({ message: error.message || 'Failed to rate pin' });
+      }
+      next(error);
+    }
+  }
+
+  async getUserVote(
+    req: Request<{ id: string }>,
+    res: Response,
+    next: NextFunction
+  ) {
+    try {
+      const pinId = new mongoose.Types.ObjectId(req.params.id);
+      const userId = req.user!._id;
+      
+      const userVote = await pinVoteModel.getUserVote(userId, pinId);
+      
+      res.status(200).json({ 
+        data: {
+          userVote
+        }
+      });
+    } catch (error) {
+      logger.error('Failed to get user vote:', error as Error);
+      if (error instanceof Error) {
+        return res.status(500).json({ message: error.message || 'Failed to get user vote' });
       }
       next(error);
     }
@@ -184,6 +225,57 @@ export class PinsController {
       logger.error('Failed to report pin:', error as Error);
       if (error instanceof Error) {
         return res.status(500).json({ message: error.message || 'Failed to report pin' });
+      }
+      next(error);
+    }
+  }
+
+  // ==================== ADMIN METHODS ====================
+
+  async getReportedPins(req: Request, res: Response, next: NextFunction) {
+    try {
+      // Check if user is admin
+      if (!req.user?.isAdmin) {
+        return res.status(403).json({ message: 'Unauthorized: Admin access required' });
+      }
+
+      const reportedPins = await pinModel.getReportedPins();
+      
+      res.status(200).json({ 
+        message: 'Reported pins fetched successfully',
+        data: { pins: reportedPins, total: reportedPins.length }
+      });
+    } catch (error) {
+      logger.error('Failed to fetch reported pins:', error as Error);
+      if (error instanceof Error) {
+        return res.status(500).json({ message: error.message || 'Failed to fetch reported pins' });
+      }
+      next(error);
+    }
+  }
+
+  async clearPinReports(req: Request<{ id: string }>, res: Response, next: NextFunction) {
+    try {
+      // Check if user is admin
+      if (!req.user?.isAdmin) {
+        return res.status(403).json({ message: 'Unauthorized: Admin access required' });
+      }
+
+      const pinId = new mongoose.Types.ObjectId(req.params.id);
+      const pin = await pinModel.clearReports(pinId);
+      
+      if (!pin) {
+        return res.status(404).json({ message: 'Pin not found' });
+      }
+      
+      res.status(200).json({ 
+        message: 'Reports cleared successfully',
+        data: { pin }
+      });
+    } catch (error) {
+      logger.error('Failed to clear reports:', error as Error);
+      if (error instanceof Error) {
+        return res.status(500).json({ message: error.message || 'Failed to clear reports' });
       }
       next(error);
     }

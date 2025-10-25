@@ -7,9 +7,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.ThumbUp
+import androidx.compose.material.icons.outlined.ThumbDown
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -37,6 +40,20 @@ fun PinDetailsScreen(
     val pin = pinUiState.currentPin
     val currentUserId = profileUiState.user?._id
     
+    // Local state for instant UI feedback (optimistic UI)
+    var optimisticUserVote by remember(pin?.id) { mutableStateOf(pin?.userVote) }
+    var optimisticUpvotes by remember(pin?.id) { mutableIntStateOf(pin?.rating?.upvotes ?: 0) }
+    var optimisticDownvotes by remember(pin?.id) { mutableIntStateOf(pin?.rating?.downvotes ?: 0) }
+    
+    // Sync with actual pin data when it changes
+    LaunchedEffect(pin?.userVote, pin?.rating?.upvotes, pin?.rating?.downvotes) {
+        pin?.let {
+            optimisticUserVote = it.userVote
+            optimisticUpvotes = it.rating.upvotes
+            optimisticDownvotes = it.rating.downvotes
+        }
+    }
+    
     val sheetState = rememberModalBottomSheetState(
         skipPartiallyExpanded = false
     )
@@ -54,11 +71,29 @@ fun PinDetailsScreen(
     var showReportDialog by remember { mutableStateOf(false) }
     var reportReason by remember { mutableStateOf("") }
     
+    // Snackbar for success/error messages
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+    
     // Handle success messages
     LaunchedEffect(pinUiState.successMessage) {
-        if (pinUiState.successMessage?.contains("deleted") == true) {
-            pinViewModel.clearSuccessMessage()
-            onNavigateBack()
+        pinUiState.successMessage?.let { message ->
+            if (message.contains("deleted", ignoreCase = true)) {
+                pinViewModel.clearSuccessMessage()
+                onNavigateBack()
+            } else {
+                // Show other success messages (like "Pin reported")
+                snackbarHostState.showSnackbar(message)
+                pinViewModel.clearSuccessMessage()
+            }
+        }
+    }
+    
+    // Handle error messages
+    LaunchedEffect(pinUiState.error) {
+        pinUiState.error?.let { error ->
+            snackbarHostState.showSnackbar(error)
+            pinViewModel.clearError()
         }
     }
     
@@ -117,9 +152,16 @@ fun PinDetailsScreen(
                             }
                         }
                         
-                        // Report button (show for all users except pin owner)
-                        if (pin != null && currentUserId != null && pin.createdBy.id != currentUserId) {
-                            IconButton(onClick = { showReportDialog = true }) {
+                        // Report button (show for all users except pin owner, and exclude pre-seeded and friends-only pins)
+                        if (pin != null && 
+                            currentUserId != null && 
+                            pin.createdBy.id != currentUserId &&
+                            !pin.isPreSeeded &&
+                            pin.visibility != PinVisibility.FRIENDS_ONLY) {
+                            IconButton(onClick = { 
+                                android.util.Log.d("PinDetails", "Report button clicked for pin ${pin.id}")
+                                showReportDialog = true 
+                            }) {
                                 Icon(
                                     imageVector = Icons.Default.Report,
                                     contentDescription = "Report Pin",
@@ -141,28 +183,35 @@ fun PinDetailsScreen(
         },
         scrimColor = Color.Black.copy(alpha = 0.6f)
     ) {
-        when {
-            pinUiState.isLoading && pin == null -> {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(300.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator(color = Color(0xFF4A90E2))
+        Box(modifier = Modifier.fillMaxSize()) {
+            when {
+                pinUiState.isLoading && pin == null -> {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(300.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(color = Color(0xFF4A90E2))
+                    }
                 }
-            }
-            pin != null -> {
-                PinDetailsContent(
-                    pin = pin,
-                    isOwner = pin.createdBy.id == currentUserId,
-                    pinViewModel = pinViewModel,
-                    pinId = pinId,
-                    modifier = Modifier
-                )
-            }
-            else -> {
-                Box(
+                pin != null -> {
+                    PinDetailsContent(
+                        pin = pin,
+                        isOwner = pin.createdBy.id == currentUserId,
+                        pinViewModel = pinViewModel,
+                        pinId = pinId,
+                        optimisticUserVote = optimisticUserVote,
+                        onOptimisticUserVoteChange = { optimisticUserVote = it },
+                        optimisticUpvotes = optimisticUpvotes,
+                        onOptimisticUpvotesChange = { optimisticUpvotes = it },
+                        optimisticDownvotes = optimisticDownvotes,
+                        onOptimisticDownvotesChange = { optimisticDownvotes = it },
+                        modifier = Modifier
+                    )
+                }
+                else -> {
+                    Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(200.dp),
@@ -175,9 +224,22 @@ fun PinDetailsScreen(
                     )
                 }
             }
+            }
+            
+            // Snackbar host at bottom for success/error messages
+            SnackbarHost(
+                hostState = snackbarHostState,
+                modifier = Modifier.align(Alignment.BottomCenter)
+            ) { data ->
+                Snackbar(
+                    snackbarData = data,
+                    containerColor = Color(0xFF4A90E2),
+                    contentColor = Color.White
+                )
+            }
         }
         
-        // Error snackbar at bottom
+        // Error snackbar at bottom (legacy - can be removed if not needed)
         pinUiState.error?.let { error ->
             Surface(
                 modifier = Modifier
@@ -237,12 +299,12 @@ fun PinDetailsScreen(
             title = { Text("Report Pin") },
             text = { 
                 Column {
-                    Text("Please provide a reason for reporting this pin:")
+                    Text("Reason for reporting (optional):")
                     Spacer(modifier = Modifier.height(8.dp))
                     OutlinedTextField(
                         value = reportReason,
                         onValueChange = { reportReason = it },
-                        placeholder = { Text("Enter reason...") },
+                        placeholder = { Text("Enter reason (optional)...") },
                         modifier = Modifier.fillMaxWidth(),
                         maxLines = 3
                     )
@@ -251,16 +313,14 @@ fun PinDetailsScreen(
             confirmButton = {
                 TextButton(
                     onClick = {
-                        if (reportReason.isNotBlank()) {
-                            pinViewModel.reportPin(pinId, reportReason)
-                            showReportDialog = false
-                            reportReason = ""
-                        }
+                        android.util.Log.d("PinDetails", "Reporting pin $pinId with reason: $reportReason")
+                        pinViewModel.reportPin(pinId, reportReason.ifBlank { "" })
+                        showReportDialog = false
+                        reportReason = ""
                     },
                     colors = ButtonDefaults.textButtonColors(
                         contentColor = Color(0xFFE74C3C)
-                    ),
-                    enabled = reportReason.isNotBlank()
+                    )
                 ) {
                     Text("Report")
                 }
@@ -283,6 +343,12 @@ private fun PinDetailsContent(
     isOwner: Boolean,
     pinViewModel: PinViewModel,
     pinId: String,
+    optimisticUserVote: String?,
+    onOptimisticUserVoteChange: (String?) -> Unit,
+    optimisticUpvotes: Int,
+    onOptimisticUpvotesChange: (Int) -> Unit,
+    optimisticDownvotes: Int,
+    onOptimisticDownvotesChange: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -393,53 +459,185 @@ private fun PinDetailsContent(
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
                 // Upvote Button
+                val isUpvoted = optimisticUserVote == "upvote"
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    IconButton(
-                        onClick = { pinViewModel.ratePin(pinId, "upvote") },
-                        modifier = Modifier.size(48.dp)
+                    Card(
+                        modifier = Modifier.size(68.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = if (isUpvoted) 
+                                Color(0xFF4CAF50).copy(alpha = 0.2f) 
+                            else 
+                                Color(0xFF2C2C3E)
+                        ),
+                        shape = RoundedCornerShape(12.dp),
+                        elevation = CardDefaults.cardElevation(
+                            defaultElevation = if (isUpvoted) 4.dp else 0.dp
+                        )
                     ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = Icons.Default.ThumbUp,
-                                contentDescription = "Upvote",
-                                tint = Color(0xFF4CAF50),
-                                modifier = Modifier.size(24.dp)
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(
-                                text = pin.rating.upvotes.toString(),
-                                color = Color.White,
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.Bold
-                            )
+                        IconButton(
+                            onClick = { 
+                                // INSTANT UI UPDATE - before ViewModel processes
+                                val currentVote = optimisticUserVote
+                                val newVote = if (currentVote == "upvote") null else "upvote"
+                                
+                                // Calculate changes
+                                var newUpvotes = optimisticUpvotes
+                                var newDownvotes = optimisticDownvotes
+                                
+                                when {
+                                    currentVote == null -> {
+                                        newUpvotes += 1
+                                    }
+                                    currentVote == "upvote" -> {
+                                        newUpvotes -= 1
+                                    }
+                                    currentVote == "downvote" -> {
+                                        newUpvotes += 1
+                                        newDownvotes -= 1
+                                    }
+                                }
+                                
+                                onOptimisticUserVoteChange(newVote)
+                                onOptimisticUpvotesChange(newUpvotes)
+                                onOptimisticDownvotesChange(newDownvotes)
+                                
+                                // Then trigger backend update
+                                pinViewModel.ratePin(pinId, "upvote")
+                            },
+                            modifier = Modifier.fillMaxSize()
+                        ) {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center
+                            ) {
+                                Icon(
+                                    imageVector = if (isUpvoted) 
+                                        Icons.Filled.ThumbUp 
+                                    else 
+                                        Icons.Outlined.ThumbUp,
+                                    contentDescription = "Upvote",
+                                    tint = if (isUpvoted) 
+                                        Color(0xFF4CAF50) 
+                                    else 
+                                        Color(0xFF7F8C8D),
+                                    modifier = Modifier.size(24.dp)
+                                )
+                                Text(
+                                    text = optimisticUpvotes.toString(),
+                                    color = if (isUpvoted) 
+                                        Color(0xFF4CAF50) 
+                                    else 
+                                        Color.White,
+                                    fontSize = 16.sp,
+                                    fontWeight = if (isUpvoted) 
+                                        FontWeight.Bold 
+                                    else 
+                                        FontWeight.Normal
+                                )
+                            }
                         }
                     }
-                    Text("Upvote", color = Color(0xFFB0B0B0), fontSize = 12.sp)
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = if (isUpvoted) "Upvoted" else "Upvote",
+                        color = if (isUpvoted) 
+                            Color(0xFF4CAF50) 
+                        else 
+                            Color(0xFFB0B0B0),
+                        fontSize = 12.sp,
+                        fontWeight = if (isUpvoted) FontWeight.Bold else FontWeight.Normal
+                    )
                 }
                 
                 // Downvote Button
+                val isDownvoted = optimisticUserVote == "downvote"
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    IconButton(
-                        onClick = { pinViewModel.ratePin(pinId, "downvote") },
-                        modifier = Modifier.size(48.dp)
+                    Card(
+                        modifier = Modifier.size(68.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = if (isDownvoted) 
+                                Color(0xFFE74C3C).copy(alpha = 0.2f) 
+                            else 
+                                Color(0xFF2C2C3E)
+                        ),
+                        shape = RoundedCornerShape(12.dp),
+                        elevation = CardDefaults.cardElevation(
+                            defaultElevation = if (isDownvoted) 4.dp else 0.dp
+                        )
                     ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = Icons.Default.ThumbDown,
-                                contentDescription = "Downvote",
-                                tint = Color(0xFFE74C3C),
-                                modifier = Modifier.size(24.dp)
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(
-                                text = pin.rating.downvotes.toString(),
-                                color = Color.White,
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.Bold
-                            )
+                        IconButton(
+                            onClick = { 
+                                // INSTANT UI UPDATE - before ViewModel processes
+                                val currentVote = optimisticUserVote
+                                val newVote = if (currentVote == "downvote") null else "downvote"
+                                
+                                // Calculate changes
+                                var newUpvotes = optimisticUpvotes
+                                var newDownvotes = optimisticDownvotes
+                                
+                                when {
+                                    currentVote == null -> {
+                                        newDownvotes += 1
+                                    }
+                                    currentVote == "downvote" -> {
+                                        newDownvotes -= 1
+                                    }
+                                    currentVote == "upvote" -> {
+                                        newDownvotes += 1
+                                        newUpvotes -= 1
+                                    }
+                                }
+                                
+                                onOptimisticUserVoteChange(newVote)
+                                onOptimisticUpvotesChange(newUpvotes)
+                                onOptimisticDownvotesChange(newDownvotes)
+                                
+                                // Then trigger backend update
+                                pinViewModel.ratePin(pinId, "downvote")
+                            },
+                            modifier = Modifier.fillMaxSize()
+                        ) {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center
+                            ) {
+                                Icon(
+                                    imageVector = if (isDownvoted) 
+                                        Icons.Filled.ThumbDown 
+                                    else 
+                                        Icons.Outlined.ThumbDown,
+                                    contentDescription = "Downvote",
+                                    tint = if (isDownvoted) 
+                                        Color(0xFFE74C3C) 
+                                    else 
+                                        Color(0xFF7F8C8D),
+                                    modifier = Modifier.size(24.dp)
+                                )
+                                Text(
+                                    text = optimisticDownvotes.toString(),
+                                    color = if (isDownvoted) 
+                                        Color(0xFFE74C3C) 
+                                    else 
+                                        Color.White,
+                                    fontSize = 16.sp,
+                                    fontWeight = if (isDownvoted) 
+                                        FontWeight.Bold 
+                                    else 
+                                        FontWeight.Normal
+                                )
+                            }
                         }
                     }
-                    Text("Downvote", color = Color(0xFFB0B0B0), fontSize = 12.sp)
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = if (isDownvoted) "Downvoted" else "Downvote",
+                        color = if (isDownvoted) 
+                            Color(0xFFE74C3C) 
+                        else 
+                            Color(0xFFB0B0B0),
+                        fontSize = 12.sp,
+                        fontWeight = if (isDownvoted) FontWeight.Bold else FontWeight.Normal
+                    )
                 }
             }
         }

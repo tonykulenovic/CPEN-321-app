@@ -144,16 +144,86 @@ class PinViewModel @Inject constructor(
     
     fun ratePin(pinId: String, voteType: String) {
         viewModelScope.launch {
+            // Find the pin in the current state
+            val currentPin = _uiState.value.pins.find { it.id == pinId }
+                ?: _uiState.value.currentPin
+            
+            if (currentPin == null) {
+                _uiState.value = _uiState.value.copy(
+                    error = "Pin not found"
+                )
+                return@launch
+            }
+
+            // OPTIMISTIC UPDATE: Update UI immediately before backend responds
+            val currentVote = currentPin.userVote
+            val newVote = if (currentVote == voteType) null else voteType // Toggle if same
+            
+            // Calculate optimistic upvotes/downvotes
+            var upvoteDelta = 0
+            var downvoteDelta = 0
+            
+            when {
+                currentVote == null && newVote == "upvote" -> upvoteDelta = 1
+                currentVote == null && newVote == "downvote" -> downvoteDelta = 1
+                currentVote == "upvote" && newVote == "downvote" -> {
+                    upvoteDelta = -1
+                    downvoteDelta = 1
+                }
+                currentVote == "downvote" && newVote == "upvote" -> {
+                    upvoteDelta = 1
+                    downvoteDelta = -1
+                }
+                currentVote == "upvote" && newVote == null -> upvoteDelta = -1
+                currentVote == "downvote" && newVote == null -> downvoteDelta = -1
+            }
+            
+            val optimisticPin = currentPin.copy(
+                userVote = newVote,
+                rating = currentPin.rating.copy(
+                    upvotes = (currentPin.rating.upvotes + upvoteDelta).coerceAtLeast(0),
+                    downvotes = (currentPin.rating.downvotes + downvoteDelta).coerceAtLeast(0)
+                )
+            )
+            
+            // Update UI immediately with optimistic data
+            _uiState.value = _uiState.value.copy(
+                pins = _uiState.value.pins.map { 
+                    if (it.id == pinId) optimisticPin else it 
+                },
+                currentPin = if (_uiState.value.currentPin?.id == pinId) 
+                    optimisticPin else _uiState.value.currentPin
+            )
+            
+            // Now make the actual API call
             pinRepository.ratePin(pinId, voteType)
-                .onSuccess {
-                    _uiState.value = _uiState.value.copy(
-                        successMessage = "Pin ${voteType}d successfully!"
+                .onSuccess { response ->
+                    // Update with actual data from backend
+                    val updatedPin = currentPin.copy(
+                        userVote = response.data?.userVote,
+                        rating = currentPin.rating.copy(
+                            upvotes = response.data?.upvotes ?: currentPin.rating.upvotes,
+                            downvotes = response.data?.downvotes ?: currentPin.rating.downvotes
+                        )
                     )
-                    // Refresh the pin or pins list
-                    loadPins()
+                    
+                    _uiState.value = _uiState.value.copy(
+                        pins = _uiState.value.pins.map { 
+                            if (it.id == pinId) updatedPin else it 
+                        },
+                        currentPin = if (_uiState.value.currentPin?.id == pinId) 
+                            updatedPin else _uiState.value.currentPin,
+                        successMessage = response.message
+                    )
                 }
                 .onFailure { error ->
+                    // Revert optimistic update on error
                     _uiState.value = _uiState.value.copy(
+                        pins = _uiState.value.pins.map { 
+                            if (it.id == pinId) currentPin else it 
+                        },
+                        currentPin = if (_uiState.value.currentPin?.id == pinId) 
+                            currentPin else _uiState.value.currentPin,
                         error = error.message ?: "Failed to rate pin"
                     )
                 }
@@ -165,8 +235,10 @@ class PinViewModel @Inject constructor(
             pinRepository.reportPin(pinId, reason)
                 .onSuccess {
                     _uiState.value = _uiState.value.copy(
-                        successMessage = "Pin reported successfully"
+                        successMessage = "Pin reported"
                     )
+                    // Force refresh the pin to get updated report status
+                    getPin(pinId)
                 }
                 .onFailure { error ->
                     _uiState.value = _uiState.value.copy(
@@ -210,6 +282,47 @@ class PinViewModel @Inject constructor(
                     _uiState.value = _uiState.value.copy(
                         error = error.message ?: "Failed to update pin",
                         isUpdating = false
+                    )
+                }
+        }
+    }
+    
+    // Admin methods
+    fun loadReportedPins() {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(
+                isLoading = true,
+                error = null
+            )
+            
+            pinRepository.getReportedPins()
+                .onSuccess { data ->
+                    _uiState.value = _uiState.value.copy(
+                        pins = data.pins,
+                        totalPins = data.total,
+                        isLoading = false
+                    )
+                }
+                .onFailure { error ->
+                    _uiState.value = _uiState.value.copy(
+                        error = error.message ?: "Failed to load reported pins",
+                        isLoading = false
+                    )
+                }
+        }
+    }
+    
+    fun clearPinReports(pinId: String) {
+        viewModelScope.launch {
+            pinRepository.clearPinReports(pinId)
+                .onSuccess {
+                    _uiState.value = _uiState.value.copy(
+                        successMessage = "Reports cleared successfully"
+                    )
+                }
+                .onFailure { error ->
+                    _uiState.value = _uiState.value.copy(
+                        error = error.message ?: "Failed to clear reports"
                     )
                 }
         }

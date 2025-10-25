@@ -42,11 +42,25 @@ interface PinInterface {
     suspend fun ratePin(
         @Path("id") pinId: String,
         @Body request: RatePinRequest
-    ): Response<SimpleResponse>
+    ): Response<RatePinResponse>
+    
+    @GET("pins/{id}/vote")
+    suspend fun getUserVote(
+        @Path("id") pinId: String
+    ): Response<UserVoteResponse>
     
     @POST("pins/{id}/report")
     suspend fun reportPin(
         @Path("id") pinId: String,
         @Body request: ReportPinRequest
+    ): Response<SimpleResponse>
+    
+    // Admin endpoints
+    @GET("pins/admin/reported")
+    suspend fun getReportedPins(): Response<PinsListResponse>
+    
+    @PATCH("pins/admin/{id}/clear-reports")
+    suspend fun clearPinReports(
+        @Path("id") pinId: String
     ): Response<SimpleResponse>
 }

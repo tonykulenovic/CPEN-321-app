@@ -15,8 +15,13 @@ const router = Router();
 // Apply authentication to all pin routes for visibility filtering
 router.use(authenticateToken);
 
+// Admin routes (must be before /:id to avoid path conflicts)
+router.get('/admin/reported', pinsController.getReportedPins);
+router.patch('/admin/:id/clear-reports', pinsController.clearPinReports);
+
 router.get('/search', validateQuery(searchPinsSchema), pinsController.searchPins);
 router.get('/:id', pinsController.getPin);
+router.get('/:id/vote', pinsController.getUserVote);
 router.post('/', validateBody(createPinSchema), pinsController.createPin);
 router.put('/:id', validateBody(updatePinSchema), pinsController.updatePin);
 router.delete('/:id', pinsController.deletePin);

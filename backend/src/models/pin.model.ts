@@ -83,9 +83,27 @@ export class PinModel {
     }
   }
 
-  async findById(pinId: mongoose.Types.ObjectId): Promise<IPin | null> {
+  async findById(pinId: mongoose.Types.ObjectId, userId?: mongoose.Types.ObjectId): Promise<IPin | null> {
     try {
-      return await this.pin.findById(pinId).populate('createdBy', 'name profilePicture');
+      const pin = await this.pin.findById(pinId).populate('createdBy', 'name profilePicture');
+      
+      if (!pin) {
+        return null;
+      }
+
+      // Add user's vote if userId is provided
+      if (userId) {
+        // Query vote directly to avoid circular dependency
+        const PinVote = mongoose.model('PinVote');
+        const vote = await PinVote.findOne({ userId, pinId: pin._id });
+        const userVote = vote ? (vote as any).voteType : null;
+        return {
+          ...pin.toObject(),
+          userVote
+        } as any;
+      }
+
+      return pin;
     } catch (error) {
       logger.error('Error finding pin:', error);
       throw new Error('Failed to find pin');
@@ -243,6 +261,23 @@ export class PinModel {
       const total = pins.length;
       const paginatedPins = pins.slice(skip, skip + limit);
 
+      // Add user's vote to each pin if userId is provided
+      if (filters.userId) {
+        // Query votes directly to avoid circular dependency
+        const PinVote = mongoose.model('PinVote');
+        const pinsWithVotes = await Promise.all(
+          paginatedPins.map(async (pin) => {
+            const vote = await PinVote.findOne({ userId: filters.userId, pinId: pin._id });
+            const userVote = vote ? (vote as any).voteType : null;
+            return {
+              ...pin.toObject(),
+              userVote
+            };
+          })
+        );
+        return { pins: pinsWithVotes as any, total };
+      }
+
       return { pins: paginatedPins, total };
     } catch (error) {
       logger.error('Error searching pins:', error);
@@ -252,21 +287,82 @@ export class PinModel {
 
   async reportPin(pinId: mongoose.Types.ObjectId, userId: mongoose.Types.ObjectId, reason: string): Promise<IPin | null> {
     try {
+      // Simply add the report (allow multiple reports from same user)
       const pin = await this.pin.findByIdAndUpdate(
         pinId,
-        { $push: { reports: { reportedBy: userId, reason, timestamp: new Date() } } },
+        { $push: { reports: { reportedBy: userId, reason: reason || 'No reason provided', timestamp: new Date() } } },
         { new: true }
       );
 
-      if (pin && pin.reports.length >= 5) {
+      if (!pin) {
+        throw new Error('Pin not found');
+      }
+
+      // Mark as reported if 5+ reports
+      if (pin.reports.length >= 5 && pin.status !== PinStatus.REPORTED) {
         pin.status = PinStatus.REPORTED;
         await pin.save();
       }
 
+      logger.info(`Pin ${pinId} reported by user ${userId}. Total reports: ${pin.reports.length}`);
       return pin;
     } catch (error) {
       logger.error('Error reporting pin:', error);
-      throw new Error('Failed to report pin');
+      throw error;
+    }
+  }
+
+  async getReportedPins(): Promise<IPin[]> {
+    try {
+      logger.info('Fetching reported pins...');
+      
+      const reportedPins = await this.pin
+        .find({ 
+          $or: [
+            { status: PinStatus.REPORTED },
+            { 'reports.0': { $exists: true } } // Has at least one report
+          ]
+        })
+        .populate('createdBy', 'name profilePicture email')
+        .populate('reports.reportedBy', 'name email')
+        .sort({ 'reports.0.timestamp': -1 }) // Most recent reports first
+        .lean();
+      
+      logger.info(`Found ${reportedPins.length} reported pins`);
+      reportedPins.forEach(pin => {
+        logger.info(`  - Pin ${pin._id}: ${pin.name}, Reports: ${pin.reports.length}, Status: ${pin.status}`);
+      });
+      
+      return reportedPins as IPin[];
+    } catch (error) {
+      logger.error('Error fetching reported pins:', error);
+      throw new Error('Failed to fetch reported pins');
+    }
+  }
+
+  async clearReports(pinId: mongoose.Types.ObjectId): Promise<IPin | null> {
+    try {
+      logger.info(`Clearing reports for pin ${pinId}...`);
+      
+      const pin = await this.pin.findByIdAndUpdate(
+        pinId,
+        { 
+          reports: [], // Clear all reports
+          status: PinStatus.ACTIVE // Reset status to active
+        },
+        { new: true }
+      );
+      
+      if (pin) {
+        logger.info(`Successfully cleared reports for pin ${pinId}. New status: ${pin.status}, Reports: ${pin.reports.length}`);
+      } else {
+        logger.warn(`Pin ${pinId} not found when trying to clear reports`);
+      }
+      
+      return pin;
+    } catch (error) {
+      logger.error('Error clearing reports:', error);
+      throw new Error('Failed to clear reports');
     }
   }
 

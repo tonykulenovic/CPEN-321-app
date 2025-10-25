@@ -1,6 +1,8 @@
 package com.cpen321.usermanagement.data.remote.dto
 
+import com.google.gson.annotations.JsonAdapter
 import com.google.gson.annotations.SerializedName
+import com.cpen321.usermanagement.utils.ReportedByUserDeserializer
 
 // Enums matching backend
 enum class PinCategory {
@@ -48,8 +50,16 @@ data class PinRating(
     @SerializedName("voters") val voters: List<String> = emptyList()
 )
 
+data class ReportedByUser(
+    @SerializedName("_id") val id: String? = null,
+    @SerializedName("name") val name: String? = null,
+    @SerializedName("email") val email: String? = null
+)
+
 data class PinReport(
-    @SerializedName("reportedBy") val reportedBy: String,
+    @SerializedName("reportedBy") 
+    @JsonAdapter(ReportedByUserDeserializer::class) 
+    val reportedBy: ReportedByUser? = null, // Can be either string ID or object
     @SerializedName("reason") val reason: String,
     @SerializedName("timestamp") val timestamp: String
 )
@@ -62,6 +72,7 @@ data class PinCreator(
 
 data class Pin(
     @SerializedName("_id") val id: String,
+    @SerializedName("userVote") val userVote: String? = null, // "upvote", "downvote", or null
     @SerializedName("name") val name: String,
     @SerializedName("category") val category: PinCategory,
     @SerializedName("description") val description: String,
@@ -131,4 +142,24 @@ data class PinsListData(
 
 data class SimpleResponse(
     @SerializedName("message") val message: String
+)
+
+data class RatePinResponse(
+    @SerializedName("message") val message: String,
+    @SerializedName("data") val data: RatePinData?
+)
+
+data class RatePinData(
+    @SerializedName("action") val action: String, // "added", "removed", "changed"
+    @SerializedName("upvotes") val upvotes: Int,
+    @SerializedName("downvotes") val downvotes: Int,
+    @SerializedName("userVote") val userVote: String? // "upvote", "downvote", or null
+)
+
+data class UserVoteResponse(
+    @SerializedName("data") val data: UserVoteData?
+)
+
+data class UserVoteData(
+    @SerializedName("userVote") val userVote: String? // "upvote", "downvote", or null
 )

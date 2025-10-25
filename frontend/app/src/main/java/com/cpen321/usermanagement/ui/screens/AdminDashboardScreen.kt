@@ -22,7 +22,8 @@ import kotlinx.coroutines.launch
 fun AdminDashboardScreen(
     onLogout: () -> Unit,
     onManagePinsClick: () -> Unit,
-    onManageUsersClick: () -> Unit
+    onManageUsersClick: () -> Unit,
+    onReportedPinsClick: () -> Unit
 ) {
     // State for snackbar messages
     val snackbarHostState = remember { SnackbarHostState() }
@@ -119,11 +120,7 @@ fun AdminDashboardScreen(
                 icon = Icons.Default.Flag,
                 title = "Review Reported Pins",
                 description = "View and moderate pins reported by users",
-                onClick = {
-                    scope.launch {
-                        snackbarHostState.showSnackbar("Reported Pins feature coming soon!")
-                    }
-                }
+                onClick = onReportedPinsClick
             )
             
             // Manage Pins

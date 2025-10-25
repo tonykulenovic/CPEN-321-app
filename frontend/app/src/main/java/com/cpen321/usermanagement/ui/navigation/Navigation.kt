@@ -14,6 +14,7 @@ import com.cpen321.usermanagement.R
 import com.cpen321.usermanagement.ui.screens.AdminDashboardScreen
 import com.cpen321.usermanagement.ui.screens.AdminManagePinsScreen
 import com.cpen321.usermanagement.ui.screens.AdminManageUsersScreen
+import com.cpen321.usermanagement.ui.screens.AdminReportedPinsScreen
 import com.cpen321.usermanagement.ui.screens.AuthScreen
 import com.cpen321.usermanagement.ui.screens.BadgesScreen
 import com.cpen321.usermanagement.ui.screens.CreatePinScreen
@@ -47,6 +48,7 @@ object NavRoutes {
     const val ADMIN_DASHBOARD = "admin_dashboard"
     const val ADMIN_MANAGE_PINS = "admin_manage_pins"
     const val ADMIN_MANAGE_USERS = "admin_manage_users"
+    const val ADMIN_REPORTED_PINS = "admin_reported_pins"
     const val MAIN = "main"
     const val SEARCH_PINS = "search_pins"
     const val PROFILE = "profile"
@@ -213,6 +215,9 @@ private fun AppNavHost(
                 },
                 onManageUsersClick = {
                     navController.navigate(NavRoutes.ADMIN_MANAGE_USERS)
+                },
+                onReportedPinsClick = {
+                    navController.navigate(NavRoutes.ADMIN_REPORTED_PINS)
                 }
             )
         }
@@ -231,6 +236,16 @@ private fun AppNavHost(
             val adminViewModel: AdminViewModel = hiltViewModel()
             AdminManageUsersScreen(
                 adminViewModel = adminViewModel,
+                onBackClick = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        composable(NavRoutes.ADMIN_REPORTED_PINS) {
+            val pinViewModel: PinViewModel = hiltViewModel()
+            AdminReportedPinsScreen(
+                pinViewModel = pinViewModel,
                 onBackClick = {
                     navController.popBackStack()
                 }
@@ -355,7 +370,7 @@ private fun AppNavHost(
 
         composable(NavRoutes.CREATE_PIN) {
             val pinViewModel: PinViewModel = hiltViewModel()
-            val navBackStackEntry = remember { navController.getBackStackEntry(NavRoutes.CREATE_PIN) }
+            val navBackStackEntry = remember(it) { navController.getBackStackEntry(NavRoutes.CREATE_PIN) }
             val savedStateHandle = navBackStackEntry.savedStateHandle
             
             // Get location from saved state
@@ -378,7 +393,7 @@ private fun AppNavHost(
         }
 
         composable(NavRoutes.PICK_LOCATION) {
-            val createPinBackStackEntry = remember { navController.getBackStackEntry(NavRoutes.CREATE_PIN) }
+            val createPinBackStackEntry = remember(it) { navController.getBackStackEntry(NavRoutes.CREATE_PIN) }
             val savedStateHandle = createPinBackStackEntry.savedStateHandle
             
             // Get initial location if already selected

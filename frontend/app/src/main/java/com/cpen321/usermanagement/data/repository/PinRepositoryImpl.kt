@@ -126,12 +126,12 @@ class PinRepositoryImpl @Inject constructor() : PinRepository {
         }
     }
     
-    override suspend fun ratePin(pinId: String, voteType: String): Result<Unit> {
+    override suspend fun ratePin(pinId: String, voteType: String): Result<RatePinResponse> {
         return try {
             val request = RatePinRequest(voteType)
             val response = pinInterface.ratePin(pinId, request)
-            if (response.isSuccessful) {
-                Result.success(Unit)
+            if (response.isSuccessful && response.body() != null) {
+                Result.success(response.body()!!)
             } else {
                 val errorMessage = JsonUtils.parseErrorMessage(
                     response.errorBody()?.string(),
@@ -142,6 +142,25 @@ class PinRepositoryImpl @Inject constructor() : PinRepository {
             }
         } catch (e: Exception) {
             Log.e(TAG, "Error rating pin", e)
+            Result.failure(e)
+        }
+    }
+    
+    override suspend fun getUserVote(pinId: String): Result<String?> {
+        return try {
+            val response = pinInterface.getUserVote(pinId)
+            if (response.isSuccessful && response.body() != null) {
+                Result.success(response.body()!!.data?.userVote)
+            } else {
+                val errorMessage = JsonUtils.parseErrorMessage(
+                    response.errorBody()?.string(),
+                    "Failed to get user vote"
+                )
+                Log.e(TAG, "Get user vote failed: $errorMessage")
+                Result.failure(Exception(errorMessage))
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error getting user vote", e)
             Result.failure(e)
         }
     }
@@ -162,6 +181,44 @@ class PinRepositoryImpl @Inject constructor() : PinRepository {
             }
         } catch (e: Exception) {
             Log.e(TAG, "Error reporting pin", e)
+            Result.failure(e)
+        }
+    }
+    
+    override suspend fun getReportedPins(): Result<PinsListData> {
+        return try {
+            val response = pinInterface.getReportedPins()
+            if (response.isSuccessful && response.body()?.data != null) {
+                Result.success(response.body()!!.data!!)
+            } else {
+                val errorMessage = JsonUtils.parseErrorMessage(
+                    response.errorBody()?.string(),
+                    response.body()?.message ?: "Failed to get reported pins"
+                )
+                Log.e(TAG, "Get reported pins failed: $errorMessage")
+                Result.failure(Exception(errorMessage))
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error getting reported pins", e)
+            Result.failure(e)
+        }
+    }
+    
+    override suspend fun clearPinReports(pinId: String): Result<Unit> {
+        return try {
+            val response = pinInterface.clearPinReports(pinId)
+            if (response.isSuccessful) {
+                Result.success(Unit)
+            } else {
+                val errorMessage = JsonUtils.parseErrorMessage(
+                    response.errorBody()?.string(),
+                    response.body()?.message ?: "Failed to clear reports"
+                )
+                Log.e(TAG, "Clear reports failed: $errorMessage")
+                Result.failure(Exception(errorMessage))
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error clearing reports", e)
             Result.failure(e)
         }
     }
