@@ -94,6 +94,7 @@ import androidx.compose.runtime.SideEffect
 import com.cpen321.usermanagement.ui.screens.BadgesScreen
 import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.DisposableEffect
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
@@ -232,6 +233,26 @@ fun MainScreen(
             color = Color(0xFF1A1A2E),
             darkIcons = false // false = light/white icons
         )
+    }
+
+    // Lifecycle management - Signal when map screen is active/inactive
+    DisposableEffect(Unit) {
+        android.util.Log.d("MainScreen", "🗺️  Map screen ACTIVE - Starting map operations")
+        mainViewModel.onMapScreenActive()
+        
+        onDispose {
+            android.util.Log.d("MainScreen", "🗺️  Map screen INACTIVE - Stopping map operations")
+            mainViewModel.onMapScreenInactive()
+            
+            // Stop location tracking when leaving map screen
+            try {
+                locationTrackingService.stopRealGPSTracking()
+                locationTrackingService.stopLocationSharing()
+                android.util.Log.d("MainScreen", "✅ Location tracking stopped on map screen exit")
+            } catch (e: Exception) {
+                android.util.Log.e("MainScreen", "❌ Error stopping location tracking", e)
+            }
+        }
     }
 
     MainContent(

@@ -9,7 +9,8 @@ import javax.inject.Inject
 
 data class MainUiState(
     val successMessage: String? = null,
-    val selectedPinIdFromSearch: String? = null
+    val selectedPinIdFromSearch: String? = null,
+    val isMapActive: Boolean = false
 )
 
 @HiltViewModel
@@ -32,5 +33,14 @@ class MainViewModel @Inject constructor() : ViewModel() {
     
     fun clearSelectedPinFromSearch() {
         _uiState.value = _uiState.value.copy(selectedPinIdFromSearch = null)
+    }
+    
+    // Lifecycle management for map screen
+    fun onMapScreenActive() {
+        _uiState.value = _uiState.value.copy(isMapActive = true)
+    }
+    
+    fun onMapScreenInactive() {
+        _uiState.value = _uiState.value.copy(isMapActive = false)
     }
 }
