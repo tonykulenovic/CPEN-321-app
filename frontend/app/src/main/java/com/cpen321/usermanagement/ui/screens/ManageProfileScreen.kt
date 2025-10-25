@@ -22,6 +22,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -365,21 +366,9 @@ private fun ProfileForm(
             )
         )
 
-        // Privacy Settings Button
-        Button(
-            onClick = data.onPrivacySettingsClick,
-            modifier = Modifier.fillMaxWidth(),
-            colors = androidx.compose.material3.ButtonDefaults.buttonColors(
-                containerColor = Color(0xFF2A2A3E),
-                contentColor = Color.White
-            )
-        ) {
-            Text(
-                text = "Privacy Settings",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Medium
-            )
-        }
+        PrivacySettingsButton(
+            onClick = data.onPrivacySettingsClick
+        )
 
         SaveButton(
             isSaving = data.isSavingProfile,
@@ -622,5 +611,45 @@ private fun SaveButton(
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Medium
         )
+    }
+}
+
+@Composable
+private fun PrivacySettingsButton(
+    onClick: () -> Unit,
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = Color(0xFF2A2A3E)
+        ),
+        onClick = onClick
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column {
+                Text(
+                    text = "Privacy Settings",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Medium,
+                    color = Color.White
+                )
+                Text(
+                    text = "Control your location sharing and visibility",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color(0xFF8B9DAF)
+                )
+            }
+            androidx.compose.material3.Icon(
+                imageVector = Icons.Default.ArrowForward,
+                contentDescription = "Go to Privacy Settings",
+                tint = Color(0xFF8B9DAF)
+            )
+        }
     }
 }
