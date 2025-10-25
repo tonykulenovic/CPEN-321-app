@@ -282,12 +282,11 @@ export class UserController {
         return;
       }
 
-      // 4. Return success response
+      // 4. Return success response with full user object (matching other endpoints)
       res.status(200).json({
         message: 'Privacy settings updated successfully',
         data: {
-          success: true,
-          privacy: updatedUser.privacy,
+          user: updatedUser,
         },
       });
     } catch (error) {
