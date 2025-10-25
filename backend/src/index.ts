@@ -15,6 +15,8 @@ import { BadgeService } from './services/badge.service';
 import { seedLibraries } from './scripts/seedLibraries';
 import { seedCafes } from './scripts/seedCafes';
 import { seedRestaurants } from './scripts/seedRestaurants';
+import { firebaseService } from './config/firebase';
+
 
 const app = express();
 const httpServer = createServer(app);
@@ -29,6 +31,9 @@ app.use(errorHandler);
 
 // Initialize location gateway with Socket.io
 locationGateway.initialize(httpServer);
+
+// Initialize Firebase for push notifications
+firebaseService.initialize();
 
 // Connect to database and initialize system data
 connectDB().then(() => {

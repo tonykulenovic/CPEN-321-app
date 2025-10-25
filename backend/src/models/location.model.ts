@@ -177,6 +177,68 @@ export class LocationModel {
       throw new Error('Failed to delete user locations');
     }
   }
+
+  /**
+   * Check if users have been active (shared location) within the last specified minutes
+   * @param userIds - Array of user IDs to check
+   * @param minutesThreshold - Number of minutes to consider as "recently active" (default: 10)
+   * @returns Map of userId -> boolean indicating if they're online
+   */
+  async getOnlineStatus(
+    userIds: mongoose.Types.ObjectId[],
+    minutesThreshold: number = 10
+  ): Promise<Map<string, boolean>> {
+    try {
+      const onlineStatus = new Map<string, boolean>();
+      
+      if (userIds.length === 0) {
+        return onlineStatus;
+      }
+
+      // Calculate threshold time (X minutes ago)
+      const thresholdTime = new Date();
+      thresholdTime.setMinutes(thresholdTime.getMinutes() - minutesThreshold);
+
+      // Find users who have shared location recently
+      const recentLocations = await this.location.aggregate([
+        {
+          $match: {
+            userId: { $in: userIds },
+            shared: true,
+            createdAt: { $gte: thresholdTime }
+          }
+        },
+        {
+          $group: {
+            _id: '$userId',
+            lastActivity: { $max: '$createdAt' }
+          }
+        }
+      ]);
+
+      // Initialize all users as offline
+      userIds.forEach(userId => {
+        onlineStatus.set(userId.toString(), false);
+      });
+
+      // Mark users with recent activity as online
+      recentLocations.forEach(location => {
+        onlineStatus.set(location._id.toString(), true);
+      });
+
+      logger.debug(`📍 Online status check: ${recentLocations.length}/${userIds.length} users online (threshold: ${minutesThreshold}min)`);
+      
+      return onlineStatus;
+    } catch (error) {
+      logger.error('Error getting online status:', error);
+      // Return all users as offline on error
+      const onlineStatus = new Map<string, boolean>();
+      userIds.forEach(userId => {
+        onlineStatus.set(userId.toString(), false);
+      });
+      return onlineStatus;
+    }
+  }
 }
 
 export const locationModel = new LocationModel();

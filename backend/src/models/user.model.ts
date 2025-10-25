@@ -106,6 +106,16 @@ const userSchema = new Schema<IUser>(
       default: false,
       index: true,
     },
+    fcmToken: {
+      type: String,
+      required: false,
+      trim: true,
+    },
+    lastActiveAt: {
+      type: Date,
+      default: Date.now,
+      index: true,
+    },
     stats: {
       pinsCreated: {
         type: Number,
@@ -347,6 +357,39 @@ export class UserModel {
     };
   }
 
+  async updateFcmToken(
+    userId: mongoose.Types.ObjectId,
+    fcmToken: string
+  ): Promise<IUser | null> {
+    try {
+      const updatedUser = await this.user.findByIdAndUpdate(
+        userId,
+        { fcmToken },
+        { new: true, select: '_id name fcmToken' }
+      );
+      return updatedUser;
+    } catch (error) {
+      logger.error('Error updating FCM token:', error);
+      throw new Error('Failed to update FCM token');
+    }
+  }
+
+  async removeFcmToken(
+    userId: mongoose.Types.ObjectId
+  ): Promise<IUser | null> {
+    try {
+      const updatedUser = await this.user.findByIdAndUpdate(
+        userId,
+        { $unset: { fcmToken: 1 } },
+        { new: true, select: '_id name fcmToken' }
+      );
+      return updatedUser;
+    } catch (error) {
+      logger.error('Error removing FCM token:', error);
+      throw new Error('Failed to remove FCM token');
+    }
+  }
+
   async findByIdWithBadges(_id: mongoose.Types.ObjectId): Promise<IUser | null> {
     try {
       const user = await this.user.findById(_id).populate({
@@ -377,15 +420,15 @@ export class UserModel {
 
       const now = new Date();
       const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-      
+
       let newStreak = 1;
-      
+
       if (user.loginTracking?.lastLoginDate) {
         const lastLogin = new Date(user.loginTracking.lastLoginDate);
         const lastLoginDate = new Date(lastLogin.getFullYear(), lastLogin.getMonth(), lastLogin.getDate());
-        
+
         const daysDiff = Math.floor((today.getTime() - lastLoginDate.getTime()) / (1000 * 60 * 60 * 24));
-        
+
         if (daysDiff === 0) {
           // Same day, don't update streak
           return user.loginTracking.currentStreak || 0;
@@ -395,9 +438,9 @@ export class UserModel {
         }
         // daysDiff > 1: streak broken, newStreak = 1 (already set)
       }
-      
+
       const longestStreak = Math.max(newStreak, user.loginTracking?.longestStreak || 0);
-      
+
       await this.user.findByIdAndUpdate(userId, {
         $set: {
           'loginTracking.lastLoginDate': now,
@@ -405,12 +448,81 @@ export class UserModel {
           'loginTracking.longestStreak': longestStreak,
         },
       });
-      
+
       logger.info(`User ${userId} login streak updated: ${newStreak} days`);
       return newStreak;
     } catch (error) {
       logger.error('Error updating login streak:', error);
       throw new Error('Failed to update login streak');
+    }
+  }
+
+  async updateLastActiveAt(
+    userId: mongoose.Types.ObjectId
+  ): Promise<void> {
+    try {
+      await this.user.findByIdAndUpdate(
+        userId,
+        { lastActiveAt: new Date() }
+      );
+    } catch (error) {
+      logger.error('Error updating last active time:', error);
+      throw new Error('Failed to update last active time');
+    }
+  }
+
+  async getOnlineStatus(
+    userIds: mongoose.Types.ObjectId[],
+    minutesThreshold: number = 10
+  ): Promise<Map<string, boolean>> {
+    try {
+      const onlineStatus = new Map<string, boolean>();
+
+      if (userIds.length === 0) {
+        return onlineStatus;
+      }
+
+      // Calculate threshold time (X minutes ago)
+      const thresholdTime = new Date();
+      thresholdTime.setMinutes(thresholdTime.getMinutes() - minutesThreshold);
+
+      // Find users who have been active recently
+      const activeUsers = await this.user.find({
+        _id: { $in: userIds },
+        lastActiveAt: { $gte: thresholdTime }
+      }, '_id lastActiveAt');
+
+      // Initialize all users as offline
+      userIds.forEach(userId => {
+        onlineStatus.set(userId.toString(), false);
+      });
+
+      // Mark recently active users as online
+      activeUsers.forEach(user => {
+        onlineStatus.set(user._id.toString(), true);
+      });
+
+      logger.info(`👥 Online status: ${activeUsers.length}/${userIds.length} users online (threshold: ${minutesThreshold}min)`);
+
+      return onlineStatus;
+    } catch (error) {
+      logger.error('Error getting online status:', error);
+      // Return all users as offline on error
+      const onlineStatus = new Map<string, boolean>();
+      userIds.forEach(userId => {
+        onlineStatus.set(userId.toString(), false);
+      });
+      return onlineStatus;
+    }
+  }
+
+  async findAll(): Promise<IUser[]> {
+    try {
+      const users = await this.user.find({}, '_id name email username fcmToken lastActiveAt createdAt');
+      return users;
+    } catch (error) {
+      logger.error('Error finding all users:', error);
+      throw new Error('Failed to find users');
     }
   }
 }

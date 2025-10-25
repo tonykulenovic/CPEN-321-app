@@ -6,6 +6,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt.android)
+    alias(libs.plugins.google.services)
     // secrets gradle plugin
     id("com.google.android.libraries.mapsplatform.secrets-gradle-plugin")
 }
@@ -85,6 +86,11 @@ dependencies {
     
     // Socket.io for real-time updates
     implementation(libs.socket.io.client)
+    
+    // Firebase
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.messaging)
+    implementation(libs.firebase.analytics)
     
     // Image loading
     implementation(libs.coil.compose)
