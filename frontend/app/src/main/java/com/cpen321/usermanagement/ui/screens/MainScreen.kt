@@ -48,6 +48,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -69,6 +70,7 @@ import com.cpen321.usermanagement.ui.components.MessageSnackbarState
 import com.cpen321.usermanagement.ui.viewmodels.LocationTrackingViewModel
 import com.cpen321.usermanagement.ui.viewmodels.MainUiState
 import com.cpen321.usermanagement.ui.viewmodels.MainViewModel
+import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MapStyleOptions
@@ -90,6 +92,7 @@ import androidx.compose.runtime.LaunchedEffect
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
+import kotlinx.coroutines.launch
 import com.cpen321.usermanagement.data.remote.dto.PinCategory
 import com.cpen321.usermanagement.ui.viewmodels.PinViewModel
 import com.cpen321.usermanagement.ui.viewmodels.ProfileViewModel
@@ -111,12 +114,14 @@ fun MainScreen(
     pinViewModel: PinViewModel,
     onProfileClick: () -> Unit,
     onMapClick: () -> Unit = {},
+    onSearchClick: () -> Unit = {},
     onFriendsClick: () -> Unit = {},
     onBadgesClick: () -> Unit = {},
     onCreatePinClick: () -> Unit = {},
     onEditPinClick: (String) -> Unit = {}
 ) {
     val uiState by mainViewModel.uiState.collectAsState()
+    val initialSelectedPinId = uiState.selectedPinIdFromSearch
     val snackBarHostState = remember { SnackbarHostState() }
     
     // Get ProfileViewModel to pre-load user data
@@ -137,7 +142,7 @@ fun MainScreen(
     val profileUiState by profileViewModel.uiState.collectAsState()
 
     // State for pin details bottom sheet
-    var selectedPinId by remember { mutableStateOf<String?>(null) }
+    var selectedPinId by remember { mutableStateOf<String?>(initialSelectedPinId) }
     
     // State for friend details bottom sheet
     var selectedFriend by remember { mutableStateOf<Pair<com.cpen321.usermanagement.data.remote.dto.FriendSummary, Map<String, String>>?>(null) }
@@ -237,11 +242,14 @@ fun MainScreen(
         snackBarHostState = snackBarHostState,
         onProfileClick = onProfileClick,
         onMapClick = onMapClick,
+        onSearchClick = onSearchClick,
         onFriendsClick = onFriendsClick,
         onBadgesClick = onBadgesClick,
         onCreatePinClick = onCreatePinClick,
         onSuccessMessageShown = mainViewModel::clearSuccessMessage,
         hasLocationPermission = locationPermissionState.status.isGranted,
+        initialSelectedPinId = initialSelectedPinId,
+        onClearSelectedPin = mainViewModel::clearSelectedPinFromSearch,
         onPinClick = { pinId -> selectedPinId = pinId },
         selectedPinId = selectedPinId,
         onDismissPinDetails = { selectedPinId = null },
@@ -261,11 +269,14 @@ private fun MainContent(
     snackBarHostState: SnackbarHostState,
     onProfileClick: () -> Unit,
     onMapClick: () -> Unit,
+    onSearchClick: () -> Unit,
     onFriendsClick: () -> Unit,
     onBadgesClick: () -> Unit,
     onCreatePinClick: () -> Unit,
     onSuccessMessageShown: () -> Unit,
     hasLocationPermission: Boolean,
+    initialSelectedPinId: String? = null,
+    onClearSelectedPin: () -> Unit,
     modifier: Modifier = Modifier,
     onPinClick: (String) -> Unit,
     selectedPinId: String?,
@@ -290,7 +301,7 @@ private fun MainContent(
                         selectedItem = index
                         when (index) {
                             0 -> onMapClick() // Map button
-                            1 -> {} // Search button - not implemented yet
+                            1 -> onSearchClick() // Search button
                             2 -> onBadgesClick() // Badge button
                             3 -> onFriendsClick() // Friends button
                             4 -> onProfileClick() // Profile button
@@ -314,6 +325,8 @@ private fun MainContent(
                 pinViewModel = pinViewModel,
                 friendsUiState = friendsUiState,
                 hasLocationPermission = hasLocationPermission,
+                initialSelectedPinId = initialSelectedPinId,
+                onClearSelectedPin = onClearSelectedPin,
                 onCreatePinClick = onCreatePinClick,
                 onPinClick = onPinClick,
                 onFriendClick = onFriendClick,
@@ -491,10 +504,13 @@ private fun MapContent(
     onCreatePinClick: () -> Unit,
     onPinClick: (String) -> Unit,
     onFriendClick: (com.cpen321.usermanagement.data.remote.dto.FriendSummary, Map<String, String>) -> Unit,
+    initialSelectedPinId: String? = null,
+    onClearSelectedPin: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val pinUiState by pinViewModel.uiState.collectAsState()
     val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
     
     // Create scaled custom icons (48dp size for map markers) - nullable until map loads
     var libraryIcon by remember { mutableStateOf<BitmapDescriptor?>(null) }
@@ -519,6 +535,35 @@ private fun MapContent(
     
     val cameraPositionState = rememberCameraPositionState {
         position = CameraPosition.fromLatLngZoom(ubcLocation, 15f)
+    }
+    
+    // Center camera on selected pin from search
+    LaunchedEffect(initialSelectedPinId) {
+        if (initialSelectedPinId != null) {
+            // Wait for pins to load
+            var attempts = 0
+            while (pinUiState.pins.isEmpty() && attempts < 50) {
+                kotlinx.coroutines.delay(100)
+                attempts++
+            }
+            
+            val selectedPin = pinUiState.pins.find { it.id == initialSelectedPinId }
+            selectedPin?.let { pin ->
+                // Trigger bottom sheet to open
+                onPinClick(pin.id)
+                
+                // Small delay to ensure map is fully initialized
+                kotlinx.coroutines.delay(300)
+                val pinLocation = LatLng(pin.location.latitude, pin.location.longitude)
+                cameraPositionState.animate(
+                    CameraUpdateFactory.newLatLngZoom(pinLocation, 17f),
+                    durationMs = 1000
+                )
+                
+                // Clear the selected pin after handling
+                onClearSelectedPin()
+            }
+        }
     }
     
     // Toggle between styled map and satellite
@@ -694,6 +739,15 @@ private fun MapContent(
                         )
                     },
                     onClick = {
+                        // Animate camera to pin location
+                        val pinLocation = LatLng(pin.location.latitude, pin.location.longitude)
+                        coroutineScope.launch {
+                            cameraPositionState.animate(
+                                CameraUpdateFactory.newLatLngZoom(pinLocation, 17f),
+                                durationMs = 1000
+                            )
+                        }
+                        // Open pin details
                         onPinClick(pin.id)
                         true // Consume the click event
                     }

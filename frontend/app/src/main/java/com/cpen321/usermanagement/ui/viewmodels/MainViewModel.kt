@@ -8,7 +8,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import javax.inject.Inject
 
 data class MainUiState(
-    val successMessage: String? = null
+    val successMessage: String? = null,
+    val selectedPinIdFromSearch: String? = null
 )
 
 @HiltViewModel
@@ -23,5 +24,13 @@ class MainViewModel @Inject constructor() : ViewModel() {
 
     fun clearSuccessMessage() {
         _uiState.value = _uiState.value.copy(successMessage = null)
+    }
+    
+    fun setSelectedPinFromSearch(pinId: String?) {
+        _uiState.value = _uiState.value.copy(selectedPinIdFromSearch = pinId)
+    }
+    
+    fun clearSelectedPinFromSearch() {
+        _uiState.value = _uiState.value.copy(selectedPinIdFromSearch = null)
     }
 }

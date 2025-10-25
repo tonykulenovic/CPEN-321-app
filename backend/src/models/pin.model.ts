@@ -153,16 +153,21 @@ export class PinModel {
       if (filters.category) {
         query.category = filters.category;
       }
-      if (filters.search) {
-        query.$text = { $search: filters.search };
+
+      // Simple case-insensitive search using regex (frontend does the heavy lifting)
+      if (filters.search && filters.search.trim() !== '') {
+        const searchRegex = new RegExp(filters.search.trim(), 'i');
+        query.$or = [
+          { name: { $regex: searchRegex } },
+          { description: { $regex: searchRegex } },
+          { 'location.address': { $regex: searchRegex } }
+        ];
       }
 
       let pins = await this.pin
         .find(query)
         .populate('createdBy', 'name profilePicture')
-        .sort({ isPreSeeded: -1, createdAt: -1 }) // Pre-seeded pins first, then by date
-        .limit(limit)
-        .skip(skip);
+        .sort({ isPreSeeded: -1, createdAt: -1 }); // Pre-seeded pins first, then by date
 
       logger.info(`Search pins: Found ${pins.length} pins. UserId: ${filters.userId || 'NOT PROVIDED'}`);
       // Log pin details for debugging
@@ -234,8 +239,11 @@ export class PinModel {
         pins = pins.filter(p => this.calculateDistance(filters.latitude!, filters.longitude!, p.location.latitude, p.location.longitude) <= filters.radius!);
       }
 
-      const total = await this.pin.countDocuments(query);
-      return { pins, total };
+      // Apply pagination after all filtering
+      const total = pins.length;
+      const paginatedPins = pins.slice(skip, skip + limit);
+
+      return { pins: paginatedPins, total };
     } catch (error) {
       logger.error('Error searching pins:', error);
       throw new Error('Failed to search pins');

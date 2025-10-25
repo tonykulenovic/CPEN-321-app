@@ -28,6 +28,7 @@ import com.cpen321.usermanagement.ui.screens.ManageProfileScreen
 import com.cpen321.usermanagement.ui.screens.ProfileCompletionScreen
 import com.cpen321.usermanagement.ui.screens.ProfileScreen
 import com.cpen321.usermanagement.ui.screens.ProfileScreenActions
+import com.cpen321.usermanagement.ui.screens.SearchPinsScreen
 import com.cpen321.usermanagement.ui.viewmodels.AdminViewModel
 import com.cpen321.usermanagement.ui.viewmodels.AuthViewModel
 import com.cpen321.usermanagement.ui.viewmodels.BadgeViewModel
@@ -47,6 +48,7 @@ object NavRoutes {
     const val ADMIN_MANAGE_PINS = "admin_manage_pins"
     const val ADMIN_MANAGE_USERS = "admin_manage_users"
     const val MAIN = "main"
+    const val SEARCH_PINS = "search_pins"
     const val PROFILE = "profile"
     const val MANAGE_PROFILE = "manage_profile"
     const val PROFILE_COMPLETION = "profile_completion"
@@ -247,18 +249,39 @@ private fun AppNavHost(
         }
 
         composable(NavRoutes.MAIN) {
-            val mainViewModel: MainViewModel = hiltViewModel()
             val pinViewModel: PinViewModel = hiltViewModel()
-
             
             MainScreen(
-                mainViewModel = mainViewModel,
+                mainViewModel = mainViewModel,  // Use shared instance from AppNavHost
                 pinViewModel = pinViewModel,
                 onProfileClick = { navController.navigate(NavRoutes.PROFILE) },
                 onFriendsClick = { navController.navigate(NavRoutes.FRIENDS) },
                 onBadgesClick = { navController.navigate(NavRoutes.BADGES) },
+                onSearchClick = { navController.navigate(NavRoutes.SEARCH_PINS) },
                 onCreatePinClick = { navController.navigate(NavRoutes.CREATE_PIN) },
                 onEditPinClick = { pinId -> navController.navigate(NavRoutes.editPin(pinId)) }
+            )
+        }
+
+        composable(NavRoutes.SEARCH_PINS) {
+            val pinViewModel: PinViewModel = hiltViewModel()
+            SearchPinsScreen(
+                pinViewModel = pinViewModel,
+                onMapClick = { navController.navigate(NavRoutes.MAIN) {
+                    popUpTo(NavRoutes.MAIN) { inclusive = true }
+                } },
+                onBadgesClick = { navController.navigate(NavRoutes.BADGES) },
+                onFriendsClick = { navController.navigate(NavRoutes.FRIENDS) },
+                onProfileClick = { navigationStateManager.navigateToProfile() },
+                onPinClick = { pinId ->
+                    // Save pin ID to MainViewModel so it persists across navigation
+                    mainViewModel.setSelectedPinFromSearch(pinId)  // Use shared instance from AppNavHost
+                    
+                    // Navigate to map and show the pin details
+                    navController.navigate(NavRoutes.MAIN) {
+                        popUpTo(NavRoutes.MAIN) { inclusive = true }
+                    }
+                }
             )
         }
 
@@ -269,6 +292,7 @@ private fun AppNavHost(
                 onMapClick = { navController.navigate(NavRoutes.MAIN) {
                     popUpTo(NavRoutes.MAIN) { inclusive = true }
                 } },
+                onSearchClick = { navController.navigate(NavRoutes.SEARCH_PINS) },
                 onProfileClick = { navigationStateManager.navigateToProfile() },
                 onBadgesClick = { navController.navigate(NavRoutes.BADGES) },
                 onViewFriendProfile = { friendId ->
@@ -285,7 +309,7 @@ private fun AppNavHost(
                 onMapClick = { navController.navigate(NavRoutes.MAIN) {
                     popUpTo(NavRoutes.MAIN) { inclusive = true }
                 } },
-                onSearchClick = { /* TODO: Add search screen later */ },
+                onSearchClick = { navController.navigate(NavRoutes.SEARCH_PINS) },
                 onFriendsClick = { navController.navigate(NavRoutes.FRIENDS) },
                 onProfileClick = { navigationStateManager.navigateToProfile() }
             )
