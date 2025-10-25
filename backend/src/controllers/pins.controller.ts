@@ -324,8 +324,15 @@ export class PinsController {
           increments['stats.librariesVisited'] = 1;
           logger.info(`📚 User ${userId} visited pre-seeded library: ${pin.name}`);
         } else if (pin.category === 'shops_services') {
-          increments['stats.cafesVisited'] = 1;
-          logger.info(`☕ User ${userId} visited pre-seeded cafe: ${pin.name}`);
+          // Check subtype to distinguish cafes from restaurants
+          const subtype = pin.metadata?.subtype;
+          if (subtype === 'cafe') {
+            increments['stats.cafesVisited'] = 1;
+            logger.info(`☕ User ${userId} visited pre-seeded cafe: ${pin.name}`);
+          } else if (subtype === 'restaurant') {
+            increments['stats.restaurantsVisited'] = 1;
+            logger.info(`🍽️  User ${userId} visited pre-seeded restaurant: ${pin.name}`);
+          }
         }
       }
 
@@ -368,17 +375,33 @@ export class PinsController {
             });
             allEarnedBadges = allEarnedBadges.concat(libraryBadges);
           } else if (pin.category === 'shops_services') {
-            const cafeBadges = await BadgeService.processBadgeEvent({
-              userId: userId.toString(),
-              eventType: BadgeRequirementType.CAFES_VISITED,
-              value: 1,
-              timestamp: new Date(),
-              metadata: {
-                pinId: pinId.toString(),
-                pinName: pin.name,
-              },
-            });
-            allEarnedBadges = allEarnedBadges.concat(cafeBadges);
+            // Check subtype for specific badge events
+            const subtype = pin.metadata?.subtype;
+            if (subtype === 'cafe') {
+              const cafeBadges = await BadgeService.processBadgeEvent({
+                userId: userId.toString(),
+                eventType: BadgeRequirementType.CAFES_VISITED,
+                value: 1,
+                timestamp: new Date(),
+                metadata: {
+                  pinId: pinId.toString(),
+                  pinName: pin.name,
+                },
+              });
+              allEarnedBadges = allEarnedBadges.concat(cafeBadges);
+            } else if (subtype === 'restaurant') {
+              const restaurantBadges = await BadgeService.processBadgeEvent({
+                userId: userId.toString(),
+                eventType: BadgeRequirementType.RESTAURANTS_VISITED,
+                value: 1,
+                timestamp: new Date(),
+                metadata: {
+                  pinId: pinId.toString(),
+                  pinName: pin.name,
+                },
+              });
+              allEarnedBadges = allEarnedBadges.concat(restaurantBadges);
+            }
           }
         }
 

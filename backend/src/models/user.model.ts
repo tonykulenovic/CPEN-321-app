@@ -123,6 +123,10 @@ const userSchema = new Schema<IUser>(
         type: Number,
         default: 0,
       },
+      restaurantsVisited: {
+        type: Number,
+        default: 0,
+      },
       reportsMade: {
         type: Number,
         default: 0,

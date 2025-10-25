@@ -14,6 +14,7 @@ import { locationGateway } from './realtime/gateway';
 import { BadgeService } from './services/badge.service';
 import { seedLibraries } from './scripts/seedLibraries';
 import { seedCafes } from './scripts/seedCafes';
+import { seedRestaurants } from './scripts/seedRestaurants';
 
 const app = express();
 const httpServer = createServer(app);
@@ -50,6 +51,12 @@ connectDB().then(() => {
   seedCafes()
     .catch(err => {
       console.error('⚠️  Failed to seed cafes:', err);
+    });
+  
+  // Seed restaurants near UBC using Google Places API (excludes overlapping cafes)
+  seedRestaurants()
+    .catch(err => {
+      console.error('⚠️  Failed to seed restaurants:', err);
     });
 });
 

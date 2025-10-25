@@ -32,6 +32,7 @@ export interface IPin {
   };
   createdBy: mongoose.Types.ObjectId;
   metadata?: {
+    subtype?: string; // 'cafe' or 'restaurant' for SHOPS_SERVICES category
     capacity?: number;
     openingHours?: string;
     amenities?: string[];
@@ -76,6 +77,7 @@ export const createPinSchema = z.object({
   visibility: z.nativeEnum(PinVisibility).default(PinVisibility.PUBLIC),
   metadata: z
     .object({
+      subtype: z.string().optional(),
       capacity: z.number().min(0).optional(),
       openingHours: z.string().optional(),
       amenities: z.array(z.string()).optional(),
@@ -92,6 +94,7 @@ export const updatePinSchema = z.object({
   visibility: z.nativeEnum(PinVisibility).optional(),
   metadata: z
     .object({
+      subtype: z.string().optional(),
       capacity: z.number().min(0).optional(),
       openingHours: z.string().optional(),
       amenities: z.array(z.string()).optional(),

@@ -26,6 +26,7 @@ export interface IUser extends Document {
     locationsExplored: number;
     librariesVisited: number;
     cafesVisited: number;
+    restaurantsVisited: number;
   };
   visitedPins: mongoose.Types.ObjectId[];
   loginTracking: {

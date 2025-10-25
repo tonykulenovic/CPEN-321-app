@@ -38,6 +38,7 @@ data class PinLocation(
 )
 
 data class PinMetadata(
+    @SerializedName("subtype") val subtype: String? = null, // "cafe" or "restaurant" for SHOPS_SERVICES
     @SerializedName("capacity") val capacity: Int? = null,
     @SerializedName("openingHours") val openingHours: String? = null,
     @SerializedName("amenities") val amenities: List<String>? = null,

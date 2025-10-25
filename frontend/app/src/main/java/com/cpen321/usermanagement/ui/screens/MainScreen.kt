@@ -559,6 +559,7 @@ private fun MapContent(
     // Create scaled custom icons (48dp size for map markers) - nullable until map loads
     var libraryIcon by remember { mutableStateOf<BitmapDescriptor?>(null) }
     var cafeIcon by remember { mutableStateOf<BitmapDescriptor?>(null) }
+    var restaurantIcon by remember { mutableStateOf<BitmapDescriptor?>(null) }
 
     // Load pins when screen opens
     LaunchedEffect(Unit) {
@@ -570,6 +571,7 @@ private fun MapContent(
         kotlinx.coroutines.delay(500) // Wait for map to initialize
         libraryIcon = context.createScaledBitmapFromPng(R.drawable.ic_library, 48)
         cafeIcon = context.createScaledBitmapFromPng(R.drawable.ic_coffee, 48)
+        restaurantIcon = context.createScaledBitmapFromPng(R.drawable.ic_restaurants, 48)
     }
     
     // UBC Vancouver coordinates
@@ -762,8 +764,21 @@ private fun MapContent(
                                 libraryIcon ?: BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE)
                             }
                             PinCategory.SHOPS_SERVICES -> {
-                                // Cafes use coffee icon (fallback to orange while loading)
-                                cafeIcon ?: BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE)
+                                // Check subtype to distinguish cafes from restaurants
+                                when (pin.metadata?.subtype) {
+                                    "cafe" -> {
+                                        // Cafes use coffee icon (fallback to orange while loading)
+                                        cafeIcon ?: BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE)
+                                    }
+                                    "restaurant" -> {
+                                        // Restaurants use restaurant icon (fallback to red while loading)
+                                        restaurantIcon ?: BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)
+                                    }
+                                    else -> {
+                                        // Default for SHOPS_SERVICES without subtype
+                                        cafeIcon ?: BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE)
+                                    }
+                                }
                             }
                             else -> {
                                 // Fallback for any other pre-seeded category
