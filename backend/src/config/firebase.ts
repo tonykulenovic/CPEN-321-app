@@ -49,7 +49,7 @@ class FirebaseService {
     ): Promise<boolean> {
         const messaging = this.getMessaging();
         if (!messaging) {
-            logger.warn('Firebase messaging not available');
+            logger.warn('🚫 Firebase messaging not available - app not initialized');
             return false;
         }
 
@@ -70,24 +70,36 @@ class FirebaseService {
                 },
             };
 
-            logger.info(`📤 Attempting to send notification to token: ${token.substring(0, 30)}...`);
-            logger.info(`   Title: ${title}`);
-            logger.info(`   Body: ${body}`);
+            logger.info(`📤 [FCM] Attempting to send notification:`);
+            logger.info(`   📱 Token: ${token.substring(0, 30)}...${token.substring(token.length - 10)}`);
+            logger.info(`   📰 Title: "${title}"`);
+            logger.info(`   💬 Body: "${body}"`);
+            logger.info(`   📦 Data: ${JSON.stringify(data || {})}`);
+            logger.info(`   🤖 Android Channel: friend_activity_channel`);
             
+            const startTime = Date.now();
             const response = await messaging.send(message);
-            logger.info(`✅ Successfully sent message: ${response}`);
+            const duration = Date.now() - startTime;
+            
+            logger.info(`✅ [FCM] Successfully sent notification in ${duration}ms`);
+            logger.info(`   📧 Message ID: ${response}`);
             return true;
         } catch (error: any) {
-            logger.error('❌ Error sending notification:', error);
-            logger.error(`   Error code: ${error.code || 'N/A'}`);
-            logger.error(`   Error message: ${error.message || 'N/A'}`);
+            logger.error(`❌ [FCM] Error sending notification:`, error);
+            logger.error(`   🔢 Error code: ${error.code || 'N/A'}`);
+            logger.error(`   💬 Error message: ${error.message || 'N/A'}`);
+            logger.error(`   📊 Error details: ${JSON.stringify(error.details || {})}`);
             
-            // Log specific Firebase error codes
+            // Log specific Firebase error codes with solutions
             if (error.code === 'messaging/invalid-registration-token' || 
                 error.code === 'messaging/registration-token-not-registered') {
-                logger.error('   → FCM token is invalid or expired. User needs to re-login.');
+                logger.error('   🔧 → FCM token is invalid or expired. User needs to re-login.');
             } else if (error.code === 'messaging/invalid-argument') {
-                logger.error('   → Invalid message format. Check notification payload.');
+                logger.error('   🔧 → Invalid message format. Check notification payload.');
+            } else if (error.code === 'messaging/authentication-error') {
+                logger.error('   🔧 → Firebase authentication failed. Check service account.');
+            } else if (error.code === 'messaging/invalid-data-payload-key') {
+                logger.error('   🔧 → Invalid data payload. All values must be strings.');
             }
             
             return false;

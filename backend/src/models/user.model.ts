@@ -511,6 +511,16 @@ export class UserModel {
       return onlineStatus;
     }
   }
+
+  async findAll(): Promise<IUser[]> {
+    try {
+      const users = await this.user.find({}, '_id name email username fcmToken lastActiveAt createdAt');
+      return users;
+    } catch (error) {
+      logger.error('Error finding all users:', error);
+      throw new Error('Failed to find users');
+    }
+  }
 }
 
 export const userModel = new UserModel();

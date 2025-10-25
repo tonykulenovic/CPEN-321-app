@@ -24,12 +24,22 @@ export class NotificationService {
         fromUserName: string
     ): Promise<void> {
         try {
+            logger.info(`🔔 [NOTIFY] Friend request notification: ${fromUserName} → user ${toUserId}`);
+            
             const toUser = await userModel.findById(new mongoose.Types.ObjectId(toUserId));
-            if (!toUser?.fcmToken) {
-                logger.info(`No FCM token for user ${toUserId}, skipping notification`);
+            if (!toUser) {
+                logger.warn(`❌ [NOTIFY] Recipient user ${toUserId} not found`);
+                return;
+            }
+            
+            logger.info(`📍 [NOTIFY] Recipient user found: ${toUser.name} (${toUser.email})`);
+            
+            if (!toUser.fcmToken) {
+                logger.info(`🚫 [NOTIFY] No FCM token for user ${toUser.name}, skipping notification`);
                 return;
             }
 
+            logger.info(`✅ [NOTIFY] FCM token available for ${toUser.name}`);
             const title = 'New Friend Request';
             const body = `${fromUserName} sent you a friend request`;
 
@@ -45,10 +55,12 @@ export class NotificationService {
             );
 
             if (sent) {
-                logger.info(`📲 Sent friend request notification to ${toUser.name}`);
+                logger.info(`📲 [NOTIFY] Successfully sent friend request notification to ${toUser.name}`);
+            } else {
+                logger.error(`💥 [NOTIFY] Failed to send friend request notification to ${toUser.name}`);
             }
         } catch (error) {
-            logger.error('Error sending friend request notification:', error);
+            logger.error('💥 [NOTIFY] Error sending friend request notification:', error);
         }
     }
 

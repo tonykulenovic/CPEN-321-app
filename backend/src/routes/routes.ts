@@ -8,6 +8,7 @@ import usersRoutes from '../routes/user.routes';
 import friendsRoutes from '../routes/friends.routes';
 import locationRoutes from '../routes/location.routes';
 import pinsRoutes from '../routes/pins.routes';
+import debugRoutes from '../routes/debug.routes';
 
 
 
@@ -37,5 +38,8 @@ router.use('/me', locationRoutes); // Authentication middleware applied within l
 router.use('/badges', authenticateToken, badgeRoutes);
 
 router.use('/pins', pinsRoutes);
+
+// Debug endpoints (consider removing in production)
+router.use('/debug', debugRoutes);
 
 export default router;

@@ -21,19 +21,40 @@ class FCMTokenManager @Inject constructor(
      */
     suspend fun registerFCMToken() {
         try {
+            Log.d(TAG, "🔄 [FCM] Starting FCM token registration process...")
+            
             // Get current FCM token
+            Log.d(TAG, "📱 [FCM] Requesting token from Firebase Messaging...")
+            val startTime = System.currentTimeMillis()
             val token = FirebaseMessaging.getInstance().token.await()
-            Log.d(TAG, "📱 Retrieved FCM token: ${token.take(20)}...")
+            val tokenRetrievalTime = System.currentTimeMillis() - startTime
+            
+            Log.d(TAG, "✅ [FCM] Retrieved FCM token in ${tokenRetrievalTime}ms")
+            Log.d(TAG, "🔑 [FCM] Token preview: ${token.take(30)}...${token.takeLast(10)}")
+            Log.d(TAG, "📏 [FCM] Token length: ${token.length} characters")
             
             // Send to backend
+            Log.d(TAG, "📤 [FCM] Sending token to backend...")
+            val backendStartTime = System.currentTimeMillis()
             val result = profileRepository.updateFcmToken(token)
+            val backendTime = System.currentTimeMillis() - backendStartTime
+            
             if (result.isSuccess) {
-                Log.d(TAG, "✅ FCM token successfully registered with backend")
+                Log.i(TAG, "🎉 [FCM] Token successfully registered with backend in ${backendTime}ms")
+                Log.d(TAG, "📊 [FCM] Total registration time: ${System.currentTimeMillis() - startTime}ms")
             } else {
-                Log.e(TAG, "❌ Failed to register FCM token: ${result.exceptionOrNull()?.message}")
+                Log.e(TAG, "💥 [FCM] Failed to register FCM token with backend:")
+                Log.e(TAG, "   📊 Backend call took: ${backendTime}ms")
+                Log.e(TAG, "   💬 Error: ${result.exceptionOrNull()?.message}")
+                Log.e(TAG, "   📋 Exception type: ${result.exceptionOrNull()?.javaClass?.simpleName}")
+                result.exceptionOrNull()?.printStackTrace()
             }
         } catch (e: Exception) {
-            Log.e(TAG, "❌ Error registering FCM token", e)
+            Log.e(TAG, "💥 [FCM] Exception during FCM token registration:", e)
+            Log.e(TAG, "   📊 Exception type: ${e.javaClass.simpleName}")
+            Log.e(TAG, "   💬 Exception message: ${e.message}")
+            Log.e(TAG, "   📋 Stack trace:")
+            e.printStackTrace()
         }
     }
 }
