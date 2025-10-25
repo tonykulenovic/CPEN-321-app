@@ -25,6 +25,7 @@ import com.cpen321.usermanagement.ui.screens.LocationPickerScreen
 import com.cpen321.usermanagement.data.realtime.LocationTrackingService
 import com.cpen321.usermanagement.ui.screens.MainScreen
 import com.cpen321.usermanagement.ui.screens.ManageProfileScreen
+import com.cpen321.usermanagement.ui.screens.PrivacySettingsScreen
 import com.cpen321.usermanagement.ui.screens.ProfileCompletionScreen
 import com.cpen321.usermanagement.ui.screens.ProfileScreen
 import com.cpen321.usermanagement.ui.screens.ProfileScreenActions
@@ -49,6 +50,7 @@ object NavRoutes {
     const val MAIN = "main"
     const val PROFILE = "profile"
     const val MANAGE_PROFILE = "manage_profile"
+    const val PRIVACY_SETTINGS = "privacy_settings"
     const val PROFILE_COMPLETION = "profile_completion"
     const val FRIENDS = "friends"
     const val BADGES = "badges"
@@ -154,6 +156,11 @@ private fun handleNavigationEvent(
 
         is NavigationEvent.NavigateToManageProfile -> {
             navController.navigate(NavRoutes.MANAGE_PROFILE)
+            navigationStateManager.clearNavigationEvent()
+        }
+
+        is NavigationEvent.NavigateToPrivacySettings -> {
+            navController.navigate(NavRoutes.PRIVACY_SETTINGS)
             navigationStateManager.clearNavigationEvent()
         }
 
@@ -311,6 +318,14 @@ private fun AppNavHost(
 
         composable(NavRoutes.MANAGE_PROFILE) {
             ManageProfileScreen(
+                profileViewModel = profileViewModel,
+                onBackClick = { navigationStateManager.navigateBack() },
+                onPrivacySettingsClick = { navigationStateManager.navigateToPrivacySettings() }
+            )
+        }
+
+        composable(NavRoutes.PRIVACY_SETTINGS) {
+            PrivacySettingsScreen(
                 profileViewModel = profileViewModel,
                 onBackClick = { navigationStateManager.navigateBack() }
             )

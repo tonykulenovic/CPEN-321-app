@@ -127,4 +127,62 @@ class ProfileRepositoryImpl @Inject constructor(
             Result.failure(e)
         }
     }
+
+    override suspend fun updateFcmToken(token: String): Result<Unit> {
+        return try {
+            val request = com.cpen321.usermanagement.data.remote.dto.NotificationTokenRequest(token)
+            val response = userInterface.updateFcmToken("", request)
+            if (response.isSuccessful) {
+                Result.success(Unit)
+            } else {
+                val errorMessage = parseErrorMessage(
+                    response.errorBody()?.string(),
+                    "Failed to update FCM token"
+                )
+                Log.e(TAG, "Failed to update FCM token: $errorMessage")
+                Result.failure(Exception(errorMessage))
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error updating FCM token", e)
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun removeFcmToken(): Result<Unit> {
+        return try {
+            val response = userInterface.removeFcmToken("")
+            if (response.isSuccessful) {
+                Result.success(Unit)
+            } else {
+                val errorMessage = parseErrorMessage(
+                    response.errorBody()?.string(),
+                    "Failed to remove FCM token"
+                )
+                Log.e(TAG, "Failed to remove FCM token: $errorMessage")
+                Result.failure(Exception(errorMessage))
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error removing FCM token", e)
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun updatePrivacy(request: com.cpen321.usermanagement.data.remote.dto.UpdatePrivacyRequest): Result<com.cpen321.usermanagement.data.remote.dto.User> {
+        return try {
+            val response = userInterface.updatePrivacy("", request)
+            if (response.isSuccessful && response.body()?.data != null) {
+                Result.success(response.body()!!.data!!.user)
+            } else {
+                val errorMessage = parseErrorMessage(
+                    response.errorBody()?.string(),
+                    "Failed to update privacy settings"
+                )
+                Log.e(TAG, "Failed to update privacy settings: $errorMessage")
+                Result.failure(Exception(errorMessage))
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error updating privacy settings", e)
+            Result.failure(e)
+        }
+    }
 }

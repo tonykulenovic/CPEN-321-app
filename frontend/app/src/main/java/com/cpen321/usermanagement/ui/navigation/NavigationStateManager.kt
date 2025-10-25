@@ -13,6 +13,7 @@ sealed class NavigationEvent {
     object NavigateToProfileCompletion : NavigationEvent()
     object NavigateToProfile : NavigationEvent()
     object NavigateToManageProfile : NavigationEvent()
+    object NavigateToPrivacySettings : NavigationEvent()
     data class NavigateToAuthWithMessage(val message: String) : NavigationEvent()
     data class NavigateToMainWithMessage(val message: String) : NavigationEvent()
     object NavigateBack : NavigationEvent()
@@ -165,6 +166,15 @@ class NavigationStateManager @Inject constructor() {
         _navigationEvent.value = NavigationEvent.NavigateToManageProfile
         _navigationState.value =
             _navigationState.value.copy(currentRoute = NavRoutes.MANAGE_PROFILE)
+    }
+
+    /**
+     * Navigate to privacy settings screen
+     */
+    fun navigateToPrivacySettings() {
+        _navigationEvent.value = NavigationEvent.NavigateToPrivacySettings
+        _navigationState.value =
+            _navigationState.value.copy(currentRoute = NavRoutes.PRIVACY_SETTINGS)
     }
 
     /**
