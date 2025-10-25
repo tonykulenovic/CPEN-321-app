@@ -117,6 +117,7 @@ data class FriendRequest(
 fun FriendsScreen(
     friendsViewModel: FriendsViewModel = hiltViewModel(),  // ADD ViewModel
     onMapClick: () -> Unit = {},
+    onSearchClick: () -> Unit = {},
     onProfileClick: () -> Unit = {},
     onBadgesClick: () -> Unit = {},
     onViewFriendProfile: (String) -> Unit = {}
@@ -210,7 +211,7 @@ fun FriendsScreen(
                     selectedItem = index
                     when (index) {
                         0 -> onMapClick()
-                        1 -> {} // Search
+                        1 -> onSearchClick()
                         2 -> onBadgesClick()
                         3 -> {} // Already on Friends
                         4 -> onProfileClick()
