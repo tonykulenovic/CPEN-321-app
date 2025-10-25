@@ -70,11 +70,26 @@ class FirebaseService {
                 },
             };
 
+            logger.info(`📤 Attempting to send notification to token: ${token.substring(0, 30)}...`);
+            logger.info(`   Title: ${title}`);
+            logger.info(`   Body: ${body}`);
+            
             const response = await messaging.send(message);
-            logger.info(`Successfully sent message: ${response}`);
+            logger.info(`✅ Successfully sent message: ${response}`);
             return true;
-        } catch (error) {
-            logger.error('Error sending notification:', error);
+        } catch (error: any) {
+            logger.error('❌ Error sending notification:', error);
+            logger.error(`   Error code: ${error.code || 'N/A'}`);
+            logger.error(`   Error message: ${error.message || 'N/A'}`);
+            
+            // Log specific Firebase error codes
+            if (error.code === 'messaging/invalid-registration-token' || 
+                error.code === 'messaging/registration-token-not-registered') {
+                logger.error('   → FCM token is invalid or expired. User needs to re-login.');
+            } else if (error.code === 'messaging/invalid-argument') {
+                logger.error('   → Invalid message format. Check notification payload.');
+            }
+            
             return false;
         }
     }
