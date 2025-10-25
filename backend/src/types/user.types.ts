@@ -28,6 +28,7 @@ export interface IUser extends Document {
     cafesVisited: number;
   };
   visitedPins: mongoose.Types.ObjectId[];
+  reportedPins: mongoose.Types.ObjectId[];
   loginTracking: {
     lastLoginDate: Date | null;
     currentStreak: number;

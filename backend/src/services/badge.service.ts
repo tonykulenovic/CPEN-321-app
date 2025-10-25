@@ -323,9 +323,16 @@ export class BadgeService {
    * Check reports made requirement
    */
   private static async checkReportsMade(userId: mongoose.Types.ObjectId, target: number): Promise<boolean> {
-    // This would need to be implemented based on your reporting system
-    logger.info(`Checking reports made for user ${userId}, target: ${target}`);
-    return false; // Placeholder - implement based on your reporting system
+    try {
+      const User = mongoose.model('User');
+      const user = await User.findById(userId).select('stats.reportsMade');
+      const count = user?.stats?.reportsMade || 0;
+      logger.info(`User ${userId} has made ${count} reports (cumulative), target: ${target}`);
+      return count >= target;
+    } catch (error) {
+      logger.error('Error checking reports made:', error);
+      return false;
+    }
   }
 
   /**
