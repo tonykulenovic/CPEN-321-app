@@ -14,6 +14,8 @@ import {
 import { friendshipModel } from '../models/friendship.model';
 import { userModel } from '../models/user.model';
 import logger from '../utils/logger.util';
+import { BadgeService } from '../services/badge.service';
+import { BadgeRequirementType } from '../types/badge.types';
 
 /**
  * POST /friends/requests — Send friend request.
@@ -309,7 +311,55 @@ export async function acceptFriendRequest(req: Request, res: Response): Promise<
       userModel.incrementFriendsCount(userId, 1),
     ]);
 
-    // 8. Return success response
+    // 8. Process badge events for both users who gained a friend
+    try {
+      const badgePromises = [
+        BadgeService.processBadgeEvent({
+          userId: currentUserId.toString(),
+          eventType: BadgeRequirementType.FRIENDS_ADDED,
+          value: 1,
+          timestamp: new Date(),
+          metadata: {
+            friendId: userId.toString(),
+          },
+        }),
+        BadgeService.processBadgeEvent({
+          userId: userId.toString(),
+          eventType: BadgeRequirementType.FRIENDS_ADDED,
+          value: 1,
+          timestamp: new Date(),
+          metadata: {
+            friendId: currentUserId.toString(),
+          },
+        }),
+      ];
+
+      const [currentUserBadges, friendUserBadges] = await Promise.all(badgePromises);
+
+      if (currentUserBadges.length > 0) {
+        logger.info(`User ${currentUserId} earned ${currentUserBadges.length} badge(s) from adding a friend`);
+      }
+      if (friendUserBadges.length > 0) {
+        logger.info(`User ${userId} earned ${friendUserBadges.length} badge(s) from adding a friend`);
+      }
+
+      // If current user earned badges, include them in response
+      if (currentUserBadges.length > 0) {
+        res.status(200).json({
+          message: 'Friend request accepted successfully',
+          data: {
+            status: 'accepted',
+            earnedBadges: currentUserBadges,
+          },
+        });
+        return;
+      }
+    } catch (badgeError) {
+      // Log badge processing error but don't fail the friend acceptance
+      logger.error('Error processing badge event for friend added:', badgeError);
+    }
+
+    // 9. Return success response
     res.status(200).json({
       message: 'Friend request accepted successfully',
       data: {
