@@ -1,7 +1,7 @@
 import mongoose, { Document } from 'mongoose';
 import z from 'zod';
 
-// Badge model interfaces
+// Badge model interfaces   
 // ------------------------------------------------------------
 export interface IBadge extends Document {
   _id: mongoose.Types.ObjectId;
