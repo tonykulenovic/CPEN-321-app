@@ -26,6 +26,9 @@ export class UserController {
     this.searchUsers = this.searchUsers.bind(this);
     this.getMe = this.getMe.bind(this);
     this.updatePrivacy = this.updatePrivacy.bind(this);
+    // FCM token methods
+    this.updateFcmToken = this.updateFcmToken.bind(this);
+    this.removeFcmToken = this.removeFcmToken.bind(this);
     // Admin methods
     this.getAllUsers = this.getAllUsers.bind(this);
     this.suspendUser = this.suspendUser.bind(this);
@@ -435,6 +438,85 @@ export class UserController {
       });
     } catch (error) {
       logger.error('Error in deleteUserByAdmin:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  }
+
+  /**
+   * PUT /users/me/fcm-token - Update user's FCM token for push notifications
+   */
+  async updateFcmToken(req: Request, res: Response): Promise<void> {
+    try {
+      if (!req.user) {
+        res.status(401).json({ message: 'Unauthorized' });
+        return;
+      }
+      
+      const userId = req.user._id;
+      const { fcmToken } = req.body;
+
+      if (!fcmToken || typeof fcmToken !== 'string') {
+        res.status(400).json({ 
+          message: 'FCM token is required and must be a string' 
+        });
+        return;
+      }
+
+      const updatedUser = await userModel.updateFcmToken(
+        userId,
+        fcmToken.trim()
+      );
+
+      if (!updatedUser) {
+        res.status(404).json({ message: 'User not found' });
+        return;
+      }
+
+      logger.info(`📱 FCM token updated for user ${updatedUser.name}`);
+
+      res.status(200).json({
+        message: 'FCM token updated successfully',
+        data: {
+          userId: updatedUser._id,
+          hasToken: !!updatedUser.fcmToken
+        }
+      });
+    } catch (error) {
+      logger.error('Error in updateFcmToken:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  }
+
+  /**
+   * DELETE /users/me/fcm-token - Remove user's FCM token
+   */
+  async removeFcmToken(req: Request, res: Response): Promise<void> {
+    try {
+      if (!req.user) {
+        res.status(401).json({ message: 'Unauthorized' });
+        return;
+      }
+      
+      const userId = req.user._id;
+
+      const updatedUser = await userModel.removeFcmToken(userId);
+
+      if (!updatedUser) {
+        res.status(404).json({ message: 'User not found' });
+        return;
+      }
+
+      logger.info(`📱 FCM token removed for user ${updatedUser.name}`);
+
+      res.status(200).json({
+        message: 'FCM token removed successfully',
+        data: {
+          userId: updatedUser._id,
+          hasToken: false
+        }
+      });
+    } catch (error) {
+      logger.error('Error in removeFcmToken:', error);
       res.status(500).json({ message: 'Internal server error' });
     }
   }

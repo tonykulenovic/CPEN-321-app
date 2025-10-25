@@ -18,6 +18,8 @@ export interface IUser extends Document {
   badgesCount: number;
   isAdmin: boolean;
   isSuspended: boolean;
+  fcmToken?: string;
+  lastActiveAt: Date;
 
   stats: {
     pinsCreated: number;

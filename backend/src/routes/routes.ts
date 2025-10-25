@@ -10,6 +10,7 @@ import locationRoutes from '../routes/location.routes';
 import pinsRoutes from '../routes/pins.routes';
 
 
+
 const router = Router();
 
 // Health check endpoint - no auth required

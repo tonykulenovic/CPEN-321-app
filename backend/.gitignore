@@ -9,6 +9,9 @@ build/
 # Environment variables
 .env
 
+# Firebase service account key (contains sensitive credentials)
+firebase.json
+
 # Logs
 logs
 *.log
