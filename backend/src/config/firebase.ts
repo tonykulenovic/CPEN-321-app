@@ -63,7 +63,7 @@ class FirebaseService {
                 data: data || {},
                 android: {
                     notification: {
-                        channelId: 'friend_activities',
+                        channelId: 'friend_activity_channel',
                         priority: 'high',
                         defaultSound: true,
                     },
@@ -101,7 +101,7 @@ class FirebaseService {
                 data: data || {},
                 android: {
                     notification: {
-                        channelId: 'friend_activities',
+                        channelId: 'friend_activity_channel',
                         priority: 'high',
                         defaultSound: true,
                     },
