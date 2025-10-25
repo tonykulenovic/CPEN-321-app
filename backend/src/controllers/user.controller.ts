@@ -445,43 +445,72 @@ export class UserController {
    * PUT /users/me/fcm-token - Update user's FCM token for push notifications
    */
   async updateFcmToken(req: Request, res: Response): Promise<void> {
+    logger.info('📤 [USER-CONTROLLER] FCM token update request received');
+    
     try {
+      // Authentication check
       if (!req.user) {
+        logger.warn('🚫 [USER-CONTROLLER] Unauthorized FCM token update attempt');
         res.status(401).json({ message: 'Unauthorized' });
         return;
       }
       
       const userId = req.user._id;
+      const userName = req.user.name || 'unknown';
+      logger.info(`👤 [USER-CONTROLLER] FCM token update for user: ${userName} (${userId})`);
+      
       const { fcmToken } = req.body;
+      logger.debug(`📦 [USER-CONTROLLER] Request body keys: ${Object.keys(req.body)}`);
 
+      // Validation
       if (!fcmToken || typeof fcmToken !== 'string') {
+        logger.warn('⚠️ [USER-CONTROLLER] Invalid FCM token in request');
+        logger.debug(`🔍 [USER-CONTROLLER] Token type: ${typeof fcmToken}, value: ${fcmToken}`);
         res.status(400).json({ 
           message: 'FCM token is required and must be a string' 
         });
         return;
       }
 
-      const updatedUser = await userModel.updateFcmToken(
-        userId,
-        fcmToken.trim()
-      );
+      const trimmedToken = fcmToken.trim();
+      logger.debug(`🔑 [USER-CONTROLLER] Token preview: ${trimmedToken.substring(0, 30)}...${trimmedToken.substring(trimmedToken.length - 10)}`);
+      logger.debug(`📏 [USER-CONTROLLER] Token length: ${trimmedToken.length} characters`);
+
+      // Update token in database
+      logger.debug('💾 [USER-CONTROLLER] Updating FCM token in database...');
+      const startTime = Date.now();
+      const updatedUser = await userModel.updateFcmToken(userId, trimmedToken);
+      const duration = Date.now() - startTime;
+      logger.debug(`⏱️ [USER-CONTROLLER] Database update completed in ${duration}ms`);
 
       if (!updatedUser) {
+        logger.error(`❌ [USER-CONTROLLER] User not found: ${userId}`);
         res.status(404).json({ message: 'User not found' });
         return;
       }
 
-      logger.info(`📱 FCM token updated for user ${updatedUser.name}`);
+      // Success response
+      const hasToken = !!updatedUser.fcmToken;
+      logger.info(`🎉 [USER-CONTROLLER] FCM token updated successfully for user ${updatedUser.name}`);
+      logger.debug(`✅ [USER-CONTROLLER] User now has token: ${hasToken}`);
+      logger.debug(`🔍 [USER-CONTROLLER] Updated token preview: ${updatedUser.fcmToken?.substring(0, 30)}...${updatedUser.fcmToken?.substring(updatedUser.fcmToken.length - 10)}`);
 
       res.status(200).json({
         message: 'FCM token updated successfully',
         data: {
           userId: updatedUser._id,
-          hasToken: !!updatedUser.fcmToken
+          hasToken: hasToken
         }
       });
+      
+      logger.debug('📤 [USER-CONTROLLER] Success response sent');
+      
     } catch (error) {
-      logger.error('Error in updateFcmToken:', error);
+      logger.error('💥 [USER-CONTROLLER] Error in updateFcmToken:', error);
+      if (error instanceof Error) {
+        logger.error(`   💬 Error message: ${error.message}`);
+        logger.error(`   📍 Error stack: ${error.stack}`);
+      }
       res.status(500).json({ message: 'Internal server error' });
     }
   }
