@@ -930,11 +930,12 @@ private fun MapContent(
                 }
             }
 
-            // Display friend markers using HTTP endpoint location data
+            // Display friend markers using HTTP endpoint location data - ONLY for online friends
             friendsUiState.friendLocations.forEach { friendLocation ->
                 val friend = friendsUiState.friends.find { it.userId == friendLocation.userId }
 
-                if (friend != null) {
+                // Only show marker if friend exists AND is online
+                if (friend != null && friend.isOnline) {
                     val position = LatLng(friendLocation.lat, friendLocation.lng)
 
                     // Calculate time since last update
@@ -1000,8 +1001,13 @@ private fun MapContent(
                 .padding(top = 8.dp, end = 8.dp),
             horizontalAlignment = Alignment.End
         ) {
-            // Enhanced friends status indicator
-            if (friendsUiState.friendLocations.isNotEmpty()) {
+            // Enhanced friends status indicator - ONLY count online friends
+            val onlineFriendsCount = friendsUiState.friendLocations.count { friendLocation ->
+                val friend = friendsUiState.friends.find { it.userId == friendLocation.userId }
+                friend?.isOnline == true
+            }
+            
+            if (onlineFriendsCount > 0) {
                 Column(
                     horizontalAlignment = Alignment.End
                 ) {
@@ -1023,7 +1029,7 @@ private fun MapContent(
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
-                            text = "${friendsUiState.friendLocations.size} friends nearby",
+                            text = "$onlineFriendsCount friends nearby",
                             color = Color.White,
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Medium
