@@ -63,10 +63,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.material3.CircularProgressIndicator
+import coil.compose.SubcomposeAsyncImage
+import com.cpen321.usermanagement.data.remote.api.RetrofitClient
 import com.cpen321.usermanagement.ui.theme.LocalSpacing
 import kotlinx.coroutines.launch
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
@@ -455,20 +459,63 @@ private fun FriendCard(
                 .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Profile Picture Placeholder
+            // Profile Picture
             Box(
                 modifier = Modifier
                     .size(50.dp)
                     .clip(CircleShape)
-                    .background(Color(0xFF4A90E2)),
+                    .background(Color(0xFF1A2332)),
                 contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = friend.name.firstOrNull()?.toString() ?: "?",
-                    color = Color.White,
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold
-                )
+                if (friend.profilePictureUrl.isNullOrBlank()) {
+                    // Fallback to initial letter if no profile picture
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(Color(0xFF4A90E2)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = friend.name.firstOrNull()?.toString() ?: "?",
+                            color = Color.White,
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                } else {
+                    // Load actual profile picture from URL
+                    SubcomposeAsyncImage(
+                        model = RetrofitClient.getPictureUri(friend.profilePictureUrl),
+                        contentDescription = "Profile Picture",
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clip(CircleShape),
+                        contentScale = ContentScale.Crop,
+                        loading = {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(24.dp),
+                                color = Color(0xFF00BCD4),
+                                strokeWidth = 2.dp
+                            )
+                        },
+                        error = {
+                            // Fallback to initial letter on error
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .background(Color(0xFF4A90E2)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = friend.name.firstOrNull()?.toString() ?: "?",
+                                    color = Color.White,
+                                    fontSize = 20.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+                    )
+                }
             }
             
             Spacer(modifier = Modifier.width(12.dp))

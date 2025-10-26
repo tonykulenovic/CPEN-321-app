@@ -9,6 +9,7 @@ import com.cpen321.usermanagement.data.remote.api.RetrofitClient
 import com.cpen321.usermanagement.data.remote.api.UserInterface
 import com.cpen321.usermanagement.data.remote.dto.UpdateProfileRequest
 import com.cpen321.usermanagement.data.remote.dto.User
+import com.cpen321.usermanagement.data.remote.dto.FriendProfileData
 import com.cpen321.usermanagement.utils.JsonUtils.parseErrorMessage
 import com.cpen321.usermanagement.utils.MediaUtils.uriToFile
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -54,6 +55,25 @@ class ProfileRepositoryImpl @Inject constructor(
             Result.failure(e)
         } catch (e: retrofit2.HttpException) {
             Log.e(TAG, "HTTP error while getting profile: ${e.code()}", e)
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun getFriendProfile(userId: String): Result<FriendProfileData> {
+        return try {
+            val response = userInterface.getFriendProfile("", userId)
+            if (response.isSuccessful && response.body()?.data != null) {
+                Result.success(response.body()!!.data)
+            } else {
+                val errorMessage = parseErrorMessage(
+                    response.errorBody()?.string(),
+                    "Failed to fetch friend profile"
+                )
+                Log.e(TAG, "Failed to get friend profile: $errorMessage")
+                Result.failure(Exception(errorMessage))
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error getting friend profile", e)
             Result.failure(e)
         }
     }

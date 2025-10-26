@@ -4,6 +4,7 @@ import com.cpen321.usermanagement.data.remote.dto.ApiResponse
 import com.cpen321.usermanagement.data.remote.dto.ProfileData
 import com.cpen321.usermanagement.data.remote.dto.UpdateProfileRequest
 import com.cpen321.usermanagement.data.remote.dto.UploadImageData
+import com.cpen321.usermanagement.data.remote.dto.FriendProfileResponse
 import okhttp3.MultipartBody
 import retrofit2.Response
 import retrofit2.http.Body
@@ -15,6 +16,7 @@ import retrofit2.http.PATCH
 import retrofit2.http.POST
 import retrofit2.http.PUT
 import retrofit2.http.Part
+import retrofit2.http.Path
 
 interface UserInterface {
     @GET("user/profile")
@@ -28,6 +30,13 @@ interface UserInterface {
     
     @DELETE("user/profile")
     suspend fun deleteProfile(@Header("Authorization") authHeader: String): Response<ApiResponse<Unit>>
+    
+    // Get friend's profile
+    @GET("users/{userId}/profile")
+    suspend fun getFriendProfile(
+        @Header("Authorization") authHeader: String,
+        @Path("userId") userId: String
+    ): Response<FriendProfileResponse>
     
     // FCM Token management for push notifications  
     @PUT("users/me/fcm-token")

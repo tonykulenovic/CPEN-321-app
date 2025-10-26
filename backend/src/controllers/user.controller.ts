@@ -16,11 +16,13 @@ import logger from '../utils/logger.util';
 import { MediaService } from '../services/media.service';
 import { userModel } from '../models/user.model';
 import { friendshipModel } from '../models/friendship.model';
+import { badgeModel } from '../models/badge.model';
 
 export class UserController {
   constructor() {
     // Bind methods to preserve 'this' context
     this.getProfile = this.getProfile.bind(this);
+    this.getUserProfile = this.getUserProfile.bind(this);
     this.updateProfile = this.updateProfile.bind(this);
     this.deleteProfile = this.deleteProfile.bind(this);
     this.searchUsers = this.searchUsers.bind(this);
@@ -75,6 +77,91 @@ export class UserController {
       message: 'Profile fetched successfully',
       data: { user },
     });
+  }
+
+  /**
+   * GET /api/users/:userId/profile - Get a friend's profile with badges and stats
+   * Only returns profile if users are friends
+   */
+  async getUserProfile(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) {
+    try {
+      const currentUser = req.user!;
+      const { userId } = req.params;
+
+      // Validate userId format
+      if (!mongoose.Types.ObjectId.isValid(userId)) {
+        return res.status(400).json({
+          message: 'Invalid user ID format',
+        });
+      }
+
+      const targetUserId = new mongoose.Types.ObjectId(userId);
+
+      // Check if users are friends
+      const areFriends = await friendshipModel.areFriends(currentUser._id, targetUserId);
+      if (!areFriends) {
+        return res.status(403).json({
+          message: 'You can only view profiles of your friends',
+        });
+      }
+
+      // Fetch target user
+      const targetUser = await userModel.findById(targetUserId);
+      if (!targetUser) {
+        return res.status(404).json({
+          message: 'User not found',
+        });
+      }
+
+      // Get online status
+      const onlineStatusMap = await userModel.getOnlineStatus([targetUserId], 10);
+      const isOnline = onlineStatusMap.get(targetUserId.toString()) || false;
+
+      // Get user badges
+      const userBadges = await badgeModel.getUserBadges(targetUserId);
+      
+      logger.info(`Fetched ${userBadges.length} badges for user ${targetUserId}`);
+
+      // Format response
+      const profileData = {
+        userId: targetUser._id.toString(),
+        name: targetUser.name,
+        username: targetUser.username,
+        email: targetUser.email,
+        bio: targetUser.bio,
+        campus: targetUser.campus,
+        profilePicture: targetUser.profilePicture,
+        isOnline,
+        friendsCount: targetUser.friendsCount,
+        badgesCount: userBadges.length, // Use actual count from fetched badges
+        stats: {
+          pinsCreated: targetUser.stats.pinsCreated,
+          pinsVisited: targetUser.stats.pinsVisited,
+          locationsExplored: targetUser.stats.locationsExplored,
+          librariesVisited: targetUser.stats.librariesVisited,
+          cafesVisited: targetUser.stats.cafesVisited,
+          restaurantsVisited: targetUser.stats.restaurantsVisited,
+        },
+        badges: userBadges,
+      };
+
+      res.status(200).json({
+        message: 'Friend profile fetched successfully',
+        data: profileData,
+      });
+    } catch (error) {
+      logger.error('Error in getUserProfile:', error);
+      if (error instanceof Error) {
+        return res.status(500).json({
+          message: error.message || 'Failed to fetch friend profile',
+        });
+      }
+      next(error);
+    }
   }
 
   async updateProfile(
