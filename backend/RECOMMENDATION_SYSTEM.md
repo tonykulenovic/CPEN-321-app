@@ -2,7 +2,7 @@
 
 ## Overview
 
-The recommendation system provides personalized meal suggestions (breakfast, lunch, dinner) based on user location, preferences, weather conditions, and real-time data from both the database and Google Places API.
+The recommendation system provides personalized meal suggestions (breakfast, lunch, dinner) based on user location, preferences, weather conditions, and real-time data from both the database and Google Places API. The system has been **simplified** to use existing user data (pin votes and visited pins) instead of complex interaction tracking.
 
 ## 🏗️ Architecture
 
@@ -18,6 +18,35 @@ The recommendation system provides personalized meal suggestions (breakfast, lun
 - `PlacesApiService`: Google Places API integration
 - `WeatherService`: Weather data integration
 - `NotificationService`: FCM push notifications
+
+### ✨ Simplified Architecture (v2.0)
+
+The recommendation system has been **streamlined** to eliminate complexity while maintaining effectiveness:
+
+#### **Removed Components**
+
+- ❌ `userInteraction.model.ts` - Complex interaction tracking removed
+- ❌ Detailed interaction patterns and preference learning
+- ❌ Complex user behavior analysis
+
+#### **Enhanced Components**
+
+- ✅ **Direct Pin Vote Integration**: Uses existing `PinVote` collection for user preferences
+- ✅ **User Visit History**: Leverages `user.visitedPins` array for familiarity scoring
+- ✅ **Simplified Preferences**: `getUserPreferences()` now uses real user data
+- ✅ **Improved Grammar**: Notification text uses proper English ("A great place for...")
+
+#### **Current Data Sources**
+
+```typescript
+// User Preferences (Simplified)
+interface UserPreferences {
+  likedPins: ObjectId[]; // From PinVote collection (upvotes)
+  visitedPins: ObjectId[]; // From User.visitedPins array
+}
+
+// No more complex userInteraction tracking!
+```
 
 ## 🧮 Recommendation Algorithm
 
@@ -50,9 +79,10 @@ Keyword-based matching against place names and descriptions:
 
 #### **User Preference Score (0-25 points)**
 
-- Based on user interaction history and place ratings
-- Database pins: Historical interaction patterns
-- Places API: Rating-based scoring (rating/5 \* 15-20 points)
+- **Simplified approach**: Based on existing user data instead of complex interaction tracking
+- **Pin Votes**: Users who upvoted pins get preference bonuses for those locations
+- **Visited Pins**: Places user has visited before get moderate preference scores
+- **Places API**: Rating-based scoring (rating/5 \* 15-20 points) for new locations
 
 #### **Weather Score (0-15 points)**
 
@@ -167,7 +197,7 @@ GET /api/recommendations/:mealType
       {
         "score": 80,
         "distance": 245,
-        "reason": "A great for lunch, very close, highly rated, currently open",
+        "reason": "A great place for lunch, very close, highly rated, currently open",
         "factors": {
           "proximity": 25,
           "mealRelevance": 25,
@@ -307,17 +337,23 @@ interface RecommendationParams {
 ### Manual Testing
 
 ```powershell
-# Test recommendations
+# Test recommendations (PowerShell)
 $headers = @{
   "Authorization" = "Bearer dev-token-12345"
-  "x-dev-user-id" = "68fc28e525015583d3a51f6a"
+  "x-dev-user-id" = "68f6ab1bbeb725bab56c9b7d"  # Valid user ID
+  "Content-Type" = "application/json"
 }
 
 # Get lunch recommendations
 Invoke-RestMethod -Uri "http://localhost:3000/api/recommendations/lunch" -Headers $headers
 
-# Send notification
+# Send notification to single user
 Invoke-RestMethod -Uri "http://localhost:3000/api/recommendations/notify/lunch" -Headers $headers -Method POST
+
+# 🎯 BULK TESTING: Send to ALL users (recommended for testing)
+Invoke-RestMethod -Uri "http://localhost:3000/api/admin/scheduler/trigger/lunch" -Headers $headers -Method POST
+Invoke-RestMethod -Uri "http://localhost:3000/api/admin/scheduler/trigger/breakfast" -Headers $headers -Method POST
+Invoke-RestMethod -Uri "http://localhost:3000/api/admin/scheduler/trigger/dinner" -Headers $headers -Method POST
 ```
 
 ### Expected Results
@@ -326,6 +362,7 @@ Invoke-RestMethod -Uri "http://localhost:3000/api/recommendations/notify/lunch" 
 - **Distance variety**: Mix of very close (11m) to moderate (500m) options
 - **Meal relevance**: 20-25 points for good keyword matches
 - **Real-time accuracy**: Places API provides current hours and ratings
+- **Proper grammar**: Notifications display "A great place for [meal]" with correct English
 
 ## 🚀 Performance
 
@@ -410,3 +447,28 @@ Invoke-RestMethod -Uri "http://localhost:3000/api/admin/scheduler/trigger/lunch"
 - **Rate Limiting**: API call optimization
 - **A/B Testing**: Algorithm variant testing
 - **Analytics**: Recommendation effectiveness tracking
+
+## 📋 Changelog
+
+### v2.0 - Simplified Architecture (October 2025)
+
+#### **Major Changes**
+
+- ✅ **Removed userInteraction model**: Eliminated complex interaction tracking
+- ✅ **Simplified preferences**: Now uses existing `PinVote` upvotes and `User.visitedPins`
+- ✅ **Fixed notification grammar**: "A great place for [meal]" instead of "great for [meal]"
+- ✅ **Enhanced testing**: Bulk testing endpoints for all users
+- ✅ **Improved TypeScript**: Fixed type casting issues with MongoDB queries
+
+#### **Benefits**
+
+- 🚀 **Reduced complexity**: Fewer models and simpler logic
+- 📊 **Real user data**: Uses actual voting and visit patterns
+- 🔧 **Better maintainability**: Less code to maintain and debug
+- ✅ **Proven reliability**: Successfully tested with bulk user notifications
+
+#### **Backward Compatibility**
+
+- 🔄 **API unchanged**: All existing endpoints work the same
+- 📱 **Frontend compatible**: No frontend changes required
+- 🗄️ **Database migration**: Old userInteraction data safely ignored
