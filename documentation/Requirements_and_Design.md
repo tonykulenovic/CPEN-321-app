@@ -186,33 +186,50 @@ Target audience: university students who want an easy way to discover study spot
 
 ### **3.4. Use Case Description**
 
-- Use cases for feature 1: **View Map**
+### Feature 1: View Map
+1. **View Pins**: User opens the map to see campus libraries and food spots and pins added by others.
+2. **Filter Pins by Category**: User can filter pins by category (Study, Events, Chill, Shops/Services).
+3. **View Friend Locations**: User can see real-time locations of friends (with privacy controls).
 
-  1. **View Pins**: User opens the map to see campus libraries and food spots and pins added by others.  
-  2. **Filter Pins by Category**: User can filter pins by category (Study, Events, Chill, Shops/Services).
-  3. **View Friend Locations**: User can see real-time locations of friends (with privacy controls).
+### Feature 2: Manage Pins
+4. **Add Pin**: User adds a new study space/event pin with enhanced metadata.
+5. **View Pin Details**: User clicks a pin to see name, description, capacity, crowd level, and opening hours.
+6. **Vote on Pin**: User can upvote or downvote pins to show approval/disapproval.
+7. **Report Pin**: User reports a community-created pin as unsafe or inappropriate.
+8. **View Reported Pins**: Admin can view and manage reported pins.
+9. **Remove Pin**: Admin can remove pins from the map.
 
-- Use cases for feature 2: **Manage Pins** 4. **Add Pin**: User adds a new study space/event pin with enhanced metadata. 5. **View Pin Details**: User clicks a pin to see name, description, capacity, crowd level, and opening hours.  
-  6. **Vote on Pin**: User can upvote or downvote pins to show approval/disapproval. 7. **Report Pin**: User reports a community-created pin as unsafe or inappropriate.  
-  8. **View Reported Pins**: Admin can view and manage reported pins. 9. **Remove Pin**: Admin can remove pins from the map.
+### Feature 3: Manage Account
+10. **Sign Up**: User can sign up for the app with their Google account.
+11. **Log In**: User can log in to the app with their Google account after they have signed up.
+12. **Log Out**: User can log out of the app.
+13. **Delete Account**: User can delete their account.
+14. **Create Profile**: User can create a profile for the app.
+15. **Manage Profile**: User can manage their profile for the app.
+16. **Manage Privacy Settings**: User can control profile visibility, location sharing, and friend request preferences.
+17. **Receive Notifications**: User receives push notifications for friend requests, pin updates, and system messages.
+18. **Manage Notification Settings**: User can control notification preferences and FCM token management.
 
-- Use cases for feature 3: **Manage Account** 10. **Sign Up**: User can sign up for the app with their Google account. 11. **Log In**: User can log in to the app with their Google account after they have signed up. 12. **Log Out**: User can log out of the app. 13. **Delete Account**: User can delete their account. 14. **Create Profile**: User can create a profile for the app. 15. **Manage Profile**: User can manage their profile for the app. 16. **Manage Privacy Settings**: User can control profile visibility, location sharing, and friend request preferences. 17. **Receive Notifications**: User receives push notifications for friend requests, pin updates, and system messages. 18. **Manage Notification Settings**: User can control notification preferences and FCM token management. 19. **Earn Badge**: User receives a profile badge for activity (e.g., daily logins, time at library).  
-  20. **View Badges**: User views unlocked profile badges and progress toward new ones.
+### Feature 4: Manage Friends
+19. **Add Friend**: User searches for a classmate by username/email and sends a request.
+20. **View Friend Profile**: User views a friend's badges and activity (respecting privacy settings).
+21. **Remove Friend**: User can remove a friend from their friend network.
+22. **Manage Friend Requests**: User can accept, decline, or block friend requests.
+23. **Share Location with Friends**: User can optionally share real-time location with friends.
 
-- Use cases for feature 4: **Manage Friends** 21. **Add Friend**: User searches for a classmate by username/email and sends a request.  
-  22. **View Friend Profile**: User views a friend's badges and activity (respecting privacy settings).  
-  23. **Remove Friend**: User can remove a friend from their friend network. 24. **Manage Friend Requests**: User can accept, decline, or block friend requests. 25. **Share Location with Friends**: User can optionally share real-time location with friends.
+### Feature 5: Admin Functionality
+24. **Review Reported Content**: Admin can review and moderate reported pins and user content.
+25. **Manage User Accounts**: Admin can suspend, unsuspend, or delete user accounts.
+26. **View System Analytics**: Admin can view system usage statistics and user activity.
 
-- Use cases for feature 5: **Admin Functionality** 26. **Review Reported Content**: Admin can review and moderate reported pins and user content. 27. **Manage User Accounts**: Admin can suspend, unsuspend, or delete user accounts. 28. **View System Analytics**: Admin can view system usage statistics and user activity.
+### Feature 6: Badge System
+27. **Earn Badge**: User receives a profile badge for activity (e.g., daily logins, time at library).
+28. **View Badges**: User views unlocked profile badges and progress toward new ones.
+29. **Track Badge Progress**: User can see progress toward earning new badges.
 
-- Use cases for feature 6: **Badge System** 29. **Earn Badge**: User receives a profile badge for activity (e.g., daily logins, time at library).  
-  30. **View Badges**: User views unlocked profile badges and progress toward new ones.  
-  31. **Track Badge Progress**: User can see progress toward earning new badges.
-
-- Use cases for feature 7: **Recommend Locations** 32. **Get Food Recommendations**: App suggests nearby food options at lunch, coffee break, or dinner times.  
-  33. **Get Personalized Recommendations**: App suggests pins based on user preferences, time, and location.
-
----
+### Feature 7: Recommend Locations
+30. **Get Food Recommendations**: App suggests nearby food options at lunch, coffee break, or dinner times.
+31. **Get Personalized Recommendations**: App suggests pins based on user preferences, time, and location.
 
 ### **3.5. Formal Use Case Specifications (5 Most Major Use Cases)**
 
