@@ -10,23 +10,38 @@
 
 ## 2. Project Description
 
-**UniVerse** is a mobile-first application designed for university students to navigate campus life more effectively. The app provides a map of campus locations, including study spaces, libraries, and food spots, along with community-created pins for events, chill areas, and student-reported updates.  
+**UniVerse** is a mobile-first Android application designed for university students to navigate campus life more effectively. The app provides an interactive map of campus locations, including pre-seeded libraries and cafes, along with community-created pins for study spaces, events, chill areas, and shops.
 
-Students can also connect with friends, earn badges for their activities, and receive personalized recommendations for nearby pins/locations based on relevant criteria (e.g., food recommendations given the time of day). The app creates a lightweight social ecosystem for students by combining location-based data, gamification, and personalization.  
+**Core Features:**
+- **Interactive Map**: Real-time map with Google Maps integration showing pins with voting, reporting, and category filtering
+- **Pin Management**: Create, edit, and manage community pins with enhanced metadata (capacity, crowd levels, opening hours)
+- **Social Features**: Connect with friends, view friend locations (with privacy controls), and manage friend requests
+- **Gamification**: Badge system with progress tracking for user activities and achievements
+- **Admin Tools**: Content moderation, user management, and reported pin review for administrators
+- **Privacy Controls**: Granular privacy settings for profile visibility, location sharing, and friend requests
+- **Real-time Updates**: Push notifications and live location tracking via Socket.io
 
-Target audience: university students who want an easy way to discover study spots, food options, and campus events, while staying connected with friends.  
+**Technical Stack:**
+- **Backend**: Node.js, Express, MongoDB, Socket.io, Firebase Cloud Messaging
+- **Frontend**: Android (Kotlin), Jetpack Compose, Material Design 3, Google Maps API
+- **Authentication**: Google OAuth with credential management
+- **Real-time**: Socket.io for live updates and location tracking
+
+Target audience: university students who want an easy way to discover study spots, food options, and campus events, while staying connected with friends in a privacy-conscious environment.  
 
 ---
 
 ## 3. Requirements Specification
 
 ### **3.1. List of Features**
-- **Authentication**: Google OAuth login.  
-- **View Map**: Display pre-seeded pins, user-created pins, and later, friend locations.  
-- **Manage Pins**: Create, update, and delete community pins (study spaces, events, chill areas, shops).  
-- **Manage Account**: Create, update, or delete an account, view profile attributes, e.g, badges and friends.  
-- **Manage Friends**: Send friend requests, maintain a friends list, and view friend profiles.  
-- **Recommend Locations**: Suggest location/pins based on user preferences, time of day, etc.
+- **Authentication**: Google OAuth login with credential management and secure token handling.  
+- **View Map**: Display pre-seeded pins, user-created pins, and friend locations with real-time updates. Filter pins by category (Study, Events, Chill, Shops/Services).  
+- **Manage Pins**: Create, update, and delete community pins (study spaces, events, chill areas, shops). Vote on pins (upvote/downvote), report inappropriate content, and view enhanced pin details with capacity, crowd levels, and opening hours.  
+- **Manage Account**: Create, update, or delete an account, view profile attributes, badges, and friends. Control privacy settings including profile visibility, location sharing, and friend request preferences. Receive push notifications for account-related events.  
+- **Manage Friends**: Send friend requests, maintain a friends list, and view friend profiles. Share real-time locations with friends (with privacy controls).  
+- **Admin Functionality**: Review reported pins, manage user accounts, moderate content, and view system analytics.  
+- **Badge System**: Earn badges for activities, view progress, and track achievements.  
+- **Recommend Locations**: Suggest location/pins based on user preferences, time of day, and location data.
 
 ---
 
@@ -43,33 +58,50 @@ Target audience: university students who want an easy way to discover study spot
 ### **3.4. Use Case Description**
 - Use cases for feature 1: **View Map**
   1. **View Pins**: User opens the map to see campus libraries and food spots and pins added by others.  
-
+  2. **Filter Pins by Category**: User can filter pins by category (Study, Events, Chill, Shops/Services).
+  3. **View Friend Locations**: User can see real-time locations of friends (with privacy controls).
 
 - Use cases for feature 2: **Manage Pins**
-  2. **Add Pin**: User adds a new study space/event pin. 
-  3. **View Pin Details**: User clicks a pin to see name, description, and metadata.  
-  4. **Report Pin**: User reports a community-created pin as unsafe.  
-  5. **Rate Pin**: User gives a pin a thumbs up or thumbs down.  
-  6. **View Reported Pins**: Admin can view reported pins.
-  7. **Remove Pin**: Admin can remove pins from the map.
+  4. **Add Pin**: User adds a new study space/event pin with enhanced metadata. 
+  5. **View Pin Details**: User clicks a pin to see name, description, capacity, crowd level, and opening hours.  
+  6. **Vote on Pin**: User can upvote or downvote pins to show approval/disapproval.
+  7. **Report Pin**: User reports a community-created pin as unsafe or inappropriate.  
+  8. **View Reported Pins**: Admin can view and manage reported pins.
+  9. **Remove Pin**: Admin can remove pins from the map.
 
 - Use cases for feature 3: **Manage Account**
-  8. **Sign Up**: User can sign up for the app with their Google account.
-  10. **Log In**: User can log in to the app with their Google account after they have signed up.
-  11. **Log Out**: User can log out of the app.
-  12. **Delete Account**: User can delete their account.
-  13. **Create Profile**: User can create a profile for the app.
-  14. **Manage Profile**: User can manage their profile for the app.
-  15. **Earn Badge**: User receives a profile badge for activity (e.g., daily logins, time at library).  
-  16. **View Badges**: User views unlocked profile badges and progress toward new ones.  
+  10. **Sign Up**: User can sign up for the app with their Google account.
+  11. **Log In**: User can log in to the app with their Google account after they have signed up.
+  12. **Log Out**: User can log out of the app.
+  13. **Delete Account**: User can delete their account.
+  14. **Create Profile**: User can create a profile for the app.
+  15. **Manage Profile**: User can manage their profile for the app.
+  16. **Manage Privacy Settings**: User can control profile visibility, location sharing, and friend request preferences.
+  17. **Receive Notifications**: User receives push notifications for friend requests, pin updates, and system messages.
+  18. **Manage Notification Settings**: User can control notification preferences and FCM token management.
+  19. **Earn Badge**: User receives a profile badge for activity (e.g., daily logins, time at library).  
+  20. **View Badges**: User views unlocked profile badges and progress toward new ones.  
 
 - Use cases for feature 4: **Manage Friends**
-  17. **Add Friend**: User searches for a classmate by username/email and sends a request.  
-  18. **View Friend Profile**: User views a friend’s badges and activity.  
-  19. **Remove Friend**: User can remove a friend from their friend network.
+  21. **Add Friend**: User searches for a classmate by username/email and sends a request.  
+  22. **View Friend Profile**: User views a friend's badges and activity (respecting privacy settings).  
+  23. **Remove Friend**: User can remove a friend from their friend network.
+  24. **Manage Friend Requests**: User can accept, decline, or block friend requests.
+  25. **Share Location with Friends**: User can optionally share real-time location with friends.
 
-- Use cases for feature 5: **Recommend Locations**
-  20. **Get Food Recommendations**: App suggests nearby food options at lunch, coffee break, or dinner times.   
+- Use cases for feature 5: **Admin Functionality**
+  26. **Review Reported Content**: Admin can review and moderate reported pins and user content.
+  27. **Manage User Accounts**: Admin can suspend, unsuspend, or delete user accounts.
+  28. **View System Analytics**: Admin can view system usage statistics and user activity.
+
+- Use cases for feature 6: **Badge System**
+  29. **Earn Badge**: User receives a profile badge for activity (e.g., daily logins, time at library).  
+  30. **View Badges**: User views unlocked profile badges and progress toward new ones.  
+  31. **Track Badge Progress**: User can see progress toward earning new badges.
+
+- Use cases for feature 7: **Recommend Locations**
+  32. **Get Food Recommendations**: App suggests nearby food options at lunch, coffee break, or dinner times.  
+  33. **Get Personalized Recommendations**: App suggests pins based on user preferences, time, and location.   
 
 ---
 
@@ -143,21 +175,113 @@ Target audience: university students who want an easy way to discover study spot
 
 ---
 
-#### Use Case 5: Get Food Recommendations
-**Description**: User gets food spot suggestions near their current location.  
+#### Use Case 5: Vote on Pin
+**Description**: User votes on a pin to show approval or disapproval.  
 **Primary actor(s)**: Student User  
 
 **Main success scenario**:
-1. At a certain time (e.g., 1 PM), the app fetches user's location.  
-2. Backend queries Google Places API for nearby restaurants.  
-3. Backend filters results by “open now.”  
-4. Recommendations are displayed to the user.  
+1. User taps on a pin to view details.  
+2. User taps the upvote or downvote button.  
+3. System records the vote and updates the pin's rating.  
+4. Pin displays updated vote count to all users.  
 
 **Failure scenario(s)**:
-- 1a. User denies location access.  
-    - 1a1. The system cannot fetch recommendations.  
-- 2a. Google Places API call fails.  
-    - 2a1. System shows fallback message: “Unable to fetch recommendations.”  
+- 1a. User has already voted on this pin.  
+    - 1a1. System prevents duplicate voting and shows current vote status.  
+- 2a. Network connection fails during vote submission.  
+    - 2a1. System shows error message and allows retry.  
+
+---
+
+#### Use Case 6: Report Pin
+**Description**: User reports a pin as inappropriate or unsafe content.  
+**Primary actor(s)**: Student User  
+
+**Main success scenario**:
+1. User taps on a pin to view details.  
+2. User taps the "Report" button.  
+3. User selects a reason for reporting and provides additional details.  
+4. System records the report and notifies admins.  
+5. User receives confirmation that the report was submitted.  
+
+**Failure scenario(s)**:
+- 1a. User tries to report their own pin.  
+    - 1a1. System prevents self-reporting and hides the report button.  
+- 2a. Report submission fails due to network issues.  
+    - 2a1. System shows error message and allows retry.  
+
+---
+
+#### Use Case 7: Filter Pins by Category
+**Description**: User filters map pins by category to find specific types of locations.  
+**Primary actor(s)**: Student User  
+
+**Main success scenario**:
+1. User opens the map view.  
+2. User taps on category filter buttons (Study, Events, Chill, Shops).  
+3. Map updates to show only pins of the selected category.  
+4. User can select multiple categories or clear filters.  
+
+**Failure scenario(s)**:
+- 1a. No pins exist for the selected category.  
+    - 1a1. System shows "No pins found" message.  
+- 2a. Filter request fails due to network issues.  
+    - 2a1. System shows error message and reverts to showing all pins.  
+
+---
+
+#### Use Case 8: Receive Push Notification
+**Description**: User receives real-time notifications for app events.  
+**Primary actor(s)**: Student User  
+
+**Main success scenario**:
+1. System event occurs (friend request, pin update, etc.).  
+2. Backend sends push notification via Firebase.  
+3. User's device receives and displays the notification.  
+4. User taps notification to open relevant app section.  
+
+**Failure scenario(s)**:
+- 1a. User has disabled notifications.  
+    - 1a1. System respects user preferences and does not send notifications.  
+- 2a. FCM token is invalid or expired.  
+    - 2a1. System attempts to refresh token and retry notification.  
+
+---
+
+#### Use Case 9: Manage Privacy Settings
+**Description**: User controls their privacy and visibility settings.  
+**Primary actor(s)**: Student User  
+
+**Main success scenario**:
+1. User navigates to privacy settings.  
+2. User adjusts profile visibility, location sharing, and friend request preferences.  
+3. System saves the new privacy settings.  
+4. Settings take effect immediately for all users.  
+
+**Failure scenario(s)**:
+- 1a. Privacy settings update fails due to network issues.  
+    - 1a1. System shows error message and allows retry.  
+- 2a. Invalid privacy setting values are submitted.  
+    - 2a1. System validates input and shows appropriate error messages.  
+
+---
+
+#### Use Case 10: Admin Review Reported Content
+**Description**: Admin reviews and moderates reported pins and user content.  
+**Primary actor(s)**: Admin  
+
+**Main success scenario**:
+1. Admin accesses the admin dashboard.  
+2. Admin views list of reported pins and content.  
+3. Admin reviews the reported content and context.  
+4. Admin takes action (approve, remove, or dismiss report).  
+5. System updates the content status and notifies relevant users.  
+
+**Failure scenario(s)**:
+- 1a. Admin tries to access admin functions without proper permissions.  
+    - 1a1. System denies access and redirects to regular user interface.  
+- 2a. Content moderation action fails due to system error.  
+    - 2a1. System shows error message and allows retry.  
 
 ---
 
@@ -169,13 +293,22 @@ Target audience: university students who want an easy way to discover study spot
 ### 3.7 Non-Functional Requirements
 
 1. **Performance**  
-   The app shall display map pins within **2 seconds** of opening the map and update pins during panning with minimal delay. This ensures a smooth and responsive experience for students navigating campus in real time.  
+   The app shall display map pins within **2 seconds** of opening the map and update pins during panning with minimal delay. Real-time features (voting, notifications) shall respond within **1 second**. Database queries are optimized with proper indexing on frequently accessed fields (category, location, user_id, status). This ensures a smooth and responsive experience for students navigating campus in real time.  
 
 2. **Scalability**  
-   The backend shall support at least **500 concurrent student users** with responses delivered in **≤2 seconds**. This enables the app to handle peak traffic (e.g., during class transitions or at lunchtime) without compromising usability.  
+   The backend shall support at least **500 concurrent student users** with responses delivered in **≤2 seconds**. The system uses pagination (20 pins per page) and TTL indexes for efficient data management. The system shall handle peak traffic (e.g., during class transitions or at lunchtime) without compromising usability.  
 
 3. **Security**  
-   All sensitive student data (friend connections, badges, location history) shall be **encrypted in transit and at rest**. This protects privacy, builds user trust, and aligns with industry security best practices.  
+   All sensitive student data (friend connections, badges, location history, privacy settings) shall be **encrypted in transit and at rest**. The system implements JWT authentication, input validation with Zod schemas, and comprehensive privacy controls for location sharing and profile visibility. All user input is sanitized and validated before processing.
+
+4. **Reliability**  
+   The system shall maintain **99% uptime** with graceful degradation when external services are unavailable. Critical features (authentication, pin viewing) shall remain functional even during partial system failures. Comprehensive error handling and logging are implemented throughout the application.
+
+5. **Usability**  
+   The app shall provide an intuitive user experience with Material Design 3 principles, real-time updates via Socket.io, and responsive design for mobile-first experience. New users shall be able to complete basic tasks (view pins, vote, report) within **30 seconds** of app installation.
+
+6. **Privacy**  
+   The system provides granular privacy controls allowing users to control profile visibility, location sharing precision, and friend request preferences. Location data includes TTL (Time To Live) for automatic cleanup, and all privacy settings are enforced throughout the application.  
 
 ---
 
@@ -183,36 +316,76 @@ Target audience: university students who want an easy way to discover study spot
 
 ### **4.1. Main Components**
 1. **Authentication Service**
-   - **Purpose**: Handles Google OAuth login for all users.  
+   - **Purpose**: Handles Google OAuth login for all users with credential management.  
    - **Rationale**: Using Google OAuth avoids building a custom authentication system and leverages an external trusted identity provider.
    - **Interfaces**: 
-      1. ...
-         - **Purpose**: ...
-      2. ...
+      1. **Google OAuth Integration** - Handles Google sign-in flow and token management
+      2. **Credential Manager** - Manages user credentials and session persistence
+      3. **JWT Token Service** - Generates and validates JWT tokens for API access
 
 2. **Pin Manager**
-   - **Purpose**: Manages CRUD operations for pins (create, update, delete, view).  
+   - **Purpose**: Manages CRUD operations for pins (create, update, delete, view) with voting and reporting.  
    - **Rationale**: Pins are the central content of the app, and isolating them in a component makes it easier to manage validation, reports, and updates.  
    - **Interfaces**: 
-      1. ...
-         - **Purpose**: ...
-      2. ...
+      1. **Pin CRUD Operations** - Create, read, update, delete pins with validation
+      2. **Voting System** - Handle upvote/downvote operations and prevent duplicate voting
+      3. **Reporting System** - Manage pin reports and admin moderation
+      4. **Category Filtering** - Filter pins by category (Study, Events, Chill, Shops)
+      5. **Enhanced Metadata** - Display capacity, crowd levels, opening hours
 
-3. **Badge Manager**
+3. **User Management Service**
+   - **Purpose**: Manages user profiles, privacy settings, and account operations.  
+   - **Rationale**: Centralized user management ensures consistent privacy controls and profile management across the app.
+   - **Interfaces**: 
+      1. **Profile Management** - Create, update, and delete user profiles
+      2. **Privacy Settings** - Control profile visibility, location sharing, friend requests
+      3. **FCM Token Management** - Handle push notification tokens
+      4. **Account Operations** - Account deletion and suspension
+
+4. **Notification Service**
+   - **Purpose**: Manages push notifications for real-time updates and user engagement.  
+   - **Rationale**: Real-time notifications improve user engagement and keep users informed of important events.
+   - **Interfaces**: 
+      1. **Firebase Integration** - Send notifications via Firebase Cloud Messaging
+      2. **Notification Types** - Friend requests, pin updates, system messages
+      3. **Token Management** - Register and manage FCM tokens
+      4. **Notification Preferences** - User-controlled notification settings
+
+5. **Badge Manager**
    - **Purpose**: Assigns badges based on user activity (logins, time spent at locations, reports).  
    - **Rationale**: A separate manager for badges allows us to implement custom logic and computations beyond simple CRUD, supporting gamification.  
    - **Interfaces**: 
-      1. ...
-         - **Purpose**: ...
-      2. ...
+      1. **Badge Assignment** - Automatically assign badges based on user activity
+      2. **Progress Tracking** - Track user progress toward badge requirements
+      3. **Badge Display** - Show earned badges and progress in user profiles
+      4. **Admin Badge Management** - Create and manage badge templates
 
-4. **Recommendation Engine**
+6. **Admin Service**
+   - **Purpose**: Provides administrative functionality for content moderation and user management.  
+   - **Rationale**: Admin tools are essential for maintaining app quality and handling user reports.
+   - **Interfaces**: 
+      1. **Content Moderation** - Review and moderate reported pins and content
+      2. **User Management** - Suspend, unsuspend, or delete user accounts
+      3. **Analytics Dashboard** - View system usage statistics and user activity
+      4. **Report Management** - Handle user reports and take appropriate actions
+
+7. **Friends Management Service**
+   - **Purpose**: Manages friend connections, requests, and social features.  
+   - **Rationale**: Social features enhance user engagement and create a community aspect to the app.
+   - **Interfaces**: 
+      1. **Friend Requests** - Send, accept, decline friend requests
+      2. **Friend List Management** - Add, remove, and view friends
+      3. **Privacy Controls** - Respect user privacy settings for friend visibility
+      4. **Location Sharing** - Optional real-time location sharing with friends
+
+8. **Recommendation Engine**
    - **Purpose**: Fetches nearby food spots using Google Places API and applies time-of-day rules.  
    - **Rationale**: Encapsulating recommendation logic separately allows us to combine external API data with custom filters (e.g., lunch vs. dinner).  
    - **Interfaces**: 
-      1. ...
-         - **Purpose**: ...
-      2. ...
+      1. **Google Places Integration** - Query nearby restaurants and services
+      2. **Time-based Filtering** - Apply time-of-day rules for recommendations
+      3. **Personalized Recommendations** - Suggest content based on user preferences
+      4. **Location-based Suggestions** - Recommend pins based on user location
 
 ---
 
@@ -227,12 +400,23 @@ Target audience: university students who want an easy way to discover study spot
 ### **4.3. External Modules**
 1. **Google Maps API**  
    - **Purpose**: Displays the interactive map and places pins on it.  
+   - **Implementation**: Integrated in Android app with custom markers and clustering
 
 2. **Google Places API**  
    - **Purpose**: Provides data on nearby food spots (open/closed, name, location).  
+   - **Implementation**: Used for seeding cafe data and location recommendations
 
 3. **Google OAuth**  
    - **Purpose**: Handles user authentication using an external identity provider.  
+   - **Implementation**: Google Credential Manager integration with JWT token generation
+
+4. **Firebase Cloud Messaging (FCM)**  
+   - **Purpose**: Sends push notifications to mobile devices for real-time updates.  
+   - **Implementation**: Backend Firebase Admin SDK with FCM token management
+
+5. **Google Credential Manager**  
+   - **Purpose**: Manages user credentials and authentication tokens securely.  
+   - **Implementation**: Android Credential Manager API for secure authentication flow  
 
 ---
 
@@ -243,10 +427,28 @@ Target audience: university students who want an easy way to discover study spot
    - **Reason**: Lightweight, integrates well with MongoDB and external APIs.
 
 2. **Socket.io**
-    -**Purpose**:Web sockets for live updates
-    -**Reason**: Live map updates, location tracking, and live recommendations using Socket.io
+   - **Purpose**: Web sockets for live updates and real-time communication
+   - **Reason**: Live map updates, location tracking, and live recommendations using Socket.io
 
-3. **NEED TO UPDATE WITH MORE**  
+3. **Android Jetpack Compose**
+   - **Purpose**: Modern Android UI framework for declarative UI development
+   - **Reason**: Provides modern, reactive UI development with Material Design 3
+
+4. **Hilt (Dependency Injection)**
+   - **Purpose**: Dependency injection framework for Android
+   - **Reason**: Simplifies dependency management and improves testability
+
+5. **Retrofit + OkHttp**
+   - **Purpose**: HTTP client for Android API communication
+   - **Reason**: Type-safe HTTP client with automatic JSON serialization
+
+6. **MongoDB + Mongoose**
+   - **Purpose**: NoSQL database for flexible document storage
+   - **Reason**: Handles dynamic user-generated content and complex data relationships
+
+7. **Firebase Admin SDK**
+   - **Purpose**: Server-side Firebase integration for push notifications
+   - **Reason**: Reliable push notification delivery with Firebase infrastructure
 
 ---
 
@@ -263,6 +465,57 @@ Target audience: university students who want an easy way to discover study spot
 ---
 
 ### **4.7. Design of Non-Functional Requirements**
-1. [**[WRITE_NAME_HERE]**](#nfr1)
-    - **Implementation**: ...
-2. ...
+
+#### **Current Implementation (Implemented)**
+1. **Performance Requirements**
+    - **Implemented**: 
+      - Database indexing on frequently queried fields (user_id, pin_category, location, status, visibility)
+      - Pagination for pin search results (20 pins per page)
+      - TTL (Time To Live) indexes for automatic data cleanup
+      - Efficient text search with regex patterns
+
+2. **Security Requirements**
+    - **Implemented**:
+      - JWT tokens with expiration and refresh mechanisms
+      - Input validation and sanitization using Zod schemas
+      - Privacy controls with granular permission settings (location sharing, profile visibility)
+      - Role-based access control for admin functions
+
+3. **Reliability Requirements**
+    - **Implemented**:
+      - Error handling and retry mechanisms in controllers
+      - Graceful degradation when external services are unavailable
+      - Comprehensive logging for debugging and monitoring
+
+4. **Usability Requirements**
+    - **Implemented**:
+      - Material Design 3 for consistent UI/UX
+      - Real-time updates via Socket.io
+      - Progressive loading with skeleton screens
+      - Responsive design for mobile-first experience
+
+#### **Future Enhancements (Planned)**
+1. **Advanced Performance**
+    - **Planned**: 
+      - Redis caching for badge calculations and user statistics
+      - CDN for static assets and images
+      - Lazy loading optimizations for large datasets
+
+2. **Scalability**
+    - **Planned**:
+      - Horizontal scaling with load balancers
+      - Database sharding by geographic regions
+      - Microservices architecture for independent scaling
+      - Redis caching for session management
+
+3. **Advanced Security**
+    - **Planned**:
+      - Rate limiting to prevent abuse
+      - Advanced monitoring and alerting
+      - Enhanced backup and recovery strategies
+
+4. **Enhanced Usability**
+    - **Planned**:
+      - Offline support with local data caching
+      - Advanced accessibility features
+      - Performance monitoring and optimization
