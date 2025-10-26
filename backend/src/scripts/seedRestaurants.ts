@@ -80,7 +80,7 @@ const UBC_SEARCH_REGIONS = [
 ];
 
 const SEARCH_RADIUS = 800; // Smaller radius per region to avoid too much overlap
-const OVERLAP_THRESHOLD = 50; // 50 meters - if restaurant is within this distance of a cafe, exclude it
+const OVERLAP_THRESHOLD = 5; // 5 meters - if restaurant is within this distance of a cafe, exclude it
 
 // Helper function to calculate distance between two points using Haversine formula
 function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
