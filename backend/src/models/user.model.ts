@@ -116,6 +116,24 @@ const userSchema = new Schema<IUser>(
       default: Date.now,
       index: true,
     },
+    recommendations: {
+      currentDate: {
+        type: Date,
+        default: null,
+      },
+      breakfast: {
+        type: Boolean,
+        default: false,
+      },
+      lunch: {
+        type: Boolean,
+        default: false,
+      },
+      dinner: {
+        type: Boolean,
+        default: false,
+      },
+    },
     stats: {
       pinsCreated: {
         type: Number,
@@ -509,6 +527,83 @@ export class UserModel {
         onlineStatus.set(userId.toString(), false);
       });
       return onlineStatus;
+    }
+  }
+
+  /**
+   * Check if user can receive a recommendation for the specified meal type
+   * Updates date if it's a new day
+   */
+  async canReceiveRecommendation(
+    userId: mongoose.Types.ObjectId,
+    mealType: 'breakfast' | 'lunch' | 'dinner'
+  ): Promise<boolean> {
+    try {
+      const user = await this.user.findById(userId).select('recommendations');
+      if (!user) {
+        logger.warn(`User ${userId} not found for recommendation check`);
+        return false;
+      }
+
+      const today = new Date();
+      today.setHours(0, 0, 0, 0); // Start of today
+
+      // If no recommendations data or different date, reset for new day
+      if (!user.recommendations || !user.recommendations.currentDate || 
+          user.recommendations.currentDate.getTime() !== today.getTime()) {
+        
+        await this.user.findByIdAndUpdate(userId, {
+          recommendations: {
+            currentDate: today,
+            breakfast: false,
+            lunch: false,
+            dinner: false,
+          }
+        });
+
+        logger.debug(`📅 [RECOMMENDATIONS] Reset daily counters for user ${userId}`);
+        return true; // Can receive recommendation on new day
+      }
+
+      // Check if already received recommendation for this meal type today
+      const alreadyReceived = user.recommendations[mealType];
+      if (alreadyReceived) {
+        logger.debug(`⏭️ [RECOMMENDATIONS] User ${userId} already received ${mealType} recommendation today`);
+        return false;
+      }
+
+      return true; // Can receive recommendation
+    } catch (error) {
+      logger.error(`Error checking recommendation eligibility for user ${userId}:`, error);
+      return false; // Fail safely - don't send if error
+    }
+  }
+
+  /**
+   * Mark that a user has received a recommendation for the specified meal type
+   */
+  async markRecommendationSent(
+    userId: mongoose.Types.ObjectId,
+    mealType: 'breakfast' | 'lunch' | 'dinner'
+  ): Promise<boolean> {
+    try {
+      const updateField = `recommendations.${mealType}`;
+      const result = await this.user.findByIdAndUpdate(
+        userId,
+        { [updateField]: true },
+        { new: true }
+      );
+
+      if (result) {
+        logger.debug(`✅ [RECOMMENDATIONS] Marked ${mealType} as sent for user ${userId}`);
+        return true;
+      } else {
+        logger.warn(`User ${userId} not found when marking recommendation sent`);
+        return false;
+      }
+    } catch (error) {
+      logger.error(`Error marking recommendation sent for user ${userId}:`, error);
+      return false;
     }
   }
 

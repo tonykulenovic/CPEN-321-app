@@ -8,6 +8,15 @@ export enum PinCategory {
   SHOPS_SERVICES = 'shops_services',
 }
 
+// Meal categories for recommendations
+export enum MealCategory {
+  BREAKFAST = 'breakfast',
+  LUNCH = 'lunch', 
+  DINNER = 'dinner',
+  COFFEE = 'coffee',
+  SNACKS = 'snacks',
+}
+
 export enum PinStatus {
   ACTIVE = 'active',
   REPORTED = 'reported',
@@ -36,6 +45,14 @@ export interface IPin {
     openingHours?: string;
     amenities?: string[];
     crowdLevel?: 'quiet' | 'moderate' | 'busy';
+    // New recommendation-related fields
+    mealCategories?: MealCategory[];
+    cuisineType?: string[];
+    priceRange?: 1 | 2 | 3 | 4; // $ to $$$$
+    hasOutdoorSeating?: boolean;
+    businessHours?: {
+      [key: string]: { open: string; close: string; } | null; // day -> hours or null if closed
+    };
   };
   rating: {
     upvotes: number;
@@ -80,6 +97,18 @@ export const createPinSchema = z.object({
       openingHours: z.string().optional(),
       amenities: z.array(z.string()).optional(),
       crowdLevel: z.enum(['quiet', 'moderate', 'busy']).optional(),
+      // New recommendation fields
+      mealCategories: z.array(z.nativeEnum(MealCategory)).optional(),
+      cuisineType: z.array(z.string()).optional(),
+      priceRange: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4)]).optional(),
+      hasOutdoorSeating: z.boolean().optional(),
+      businessHours: z.record(z.string(), z.union([
+        z.object({
+          open: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/), // HH:MM format
+          close: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/),
+        }),
+        z.null()
+      ])).optional(),
     })
     .optional(),
   expiresAt: z.preprocess((val: unknown) => (val ? new Date(String(val)) : undefined), z.date().optional()),
@@ -96,6 +125,18 @@ export const updatePinSchema = z.object({
       openingHours: z.string().optional(),
       amenities: z.array(z.string()).optional(),
       crowdLevel: z.enum(['quiet', 'moderate', 'busy']).optional(),
+      // New recommendation fields
+      mealCategories: z.array(z.nativeEnum(MealCategory)).optional(),
+      cuisineType: z.array(z.string()).optional(),
+      priceRange: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4)]).optional(),
+      hasOutdoorSeating: z.boolean().optional(),
+      businessHours: z.record(z.string(), z.union([
+        z.object({
+          open: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/), // HH:MM format
+          close: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/),
+        }),
+        z.null()
+      ])).optional(),
     })
     .optional(),
   imageUrl: z.string().url().optional(),

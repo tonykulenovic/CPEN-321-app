@@ -5,6 +5,7 @@ import {
   PinCategory,
   PinStatus,
   PinVisibility,
+  MealCategory,
   CreatePinRequest,
   UpdatePinRequest,
   createPinSchema,

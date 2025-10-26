@@ -21,6 +21,13 @@ export interface IUser extends Document {
   fcmToken?: string;
   lastActiveAt: Date;
 
+  recommendations?: {
+    currentDate: Date;
+    breakfast: boolean;
+    lunch: boolean;
+    dinner: boolean;
+  };
+
   stats: {
     pinsCreated: number;
     pinsVisited: number;
