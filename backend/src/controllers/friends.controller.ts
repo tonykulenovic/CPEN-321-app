@@ -13,6 +13,8 @@ import {
 } from '../types/friends.types';
 import { friendshipModel } from '../models/friendship.model';
 import { userModel } from '../models/user.model';
+import { locationModel } from '../models/location.model';
+import { notificationService } from '../services/notification.service';
 import logger from '../utils/logger.util';
 import { BadgeService } from '../services/badge.service';
 import { BadgeRequirementType } from '../types/badge.types';
@@ -120,7 +122,14 @@ export async function sendFriendRequest(req: Request, res: Response): Promise<vo
 
     const newFriendship = await friendshipModel.create(friendshipData);
 
-    // 6. Return response
+    // 6. Send notification to target user
+    await notificationService.sendFriendRequestNotification(
+      toUserId,
+      fromUserId.toString(),
+      fromUser.name
+    );
+
+    // 7. Return response
     const response: SendFriendRequestResponse = {
       message: 'Friend request sent successfully',
       data: {
@@ -311,7 +320,17 @@ export async function acceptFriendRequest(req: Request, res: Response): Promise<
       userModel.incrementFriendsCount(userId, 1),
     ]);
 
-    // 8. Process badge events for both users who gained a friend
+    // 8. Send notification to the original requester
+    const acceptingUser = await userModel.findById(currentUserId);
+    if (acceptingUser) {
+      await notificationService.sendFriendRequestAcceptedNotification(
+        userId.toString(),
+        currentUserId.toString(),
+        acceptingUser.name
+      );
+    }
+
+    // 9. Process badge events for both users who gained a friend
     try {
       const badgePromises = [
         BadgeService.processBadgeEvent({
@@ -469,19 +488,30 @@ export async function listFriends(req: Request, res: Response): Promise<void> {
       friendLimit
     );
 
-    // 4. Format friend summary data
+    // 4. Get online status for all friends (based on recent location activity)
+    const friendUserIds = acceptedFriendships.map(friendship => {
+      const friend = friendship.friendId as any;
+      return friend._id;
+    });
+    
+    const onlineStatusMap = await userModel.getOnlineStatus(friendUserIds, 10); // 10 minutes threshold
+
+    // 5. Format friend summary data with online status
     const formattedFriends = acceptedFriendships.map((friendship) => {
       const friend = friendship.friendId as any; // populated by the model
+      const isOnline = onlineStatusMap.get(friend._id.toString()) || false;
+      
       return {
         userId: friend._id.toString(),
         displayName: friend.name || friend.username,
         photoUrl: friend.profilePicture,
         bio: friend.bio,
         shareLocation: friendship.shareLocation,
+        isOnline: isOnline
       };
     });
 
-    // 5. Return results
+    // 6. Return results
     const response: FriendsListResponse = {
       message: 'Friends list retrieved successfully',
       data: formattedFriends,

@@ -94,10 +94,12 @@ import androidx.compose.runtime.SideEffect
 import com.cpen321.usermanagement.ui.screens.BadgesScreen
 import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.DisposableEffect
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.async
 import com.cpen321.usermanagement.data.remote.dto.PinCategory
 import com.cpen321.usermanagement.ui.viewmodels.PinViewModel
 import com.cpen321.usermanagement.ui.viewmodels.ProfileViewModel
@@ -232,6 +234,26 @@ fun MainScreen(
             color = Color(0xFF1A1A2E),
             darkIcons = false // false = light/white icons
         )
+    }
+
+    // Lifecycle management - Signal when map screen is active/inactive
+    DisposableEffect(Unit) {
+        android.util.Log.d("MainScreen", "🗺️  Map screen ACTIVE - Starting map operations")
+        mainViewModel.onMapScreenActive()
+        
+        onDispose {
+            android.util.Log.d("MainScreen", "🗺️  Map screen INACTIVE - Stopping map operations")
+            mainViewModel.onMapScreenInactive()
+            
+            // Stop location tracking when leaving map screen
+            try {
+                locationTrackingService.stopRealGPSTracking()
+                locationTrackingService.stopLocationSharing()
+                android.util.Log.d("MainScreen", "✅ Location tracking stopped on map screen exit")
+            } catch (e: Exception) {
+                android.util.Log.e("MainScreen", "❌ Error stopping location tracking", e)
+            }
+        }
     }
 
     MainContent(
@@ -556,20 +578,35 @@ private fun MapContent(
         }
     }
     
-    // Create scaled custom icons (48dp size for map markers) - nullable until map loads
+    // Create scaled custom icons (48dp size for map markers) - use remember to cache across recompositions
     var libraryIcon by remember { mutableStateOf<BitmapDescriptor?>(null) }
     var cafeIcon by remember { mutableStateOf<BitmapDescriptor?>(null) }
+    var restaurantIcon by remember { mutableStateOf<BitmapDescriptor?>(null) }
 
-    // Load pins when screen opens
-    LaunchedEffect(Unit) {
-        pinViewModel.loadPins()
+    // Load pins - if coming from search with a selected pin, ensure pins are loaded
+    LaunchedEffect(Unit, initialSelectedPinId) {
+        if (initialSelectedPinId != null) {
+            // Force load if coming from search to ensure pin data is available
+            if (pinUiState.pins.isEmpty()) {
+                pinViewModel.loadPins(forceRefresh = true)
+            }
+        } else if (pinUiState.pins.isEmpty() && !pinUiState.isLoading) {
+            // Normal loading - use cache if available
+            pinViewModel.loadPins()
+        }
     }
     
-    // Create custom icons after a short delay to ensure GoogleMap is initialized
+    // Create custom icons immediately in parallel (no delay needed - markers have fallbacks)
     LaunchedEffect(Unit) {
-        kotlinx.coroutines.delay(500) // Wait for map to initialize
-        libraryIcon = context.createScaledBitmapFromPng(R.drawable.ic_library, 48)
-        cafeIcon = context.createScaledBitmapFromPng(R.drawable.ic_coffee, 48)
+        // Load icons in parallel using async (LaunchedEffect provides the coroutine scope)
+        val libraryJob = async { context.createScaledBitmapFromPng(R.drawable.ic_library, 48) }
+        val cafeJob = async { context.createScaledBitmapFromPng(R.drawable.ic_coffee, 48) }
+        val restaurantJob = async { context.createScaledBitmapFromPng(R.drawable.ic_restaurants, 48) }
+        
+        // Await all results
+        libraryIcon = libraryJob.await()
+        cafeIcon = cafeJob.await()
+        restaurantIcon = restaurantJob.await()
     }
     
     // UBC Vancouver coordinates
@@ -580,24 +617,18 @@ private fun MapContent(
     }
     
     // Center camera on selected pin from search
-    LaunchedEffect(initialSelectedPinId) {
-        if (initialSelectedPinId != null) {
-            // Wait for pins to load
-            var attempts = 0
-            while (pinUiState.pins.isEmpty() && attempts < 50) {
-                kotlinx.coroutines.delay(100)
-                attempts++
-            }
-            
+    LaunchedEffect(initialSelectedPinId, pinUiState.pins) {
+        if (initialSelectedPinId != null && pinUiState.pins.isNotEmpty()) {
             // Use original pins list for search selection (not filtered)
             val selectedPin = pinUiState.pins.find { it.id == initialSelectedPinId }
-            selectedPin?.let { pin ->
+            
+            if (selectedPin != null) {
                 // Trigger bottom sheet to open
-                onPinClick(pin.id)
+                onPinClick(selectedPin.id)
                 
                 // Small delay to ensure map is fully initialized
-                kotlinx.coroutines.delay(300)
-                val pinLocation = LatLng(pin.location.latitude, pin.location.longitude)
+                kotlinx.coroutines.delay(200)
+                val pinLocation = LatLng(selectedPin.location.latitude, selectedPin.location.longitude)
                 cameraPositionState.animate(
                     CameraUpdateFactory.newLatLngZoom(pinLocation, 17f),
                     durationMs = 1000
@@ -741,10 +772,16 @@ private fun MapContent(
             modifier = Modifier.fillMaxSize(),
             cameraPositionState = cameraPositionState,
             properties = mapProperties,
-            uiSettings = uiSettings
+            uiSettings = uiSettings,
+            onMapLoaded = {
+                // Map is fully loaded and ready
+                android.util.Log.d("MapContent", "Map loaded with ${filteredPins.size} pins")
+            }
         ) {
             // Display filtered pin markers (instant local filtering)
-            filteredPins.forEach { pin ->
+            // Only render markers when we have data (prevents rendering delay)
+            if (filteredPins.isNotEmpty()) {
+                filteredPins.forEach { pin ->
                 Marker(
                     state = MarkerState(
                         position = LatLng(
@@ -762,8 +799,21 @@ private fun MapContent(
                                 libraryIcon ?: BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE)
                             }
                             PinCategory.SHOPS_SERVICES -> {
-                                // Cafes use coffee icon (fallback to orange while loading)
-                                cafeIcon ?: BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE)
+                                // Check subtype to distinguish cafes from restaurants
+                                when (pin.metadata?.subtype) {
+                                    "cafe" -> {
+                                        // Cafes use coffee icon (fallback to orange while loading)
+                                        cafeIcon ?: BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE)
+                                    }
+                                    "restaurant" -> {
+                                        // Restaurants use restaurant icon (fallback to red while loading)
+                                        restaurantIcon ?: BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)
+                                    }
+                                    else -> {
+                                        // Default for SHOPS_SERVICES without subtype
+                                        cafeIcon ?: BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE)
+                                    }
+                                }
                             }
                             else -> {
                                 // Fallback for any other pre-seeded category
@@ -795,6 +845,7 @@ private fun MapContent(
                         true // Consume the click event
                     }
                 )
+                }
             }
 
             // Display friend markers if locations are available
@@ -879,11 +930,12 @@ private fun MapContent(
                 }
             }
 
-            // Display friend markers using HTTP endpoint location data
+            // Display friend markers using HTTP endpoint location data - ONLY for online friends
             friendsUiState.friendLocations.forEach { friendLocation ->
                 val friend = friendsUiState.friends.find { it.userId == friendLocation.userId }
 
-                if (friend != null) {
+                // Only show marker if friend exists AND is online
+                if (friend != null && friend.isOnline) {
                     val position = LatLng(friendLocation.lat, friendLocation.lng)
 
                     // Calculate time since last update
@@ -917,9 +969,9 @@ private fun MapContent(
                         onClick = {
                             // Create metadata map for the bottom sheet
                             val metadata = mapOf(
-                                "location" to "Lat: ${String.format("%.4f", friendLocation.lat)}, Lng: ${String.format("%.4f", friendLocation.lng)}",
-                                "activity" to if (friend.shareLocation) "Location sharing" else "Location visible",
-                                "duration" to "Updated ${if (minutesAgo < 1) "now" else "${minutesAgo}m ago"}",
+                                "location" to "Near UBC Campus", // More user-friendly location
+                                "activity" to if (friend.isOnline) "Online" else "Offline",
+                                "duration" to if (minutesAgo < 1) "now" else "${minutesAgo}m ago",
                                 "lastSeen" to lastSeen,
                                 "isLiveSharing" to friend.shareLocation.toString(),
                                 "accuracy" to "±${friendLocation.accuracyM.toInt()}m"
@@ -949,8 +1001,13 @@ private fun MapContent(
                 .padding(top = 8.dp, end = 8.dp),
             horizontalAlignment = Alignment.End
         ) {
-            // Enhanced friends status indicator
-            if (friendsUiState.friendLocations.isNotEmpty()) {
+            // Enhanced friends status indicator - ONLY count online friends
+            val onlineFriendsCount = friendsUiState.friendLocations.count { friendLocation ->
+                val friend = friendsUiState.friends.find { it.userId == friendLocation.userId }
+                friend?.isOnline == true
+            }
+            
+            if (onlineFriendsCount > 0) {
                 Column(
                     horizontalAlignment = Alignment.End
                 ) {
@@ -972,7 +1029,7 @@ private fun MapContent(
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
-                            text = "${friendsUiState.friendLocations.size} friends nearby",
+                            text = "$onlineFriendsCount friends nearby",
                             color = Color.White,
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Medium
@@ -1132,17 +1189,15 @@ private fun FriendDetailsBottomSheet(
 
                 LocationDetailRow(
                     icon = Icons.Default.AccessTime,
-                    title = "Duration",
-                    value = "Here for ${metadata["duration"] ?: "unknown time"}"
+                    title = "Last seen",
+                    value = metadata["duration"] ?: "unknown time"
                 )
 
-                if (metadata["isLiveSharing"] == "true") {
-                    LocationDetailRow(
-                        icon = Icons.Default.TrackChanges,
-                        title = "Live Sharing",
-                        value = "Location updates in real-time"
-                    )
-                }
+                LocationDetailRow(
+                    icon = Icons.Default.TrackChanges,
+                    title = "Sharing",
+                    value = if (metadata["isLiveSharing"] == "true") "Live location" else "Location visible"
+                )
 
                 Spacer(modifier = Modifier.height(16.dp))
 

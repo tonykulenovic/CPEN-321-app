@@ -21,7 +21,8 @@ data class PinUiState(
     val error: String? = null,
     val successMessage: String? = null,
     val totalPins: Int = 0,
-    val currentPage: Int = 1
+    val currentPage: Int = 1,
+    val lastLoadedTimestamp: Long = 0 // Track when pins were last loaded
 )
 
 @HiltViewModel
@@ -31,6 +32,10 @@ class PinViewModel @Inject constructor(
     
     private val _uiState = MutableStateFlow(PinUiState())
     val uiState: StateFlow<PinUiState> = _uiState.asStateFlow()
+    
+    companion object {
+        private const val CACHE_DURATION_MS = 5 * 60 * 1000L // 5 minutes cache
+    }
     
     init {
         loadPins()
@@ -42,8 +47,17 @@ class PinViewModel @Inject constructor(
         longitude: Double? = null,
         radius: Double? = null,
         search: String? = null,
-        page: Int = 1
+        page: Int = 1,
+        forceRefresh: Boolean = false
     ) {
+        // Skip if pins are cached and still fresh (unless force refresh)
+        val currentTime = System.currentTimeMillis()
+        val timeSinceLastLoad = currentTime - _uiState.value.lastLoadedTimestamp
+        
+        if (!forceRefresh && _uiState.value.pins.isNotEmpty() && timeSinceLastLoad < CACHE_DURATION_MS) {
+            // Pins are still fresh, skip loading
+            return
+        }
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(
                 isLoading = true,
@@ -58,7 +72,7 @@ class PinViewModel @Inject constructor(
                 radius = radius,
                 search = search,
                 page = page,
-                limit = 100 // Increased to show more pins (libraries + cafes)
+                limit = 100 // Increased to show more pins (libraries + cafes + restaurants)
             )
                 .onSuccess { data ->
                     _uiState.value = _uiState.value.copy(
@@ -66,7 +80,8 @@ class PinViewModel @Inject constructor(
                         totalPins = data.total,
                         currentPage = data.page,
                         isLoading = false,
-                        isSearching = false
+                        isSearching = false,
+                        lastLoadedTimestamp = System.currentTimeMillis()
                     )
                 }
                 .onFailure { error ->
@@ -89,7 +104,7 @@ class PinViewModel @Inject constructor(
                         successMessage = "Pin created successfully!",
                         isCreating = false
                     )
-                    loadPins() // Refresh pin list
+                    loadPins(forceRefresh = true) // Force refresh to show new pin
                 }
                 .onFailure { error ->
                     _uiState.value = _uiState.value.copy(
@@ -255,7 +270,7 @@ class PinViewModel @Inject constructor(
                     _uiState.value = _uiState.value.copy(
                         successMessage = "Pin deleted successfully"
                     )
-                    loadPins() // Refresh list
+                    loadPins(forceRefresh = true) // Force refresh to remove deleted pin
                 }
                 .onFailure { error ->
                     _uiState.value = _uiState.value.copy(
@@ -276,7 +291,7 @@ class PinViewModel @Inject constructor(
                         currentPin = updatedPin,
                         isUpdating = false
                     )
-                    loadPins() // Refresh pin list
+                    loadPins(forceRefresh = true) // Force refresh to show updated pin
                 }
                 .onFailure { error ->
                     _uiState.value = _uiState.value.copy(

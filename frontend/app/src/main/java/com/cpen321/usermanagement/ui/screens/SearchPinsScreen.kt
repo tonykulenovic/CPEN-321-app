@@ -42,9 +42,11 @@ fun SearchPinsScreen(
     var selectedItem by remember { mutableIntStateOf(1) } // Search is selected (index 1)
     val uiState by pinViewModel.uiState.collectAsState()
 
-    // Load all pins when screen opens
+    // Load all pins only if not already loaded (uses 5-minute cache from PinViewModel)
     LaunchedEffect(Unit) {
-        pinViewModel.loadPins()
+        if (uiState.pins.isEmpty() && !uiState.isLoading) {
+            pinViewModel.loadPins()
+        }
     }
 
     // Apply search filtering

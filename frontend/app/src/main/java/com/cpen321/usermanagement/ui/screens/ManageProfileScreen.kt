@@ -22,6 +22,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -87,6 +88,7 @@ private data class ManageProfileScreenActions(
     val onBioChange: (String) -> Unit,
     val onEditPictureClick: () -> Unit,
     val onSaveClick: () -> Unit,
+    val onPrivacySettingsClick: () -> Unit,
     val onImagePickerDismiss: () -> Unit,
     val onImageSelected: (Uri) -> Unit,
     val onLoadingPhotoChange: (Boolean) -> Unit,
@@ -104,6 +106,7 @@ private data class ProfileFormData(
     val onBioChange: (String) -> Unit,
     val onEditPictureClick: () -> Unit,
     val onSaveClick: () -> Unit,
+    val onPrivacySettingsClick: () -> Unit,
     val onLoadingPhotoChange: (Boolean) -> Unit
 )
 
@@ -115,6 +118,7 @@ private data class ProfileBodyData(
     val onBioChange: (String) -> Unit,
     val onEditPictureClick: () -> Unit,
     val onSaveClick: () -> Unit,
+    val onPrivacySettingsClick: () -> Unit,
     val onLoadingPhotoChange: (Boolean) -> Unit
 )
 
@@ -131,7 +135,8 @@ private data class ProfileFieldsData(
 @Composable
 fun ManageProfileScreen(
     profileViewModel: ProfileViewModel,
-    onBackClick: () -> Unit
+    onBackClick: () -> Unit,
+    onPrivacySettingsClick: () -> Unit = {}
 ) {
     val uiState by profileViewModel.uiState.collectAsState()
     val snackBarHostState = remember { SnackbarHostState() }
@@ -184,6 +189,7 @@ fun ManageProfileScreen(
         onSaveClick = {
             profileViewModel.updateProfile(formState.name, formState.username, formState.bio)
         },
+        onPrivacySettingsClick = onPrivacySettingsClick,
         onImagePickerDismiss = { showImagePickerDialog = false },
         onImageSelected = { uri ->
             showImagePickerDialog = false
@@ -241,6 +247,7 @@ private fun ManageProfileContent(
                 onBioChange = actions.onBioChange,
                 onEditPictureClick = actions.onEditPictureClick,
                 onSaveClick = actions.onSaveClick,
+                onPrivacySettingsClick = actions.onPrivacySettingsClick,
                 onLoadingPhotoChange = actions.onLoadingPhotoChange
             )
         )
@@ -315,6 +322,7 @@ private fun ProfileBody(
                         onBioChange = data.onBioChange,
                         onEditPictureClick = data.onEditPictureClick,
                         onSaveClick = data.onSaveClick,
+                        onPrivacySettingsClick = data.onPrivacySettingsClick,
                         onLoadingPhotoChange = data.onLoadingPhotoChange
                     )
                 )
@@ -356,6 +364,10 @@ private fun ProfileForm(
                 onUsernameChange = data.onUsernameChange,
                 onBioChange = data.onBioChange
             )
+        )
+
+        PrivacySettingsButton(
+            onClick = data.onPrivacySettingsClick
         )
 
         SaveButton(
@@ -599,5 +611,45 @@ private fun SaveButton(
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Medium
         )
+    }
+}
+
+@Composable
+private fun PrivacySettingsButton(
+    onClick: () -> Unit,
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = Color(0xFF2A2A3E)
+        ),
+        onClick = onClick
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column {
+                Text(
+                    text = "Privacy Settings",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Medium,
+                    color = Color.White
+                )
+                Text(
+                    text = "Control your location sharing and visibility",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color(0xFF8B9DAF)
+                )
+            }
+            androidx.compose.material3.Icon(
+                imageVector = Icons.Default.ArrowForward,
+                contentDescription = "Go to Privacy Settings",
+                tint = Color(0xFF8B9DAF)
+            )
+        }
     }
 }

@@ -94,10 +94,11 @@ fun BadgesScreen(
     }
     
     // Periodic badge refresh to catch pin visits and progress updates
+    // Uses cache, so only refreshes if data is stale (> 2 minutes old)
     LaunchedEffect(Unit) {
         while (true) {
-            kotlinx.coroutines.delay(10000) // Refresh every 10 seconds
-            badgeViewModel.loadBadgeProgress()
+            kotlinx.coroutines.delay(30000) // Check every 30 seconds
+            badgeViewModel.loadBadgeProgress() // Will skip if cache is fresh
         }
     }
     
@@ -126,7 +127,9 @@ fun BadgesScreen(
         containerColor = Color(0xFF0A1929),
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         topBar = {
-            BadgesTopBar()
+            BadgesTopBar(
+                onInfoClick = { showInfoModal = true }
+            )
         },
         bottomBar = {
             BottomNavigationBar(
@@ -142,19 +145,6 @@ fun BadgesScreen(
                     }
                 }
             )
-        },
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = { showInfoModal = true },
-                containerColor = Color(0xFF00BCD4),
-                contentColor = Color.White
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Info,
-                    contentDescription = "Badge Info",
-                    modifier = Modifier.size(24.dp)
-                )
-            }
         }
     ) { paddingValues ->
         Column(
@@ -213,7 +203,9 @@ fun BadgesScreen(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun BadgesTopBar() {
+private fun BadgesTopBar(
+    onInfoClick: () -> Unit
+) {
     TopAppBar(
         modifier = Modifier.height(98.dp),
         title = {
@@ -227,6 +219,15 @@ private fun BadgesTopBar() {
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold,
                     color = Color.White
+                )
+            }
+        },
+        actions = {
+            IconButton(onClick = onInfoClick) {
+                Icon(
+                    imageVector = Icons.Default.Info,
+                    contentDescription = "Badge Info",
+                    tint = Color.White
                 )
             }
         },

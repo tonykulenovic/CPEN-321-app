@@ -470,6 +470,10 @@ export class BadgeService {
           current = user?.stats?.cafesVisited || 0;
           break;
         
+        case BadgeRequirementType.RESTAURANTS_VISITED:
+          current = user?.stats?.restaurantsVisited || 0;
+          break;
+        
         case BadgeRequirementType.LOGIN_STREAK:
           current = user?.loginTracking?.currentStreak || 0;
           break;

@@ -8,6 +8,10 @@ import usersRoutes from '../routes/user.routes';
 import friendsRoutes from '../routes/friends.routes';
 import locationRoutes from '../routes/location.routes';
 import pinsRoutes from '../routes/pins.routes';
+import recommendationsRoutes from '../routes/recommendations.routes';
+import schedulerRoutes from '../routes/scheduler.routes';
+import debugRoutes from '../routes/debug.routes';
+
 
 
 const router = Router();
@@ -36,5 +40,13 @@ router.use('/me', locationRoutes); // Authentication middleware applied within l
 router.use('/badges', authenticateToken, badgeRoutes);
 
 router.use('/pins', pinsRoutes);
+
+router.use('/recommendations', recommendationsRoutes);
+
+// Admin scheduler endpoints
+router.use('/admin/scheduler', schedulerRoutes);
+
+// Debug endpoints (consider removing in production)
+router.use('/debug', debugRoutes);
 
 export default router;

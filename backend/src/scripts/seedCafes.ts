@@ -163,6 +163,7 @@ export async function seedCafes(): Promise<void> {
             address: address,
           },
           metadata: {
+            subtype: 'cafe', // Add subtype to distinguish from restaurants
             openingHours: isOpen !== undefined 
               ? (isOpen ? 'Open now' : 'Closed')
               : undefined,
@@ -184,6 +185,7 @@ export async function seedCafes(): Promise<void> {
         const result = await pinModel['pin'].updateOne(
           {
             isPreSeeded: true,
+            'metadata.subtype': 'cafe',
             name: cafeData.name,
             'location.latitude': { 
               $gte: cafeData.location.latitude - 0.0001, 
@@ -231,6 +233,7 @@ export async function seedCafes(): Promise<void> {
     const deleteResult = await pinModel['pin'].deleteMany({
       isPreSeeded: true,
       category: PinCategory.SHOPS_SERVICES,
+      'metadata.subtype': 'cafe',
       name: { $nin: currentCafeNames }
     });
 

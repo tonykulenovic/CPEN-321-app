@@ -1,7 +1,7 @@
 import mongoose, { Document } from 'mongoose';
 import z from 'zod';
 
-// Badge model interfaces
+// Badge model interfaces   
 // ------------------------------------------------------------
 export interface IBadge extends Document {
   _id: mongoose.Types.ObjectId;
@@ -62,6 +62,7 @@ export enum BadgeRequirementType {
   LOCATIONS_EXPLORED = 'locations_explored',
   LIBRARIES_VISITED = 'libraries_visited',
   CAFES_VISITED = 'cafes_visited',
+  RESTAURANTS_VISITED = 'restaurants_visited',
   DAILY_ACTIVE = 'daily_active',
   WEEKLY_ACTIVE = 'weekly_active',
   MONTHLY_ACTIVE = 'monthly_active'

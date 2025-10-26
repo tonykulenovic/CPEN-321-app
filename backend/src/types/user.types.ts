@@ -18,6 +18,15 @@ export interface IUser extends Document {
   badgesCount: number;
   isAdmin: boolean;
   isSuspended: boolean;
+  fcmToken?: string;
+  lastActiveAt: Date;
+
+  recommendations?: {
+    currentDate: Date;
+    breakfast: boolean;
+    lunch: boolean;
+    dinner: boolean;
+  };
 
   stats: {
     pinsCreated: number;
@@ -26,6 +35,7 @@ export interface IUser extends Document {
     locationsExplored: number;
     librariesVisited: number;
     cafesVisited: number;
+    restaurantsVisited: number;
   };
   visitedPins: mongoose.Types.ObjectId[];
   reportedPins: mongoose.Types.ObjectId[];

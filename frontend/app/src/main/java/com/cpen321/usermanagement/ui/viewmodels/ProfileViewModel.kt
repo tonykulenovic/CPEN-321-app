@@ -128,4 +128,29 @@ class ProfileViewModel @Inject constructor(
             }
         }
     }
+
+    fun updatePrivacy(request: com.cpen321.usermanagement.data.remote.dto.UpdatePrivacyRequest) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(
+                isSavingProfile = true,
+                errorMessage = null,
+                successMessage = null
+            )
+
+            val result = profileRepository.updatePrivacy(request)
+            if (result.isSuccess) {
+                val updatedUser = result.getOrNull()!!
+                _uiState.value = _uiState.value.copy(
+                    isSavingProfile = false,
+                    user = updatedUser,
+                    successMessage = "Privacy settings updated successfully!"
+                )
+            } else {
+                _uiState.value = _uiState.value.copy(
+                    isSavingProfile = false,
+                    errorMessage = result.exceptionOrNull()?.message ?: "Failed to update privacy settings"
+                )
+            }
+        }
+    }
 }

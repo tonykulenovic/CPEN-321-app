@@ -16,16 +16,21 @@ import logger from '../utils/logger.util';
 import { MediaService } from '../services/media.service';
 import { userModel } from '../models/user.model';
 import { friendshipModel } from '../models/friendship.model';
+import { badgeModel } from '../models/badge.model';
 
 export class UserController {
   constructor() {
     // Bind methods to preserve 'this' context
     this.getProfile = this.getProfile.bind(this);
+    this.getUserProfile = this.getUserProfile.bind(this);
     this.updateProfile = this.updateProfile.bind(this);
     this.deleteProfile = this.deleteProfile.bind(this);
     this.searchUsers = this.searchUsers.bind(this);
     this.getMe = this.getMe.bind(this);
     this.updatePrivacy = this.updatePrivacy.bind(this);
+    // FCM token methods
+    this.updateFcmToken = this.updateFcmToken.bind(this);
+    this.removeFcmToken = this.removeFcmToken.bind(this);
     // Admin methods
     this.getAllUsers = this.getAllUsers.bind(this);
     this.suspendUser = this.suspendUser.bind(this);
@@ -72,6 +77,91 @@ export class UserController {
       message: 'Profile fetched successfully',
       data: { user },
     });
+  }
+
+  /**
+   * GET /api/users/:userId/profile - Get a friend's profile with badges and stats
+   * Only returns profile if users are friends
+   */
+  async getUserProfile(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) {
+    try {
+      const currentUser = req.user!;
+      const { userId } = req.params;
+
+      // Validate userId format
+      if (!mongoose.Types.ObjectId.isValid(userId)) {
+        return res.status(400).json({
+          message: 'Invalid user ID format',
+        });
+      }
+
+      const targetUserId = new mongoose.Types.ObjectId(userId);
+
+      // Check if users are friends
+      const areFriends = await friendshipModel.areFriends(currentUser._id, targetUserId);
+      if (!areFriends) {
+        return res.status(403).json({
+          message: 'You can only view profiles of your friends',
+        });
+      }
+
+      // Fetch target user
+      const targetUser = await userModel.findById(targetUserId);
+      if (!targetUser) {
+        return res.status(404).json({
+          message: 'User not found',
+        });
+      }
+
+      // Get online status
+      const onlineStatusMap = await userModel.getOnlineStatus([targetUserId], 10);
+      const isOnline = onlineStatusMap.get(targetUserId.toString()) || false;
+
+      // Get user badges
+      const userBadges = await badgeModel.getUserBadges(targetUserId);
+      
+      logger.info(`Fetched ${userBadges.length} badges for user ${targetUserId}`);
+
+      // Format response
+      const profileData = {
+        userId: targetUser._id.toString(),
+        name: targetUser.name,
+        username: targetUser.username,
+        email: targetUser.email,
+        bio: targetUser.bio,
+        campus: targetUser.campus,
+        profilePicture: targetUser.profilePicture,
+        isOnline,
+        friendsCount: targetUser.friendsCount,
+        badgesCount: userBadges.length, // Use actual count from fetched badges
+        stats: {
+          pinsCreated: targetUser.stats.pinsCreated,
+          pinsVisited: targetUser.stats.pinsVisited,
+          locationsExplored: targetUser.stats.locationsExplored,
+          librariesVisited: targetUser.stats.librariesVisited,
+          cafesVisited: targetUser.stats.cafesVisited,
+          restaurantsVisited: targetUser.stats.restaurantsVisited,
+        },
+        badges: userBadges,
+      };
+
+      res.status(200).json({
+        message: 'Friend profile fetched successfully',
+        data: profileData,
+      });
+    } catch (error) {
+      logger.error('Error in getUserProfile:', error);
+      if (error instanceof Error) {
+        return res.status(500).json({
+          message: error.message || 'Failed to fetch friend profile',
+        });
+      }
+      next(error);
+    }
   }
 
   async updateProfile(
@@ -279,12 +369,11 @@ export class UserController {
         return;
       }
 
-      // 4. Return success response
+      // 4. Return success response with full user object (matching other endpoints)
       res.status(200).json({
         message: 'Privacy settings updated successfully',
         data: {
-          success: true,
-          privacy: updatedUser.privacy,
+          user: updatedUser,
         },
       });
     } catch (error) {
@@ -435,6 +524,114 @@ export class UserController {
       });
     } catch (error) {
       logger.error('Error in deleteUserByAdmin:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  }
+
+  /**
+   * PUT /users/me/fcm-token - Update user's FCM token for push notifications
+   */
+  async updateFcmToken(req: Request, res: Response): Promise<void> {
+    logger.info('📤 [USER-CONTROLLER] FCM token update request received');
+    
+    try {
+      // Authentication check
+      if (!req.user) {
+        logger.warn('🚫 [USER-CONTROLLER] Unauthorized FCM token update attempt');
+        res.status(401).json({ message: 'Unauthorized' });
+        return;
+      }
+      
+      const userId = req.user._id;
+      const userName = req.user.name || 'unknown';
+      logger.info(`👤 [USER-CONTROLLER] FCM token update for user: ${userName} (${userId})`);
+      
+      const { fcmToken } = req.body;
+      logger.debug(`📦 [USER-CONTROLLER] Request body keys: ${Object.keys(req.body)}`);
+
+      // Validation
+      if (!fcmToken || typeof fcmToken !== 'string') {
+        logger.warn('⚠️ [USER-CONTROLLER] Invalid FCM token in request');
+        logger.debug(`🔍 [USER-CONTROLLER] Token type: ${typeof fcmToken}, value: ${fcmToken}`);
+        res.status(400).json({ 
+          message: 'FCM token is required and must be a string' 
+        });
+        return;
+      }
+
+      const trimmedToken = fcmToken.trim();
+      logger.debug(`🔑 [USER-CONTROLLER] Token preview: ${trimmedToken.substring(0, 30)}...${trimmedToken.substring(trimmedToken.length - 10)}`);
+      logger.debug(`📏 [USER-CONTROLLER] Token length: ${trimmedToken.length} characters`);
+
+      // Update token in database
+      logger.debug('💾 [USER-CONTROLLER] Updating FCM token in database...');
+      const startTime = Date.now();
+      const updatedUser = await userModel.updateFcmToken(userId, trimmedToken);
+      const duration = Date.now() - startTime;
+      logger.debug(`⏱️ [USER-CONTROLLER] Database update completed in ${duration}ms`);
+
+      if (!updatedUser) {
+        logger.error(`❌ [USER-CONTROLLER] User not found: ${userId}`);
+        res.status(404).json({ message: 'User not found' });
+        return;
+      }
+
+      // Success response
+      const hasToken = !!updatedUser.fcmToken;
+      logger.info(`🎉 [USER-CONTROLLER] FCM token updated successfully for user ${updatedUser.name}`);
+      logger.debug(`✅ [USER-CONTROLLER] User now has token: ${hasToken}`);
+      logger.debug(`🔍 [USER-CONTROLLER] Updated token preview: ${updatedUser.fcmToken?.substring(0, 30)}...${updatedUser.fcmToken?.substring(updatedUser.fcmToken.length - 10)}`);
+
+      res.status(200).json({
+        message: 'FCM token updated successfully',
+        data: {
+          userId: updatedUser._id,
+          hasToken: hasToken
+        }
+      });
+      
+      logger.debug('📤 [USER-CONTROLLER] Success response sent');
+      
+    } catch (error) {
+      logger.error('💥 [USER-CONTROLLER] Error in updateFcmToken:', error);
+      if (error instanceof Error) {
+        logger.error(`   💬 Error message: ${error.message}`);
+        logger.error(`   📍 Error stack: ${error.stack}`);
+      }
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  }
+
+  /**
+   * DELETE /users/me/fcm-token - Remove user's FCM token
+   */
+  async removeFcmToken(req: Request, res: Response): Promise<void> {
+    try {
+      if (!req.user) {
+        res.status(401).json({ message: 'Unauthorized' });
+        return;
+      }
+      
+      const userId = req.user._id;
+
+      const updatedUser = await userModel.removeFcmToken(userId);
+
+      if (!updatedUser) {
+        res.status(404).json({ message: 'User not found' });
+        return;
+      }
+
+      logger.info(`📱 FCM token removed for user ${updatedUser.name}`);
+
+      res.status(200).json({
+        message: 'FCM token removed successfully',
+        data: {
+          userId: updatedUser._id,
+          hasToken: false
+        }
+      });
+    } catch (error) {
+      logger.error('Error in removeFcmToken:', error);
       res.status(500).json({ message: 'Internal server error' });
     }
   }

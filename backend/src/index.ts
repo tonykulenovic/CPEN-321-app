@@ -14,6 +14,10 @@ import { locationGateway } from './realtime/gateway';
 import { BadgeService } from './services/badge.service';
 import { seedLibraries } from './scripts/seedLibraries';
 import { seedCafes } from './scripts/seedCafes';
+import { seedRestaurants } from './scripts/seedRestaurants';
+import { firebaseService } from './config/firebase';
+import { recommendationScheduler } from './services/recommendationScheduler.service';
+
 
 const app = express();
 const httpServer = createServer(app);
@@ -28,6 +32,9 @@ app.use(errorHandler);
 
 // Initialize location gateway with Socket.io
 locationGateway.initialize(httpServer);
+
+// Initialize Firebase for push notifications
+firebaseService.initialize();
 
 // Connect to database and initialize system data
 connectDB().then(() => {
@@ -51,9 +58,19 @@ connectDB().then(() => {
     .catch(err => {
       console.error('⚠️  Failed to seed cafes:', err);
     });
+  
+  // Seed restaurants near UBC using Google Places API (excludes overlapping cafes)
+  seedRestaurants()
+    .catch(err => {
+      console.error('⚠️  Failed to seed restaurants:', err);
+    });
 });
 
 httpServer.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`📡 Socket.io enabled for real-time location updates`);
+  
+  // Start recommendation scheduler
+  recommendationScheduler.startScheduler();
+  console.log(`⏰ Recommendation scheduler started`);
 });

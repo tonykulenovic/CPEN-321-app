@@ -9,6 +9,7 @@ import com.cpen321.usermanagement.data.remote.api.RetrofitClient
 import com.cpen321.usermanagement.data.remote.api.UserInterface
 import com.cpen321.usermanagement.data.remote.dto.UpdateProfileRequest
 import com.cpen321.usermanagement.data.remote.dto.User
+import com.cpen321.usermanagement.data.remote.dto.FriendProfileData
 import com.cpen321.usermanagement.utils.JsonUtils.parseErrorMessage
 import com.cpen321.usermanagement.utils.MediaUtils.uriToFile
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -54,6 +55,25 @@ class ProfileRepositoryImpl @Inject constructor(
             Result.failure(e)
         } catch (e: retrofit2.HttpException) {
             Log.e(TAG, "HTTP error while getting profile: ${e.code()}", e)
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun getFriendProfile(userId: String): Result<FriendProfileData> {
+        return try {
+            val response = userInterface.getFriendProfile("", userId)
+            if (response.isSuccessful && response.body()?.data != null) {
+                Result.success(response.body()!!.data)
+            } else {
+                val errorMessage = parseErrorMessage(
+                    response.errorBody()?.string(),
+                    "Failed to fetch friend profile"
+                )
+                Log.e(TAG, "Failed to get friend profile: $errorMessage")
+                Result.failure(Exception(errorMessage))
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error getting friend profile", e)
             Result.failure(e)
         }
     }
@@ -124,6 +144,100 @@ class ProfileRepositoryImpl @Inject constructor(
             Result.failure(e)
         } catch (e: retrofit2.HttpException) {
             Log.e(TAG, "HTTP error while deleting account: ${e.code()}", e)
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun updateFcmToken(token: String): Result<Unit> {
+        Log.i(TAG, "📤 [PROFILE-REPO] Starting FCM token update...")
+        Log.d(TAG, "🔑 [PROFILE-REPO] Token preview: ${token.take(30)}...${token.takeLast(10)}")
+        Log.d(TAG, "📏 [PROFILE-REPO] Token length: ${token.length} characters")
+        
+        return try {
+            Log.d(TAG, "🔨 [PROFILE-REPO] Creating request object...")
+            val request = com.cpen321.usermanagement.data.remote.dto.NotificationTokenRequest(token)
+            Log.d(TAG, "✅ [PROFILE-REPO] Request created successfully")
+            
+            Log.d(TAG, "🌐 [PROFILE-REPO] Sending FCM token to backend...")
+            val startTime = System.currentTimeMillis()
+            val response = userInterface.updateFcmToken("", request)
+            val duration = System.currentTimeMillis() - startTime
+            
+            Log.d(TAG, "📊 [PROFILE-REPO] Response received in ${duration}ms")
+            Log.d(TAG, "📈 [PROFILE-REPO] Response code: ${response.code()}")
+            Log.d(TAG, "✅ [PROFILE-REPO] Response successful: ${response.isSuccessful}")
+            
+            if (response.isSuccessful) {
+                Log.i(TAG, "🎉 [PROFILE-REPO] FCM token updated successfully!")
+                Log.d(TAG, "📝 [PROFILE-REPO] Response body: ${response.body()?.message}")
+                Result.success(Unit)
+            } else {
+                Log.e(TAG, "💥 [PROFILE-REPO] Failed to update FCM token")
+                Log.e(TAG, "📈 [PROFILE-REPO] HTTP Status: ${response.code()}")
+                
+                val errorBodyString = response.errorBody()?.string()
+                Log.e(TAG, "📝 [PROFILE-REPO] Error body: $errorBodyString")
+                
+                val errorMessage = parseErrorMessage(
+                    errorBodyString,
+                    "Failed to update FCM token"
+                )
+                Log.e(TAG, "💬 [PROFILE-REPO] Parsed error: $errorMessage")
+                Result.failure(Exception(errorMessage))
+            }
+        } catch (e: java.net.SocketTimeoutException) {
+            Log.e(TAG, "⏰ [PROFILE-REPO] Network timeout updating FCM token", e)
+            Result.failure(e)
+        } catch (e: java.net.UnknownHostException) {
+            Log.e(TAG, "🌐 [PROFILE-REPO] Network connection failed updating FCM token", e)
+            Result.failure(e)
+        } catch (e: java.io.IOException) {
+            Log.e(TAG, "💾 [PROFILE-REPO] IO error updating FCM token", e)
+            Result.failure(e)
+        } catch (e: retrofit2.HttpException) {
+            Log.e(TAG, "🌐 [PROFILE-REPO] HTTP error updating FCM token: ${e.code()}", e)
+            Result.failure(e)
+        } catch (e: Exception) {
+            Log.e(TAG, "💥 [PROFILE-REPO] Unexpected error updating FCM token", e)
+            e.printStackTrace()
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun removeFcmToken(): Result<Unit> {
+        return try {
+            val response = userInterface.removeFcmToken("")
+            if (response.isSuccessful) {
+                Result.success(Unit)
+            } else {
+                val errorMessage = parseErrorMessage(
+                    response.errorBody()?.string(),
+                    "Failed to remove FCM token"
+                )
+                Log.e(TAG, "Failed to remove FCM token: $errorMessage")
+                Result.failure(Exception(errorMessage))
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error removing FCM token", e)
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun updatePrivacy(request: com.cpen321.usermanagement.data.remote.dto.UpdatePrivacyRequest): Result<com.cpen321.usermanagement.data.remote.dto.User> {
+        return try {
+            val response = userInterface.updatePrivacy("", request)
+            if (response.isSuccessful && response.body()?.data != null) {
+                Result.success(response.body()!!.data!!.user)
+            } else {
+                val errorMessage = parseErrorMessage(
+                    response.errorBody()?.string(),
+                    "Failed to update privacy settings"
+                )
+                Log.e(TAG, "Failed to update privacy settings: $errorMessage")
+                Result.failure(Exception(errorMessage))
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error updating privacy settings", e)
             Result.failure(e)
         }
     }

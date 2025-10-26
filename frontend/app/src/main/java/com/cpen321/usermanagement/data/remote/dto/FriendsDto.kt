@@ -11,7 +11,8 @@ data class FriendSummary(
     val displayName: String,
     val photoUrl: String? = null,
     val bio: String? = null,
-    val shareLocation: Boolean
+    val shareLocation: Boolean,
+    val isOnline: Boolean = false
 )
 
 data class FriendRequestSummary(

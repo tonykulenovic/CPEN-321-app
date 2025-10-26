@@ -5,6 +5,7 @@ import {
   PinCategory,
   PinStatus,
   PinVisibility,
+  MealCategory,
   CreatePinRequest,
   UpdatePinRequest,
   createPinSchema,
@@ -24,6 +25,7 @@ const pinSchema = new Schema<IPin>(
     },
     createdBy: { type: Schema.Types.ObjectId, ref: 'User', required: true, index: true },
     metadata: {
+      subtype: String, // 'cafe' or 'restaurant' for SHOPS_SERVICES category
       capacity: Number,
       openingHours: String,
       amenities: [String],

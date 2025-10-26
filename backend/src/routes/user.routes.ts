@@ -23,6 +23,13 @@ router.get('/search', userController.searchUsers);
 router.get('/me', userController.getMe);
 router.patch('/me/privacy', userController.updatePrivacy);
 
+// FCM token management for push notifications
+router.put('/me/fcm-token', userController.updateFcmToken);
+router.delete('/me/fcm-token', userController.removeFcmToken);
+
+// Get friend's profile
+router.get('/:userId/profile', userController.getUserProfile);
+
 // Admin routes
 router.get('/admin/all', userController.getAllUsers);
 router.patch('/admin/:id/suspend', userController.suspendUser);
