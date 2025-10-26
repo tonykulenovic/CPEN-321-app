@@ -1,4 +1,4 @@
-package com.cpen321.usermanagement
+gipackage com.cpen321.usermanagement
 
 import android.app.Application
 import android.util.Log
