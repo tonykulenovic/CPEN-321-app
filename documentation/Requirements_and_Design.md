@@ -179,8 +179,8 @@ Target audience: university students who want an easy way to discover study spot
 
 ### **3.3. Actors Description**
 
-1. **Student User**: A student using the app to find study spots, food, events, and to connect with friends.
-2. **Admin**: Admins to review reports of unsafe content/pins and remove them.
+1. **Student User**: A student using the app to find study spots, food, events, and to connect with friends.  
+2. **Admin**: Admins to review reports of unsafe content/pins and remove them.  
 
 ---
 
@@ -188,7 +188,7 @@ Target audience: university students who want an easy way to discover study spot
 
 - Use cases for feature 1: **View Map**
 
-  1. **View Pins**: User opens the map to see campus libraries and food spots and pins added by others.
+  1. **View Pins**: User opens the map to see campus libraries and food spots and pins added by others.  
   2. **Filter Pins by Category**: User can filter pins by category (Study, Events, Chill, Shops/Services).
   3. **View Friend Locations**: User can see real-time locations of friends (with privacy controls).
 
@@ -219,80 +219,80 @@ Target audience: university students who want an easy way to discover study spot
 #### Use Case 1: Add Pin
 
 **Description**: A user adds a new pin for a study space, event, or chill spot.  
-**Primary actor(s)**: Student User
+**Primary actor(s)**: Student User  
 
 **Main success scenario**:
 
-1. User selects the “Add Pin” option.
-2. User enters pin details (name, category, description).
-3. User submits pin.
-4. Pin is saved in the backend and displayed on the map for all users.
+1. User selects the “Add Pin” option.  
+2. User enters pin details (name, category, description).  
+3. User submits pin.  
+4. Pin is saved in the backend and displayed on the map for all users.  
 
 **Failure scenario(s)**:
 
-- 1a. User has no internet connection.
-  - 1a1. The system shows a connectivity error and prompts the user to retry.
-- 3a. User submits incomplete details.
-  - 3a1. System prompts for required missing fields.
+- 1a. User has no internet connection.  
+    - 1a1. The system shows a connectivity error and prompts the user to retry.  
+- 3a. User submits incomplete details.  
+    - 3a1. System prompts for required missing fields. 
 
 ---
 
 #### Use Case 2: View Pin Details
 
 **Description**: A user taps a pin on the map to see its information.  
-**Primary actor(s)**: Student User
+**Primary actor(s)**: Student User  
 
 **Main success scenario**:
 
-1. User taps the pin on the map.
-2. System fetches pin details from the backend.
-3. Pin details (category, activity level, ratings) are displayed.
+1. User taps the pin on the map.  
+2. System fetches pin details from the backend.  
+3. Pin details (category, activity level, ratings) are displayed.  
 
 **Failure scenario(s)**:
 
-- 1a. The pin has been deleted, and race conditions/synchronization issues occur.
-  - 1a1. The system shows “pin no longer available.”
+- 1a. The pin has been deleted, and race conditions/synchronization issues occur.  
+    - 1a1. The system shows “pin no longer available.”  
 - 2a The user has no active/slow internet connection
-  - 2a1. The system shows a connectivity error and asks the user to retry
+    - 2a1. The system shows a connectivity error and asks the user to retry
 
 ---
 
 #### Use Case 3: Earn Badge
 
 **Description**: A user earns a badge after fulfilling a requirement.  
-**Primary actor(s)**: Student User
+**Primary actor(s)**: Student User  
 
 **Main success scenario**:
 
-1. User meets badge condition (e.g., logs in daily for 5 days).
-2. System verifies condition and assigns badge.
-3. User sees badge appear in profile.
+1. User meets badge condition (e.g., logs in daily for 5 days).  
+2. System verifies condition and assigns badge.  
+3. User sees badge appear in profile.  
 
 **Failure scenario(s)**:
 
-- 1a. Backend fails to update badge state due to connection issues.
-  - 1a1. The system shows a temporary error and retries later.
+- 1a. Backend fails to update badge state due to connection issues.  
+    - 1a1. The system shows a temporary error and retries later.  
 
 ---
 
 #### Use Case 4: Add Friend
 
 **Description**: A student sends a friend request to another student.  
-**Primary actor(s)**: Student User
+**Primary actor(s)**: Student User  
 
 **Main success scenario**:
 
-1. User searches for another student by username/email.
-2. System matches and shows a potential friend.
-3. User sends request.
-4. Friend accepts, and both are added to each other’s friend lists.
+1. User searches for another student by username/email.  
+2. System matches and shows a potential friend.  
+3. User sends request.  
+4. Friend accepts, and both are added to each other’s friend lists.  
 
 **Failure scenario(s)**:
 
-- 1a. No matching username found.
-  - 1a1. The system shows “user not found.”
-- 3a. Request fails to send due to connection issues.
-  - 3a1. The system shows an error and retries.
+- 1a. No matching username found.  
+    - 1a1. The system shows “user not found.”  
+- 3a. Request fails to send due to connection issues.  
+    - 3a1. The system shows an error and retries.  
 
 ---
 
@@ -384,7 +384,7 @@ Target audience: university students who want an easy way to discover study spot
 #### Use Case 9: Manage Privacy Settings
 
 **Description**: User controls their privacy and visibility settings.  
-**Primary actor(s)**: Student User
+**Primary actor(s)**: Student User  
 
 **Main success scenario**:
 
@@ -460,106 +460,210 @@ Target audience: university students who want an easy way to discover study spot
 
    - **Purpose**: Handles Google OAuth login for all users with credential management.
    - **Rationale**: Using Google OAuth avoids building a custom authentication system and leverages an external trusted identity provider.
-   - **Interfaces**:
-     1. **Google OAuth Integration** - Handles Google sign-in flow and token management
-     2. **Credential Manager** - Manages user credentials and session persistence
-     3. **JWT Token Service** - Generates and validates JWT tokens for API access
+   - **Interfaces**: 
+     1. **Google OAuth Integration**
+        - `GoogleUserInfo authenticateUser(String googleIdToken)` - Validates Google ID token and returns user information
+        - `String generateJWT(String userId, String email)` - Creates JWT token for authenticated user
+        - `boolean validateJWT(String token)` - Validates JWT token and returns authentication status
+     2. **Credential Manager**
+        - `void storeCredentials(String userId, String refreshToken)` - Stores user credentials securely
+        - `String getRefreshToken(String userId)` - Retrieves stored refresh token for user
+        - `void clearCredentials(String userId)` - Removes stored credentials on logout
+     3. **JWT Token Service**
+        - `String createAccessToken(String userId, String email, String role)` - Generates access token with user claims
+        - `Claims verifyToken(String token)` - Verifies and decodes JWT token claims
+        - `boolean isTokenExpired(String token)` - Checks if token has expired
 
 2. **Pin Manager**
 
    - **Purpose**: Manages CRUD operations for pins (create, update, delete, view) with voting and reporting.
-   - **Rationale**: Pins are the central content of the app, and isolating them in a component makes it easier to manage validation, reports, and updates.
-   - **Interfaces**:
-     1. **Pin CRUD Operations** - Create, read, update, delete pins with validation
-     2. **Voting System** - Handle upvote/downvote operations and prevent duplicate voting
-     3. **Reporting System** - Manage pin reports and admin moderation
-     4. **Category Filtering** - Filter pins by category (Study, Events, Chill, Shops)
-     5. **Enhanced Metadata** - Display capacity, crowd levels, opening hours
+   - **Rationale**: Pins are the central content of the app, and isolating them in a component makes it easier to manage validation, reports, and updates.  
+   - **Interfaces**: 
+     1. **Pin CRUD Operations**
+        - `Pin createPin(CreatePinRequest request, String userId)` - Creates new pin with validation
+        - `Pin getPinById(String pinId)` - Retrieves pin details by ID
+        - `Pin updatePin(String pinId, UpdatePinRequest request, String userId)` - Updates existing pin
+        - `boolean deletePin(String pinId, String userId)` - Deletes pin (owner or admin only)
+        - `List<Pin> searchPins(SearchFilters filters)` - Searches pins with filtering and pagination
+     2. **Voting System**
+        - `VoteResult votePin(String pinId, String userId, VoteType voteType)` - Records user vote (upvote/downvote)
+        - `boolean hasUserVoted(String pinId, String userId)` - Checks if user has already voted
+        - `PinRating getPinRating(String pinId)` - Gets current vote counts and rating
+     3. **Reporting System**
+        - `boolean reportPin(String pinId, String userId, String reason)` - Reports pin for moderation
+        - `List<ReportedPin> getReportedPins()` - Gets all reported pins (admin only)
+        - `boolean moderatePin(String pinId, ModerationAction action)` - Takes moderation action (admin only)
+     4. **Category Filtering**
+        - `List<Pin> getPinsByCategory(PinCategory category)` - Filters pins by category
+        - `List<Pin> getPinsByCategories(List<PinCategory> categories)` - Filters by multiple categories
+     5. **Enhanced Metadata**
+        - `PinMetadata getPinMetadata(String pinId)` - Gets capacity, crowd level, opening hours
+        - `boolean updatePinMetadata(String pinId, PinMetadata metadata)` - Updates pin metadata
 
 3. **User Management Service**
 
    - **Purpose**: Manages user profiles, privacy settings, and account operations.
    - **Rationale**: Centralized user management ensures consistent privacy controls and profile management across the app.
    - **Interfaces**:
-     1. **Profile Management** - Create, update, and delete user profiles
-     2. **Privacy Settings** - Control profile visibility, location sharing, friend requests
-     3. **FCM Token Management** - Handle push notification tokens
-     4. **Account Operations** - Account deletion and suspension
+     1. **Profile Management**
+        - `User createUserProfile(GoogleUserInfo googleUser)` - Creates new user profile from Google OAuth
+        - `User getUserProfile(String userId)` - Retrieves user profile information
+        - `User updateUserProfile(String userId, UpdateProfileRequest request)` - Updates user profile
+        - `boolean deleteUserProfile(String userId)` - Deletes user account and all associated data
+     2. **Privacy Settings**
+        - `PrivacySettings getPrivacySettings(String userId)` - Gets user's privacy preferences
+        - `boolean updatePrivacySettings(String userId, PrivacySettings settings)` - Updates privacy settings
+        - `boolean isProfileVisible(String userId, String requesterId)` - Checks if profile is visible to requester
+        - `LocationSharingLevel getLocationSharingLevel(String userId)` - Gets user's location sharing preferences
+     3. **FCM Token Management**
+        - `boolean updateFCMToken(String userId, String fcmToken)` - Registers/updates FCM token for notifications
+        - `boolean removeFCMToken(String userId)` - Removes FCM token on logout
+        - `String getFCMToken(String userId)` - Retrieves user's FCM token for notifications
+     4. **Account Operations**
+        - `boolean suspendUser(String userId, String reason)` - Suspends user account (admin only)
+        - `boolean unsuspendUser(String userId)` - Unsuspends user account (admin only)
+        - `boolean isUserSuspended(String userId)` - Checks if user account is suspended
 
 4. **Notification Service**
 
    - **Purpose**: Manages push notifications for real-time updates and user engagement.
    - **Rationale**: Real-time notifications improve user engagement and keep users informed of important events.
    - **Interfaces**:
-     1. **Firebase Integration** - Send notifications via Firebase Cloud Messaging
-     2. **Notification Types** - Friend requests, pin updates, system messages
-     3. **Token Management** - Register and manage FCM tokens
-     4. **Notification Preferences** - User-controlled notification settings
+     1. **Firebase Integration**
+        - `boolean sendNotification(String fcmToken, String title, String body, Map<String, String> data)` - Sends push notification via FCM
+        - `boolean sendBulkNotifications(List<String> fcmTokens, String title, String body)` - Sends notification to multiple users
+        - `boolean sendNotificationToUser(String userId, String title, String body)` - Sends notification to specific user
+     2. **Notification Types**
+        - `boolean sendFriendRequestNotification(String recipientId, String senderName)` - Sends friend request notification
+        - `boolean sendPinUpdateNotification(String userId, String pinName, String updateType)` - Sends pin update notification
+        - `boolean sendSystemNotification(String userId, String message)` - Sends system message notification
+     3. **Token Management**
+        - `boolean registerFCMToken(String userId, String fcmToken)` - Registers FCM token for user
+        - `boolean unregisterFCMToken(String userId)` - Removes FCM token for user
+        - `List<String> getActiveFCMTokens(String userId)` - Gets all active FCM tokens for user
+     4. **Notification Preferences**
+        - `NotificationSettings getNotificationSettings(String userId)` - Gets user's notification preferences
+        - `boolean updateNotificationSettings(String userId, NotificationSettings settings)` - Updates notification preferences
+        - `boolean isNotificationEnabled(String userId, NotificationType type)` - Checks if specific notification type is enabled
 
 5. **Badge Manager**
 
-   - **Purpose**: Assigns badges based on user activity (logins, time spent at locations, reports).
-   - **Rationale**: A separate manager for badges allows us to implement custom logic and computations beyond simple CRUD, supporting gamification.
-   - **Interfaces**:
-     1. **Badge Assignment** - Automatically assign badges based on user activity
-     2. **Progress Tracking** - Track user progress toward badge requirements
-     3. **Badge Display** - Show earned badges and progress in user profiles
-     4. **Admin Badge Management** - Create and manage badge templates
+   - **Purpose**: Assigns badges based on user activity (logins, time spent at locations, reports).  
+   - **Rationale**: A separate manager for badges allows us to implement custom logic and computations beyond simple CRUD, supporting gamification.  
+   - **Interfaces**: 
+     1. **Badge Assignment**
+        - `List<Badge> processUserActivity(String userId, ActivityType activityType, Map<String, Object> metadata)` - Processes user activity and assigns badges
+        - `boolean assignBadge(String userId, String badgeId)` - Manually assigns badge to user
+        - `List<Badge> getEarnedBadges(String userId)` - Gets all badges earned by user
+        - `boolean hasBadge(String userId, String badgeId)` - Checks if user has specific badge
+     2. **Progress Tracking**
+        - `BadgeProgress getBadgeProgress(String userId, String badgeId)` - Gets progress toward specific badge
+        - `List<BadgeProgress> getAllBadgeProgress(String userId)` - Gets progress for all available badges
+        - `boolean updateProgress(String userId, String badgeId, int progressValue)` - Updates progress for badge
+     3. **Badge Display**
+        - `List<Badge> getAvailableBadges()` - Gets all available badges in system
+        - `Badge getBadgeById(String badgeId)` - Gets specific badge details
+        - `List<Badge> getBadgesByCategory(BadgeCategory category)` - Gets badges by category
+     4. **Admin Badge Management**
+        - `Badge createBadge(CreateBadgeRequest request)` - Creates new badge template (admin only)
+        - `Badge updateBadge(String badgeId, UpdateBadgeRequest request)` - Updates badge template (admin only)
+        - `boolean deleteBadge(String badgeId)` - Deletes badge template (admin only)
 
 6. **Admin Service**
 
    - **Purpose**: Provides administrative functionality for content moderation and user management.
    - **Rationale**: Admin tools are essential for maintaining app quality and handling user reports.
    - **Interfaces**:
-     1. **Content Moderation** - Review and moderate reported pins and content
-     2. **User Management** - Suspend, unsuspend, or delete user accounts
-     3. **Analytics Dashboard** - View system usage statistics and user activity
-     4. **Report Management** - Handle user reports and take appropriate actions
+     1. **Content Moderation**
+        - `List<ReportedPin> getReportedPins()` - Gets all reported pins for review
+        - `boolean moderatePin(String pinId, ModerationAction action, String adminId)` - Takes moderation action on pin
+        - `boolean moderateUser(String userId, ModerationAction action, String adminId)` - Takes moderation action on user
+        - `List<ModerationLog> getModerationHistory(String adminId)` - Gets moderation history for admin
+     2. **User Management**
+        - `List<User> getAllUsers(int page, int limit)` - Gets paginated list of all users
+        - `User getUserById(String userId)` - Gets specific user details
+        - `boolean suspendUser(String userId, String reason, String adminId)` - Suspends user account
+        - `boolean unsuspendUser(String userId, String adminId)` - Unsuspends user account
+     3. **Analytics Dashboard**
+        - `SystemStats getSystemStatistics()` - Gets overall system usage statistics
+        - `UserActivityStats getUserActivityStats(String userId)` - Gets activity stats for specific user
+        - `PinStatistics getPinStatistics()` - Gets pin creation and interaction statistics
+        - `List<AdminAlert> getSystemAlerts()` - Gets system alerts and warnings
+     4. **Report Management**
+        - `boolean createReport(String reporterId, String targetId, ReportType type, String reason)` - Creates new report
+        - `List<Report> getReportsByType(ReportType type)` - Gets reports by type
+        - `boolean resolveReport(String reportId, String adminId, String resolution)` - Resolves report
 
 7. **Friends Management Service**
 
    - **Purpose**: Manages friend connections, requests, and social features.
    - **Rationale**: Social features enhance user engagement and create a community aspect to the app.
    - **Interfaces**:
-     1. **Friend Requests** - Send, accept, decline friend requests
-     2. **Friend List Management** - Add, remove, and view friends
-     3. **Privacy Controls** - Respect user privacy settings for friend visibility
-     4. **Location Sharing** - Optional real-time location sharing with friends
+     1. **Friend Requests**
+        - `boolean sendFriendRequest(String senderId, String recipientId)` - Sends friend request to user
+        - `boolean acceptFriendRequest(String requestId, String userId)` - Accepts friend request
+        - `boolean declineFriendRequest(String requestId, String userId)` - Declines friend request
+        - `List<FriendRequest> getPendingRequests(String userId)` - Gets pending friend requests
+     2. **Friend List Management**
+        - `List<Friend> getFriendsList(String userId)` - Gets user's friends list
+        - `boolean removeFriend(String userId, String friendId)` - Removes friend from list
+        - `boolean isFriend(String userId, String friendId)` - Checks if users are friends
+        - `List<Friend> searchFriends(String userId, String searchQuery)` - Searches friends by name
+     3. **Privacy Controls**
+        - `boolean canViewProfile(String viewerId, String targetId)` - Checks if viewer can see target's profile
+        - `boolean canViewLocation(String viewerId, String targetId)` - Checks if viewer can see target's location
+        - `PrivacyLevel getFriendPrivacyLevel(String userId, String friendId)` - Gets privacy level for friend
+     4. **Location Sharing**
+        - `boolean shareLocation(String userId, String friendId, LocationData location)` - Shares location with friend
+        - `LocationData getFriendLocation(String userId, String friendId)` - Gets friend's shared location
+        - `boolean stopLocationSharing(String userId, String friendId)` - Stops sharing location with friend
 
 8. **Recommendation Engine**
-   - **Purpose**: Fetches nearby food spots using Google Places API and applies time-of-day rules.
-   - **Rationale**: Encapsulating recommendation logic separately allows us to combine external API data with custom filters (e.g., lunch vs. dinner).
-   - **Interfaces**:
-     1. **Google Places Integration** - Query nearby restaurants and services
-     2. **Time-based Filtering** - Apply time-of-day rules for recommendations
-     3. **Personalized Recommendations** - Suggest content based on user preferences
-     4. **Location-based Suggestions** - Recommend pins based on user location
+   - **Purpose**: Fetches nearby food spots using Google Places API and applies time-of-day rules.  
+   - **Rationale**: Encapsulating recommendation logic separately allows us to combine external API data with custom filters (e.g., lunch vs. dinner).  
+   - **Interfaces**: 
+     1. **Google Places Integration**
+        - `List<Place> searchNearbyPlaces(double latitude, double longitude, String type, int radius)` - Searches nearby places using Google Places API
+        - `Place getPlaceDetails(String placeId)` - Gets detailed information about specific place
+        - `List<Place> getPlacesByType(String type, double latitude, double longitude)` - Gets places by specific type
+     2. **Time-based Filtering**
+        - `List<Recommendation> getTimeBasedRecommendations(String userId, int hourOfDay)` - Gets recommendations based on time of day
+        - `List<Recommendation> getLunchRecommendations(String userId, double latitude, double longitude)` - Gets lunch recommendations
+        - `List<Recommendation> getDinnerRecommendations(String userId, double latitude, double longitude)` - Gets dinner recommendations
+     3. **Personalized Recommendations**
+        - `List<Recommendation> getPersonalizedRecommendations(String userId, RecommendationType type)` - Gets personalized recommendations based on user preferences
+        - `boolean updateUserPreferences(String userId, UserPreferences preferences)` - Updates user's recommendation preferences
+        - `UserPreferences getUserPreferences(String userId)` - Gets user's recommendation preferences
+     4. **Location-based Suggestions**
+        - `List<Pin> getNearbyPins(String userId, double latitude, double longitude, int radius)` - Gets nearby pins for user
+        - `List<Recommendation> getLocationBasedRecommendations(String userId, double latitude, double longitude)` - Gets location-based recommendations
+        - `boolean trackUserInteraction(String userId, String pinId, InteractionType type)` - Tracks user interaction for better recommendations
 
 ---
 
 ### **4.2. Databases**
 
 1. **MongoDB**
-   - **Purpose**: Stores user data (profiles, friends), pins, badges, and reports.
-   - **Rationale**: MongoDB provides flexible document-based storage, which fits dynamic user-generated content like pins and metadata.
+   - **Purpose**: Stores user data (profiles, friends), pins, badges, and reports.  
+   - **Rationale**: MongoDB provides flexible document-based storage, which fits dynamic user-generated content like pins and metadata.  
 
 ---
 
 ### **4.3. External Modules**
 
-1. **Google Maps API**
+1. **Google Maps API**  
 
-   - **Purpose**: Displays the interactive map and places pins on it.
+   - **Purpose**: Displays the interactive map and places pins on it.  
    - **Implementation**: Integrated in Android app with custom markers and clustering
 
-2. **Google Places API**
+2. **Google Places API**  
 
-   - **Purpose**: Provides data on nearby food spots (open/closed, name, location).
+   - **Purpose**: Provides data on nearby food spots (open/closed, name, location).  
    - **Implementation**: Used for seeding cafe data and location recommendations
 
-3. **Google OAuth**
+3. **Google OAuth**  
 
-   - **Purpose**: Handles user authentication using an external identity provider.
+   - **Purpose**: Handles user authentication using an external identity provider.  
    - **Implementation**: Google Credential Manager integration with JWT token generation
 
 4. **Firebase Cloud Messaging (FCM)**
@@ -575,9 +679,9 @@ Target audience: university students who want an easy way to discover study spot
 
 ### **4.4. Frameworks**
 
-1. **Node.js + Express**
+1. **Node.js + Express**  
 
-   - **Purpose**: Backend REST API server.
+   - **Purpose**: Backend REST API server.  
    - **Reason**: Lightweight, integrates well with MongoDB and external APIs.
 
 2. **Socket.io**
@@ -620,7 +724,7 @@ Target audience: university students who want an easy way to discover study spot
 ### **4.6. Use Case Sequence Diagram (5 Most Major Use Cases)**
 
 1. [**[WRITE_NAME_HERE]**](#uc1)\
-   [SEQUENCE_DIAGRAM_HERE]
+[SEQUENCE_DIAGRAM_HERE]
 2. ...
 
 ---
@@ -631,33 +735,18 @@ Target audience: university students who want an easy way to discover study spot
 
 1. **Performance Requirements**
 
-   - **Implemented**:
-     - Database indexing on frequently queried fields (user_id, pin_category, location, status, visibility)
-     - Pagination for pin search results (20 pins per page)
-     - TTL (Time To Live) indexes for automatic data cleanup
-     - Efficient text search with regex patterns
+   - **Implementation**: Database queries are optimized using MongoDB compound indexes on frequently accessed fields (user_id, pin_category, location coordinates, status, visibility) with text search indexes on pin names and descriptions. Pagination is implemented with a default limit of 20 pins per page and skip-based pagination for efficient data retrieval. TTL indexes automatically clean up expired location data after 30 days, and regex-based text search provides fast filtering without full-text search overhead.
 
 2. **Security Requirements**
 
-   - **Implemented**:
-     - JWT tokens with expiration and refresh mechanisms
-     - Input validation and sanitization using Zod schemas
-     - Privacy controls with granular permission settings (location sharing, profile visibility)
-     - Role-based access control for admin functions
+   - **Implementation**: JWT tokens are generated with 24-hour expiration and include user ID, email, and role claims for stateless authentication. All API endpoints use Zod schemas for request validation and sanitization, preventing injection attacks and ensuring data integrity. Privacy controls are enforced at the service layer with granular permission checks for location sharing (off/live/approximate) and profile visibility (friends/everyone/private). Admin functions require role-based authorization middleware that validates admin status before allowing access.
 
 3. **Reliability Requirements**
 
-   - **Implemented**:
-     - Error handling and retry mechanisms in controllers
-     - Graceful degradation when external services are unavailable
-     - Comprehensive logging for debugging and monitoring
+   - **Implementation**: All controller methods include try-catch blocks with specific error handling for network timeouts, database connection failures, and external API errors. The system gracefully degrades by returning cached data or default values when external services (Google Places, Firebase) are unavailable. Comprehensive logging is implemented using Winston logger with different log levels (info, warn, error) and structured logging for debugging and monitoring system health.
 
 4. **Usability Requirements**
-   - **Implemented**:
-     - Material Design 3 for consistent UI/UX
-     - Real-time updates via Socket.io
-     - Progressive loading with skeleton screens
-     - Responsive design for mobile-first experience
+   - **Implementation**: The Android app uses Material Design 3 components with consistent theming, typography, and color schemes throughout all screens. Real-time updates are implemented using Socket.io for live location sharing, pin updates, and friend request notifications. Progressive loading is achieved with skeleton screens and loading states, while the responsive design uses Jetpack Compose's adaptive layouts for different screen sizes and orientations.
 
 #### **Future Enhancements (Planned)**
 
