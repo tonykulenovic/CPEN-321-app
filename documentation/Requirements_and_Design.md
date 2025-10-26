@@ -209,29 +209,26 @@ Target audience: university students who want an easy way to discover study spot
 16. **Manage Privacy Settings**: User can control profile visibility, location sharing, and friend request preferences.
 17. **Receive Notifications**: User receives push notifications for friend requests, pin updates, and system messages.
 18. **Manage Notification Settings**: User can control notification preferences and FCM token management.
+19. **Manage User Accounts**: Admin can suspend, unsuspend, or delete user accounts.
 
 ### Feature 4: Manage Friends
-19. **Add Friend**: User searches for a classmate by username/email and sends a request.
-20. **View Friend Profile**: User views a friend's badges and activity (respecting privacy settings).
-21. **Remove Friend**: User can remove a friend from their friend network.
-22. **Manage Friend Requests**: User can accept, decline, or block friend requests.
-23. **Share Location with Friends**: User can optionally share real-time location with friends.
+20. **Add Friend**: User searches for a classmate by username/email and sends a request.
+21. **View Friend Profile**: User views a friend's badges and activity (respecting privacy settings).
+22. **Remove Friend**: User can remove a friend from their friend network.
+23. **Manage Friend Requests**: User can accept, decline, or block friend requests.
+24. **Share Location with Friends**: User can optionally share real-time location with friends.
 
-### Feature 5: Admin Functionality
-24. **Review Reported Content**: Admin can review and moderate reported pins and user content.
-25. **Manage User Accounts**: Admin can suspend, unsuspend, or delete user accounts.
-26. **View System Analytics**: Admin can view system usage statistics and user activity.
+### Feature 5: Badge System
+25. **Earn Badge**: User receives a profile badge for activity (e.g., daily logins, time at library).
+26. **View Badges**: User views unlocked profile badges and progress toward new ones.
+27. **Track Badge Progress**: User can see progress toward earning new badges.
 
-### Feature 6: Badge System
-27. **Earn Badge**: User receives a profile badge for activity (e.g., daily logins, time at library).
-28. **View Badges**: User views unlocked profile badges and progress toward new ones.
-29. **Track Badge Progress**: User can see progress toward earning new badges.
+### Feature 6: Recommend Locations
+28. **Get Food Recommendations**: App suggests nearby food options at lunch, coffee break, or dinner times.
+29. **Get Personalized Recommendations**: App suggests pins based on user preferences, time, and location.
 
-### Feature 7: Recommend Locations
-30. **Get Food Recommendations**: App suggests nearby food options at lunch, coffee break, or dinner times.
-31. **Get Personalized Recommendations**: App suggests pins based on user preferences, time, and location.
 
-### **3.5. Formal Use Case Specifications (5 Most Major Use Cases)**
+### **3.5. Formal Use Case Specifications (10 Most Major Use Cases)**
 
 #### Use Case 1: Add Pin
 
