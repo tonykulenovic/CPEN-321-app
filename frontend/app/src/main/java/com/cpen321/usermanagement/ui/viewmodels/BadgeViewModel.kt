@@ -19,7 +19,8 @@ data class BadgeUiState(
     val badgeProgressItems: List<BadgeProgressItem> = emptyList(),
     val stats: BadgeStatsData? = null,
     val error: String? = null,
-    val successMessage: String? = null
+    val successMessage: String? = null,
+    val lastLoadedTimestamp: Long = 0 // Track when badges were last loaded
 )
 
 @HiltViewModel
@@ -29,6 +30,7 @@ class BadgeViewModel @Inject constructor(
     
     companion object {
         private const val TAG = "BadgeViewModel"
+        private const val CACHE_DURATION_MS = 2 * 60 * 1000L // 2 minutes cache for badges
     }
     
     private val _uiState = MutableStateFlow(BadgeUiState())
@@ -39,7 +41,16 @@ class BadgeViewModel @Inject constructor(
         loadBadgeStats()
     }
     
-    fun loadBadgeProgress() {
+    fun loadBadgeProgress(forceRefresh: Boolean = false) {
+        // Skip if badges are cached and still fresh (unless force refresh)
+        val currentTime = System.currentTimeMillis()
+        val timeSinceLastLoad = currentTime - _uiState.value.lastLoadedTimestamp
+        
+        if (!forceRefresh && _uiState.value.earnedBadges.isNotEmpty() && timeSinceLastLoad < CACHE_DURATION_MS) {
+            // Badges are still fresh, skip loading
+            Log.d(TAG, "Using cached badges (${timeSinceLastLoad}ms old)")
+            return
+        }
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, error = null)
             
@@ -50,9 +61,10 @@ class BadgeViewModel @Inject constructor(
                         earnedBadges = progress.earned,
                         availableBadges = progress.available,
                         badgeProgressItems = progress.progress,
-                        error = null
+                        error = null,
+                        lastLoadedTimestamp = System.currentTimeMillis()
                     )
-                    Log.d(TAG, "Badge progress loaded successfully")
+                    Log.d(TAG, "Badge progress loaded successfully and cached")
                 }
                 .onFailure { exception ->
                     _uiState.value = _uiState.value.copy(

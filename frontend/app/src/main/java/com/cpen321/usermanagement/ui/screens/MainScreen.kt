@@ -99,6 +99,7 @@ import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.async
 import com.cpen321.usermanagement.data.remote.dto.PinCategory
 import com.cpen321.usermanagement.ui.viewmodels.PinViewModel
 import com.cpen321.usermanagement.ui.viewmodels.ProfileViewModel
@@ -577,22 +578,35 @@ private fun MapContent(
         }
     }
     
-    // Create scaled custom icons (48dp size for map markers) - nullable until map loads
+    // Create scaled custom icons (48dp size for map markers) - use remember to cache across recompositions
     var libraryIcon by remember { mutableStateOf<BitmapDescriptor?>(null) }
     var cafeIcon by remember { mutableStateOf<BitmapDescriptor?>(null) }
     var restaurantIcon by remember { mutableStateOf<BitmapDescriptor?>(null) }
 
-    // Load pins when screen opens
-    LaunchedEffect(Unit) {
-        pinViewModel.loadPins()
+    // Load pins - if coming from search with a selected pin, ensure pins are loaded
+    LaunchedEffect(Unit, initialSelectedPinId) {
+        if (initialSelectedPinId != null) {
+            // Force load if coming from search to ensure pin data is available
+            if (pinUiState.pins.isEmpty()) {
+                pinViewModel.loadPins(forceRefresh = true)
+            }
+        } else if (pinUiState.pins.isEmpty() && !pinUiState.isLoading) {
+            // Normal loading - use cache if available
+            pinViewModel.loadPins()
+        }
     }
     
-    // Create custom icons after a short delay to ensure GoogleMap is initialized
+    // Create custom icons immediately in parallel (no delay needed - markers have fallbacks)
     LaunchedEffect(Unit) {
-        kotlinx.coroutines.delay(500) // Wait for map to initialize
-        libraryIcon = context.createScaledBitmapFromPng(R.drawable.ic_library, 48)
-        cafeIcon = context.createScaledBitmapFromPng(R.drawable.ic_coffee, 48)
-        restaurantIcon = context.createScaledBitmapFromPng(R.drawable.ic_restaurants, 48)
+        // Load icons in parallel using async (LaunchedEffect provides the coroutine scope)
+        val libraryJob = async { context.createScaledBitmapFromPng(R.drawable.ic_library, 48) }
+        val cafeJob = async { context.createScaledBitmapFromPng(R.drawable.ic_coffee, 48) }
+        val restaurantJob = async { context.createScaledBitmapFromPng(R.drawable.ic_restaurants, 48) }
+        
+        // Await all results
+        libraryIcon = libraryJob.await()
+        cafeIcon = cafeJob.await()
+        restaurantIcon = restaurantJob.await()
     }
     
     // UBC Vancouver coordinates
@@ -603,24 +617,18 @@ private fun MapContent(
     }
     
     // Center camera on selected pin from search
-    LaunchedEffect(initialSelectedPinId) {
-        if (initialSelectedPinId != null) {
-            // Wait for pins to load
-            var attempts = 0
-            while (pinUiState.pins.isEmpty() && attempts < 50) {
-                kotlinx.coroutines.delay(100)
-                attempts++
-            }
-            
+    LaunchedEffect(initialSelectedPinId, pinUiState.pins) {
+        if (initialSelectedPinId != null && pinUiState.pins.isNotEmpty()) {
             // Use original pins list for search selection (not filtered)
             val selectedPin = pinUiState.pins.find { it.id == initialSelectedPinId }
-            selectedPin?.let { pin ->
+            
+            if (selectedPin != null) {
                 // Trigger bottom sheet to open
-                onPinClick(pin.id)
+                onPinClick(selectedPin.id)
                 
                 // Small delay to ensure map is fully initialized
-                kotlinx.coroutines.delay(300)
-                val pinLocation = LatLng(pin.location.latitude, pin.location.longitude)
+                kotlinx.coroutines.delay(200)
+                val pinLocation = LatLng(selectedPin.location.latitude, selectedPin.location.longitude)
                 cameraPositionState.animate(
                     CameraUpdateFactory.newLatLngZoom(pinLocation, 17f),
                     durationMs = 1000
@@ -764,10 +772,16 @@ private fun MapContent(
             modifier = Modifier.fillMaxSize(),
             cameraPositionState = cameraPositionState,
             properties = mapProperties,
-            uiSettings = uiSettings
+            uiSettings = uiSettings,
+            onMapLoaded = {
+                // Map is fully loaded and ready
+                android.util.Log.d("MapContent", "Map loaded with ${filteredPins.size} pins")
+            }
         ) {
             // Display filtered pin markers (instant local filtering)
-            filteredPins.forEach { pin ->
+            // Only render markers when we have data (prevents rendering delay)
+            if (filteredPins.isNotEmpty()) {
+                filteredPins.forEach { pin ->
                 Marker(
                     state = MarkerState(
                         position = LatLng(
@@ -831,6 +845,7 @@ private fun MapContent(
                         true // Consume the click event
                     }
                 )
+                }
             }
 
             // Display friend markers if locations are available

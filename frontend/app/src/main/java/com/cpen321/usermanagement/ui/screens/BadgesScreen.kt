@@ -94,10 +94,11 @@ fun BadgesScreen(
     }
     
     // Periodic badge refresh to catch pin visits and progress updates
+    // Uses cache, so only refreshes if data is stale (> 2 minutes old)
     LaunchedEffect(Unit) {
         while (true) {
-            kotlinx.coroutines.delay(10000) // Refresh every 10 seconds
-            badgeViewModel.loadBadgeProgress()
+            kotlinx.coroutines.delay(30000) // Check every 30 seconds
+            badgeViewModel.loadBadgeProgress() // Will skip if cache is fresh
         }
     }
     
