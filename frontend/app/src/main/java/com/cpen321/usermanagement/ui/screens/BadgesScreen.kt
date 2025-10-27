@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.SubcomposeAsyncImage
+import kotlinx.coroutines.launch
 import com.cpen321.usermanagement.data.remote.api.RetrofitClient
 import com.cpen321.usermanagement.data.remote.dto.Badge
 import com.cpen321.usermanagement.data.remote.dto.BadgeRarity
@@ -68,6 +69,9 @@ fun BadgesScreen(
     
     // Get badge data from BadgeViewModel
     val badgeUiState by badgeViewModel.uiState.collectAsState()
+    
+    // Coroutine scope for launching coroutines
+    val scope = rememberCoroutineScope()
     
     // Load profile if not already loaded
     LaunchedEffect(Unit) {
@@ -145,6 +149,37 @@ fun BadgesScreen(
                     }
                 }
             )
+        },
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = {
+                    badgeViewModel.loadBadgeProgress(forceRefresh = true)
+                    // Show a quick feedback snackbar
+                    scope.launch {
+                        snackbarHostState.showSnackbar(
+                            message = "Refreshing badges...",
+                            duration = SnackbarDuration.Short
+                        )
+                    }
+                },
+                containerColor = Color(0xFF00BCD4),
+                contentColor = Color.White,
+                modifier = Modifier
+                    .padding(bottom = 16.dp)
+            ) {
+                if (badgeUiState.isLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
+                        color = Color.White,
+                        strokeWidth = 2.dp
+                    )
+                } else {
+                    Icon(
+                        imageVector = Icons.Default.Refresh,
+                        contentDescription = "Refresh badges"
+                    )
+                }
+            }
         }
     ) { paddingValues ->
         Column(

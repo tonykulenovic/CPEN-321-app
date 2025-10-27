@@ -57,10 +57,19 @@ export class LocationGateway {
       const locationPrivacy = user.privacy.location || { sharing: 'off', precisionMeters: 30 };
       logger.info(`🔒 User ${userId} privacy settings: sharing=${locationPrivacy.sharing}`);
 
-      // 2. Check if location sharing is off
+      // 2. ALWAYS check for nearby pins first (even if sharing is off)
+      // Pin visiting is a personal feature that doesn't require location sharing
+      try {
+        await this.checkAndVisitNearbyPins(userId, lat, lng);
+      } catch (error) {
+        logger.error('Error checking nearby pins:', error);
+        // Don't fail if pin checking fails
+      }
+
+      // 3. Check if location sharing is off (for friend sharing only)
       // Handle legacy "on" value as equivalent to "live"
       if (locationPrivacy.sharing === 'off') {
-        logger.warn(`🔴 User ${userId} has location sharing OFF, not sharing location`);
+        logger.info(`🔴 User ${userId} has location sharing OFF, skipping friend location broadcast`);
         return {
           shared: false,
           expiresAt: new Date().toISOString(),
@@ -93,14 +102,6 @@ export class LocationGateway {
         true,
         expiresAt
       );
-
-      // 4.5. Check for nearby pins and auto-visit (use original coordinates, not approximated)
-      try {
-        await this.checkAndVisitNearbyPins(userId, lat, lng);
-      } catch (error) {
-        logger.error('Error checking nearby pins:', error);
-        // Don't fail the location update if pin checking fails
-      }
 
       // 5. Broadcast to subscribed friends
       logger.info(`📡 Broadcasting location update for user ${userId} to subscribed friends`);
@@ -501,20 +502,28 @@ export class LocationGateway {
       const visitedPinIds = new Set(user.visitedPins.map((id: mongoose.Types.ObjectId) => id.toString()));
 
       // Search for pins within a reasonable radius (100m to be safe)
+      // Use a high limit to get ALL nearby pins (pagination would cut off results)
       const nearbyPins = await pinModel.search({
         latitude: userLat,
         longitude: userLng,
         radius: 100, // Search within 100m
         page: 1,
-        limit: 50,
+        limit: 1000, // High limit to ensure we get all pins within radius
       });
 
-      logger.info(`🔍 Checking ${nearbyPins.pins.length} nearby pins for visits. Already visited: ${visitedPinIds.size} pins.`);
+      const librariesInSearch = nearbyPins.pins.filter(p => p.category === 'study').length;
+      logger.info(`🔍 Checking ${nearbyPins.pins.length} nearby pins for visits (${librariesInSearch} libraries). Already visited: ${visitedPinIds.size} pins.`);
 
       // Check each pin for exact proximity (50m)
       for (const pin of nearbyPins.pins) {
         // Skip if already visited
         if (visitedPinIds.has(pin._id.toString())) {
+          // Log libraries at INFO level to debug badge issues
+          if (pin.category === 'study') {
+            logger.info(`⏭️  Skipping already visited LIBRARY: ${pin.name}`);
+          } else {
+            logger.debug(`⏭️  Skipping already visited pin: ${pin.name}`);
+          }
           continue;
         }
 
@@ -525,6 +534,11 @@ export class LocationGateway {
           pin.location.latitude,
           pin.location.longitude
         );
+
+        // Log distance for ALL unvisited pins (especially libraries)
+        if (pin.category === 'study' || (pin.category === 'shops_services' && pin.metadata?.subtype === 'cafe')) {
+          logger.info(`📏 Distance to ${pin.name} (${pin.category}${pin.metadata?.subtype ? '/' + pin.metadata.subtype : ''}): ${distance.toFixed(2)}m`);
+        }
 
         // If within 50 meters, mark as visited
         if (distance <= 50) {
@@ -577,8 +591,11 @@ export class LocationGateway {
             allEarnedBadges = allEarnedBadges.concat(visitBadges);
 
             // Category-specific badge events (only for pre-seeded pins)
+            logger.info(`🔍 [REALTIME] Pin visit - isPreSeeded: ${pin.isPreSeeded}, category: ${pin.category}, subtype: ${pin.metadata?.subtype}`);
+            
             if (pin.isPreSeeded) {
               if (pin.category === 'study') {
+                logger.info(`📚 [REALTIME] Processing library badge event for: ${pin.name}`);
                 const libraryBadges = await BadgeService.processBadgeEvent({
                   userId: userId.toString(),
                   eventType: BadgeRequirementType.LIBRARIES_VISITED,
@@ -589,11 +606,15 @@ export class LocationGateway {
                     pinName: pin.name,
                   },
                 });
+                logger.info(`📚 [REALTIME] Library badge event returned ${libraryBadges.length} badges`);
                 allEarnedBadges = allEarnedBadges.concat(libraryBadges);
               } else if (pin.category === 'shops_services') {
                 // Check subtype for specific badge events
                 const subtype = pin.metadata?.subtype;
+                logger.info(`🏪 [REALTIME] Shops/services pin - subtype: ${subtype}`);
+                
                 if (subtype === 'cafe') {
+                  logger.info(`☕ [REALTIME] Processing cafe badge event for: ${pin.name}`);
                   const cafeBadges = await BadgeService.processBadgeEvent({
                     userId: userId.toString(),
                     eventType: BadgeRequirementType.CAFES_VISITED,
@@ -604,8 +625,10 @@ export class LocationGateway {
                       pinName: pin.name,
                     },
                   });
+                  logger.info(`☕ [REALTIME] Cafe badge event returned ${cafeBadges.length} badges`);
                   allEarnedBadges = allEarnedBadges.concat(cafeBadges);
                 } else if (subtype === 'restaurant') {
+                  logger.info(`🍽️  [REALTIME] Processing restaurant badge event for: ${pin.name}`);
                   const restaurantBadges = await BadgeService.processBadgeEvent({
                     userId: userId.toString(),
                     eventType: BadgeRequirementType.RESTAURANTS_VISITED,
@@ -617,8 +640,12 @@ export class LocationGateway {
                     },
                   });
                   allEarnedBadges = allEarnedBadges.concat(restaurantBadges);
+                } else {
+                  logger.warn(`⚠️  [REALTIME] Shops/services pin with missing or unknown subtype: ${subtype}`);
                 }
               }
+            } else {
+              logger.info(`ℹ️  [REALTIME] Pin is not pre-seeded, skipping category-specific badge events`);
             }
 
             if (allEarnedBadges.length > 0) {

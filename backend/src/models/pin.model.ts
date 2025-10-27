@@ -256,7 +256,22 @@ export class PinModel {
       }
 
       if (filters.latitude && filters.longitude && filters.radius) {
-        pins = pins.filter(p => this.calculateDistance(filters.latitude!, filters.longitude!, p.location.latitude, p.location.longitude) <= filters.radius!);
+        logger.info(`📍 Applying geolocation filter: center=(${filters.latitude}, ${filters.longitude}), radius=${filters.radius}m`);
+        logger.info(`📍 Pins before distance filter: ${pins.length} (${pins.filter(p => p.category === 'study').length} libraries)`);
+        
+        pins = pins.filter(p => {
+          const distance = this.calculateDistance(filters.latitude!, filters.longitude!, p.location.latitude, p.location.longitude);
+          const withinRadius = distance <= filters.radius!;
+          
+          // Log library filtering for debugging
+          if (p.category === 'study') {
+            logger.info(`📚 Library "${p.name}": distance=${distance.toFixed(2)}m, within=${withinRadius}`);
+          }
+          
+          return withinRadius;
+        });
+        
+        logger.info(`📍 Pins after distance filter: ${pins.length} (${pins.filter(p => p.category === 'study').length} libraries)`);
       }
 
       // Apply pagination after all filtering

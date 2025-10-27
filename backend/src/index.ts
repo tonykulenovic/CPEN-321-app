@@ -37,33 +37,60 @@ locationGateway.initialize(httpServer);
 firebaseService.initialize();
 
 // Connect to database and initialize system data
-connectDB().then(() => {
-  // Initialize badges after database connection is established
-  BadgeService.initializeDefaultBadges()
-    .then(() => {
-      console.log('✅ Badge system initialized');
-    })
-    .catch(err => {
-      console.error('⚠️  Failed to initialize badges:', err);
-    });
+connectDB().then(async () => {
+  console.log('\n🔄 Initializing system data...\n');
   
-  // Seed UBC libraries
-  seedLibraries()
-    .catch(err => {
-      console.error('⚠️  Failed to seed libraries:', err);
+  try {
+    // Initialize badges first (required for badge tracking)
+    console.log('1️⃣  Initializing badge system...');
+    await BadgeService.initializeDefaultBadges();
+    console.log('   ✅ Badge system initialized\n');
+    
+    // Seed UBC libraries
+    console.log('2️⃣  Seeding UBC libraries...');
+    await seedLibraries();
+    console.log('   ✅ Libraries seeded\n');
+    
+    // Seed cafes near UBC using Google Places API
+    console.log('3️⃣  Seeding UBC cafes from Google Places API...');
+    await seedCafes();
+    console.log('   ✅ Cafes seeded\n');
+    
+    // Seed restaurants near UBC using Google Places API
+    console.log('4️⃣  Seeding UBC restaurants from Google Places API...');
+    await seedRestaurants();
+    console.log('   ✅ Restaurants seeded\n');
+    
+    console.log('🎉 All system data initialized successfully!\n');
+    
+    // Final verification summary
+    const mongoose = require('mongoose');
+    const badgeCount = await mongoose.connection.collection('badges').countDocuments();
+    const libraryCount = await mongoose.connection.collection('pins').countDocuments({
+      isPreSeeded: true,
+      category: 'study'
     });
-  
-  // Seed cafes near UBC using Google Places API
-  seedCafes()
-    .catch(err => {
-      console.error('⚠️  Failed to seed cafes:', err);
+    const cafeCount = await mongoose.connection.collection('pins').countDocuments({
+      isPreSeeded: true,
+      category: 'shops_services',
+      'metadata.subtype': 'cafe'
     });
-  
-  // Seed restaurants near UBC using Google Places API (excludes overlapping cafes)
-  seedRestaurants()
-    .catch(err => {
-      console.error('⚠️  Failed to seed restaurants:', err);
+    const restaurantCount = await mongoose.connection.collection('pins').countDocuments({
+      isPreSeeded: true,
+      category: 'shops_services',
+      'metadata.subtype': 'restaurant'
     });
+    
+    console.log('📊 System Data Summary:');
+    console.log(`   • Badges: ${badgeCount}`);
+    console.log(`   • Pre-seeded Libraries: ${libraryCount}`);
+    console.log(`   • Pre-seeded Cafes: ${cafeCount}`);
+    console.log(`   • Pre-seeded Restaurants: ${restaurantCount}`);
+    console.log(`   • Total Pre-seeded Pins: ${libraryCount + cafeCount + restaurantCount}\n`);
+    
+  } catch (err) {
+    console.error('❌ Failed to initialize system data:', err);
+  }
 });
 
 httpServer.listen(PORT, () => {

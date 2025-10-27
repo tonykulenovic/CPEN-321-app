@@ -239,10 +239,13 @@ export class BadgeModel {
 
   async getUserBadges(userId: mongoose.Types.ObjectId): Promise<IUserBadge[]> {
     try {
-      return await this.userBadge
+      const userBadges = await this.userBadge
         .find({ userId })
         .populate('badgeId')
         .sort({ earnedAt: -1 });
+      
+      // Filter out badges where badgeId is null (badge template was deleted)
+      return userBadges.filter(ub => ub.badgeId != null);
     } catch (error) {
       logger.error('Error getting user badges:', error);
       throw new Error('Failed to get user badges');
@@ -301,16 +304,19 @@ export class BadgeModel {
         this.userBadge.find({ userId }).populate('badgeId').sort({ earnedAt: -1 }).limit(5),
       ]);
 
+      // Filter out user badges where badgeId is null (badge was deleted)
+      const validUserBadges = userBadges.filter(ub => ub.badgeId != null);
+
       const categoryBreakdown = Object.values(BadgeCategory).reduce((acc, category) => {
-        acc[category] = userBadges.filter(ub => (ub.badgeId as any).category === category).length;
+        acc[category] = validUserBadges.filter(ub => (ub.badgeId as any).category === category).length;
         return acc;
       }, {} as Record<BadgeCategory, number>);
 
       return {
         totalBadges,
-        earnedBadges: userBadges.length,
+        earnedBadges: validUserBadges.length,
         categoryBreakdown,
-        recentBadges: userBadges,
+        recentBadges: validUserBadges,
       };
     } catch (error) {
       logger.error('Error getting badge stats:', error);
