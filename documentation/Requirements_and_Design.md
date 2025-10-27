@@ -737,9 +737,20 @@ Target audience: university students who want an easy way to discover study spot
 
 ### **4.6. Use Case Sequence Diagram (5 Most Major Use Cases)**
 
-1. [**[WRITE_NAME_HERE]**](#uc1)\
-[SEQUENCE_DIAGRAM_HERE]
-2. ...
+1. **User Authentication (Google OAuth)**
+   ![User Authentication Sequence Diagram](images/UserAuthenticationUML.png)
+
+2. **Create Pin**
+   ![Create Pin Sequence Diagram](images/CreatePinUML.png)
+
+3. **Vote on Pin**
+   ![Vote on Pin Sequence Diagram](images/VotePinUML.png)
+
+4. **Real-time Location Sharing**
+   ![Real-time Location Sharing Sequence Diagram](images/RealTimeLocationUML.png)
+
+5. **Get Meal Recommendations**
+   ![Get Meal Recommendations Sequence Diagram](images/MealRecommendationUML.png)
 
 ---
 

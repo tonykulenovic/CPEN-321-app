@@ -1,6 +1,9 @@
 import { Request, Response } from 'express';
 import { recommendationService } from '../services/recommendation.service';
-import { userInteractionModel } from '../models/userInteraction.model';
+import { weatherService } from '../services/weather.service';
+import { locationModel } from '../models/location.model';
+import { pinVoteModel } from '../models/pinVote.model';
+import { userModel } from '../models/user.model';
 import logger from '../utils/logger.util';
 import mongoose from 'mongoose';
 
@@ -39,12 +42,20 @@ export async function getRecommendations(req: Request, res: Response): Promise<v
         mealType,
         recommendations: recommendations.map(rec => ({
           pin: rec.pin,
+          place: rec.place, // Include Places API results
           score: rec.score,
           distance: Math.round(rec.distance),
           reason: rec.reason,
           factors: rec.factors,
+          source: rec.source, // 'database' or 'places_api'
         })),
         count: recommendations.length,
+        // Include weather context for user reference
+        weather: recommendations.length > 0 ? {
+          // Weather info is included in the recommendation generation process
+          hasWeatherContext: true,
+          note: "Weather conditions considered in recommendations"
+        } : null,
       },
     });
   } catch (error) {
@@ -99,19 +110,17 @@ export async function sendRecommendationNotification(req: Request, res: Response
 }
 
 /**
- * POST /recommendations/interaction - Record user interaction with a recommendation
- * @param body.pinId - Pin ID that was interacted with
- * @param body.interactionType - 'view', 'like', 'visit', 'share', 'save'
- * @param body.interactionData - Optional additional data
+ * POST /recommendations/visit - Mark a pin as visited (simplified interaction tracking)
+ * @param body.pinId - Pin ID that was visited
  */
-export async function recordInteraction(req: Request, res: Response): Promise<void> {
+export async function markPinVisited(req: Request, res: Response): Promise<void> {
   try {
-    const { pinId, interactionType, interactionData } = req.body;
+    const { pinId } = req.body;
     const currentUser = req.user!;
 
-    if (!pinId || !interactionType) {
+    if (!pinId) {
       res.status(400).json({
-        message: 'pinId and interactionType are required',
+        message: 'pinId is required',
       });
       return;
     }
@@ -123,33 +132,27 @@ export async function recordInteraction(req: Request, res: Response): Promise<vo
       return;
     }
 
-    const validInteractionTypes = ['view', 'like', 'visit', 'share', 'save'];
-    if (!validInteractionTypes.includes(interactionType)) {
-      res.status(400).json({
-        message: `Invalid interaction type. Must be one of: ${validInteractionTypes.join(', ')}`,
-      });
-      return;
-    }
+    logger.info(`📍 Marking pin ${pinId} as visited by user ${currentUser._id}`);
 
-    logger.info(`📊 Recording ${interactionType} interaction for user ${currentUser._id} on pin ${pinId}`);
-
-    const interaction = await userInteractionModel.recordInteraction(
+    // Add pin to user's visited pins if not already there using Mongoose model directly
+    const User = mongoose.model('User');
+    await User.findByIdAndUpdate(
       currentUser._id,
-      new mongoose.Types.ObjectId(pinId),
-      interactionType,
-      interactionData
+      { 
+        $addToSet: { visitedPins: new mongoose.Types.ObjectId(pinId) },
+        $inc: { 'gameData.locationsExplored': 1 }
+      }
     );
 
-    res.status(201).json({
-      message: 'Interaction recorded successfully',
+    res.status(200).json({
+      message: 'Pin marked as visited successfully',
       data: {
-        interactionId: interaction._id,
-        interactionType,
-        timestamp: interaction.timestamp,
+        pinId,
+        timestamp: new Date(),
       },
     });
   } catch (error) {
-    logger.error('Error recording interaction:', error);
+    logger.error('Error marking pin as visited:', error);
     res.status(500).json({
       message: 'Internal server error',
     });
@@ -157,7 +160,7 @@ export async function recordInteraction(req: Request, res: Response): Promise<vo
 }
 
 /**
- * GET /recommendations/preferences - Get user's recommendation preferences
+ * GET /recommendations/preferences - Get user's recommendation preferences (simplified)
  */
 export async function getUserPreferences(req: Request, res: Response): Promise<void> {
   try {
@@ -165,15 +168,23 @@ export async function getUserPreferences(req: Request, res: Response): Promise<v
 
     logger.info(`📊 Getting recommendation preferences for user ${currentUser._id}`);
 
-    const preferences = await userInteractionModel.getUserPreferences(currentUser._id);
+    // Get user's upvoted pins
+    const PinVote = mongoose.model('PinVote');
+    const upvotedPins = await PinVote.find({ userId: currentUser._id, voteType: 'upvote' }).select('pinId');
+    const likedPins = upvotedPins.map((vote: any) => vote.pinId);
+
+    // Get user's visited pins using Mongoose model directly
+    const User = mongoose.model('User');
+    const user = await User.findById(currentUser._id).select('visitedPins').lean() as any;
+    const visitedPins = user?.visitedPins || [];
 
     res.status(200).json({
       message: 'User preferences retrieved successfully',
       data: {
-        likedPinsCount: preferences.likedPins.length,
-        visitedPinsCount: preferences.visitedPins.length,
-        preferredMealTimes: preferences.preferredMealTimes,
-        preferredWeatherConditions: preferences.preferredWeatherConditions,
+        likedPinsCount: likedPins.length,
+        visitedPinsCount: visitedPins.length,
+        likedPins: likedPins,
+        visitedPins: visitedPins,
       },
     });
   } catch (error) {
@@ -185,35 +196,114 @@ export async function getUserPreferences(req: Request, res: Response): Promise<v
 }
 
 /**
- * GET /recommendations/history - Get user's recent interactions
+ * GET /recommendations/activity - Get user's recommendation-related activity (votes and visits)
  */
-export async function getInteractionHistory(req: Request, res: Response): Promise<void> {
+export async function getUserActivity(req: Request, res: Response): Promise<void> {
   try {
     const { limit = '20' } = req.query;
     const currentUser = req.user!;
 
-    logger.info(`📊 Getting interaction history for user ${currentUser._id}`);
+    logger.info(`📊 Getting recommendation activity for user ${currentUser._id}`);
 
-    const interactions = await userInteractionModel.getRecentInteractions(
-      currentUser._id,
-      parseInt(limit as string)
-    );
+    // Get recent votes
+    const PinVote = mongoose.model('PinVote');
+    const recentVotes = await PinVote
+      .find({ userId: currentUser._id })
+      .populate('pinId', 'name category location')
+      .sort({ createdAt: -1 })
+      .limit(parseInt(limit as string) / 2)
+      .lean();
+
+    // Get user's visited pins (recent ones) using Mongoose model directly
+    const User = mongoose.model('User');
+    const user = await User.findById(currentUser._id)
+      .populate({
+        path: 'visitedPins',
+        select: 'name category location',
+        options: { limit: parseInt(limit as string) / 2 }
+      })
+      .lean() as any;
+
+    const visitedPins = user?.visitedPins || [];
 
     res.status(200).json({
-      message: 'Interaction history retrieved successfully',
+      message: 'User activity retrieved successfully',
       data: {
-        interactions: interactions.map(interaction => ({
-          _id: interaction._id,
-          pinId: interaction.pinId,
-          interactionType: interaction.interactionType,
-          interactionData: interaction.interactionData,
-          timestamp: interaction.timestamp,
+        recentVotes: recentVotes.map((vote: any) => ({
+          _id: vote._id,
+          pin: vote.pinId,
+          voteType: vote.voteType,
+          timestamp: vote.createdAt,
+          activityType: 'vote'
         })),
-        count: interactions.length,
+        visitedPins: visitedPins.map((pin: any) => ({
+          _id: pin._id,
+          pin: pin,
+          activityType: 'visit'
+        })),
+        totalVotes: recentVotes.length,
+        totalVisits: visitedPins.length,
       },
     });
   } catch (error) {
-    logger.error('Error getting interaction history:', error);
+    logger.error('Error getting user activity:', error);
+    res.status(500).json({
+      message: 'Internal server error',
+    });
+  }
+}
+
+/**
+ * GET /recommendations/weather - Get current weather context for recommendations
+ */
+export async function getCurrentWeather(req: Request, res: Response): Promise<void> {
+  try {
+    const currentUser = req.user!;
+
+    // Get user's current/recent location
+    const location = await locationModel.findByUserId(currentUser._id);
+    if (!location) {
+      res.status(404).json({
+        message: 'User location not found. Location sharing required for weather context.',
+      });
+      return;
+    }
+
+    logger.info(`🌤️ Getting weather for user ${currentUser._id} at (${location.lat}, ${location.lng})`);
+
+    const weather = await weatherService.getCurrentWeather(location.lat, location.lng);
+    
+    if (!weather) {
+      res.status(503).json({
+        message: 'Weather service temporarily unavailable',
+      });
+      return;
+    }
+
+    const weatherRecommendations = weatherService.getWeatherRecommendations(weather);
+
+    res.status(200).json({
+      message: 'Weather context retrieved successfully',
+      data: {
+        location: {
+          lat: location.lat,
+          lng: location.lng,
+        },
+        weather: {
+          condition: weather.condition,
+          temperature: weather.temperature,
+          humidity: weather.humidity,
+          description: weather.description,
+          isGoodForOutdoor: weather.isGoodForOutdoor,
+        },
+        recommendations: {
+          preferOutdoor: weatherRecommendations.preferOutdoor,
+          suggestions: weatherRecommendations.suggestions,
+        },
+      },
+    });
+  } catch (error) {
+    logger.error('Error getting weather context:', error);
     res.status(500).json({
       message: 'Internal server error',
     });
