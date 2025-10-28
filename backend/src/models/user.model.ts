@@ -168,6 +168,10 @@ const userSchema = new Schema<IUser>(
       type: Schema.Types.ObjectId,
       ref: 'Pin',
     }],
+    reportedPins: [{
+      type: Schema.Types.ObjectId,
+      ref: 'Pin',
+    }],
     loginTracking: {
       lastLoginDate: {
         type: Date,

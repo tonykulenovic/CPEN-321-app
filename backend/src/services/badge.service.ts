@@ -75,11 +75,22 @@ export class BadgeService {
       },
     },
     {
+      name: 'First Friend',
+      description: 'Add your first friend',
+      icon: 'first_friend',
+      category: BadgeCategory.SOCIAL,
+      rarity: 'common' as any,
+      requirements: {
+        type: BadgeRequirementType.FRIENDS_ADDED,
+        target: 1,
+      },
+    },
+    {
       name: 'Social Butterfly',
       description: 'Add 5 friends',
       icon: 'social_butterfly',
       category: BadgeCategory.SOCIAL,
-      rarity: 'common' as any,
+      rarity: 'uncommon' as any,
       requirements: {
         type: BadgeRequirementType.FRIENDS_ADDED,
         target: 5,
@@ -94,6 +105,28 @@ export class BadgeService {
       requirements: {
         type: BadgeRequirementType.FRIENDS_ADDED,
         target: 20,
+      },
+    },
+    {
+      name: 'Social Engineer',
+      description: 'Add 50 friends',
+      icon: 'social_engineer',
+      category: BadgeCategory.SOCIAL,
+      rarity: 'epic' as any,
+      requirements: {
+        type: BadgeRequirementType.FRIENDS_ADDED,
+        target: 50,
+      },
+    },
+    {
+      name: 'King of the Campus',
+      description: 'Add 100 friends',
+      icon: 'king_of_campus',
+      category: BadgeCategory.SOCIAL,
+      rarity: 'legendary' as any,
+      requirements: {
+        type: BadgeRequirementType.FRIENDS_ADDED,
+        target: 100,
       },
     },
     {
@@ -364,18 +397,32 @@ export class BadgeService {
    * Check friends added requirement
    */
   private static async checkFriendsAdded(userId: mongoose.Types.ObjectId, target: number): Promise<boolean> {
-    // This would need to be implemented based on your friends system
-    logger.info(`Checking friends added for user ${userId}, target: ${target}`);
-    return false; // Placeholder - implement based on your friends system
+    try {
+      const User = mongoose.model('User');
+      const user = await User.findById(userId).select('friendsCount');
+      const count = user?.friendsCount || 0;
+      logger.info(`User ${userId} has ${count} friends, target: ${target}`);
+      return count >= target;
+    } catch (error) {
+      logger.error('Error checking friends added:', error);
+      return false;
+    }
   }
 
   /**
    * Check reports made requirement
    */
   private static async checkReportsMade(userId: mongoose.Types.ObjectId, target: number): Promise<boolean> {
-    // This would need to be implemented based on your reporting system
-    logger.info(`Checking reports made for user ${userId}, target: ${target}`);
-    return false; // Placeholder - implement based on your reporting system
+    try {
+      const User = mongoose.model('User');
+      const user = await User.findById(userId).select('stats.reportsMade');
+      const count = user?.stats?.reportsMade || 0;
+      logger.info(`User ${userId} has made ${count} reports (cumulative), target: ${target}`);
+      return count >= target;
+    } catch (error) {
+      logger.error('Error checking reports made:', error);
+      return false;
+    }
   }
 
   /**

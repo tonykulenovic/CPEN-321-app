@@ -219,8 +219,71 @@ export class PinsController {
       const pinId = new mongoose.Types.ObjectId(req.params.id);
       const userId = req.user!._id;
       const { reason } = req.body;
+      
+      // Check if user has already reported this pin
+      const User = mongoose.model('User');
+      const user = await User.findById(userId).select('reportedPins');
+      
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+
+      const alreadyReported = user.reportedPins?.some((id: mongoose.Types.ObjectId) => 
+        id.toString() === pinId.toString()
+      );
+
+      // Report the pin (adds to pin's reports array)
       await pinModel.reportPin(pinId, userId, reason);
-      res.status(200).json({ message: 'Pin reported successfully' });
+
+      // Only increment counter and trigger badge if this is a new unique pin being reported
+      if (!alreadyReported) {
+        // Add pin to reported list and increment counter
+        try {
+          await User.findByIdAndUpdate(userId, {
+            $push: { reportedPins: pinId },
+            $inc: { 'stats.reportsMade': 1 },
+          });
+          logger.info(`📝 User ${userId} reported pin ${pinId} (unique report #${(user.stats?.reportsMade || 0) + 1})`);
+        } catch (statsError) {
+          logger.error('Error updating user stats:', statsError);
+        }
+
+        // Process badge event for reporting a pin
+        try {
+          const earnedBadges = await BadgeService.processBadgeEvent({
+            userId: userId.toString(),
+            eventType: BadgeRequirementType.REPORTS_MADE,
+            value: 1,
+            timestamp: new Date(),
+            metadata: {
+              pinId: pinId.toString(),
+              reason: reason,
+            },
+          });
+
+          if (earnedBadges.length > 0) {
+            logger.info(`User ${userId} earned ${earnedBadges.length} badge(s) from reporting a pin`);
+            return res.status(200).json({ 
+              message: 'Pin reported successfully',
+              data: { earnedBadges, firstReport: true }
+            });
+          }
+        } catch (badgeError) {
+          // Log badge processing error but don't fail the report
+          logger.error('Error processing badge event for pin report:', badgeError);
+        }
+
+        return res.status(200).json({ 
+          message: 'Pin reported successfully',
+          data: { firstReport: true }
+        });
+      } else {
+        logger.info(`📝 User ${userId} reported pin ${pinId} again (duplicate report, not counted)`);
+        return res.status(200).json({ 
+          message: 'Pin reported successfully (already reported by you)',
+          data: { firstReport: false }
+        });
+      }
     } catch (error) {
       logger.error('Failed to report pin:', error as Error);
       if (error instanceof Error) {
