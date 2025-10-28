@@ -534,7 +534,7 @@ private fun BottomNavigationBar(
             onClick = { onItemSelected(3) },
             icon = {
                 Icon(
-                    imageVector = Icons.Filled.People,
+                    imageVector = Icons.Filled.Group,
                     contentDescription = "Friends",
                     modifier = Modifier.size(30.dp)
                 )
@@ -551,7 +551,7 @@ private fun BottomNavigationBar(
             onClick = { onItemSelected(4) },
             icon = {
                 Icon(
-                    imageVector = Icons.Filled.AccountCircle,
+                    imageVector = Icons.Filled.Person,
                     contentDescription = "Profile",
                     modifier = Modifier.size(30.dp)
                 )

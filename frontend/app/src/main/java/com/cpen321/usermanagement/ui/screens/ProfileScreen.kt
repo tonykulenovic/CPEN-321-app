@@ -81,6 +81,7 @@ data class ProfileScreenActions(
     val onAccountDeleted: () -> Unit = {},
     val onLogout: () -> Unit = {},
     val onMapClick: () -> Unit = {},
+    val onSearchClick: () -> Unit = {},
     val onFriendsClick: () -> Unit = {},
     val onBadgesClick: () -> Unit = {}
 )
@@ -95,6 +96,7 @@ private data class ProfileScreenCallbacks(
     val onSuccessMessageShown: () -> Unit,
     val onErrorMessageShown: () -> Unit,
     val onMapClick: () -> Unit,
+    val onSearchClick: () -> Unit,
     val onFriendsClick: () -> Unit,
     val onBadgesClick: () -> Unit
 )
@@ -154,6 +156,7 @@ fun ProfileScreen(
             onSuccessMessageShown = profileViewModel::clearSuccessMessage,
             onErrorMessageShown = profileViewModel::clearError,
             onMapClick = actions.onMapClick,
+            onSearchClick = actions.onSearchClick,
             onFriendsClick = actions.onFriendsClick,
             onBadgesClick = actions.onBadgesClick
         )
@@ -180,14 +183,14 @@ private fun ProfileContent(
             BottomNavigationBar(
                 selectedItem = selectedItem,
                 onItemSelected = { index ->
-                    selectedItem = index
-                    when (index) {
-                        0 -> callbacks.onMapClick() // Map button
-                        1 -> {} // Search - not implemented yet
-                        2 -> callbacks.onBadgesClick() // Badges button - ADD THIS
-                        3 -> callbacks.onFriendsClick() // Friends button
-                        4 -> { /* Already on profile */ }
-                    }
+                selectedItem = index
+                when (index) {
+                    0 -> callbacks.onMapClick() // Map button
+                    1 -> callbacks.onSearchClick() // Search button
+                    2 -> callbacks.onBadgesClick() // Badges button
+                    3 -> callbacks.onFriendsClick() // Friends button
+                    4 -> { /* Already on profile */ }
+                }
                 }
             )
         },
