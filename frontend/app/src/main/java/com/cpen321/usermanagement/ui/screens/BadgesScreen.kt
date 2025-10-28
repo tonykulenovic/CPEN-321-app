@@ -149,8 +149,50 @@ fun BadgesScreen(
                     }
                 }
             )
-        },
-        floatingActionButton = {
+        }
+    ) { paddingValues ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp)
+            ) {
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                // Profile Summary Section with real data
+                ProfileSummaryCard(
+                    userName = userName,
+                    profilePictureUrl = userProfilePicture,
+                    totalBadges = totalBadgesEarned,
+                    isLoading = profileUiState.isLoadingProfile || badgeUiState.isLoading
+                )
+                
+                Spacer(modifier = Modifier.height(24.dp))
+                
+                // Badges Grid - Always show all badges
+                if (badgeUiState.isLoading && displayBadges.isEmpty()) {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(color = Color(0xFF00BCD4))
+                    }
+                } else {
+                    BadgesGrid(
+                        badges = displayBadges,
+                        onBadgeClick = { badge ->
+                            selectedBadgeItem = badge
+                            showBadgeDetails = true
+                        }
+                    )
+                }
+            }
+            
+            // Floating refresh button - positioned at bottom right
             FloatingActionButton(
                 onClick = {
                     badgeViewModel.loadBadgeProgress(forceRefresh = true)
@@ -165,7 +207,8 @@ fun BadgesScreen(
                 containerColor = Color(0xFF00BCD4),
                 contentColor = Color.White,
                 modifier = Modifier
-                    .padding(bottom = 16.dp)
+                    .align(Alignment.BottomEnd)
+                    .padding(bottom = 16.dp, end = 16.dp)
             ) {
                 if (badgeUiState.isLoading) {
                     CircularProgressIndicator(
@@ -179,43 +222,6 @@ fun BadgesScreen(
                         contentDescription = "Refresh badges"
                     )
                 }
-            }
-        }
-    ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .padding(horizontal = 16.dp)
-        ) {
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            // Profile Summary Section with real data
-            ProfileSummaryCard(
-                userName = userName,
-                profilePictureUrl = userProfilePicture,
-                totalBadges = totalBadgesEarned,
-                isLoading = profileUiState.isLoadingProfile || badgeUiState.isLoading
-            )
-            
-            Spacer(modifier = Modifier.height(24.dp))
-            
-            // Badges Grid - Always show all badges
-            if (badgeUiState.isLoading && displayBadges.isEmpty()) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator(color = Color(0xFF00BCD4))
-                }
-            } else {
-                BadgesGrid(
-                    badges = displayBadges,
-                    onBadgeClick = { badge ->
-                        selectedBadgeItem = badge
-                        showBadgeDetails = true
-                    }
-                )
             }
         }
     }
