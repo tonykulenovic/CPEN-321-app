@@ -160,12 +160,10 @@ Target audience: university students who want an easy way to discover study spot
 
 ### **3.1. List of Features**
 
-- **Authentication**: Google OAuth login with credential management and secure token handling.
 - **View Map**: Display pre-seeded pins, user-created pins, and friend locations with real-time updates. Filter pins by category (Study, Events, Chill, Shops/Services).
 - **Manage Pins**: Create, update, and delete community pins (study spaces, events, chill areas, shops). Vote on pins (upvote/downvote), report inappropriate content, and view enhanced pin details with capacity, crowd levels, and opening hours.
 - **Manage Account**: Create, update, or delete an account, view profile attributes, badges, and friends. Control privacy settings including profile visibility, location sharing, and friend request preferences. Receive push notifications for account-related events.
 - **Manage Friends**: Send friend requests, maintain a friends list, and view friend profiles. Share real-time locations with friends (with privacy controls).
-- **Admin Functionality**: Review reported pins, manage user accounts, moderate content, and view system analytics.
 - **Badge System**: Earn badges for activities, view progress, and track achievements.
 - **Recommend Locations**: Suggest location/pins based on user preferences, time of day, and location data.
 
@@ -173,7 +171,19 @@ Target audience: university students who want an easy way to discover study spot
 
 ### **3.2. Use Case Diagram**
 
-![Use Case Diagram](images/use_case_diagram.png)
+Due to the amount of use cases in our app, we elected to create a seperate use case diagram for each feature.
+
+![Use Case Diagrams](images/View_Map.png)
+
+![Use Case Diagrams](images/Manage_Pins.png)
+
+![Use Case Diagrams](images/Manage_Account.png)
+
+![Use Case Diagrams](images/Manage_Friends.png)
+
+![Use Case Diagrams](images/Badge_System.png)
+
+![Use Case Diagrams](images/Recommend_Locations.png)
 
 ---
 
