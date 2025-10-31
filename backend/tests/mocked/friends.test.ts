@@ -137,6 +137,23 @@ describe('Mocked: POST /friends/requests', () => {
     expect(response.body).toHaveProperty('message');
     expect(mockUserModel.findById).not.toHaveBeenCalled();
   });
+
+  // Mocked behavior: friendshipModel throws error during friend request creation
+  // Input: valid request but database error occurs
+  // Expected status code: 500
+  // Expected behavior: error handling
+  // Expected output: internal server error message
+  test('Send friend request service error', async () => {
+    mockUserModel.findById.mockRejectedValueOnce(new Error('Database connection failed'));
+
+    const response = await request(app)
+      .post('/friends/requests')
+      .send({ toUserId: '507f1f77bcf86cd799439012' });
+
+    expect(response.status).toBe(500);
+    expect(response.body.message).toBe('Internal server error');
+    expect(mockUserModel.findById).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe('Mocked: GET /friends/requests', () => {
@@ -214,6 +231,23 @@ describe('Mocked: GET /friends/requests', () => {
     expect(response.body.data).toHaveLength(0);
     expect(mockFriendshipModel.findOutgoingRequests).toHaveBeenCalledTimes(1);
   });
+
+  // Mocked behavior: friendshipModel throws error during request processing
+  // Input: valid request but database error occurs
+  // Expected status code: 500
+  // Expected behavior: error handling
+  // Expected output: internal server error message
+  test('Get friend requests service error', async () => {
+    mockFriendshipModel.findOutgoingRequests.mockRejectedValueOnce(new Error('Database query failed'));
+
+    const response = await request(app).get('/friends/requests');
+
+    expect(response.status).toBe(500);
+    expect(response.body.message).toBe('Internal server error');
+    expect(mockFriendshipModel.findOutgoingRequests).toHaveBeenCalledTimes(1);
+  });
+
+
 });
 
 describe('Mocked: POST /friends/requests/:id/accept', () => {
@@ -290,6 +324,22 @@ describe('Mocked: POST /friends/requests/:id/accept', () => {
     expect(response.status).toBe(403);
     expect(mockFriendshipModel.updateStatus).not.toHaveBeenCalled();
   });
+
+  // Mocked behavior: friendshipModel throws error during processing
+  // Input: valid request but database error occurs
+  // Expected status code: 500
+  // Expected behavior: error handling
+  // Expected output: internal server error message
+  test('Accept friend request service error', async () => {
+    mockFriendshipModel.findById.mockRejectedValueOnce(new Error('Database connection failed'));
+
+    const response = await request(app)
+      .post('/friends/requests/507f1f77bcf86cd799439013/accept');
+
+    expect(response.status).toBe(500);
+    expect(response.body.message).toBe('Internal server error');
+    expect(mockFriendshipModel.findById).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe('Mocked: POST /friends/requests/:id/decline', () => {
@@ -324,6 +374,75 @@ describe('Mocked: POST /friends/requests/:id/decline', () => {
       mockFriendRequest._id, 
       'declined'
     );
+  });
+
+  // Mocked behavior: friendshipModel throws error during decline processing
+  // Input: valid request but database error occurs
+  // Expected status code: 500
+  // Expected behavior: error handling
+  // Expected output: internal server error message
+  test('Decline friend request service error', async () => {
+    mockFriendshipModel.findById.mockRejectedValueOnce(new Error('Database connection failed'));
+
+    const response = await request(app)
+      .post('/friends/requests/507f1f77bcf86cd799439013/decline');
+
+    expect(response.status).toBe(500);
+    expect(response.body.message).toBe('Internal server error');
+    expect(mockFriendshipModel.findById).toHaveBeenCalledTimes(1);
+  });
+
+  // Mocked behavior: friend request has invalid status (not pending)
+  // Input: request ID with already processed request
+  // Expected status code: 400
+  // Expected behavior: cannot decline non-pending request
+  // Expected output: status error message
+  test('Cannot decline non-pending friend request', async () => {
+    const mockFriendRequest = {
+      _id: new mongoose.Types.ObjectId('507f1f77bcf86cd799439013'),
+      userId: new mongoose.Types.ObjectId('507f1f77bcf86cd799439012'),
+      friendId: new mongoose.Types.ObjectId('507f1f77bcf86cd799439011'),
+      status: 'accepted' // Already accepted, not pending
+    };
+    
+    mockFriendshipModel.findById.mockResolvedValueOnce(mockFriendRequest as any);
+
+    const response = await request(app)
+      .post('/friends/requests/507f1f77bcf86cd799439013/decline');
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toBe('Friend request is already accepted');
+    expect(mockFriendshipModel.updateStatus).not.toHaveBeenCalled();
+  });
+
+  // Mocked behavior: friendshipModel.findById returns null
+  // Input: non-existent request ID
+  // Expected status code: 404
+  // Expected behavior: request not found
+  // Expected output: error message
+  test('Decline non-existent friend request', async () => {
+    mockFriendshipModel.findById.mockResolvedValueOnce(null);
+
+    const response = await request(app)
+      .post('/friends/requests/507f1f77bcf86cd799439013/decline');
+
+    expect(response.status).toBe(404);
+    expect(response.body.message).toBe('Friend request not found');
+    expect(mockFriendshipModel.updateStatus).not.toHaveBeenCalled();
+  });
+
+  // Mocked behavior: invalid request ID format
+  // Input: malformed request ID
+  // Expected status code: 400
+  // Expected behavior: validation error
+  // Expected output: format error message
+  test('Decline with invalid request ID format', async () => {
+    const response = await request(app)
+      .post('/friends/requests/invalid-id/decline');
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toBe('Invalid friend request ID format');
+    expect(mockFriendshipModel.findById).not.toHaveBeenCalled();
   });
 });
 
@@ -420,6 +539,53 @@ describe('Mocked: PATCH /friends/:friendId', () => {
     expect(mockFriendshipModel.findByUserAndFriend).toHaveBeenCalledTimes(1);
     expect(mockFriendshipModel.updateSettings).toHaveBeenCalledTimes(1);
   });
+
+  // Mocked behavior: friendshipModel throws error during settings update
+  // Input: valid request but database error occurs
+  // Expected status code: 500
+  // Expected behavior: error handling
+  // Expected output: internal server error message
+  test('Update friend settings service error', async () => {
+    mockFriendshipModel.findByUserAndFriend.mockRejectedValueOnce(new Error('Database connection failed'));
+
+    const response = await request(app)
+      .patch('/friends/507f1f77bcf86cd799439012')
+      .send({ shareLocation: true });
+
+    expect(response.status).toBe(500);
+    expect(response.body.message).toBe('Internal server error');
+    expect(mockFriendshipModel.findByUserAndFriend).toHaveBeenCalledTimes(1);
+  });
+
+  // Mocked behavior: invalid friend ID format
+  // Input: malformed friend ID
+  // Expected status code: 400
+  // Expected behavior: validation error
+  // Expected output: format error message
+  test('Update friend settings with invalid ID format', async () => {
+    const response = await request(app)
+      .patch('/friends/invalid-id')
+      .send({ shareLocation: true });
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toBe('Invalid friend ID format');
+    expect(mockFriendshipModel.findByUserAndFriend).not.toHaveBeenCalled();
+  });
+
+  // Mocked behavior: invalid request body
+  // Input: invalid settings data
+  // Expected status code: 400
+  // Expected behavior: validation error
+  // Expected output: validation error message
+  test('Update friend settings with invalid body', async () => {
+    const response = await request(app)
+      .patch('/friends/507f1f77bcf86cd799439012')
+      .send({}); // Empty body
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toBe('At least one setting must be provided');
+    expect(mockFriendshipModel.findByUserAndFriend).not.toHaveBeenCalled();
+  });
 });
 
 describe('Mocked: DELETE /friends/:friendId', () => {
@@ -462,5 +628,154 @@ describe('Mocked: DELETE /friends/:friendId', () => {
     expect(mockFriendshipModel.findByUserAndFriend).toHaveBeenCalledTimes(2); // Called twice for both directions
     expect(mockFriendshipModel.deleteFriendship).toHaveBeenCalledTimes(1);
     expect(mockUserModel.incrementFriendsCount).toHaveBeenCalledTimes(2); // Called twice for both users (decrement by -1)
+  });
+
+  // Mocked behavior: friendshipModel throws error during friendship removal
+  // Input: valid request but database error occurs
+  // Expected status code: 500
+  // Expected behavior: error handling
+  // Expected output: internal server error message
+  test('Remove friendship service error', async () => {
+    // The controller makes parallel calls for both directions, so both will be rejected
+    mockFriendshipModel.findByUserAndFriend.mockRejectedValueOnce(new Error('Database connection failed'));
+    mockFriendshipModel.findByUserAndFriend.mockRejectedValueOnce(new Error('Database connection failed'));
+
+    const response = await request(app)
+      .delete('/friends/507f1f77bcf86cd799439012');
+
+    expect(response.status).toBe(500);
+    expect(response.body.message).toBe('Internal server error');
+    expect(mockFriendshipModel.findByUserAndFriend).toHaveBeenCalledTimes(2); // Called twice for both directions
+  });
+
+  // Mocked behavior: invalid friend ID format
+  // Input: malformed friend ID
+  // Expected status code: 400
+  // Expected behavior: validation error
+  // Expected output: format error message
+  test('Remove friendship with invalid ID format', async () => {
+    const response = await request(app)
+      .delete('/friends/invalid-id');
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toBe('Invalid friend ID format');
+    expect(mockFriendshipModel.findByUserAndFriend).not.toHaveBeenCalled();
+  });
+
+  // Mocked behavior: non-accepted friendship in updateFriend
+  // Input: friendship with pending status
+  // Expected status code: 400
+  // Expected behavior: reject update for non-accepted friendship
+  // Expected output: error message
+  test('Update friend settings - non-accepted friendship', async () => {
+    const pendingFriendship = {
+      _id: '507f1f77bcf86cd799439013',
+      userId: '507f1f77bcf86cd799439011',
+      friendId: '507f1f77bcf86cd799439012',
+      status: 'pending',
+      requestedBy: '507f1f77bcf86cd799439011',
+      shareLocation: false,
+      closeFriend: false,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    } as any;
+
+    mockFriendshipModel.findByUserAndFriend.mockResolvedValue(pendingFriendship);
+
+    const response = await request(app)
+      .patch('/friends/507f1f77bcf86cd799439012')
+      .send({ shareLocation: true });
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toBe('Can only update settings for accepted friends');
+  });
+
+  // Mocked behavior: failed friendship settings update
+  // Input: valid friendship but updateSettings fails
+  // Expected status code: 500
+  // Expected behavior: error handling
+  // Expected output: failure message
+  test('Update friend settings - updateSettings failure', async () => {
+    const acceptedFriendship = {
+      _id: '507f1f77bcf86cd799439013',
+      userId: '507f1f77bcf86cd799439011',
+      friendId: '507f1f77bcf86cd799439012',
+      status: 'accepted',
+      requestedBy: '507f1f77bcf86cd799439011',
+      shareLocation: false,
+      closeFriend: false,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    } as any;
+
+    mockFriendshipModel.findByUserAndFriend.mockResolvedValue(acceptedFriendship);
+    mockFriendshipModel.updateSettings.mockResolvedValue(null); // Simulate failure
+
+    const response = await request(app)
+      .patch('/friends/507f1f77bcf86cd799439012')
+      .send({ shareLocation: true });
+
+    expect(response.status).toBe(500);
+    expect(response.body.message).toBe('Failed to update friendship settings');
+  });
+
+  // Mocked behavior: self-removal prevention
+  // Input: user trying to remove themselves
+  // Expected status code: 400
+  // Expected behavior: validation error
+  // Expected output: self-removal error message
+  test('Remove friendship - prevent self removal', async () => {
+    const response = await request(app)
+      .delete('/friends/507f1f77bcf86cd799439011'); // Same as current user ID
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toBe('Cannot remove yourself as a friend');
+    expect(mockFriendshipModel.findByUserAndFriend).not.toHaveBeenCalled();
+  });
+
+  // Mocked behavior: non-existent friendship in removeFriend
+  // Input: friendship that doesn't exist
+  // Expected status code: 404
+  // Expected behavior: error handling
+  // Expected output: not found message
+  test('Remove friendship - non-existent friendship', async () => {
+    mockFriendshipModel.findByUserAndFriend
+      .mockResolvedValueOnce(null) // userToFriendship
+      .mockResolvedValueOnce(null); // friendToUsershipship
+
+    const response = await request(app)
+      .delete('/friends/507f1f77bcf86cd799439012');
+
+    expect(response.status).toBe(404);
+    expect(response.body.message).toBe('Friendship not found or not accepted');
+  });
+
+  // Mocked behavior: non-accepted friendship in removeFriend
+  // Input: friendship with non-accepted status
+  // Expected status code: 404
+  // Expected behavior: error handling
+  // Expected output: not found message
+  test('Remove friendship - non-accepted friendship', async () => {
+    const pendingFriendship = {
+      _id: '507f1f77bcf86cd799439013',
+      userId: '507f1f77bcf86cd799439011',
+      friendId: '507f1f77bcf86cd799439012',
+      status: 'pending',
+      requestedBy: '507f1f77bcf86cd799439011',
+      shareLocation: false,
+      closeFriend: false,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    } as any;
+
+    mockFriendshipModel.findByUserAndFriend
+      .mockResolvedValueOnce(pendingFriendship) // userToFriendship
+      .mockResolvedValueOnce(null); // friendToUsershipship
+
+    const response = await request(app)
+      .delete('/friends/507f1f77bcf86cd799439012');
+
+    expect(response.status).toBe(404);
+    expect(response.body.message).toBe('Friendship not found or not accepted');
   });
 });
