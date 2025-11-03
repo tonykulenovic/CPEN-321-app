@@ -141,7 +141,6 @@ describe('Mocked: GET /users/:userId/profile', () => {
   // Expected behavior: user not found
   // Expected output: error message
   test('Get profile for non-existent user', async () => {
-    mockFriendshipModel.areFriends.mockResolvedValueOnce(true);
     mockUserModel.findById.mockResolvedValueOnce(null);
 
     const response = await request(app)
@@ -149,7 +148,7 @@ describe('Mocked: GET /users/:userId/profile', () => {
       .expect(404);
 
     expect(response.body.message).toBe('User not found');
-    expect(mockFriendshipModel.areFriends).toHaveBeenCalledTimes(1);
+    expect(mockFriendshipModel.areFriends).toHaveBeenCalledTimes(0); // Not called because user doesn't exist
     expect(mockUserModel.findById).toHaveBeenCalledTimes(1);
   });
 
@@ -169,6 +168,7 @@ describe('Mocked: GET /users/:userId/profile', () => {
 
     mockUserModel.findById.mockResolvedValueOnce(mockTargetUser as any);
     mockFriendshipModel.areFriends.mockResolvedValueOnce(false);
+    mockUserModel.getOnlineStatus.mockResolvedValueOnce(new Map()); // Add missing mock
 
     const response = await request(app)
       .get('/users/507f1f77bcf86cd799439012/profile')
@@ -199,14 +199,15 @@ describe('Mocked: GET /users/:userId/profile', () => {
   // Expected behavior: error handling
   // Expected output: internal server error message
   test('Get profile database error', async () => {
-    mockFriendshipModel.areFriends.mockRejectedValueOnce(new Error('Database connection failed'));
+    mockUserModel.findById.mockRejectedValueOnce(new Error('Database connection failed'));
 
     const response = await request(app)
       .get('/users/507f1f77bcf86cd799439012/profile')
       .expect(500);
 
     expect(response.body.message).toBe('Database connection failed');
-    expect(mockFriendshipModel.areFriends).toHaveBeenCalledTimes(1);
+    expect(mockUserModel.findById).toHaveBeenCalledTimes(1);
+    expect(mockFriendshipModel.areFriends).toHaveBeenCalledTimes(0); // Not reached due to user lookup error
   });
 });
 
