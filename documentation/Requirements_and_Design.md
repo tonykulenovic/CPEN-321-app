@@ -449,6 +449,35 @@ Due to the amount of use cases in our app, we elected to create a seperate use c
 
 ---
 
+#### Use Case 11: Remove Pin
+
+**Description**: A user or admin deletes a pin from the map. Regular users may only delete pins they created. Admins may delete any user-created pin. Deletion is permanent and requires confirmation.  
+**Primary actor(s)**: Regular User (Pin Owner), Admin User  
+
+**Main success scenario**:
+
+1. Actor selects a pin to remove.  
+2. System displays a delete option (only if actor has permission).  
+3. Actor selects the delete option.  
+4. System shows a confirmation dialog.  
+5. Actor confirms deletion.  
+6. System deletes the pin from storage.  
+7. UI updates and the pin is removed from the map or admin list.  
+8. System displays a success message.  
+
+**Failure scenario(s)**:
+
+- 1a. Actor does not have permission to delete the pin.  
+    - 1a1. Delete button is not shown.  
+- 4a. Actor cancels deletion.  
+    - 4a1. Dialog closes and no changes occur.  
+- 5a. Network or backend error occurs during deletion.  
+    - 5a1. System shows an error message and pin is not removed.  
+- 6a. Pin no longer exists due to simultaneous deletion.  
+    - 6a1. System informs the actor and refreshes the UI.
+
+---
+
 ### **3.6. Screen Mock-ups**
 
 (Optional – can be added later if time permits.)
