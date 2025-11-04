@@ -207,7 +207,7 @@ Due to the amount of use cases in our app, we elected to create a seperate use c
 6. **Vote on Pin**: User can upvote or downvote pins to show approval/disapproval.
 7. **Report Pin**: User reports a community-created pin as unsafe or inappropriate.
 8. **View Reported Pins**: Admin can view and manage reported pins.
-9. **Remove Pin**: Admin can remove pins from the map.
+9. **Remove Pin**: User and admin can remove pins from the map.
 
 ### Feature 3: Manage Account
 10. **Sign Up**: User can sign up for the app with their Google account.
