@@ -430,23 +430,25 @@ Due to the amount of use cases in our app, we elected to create a seperate use c
 
 #### Use Case 10: Admin Review Reported Content
 
-**Description**: Admin reviews and moderates reported pins and user content.  
+**Description**: Admin reviews and moderates reported pins through the admin dashboard.  
 **Primary actor(s)**: Admin
 
 **Main success scenario**:
 
-1. Admin accesses the admin dashboard.
-2. Admin views list of reported pins and content.
-3. Admin reviews the reported content and context.
-4. Admin takes action (approve, remove, or dismiss report).
-5. System updates the content status and notifies relevant users.
+1. Admin accesses the admin dashboard and selects "Review Reported Pins".
+2. System displays list of all pins with reports (showing pin name, creator, number of reports, and status).
+3. Admin expands a reported pin to view detailed report information (reporter name, reason, timestamp).
+4. Admin takes action on the pin:
+   - **Clear Reports**: Dismisses all reports and resets pin status to active (if reports were false).
+   - **Delete Pin**: Permanently removes the pin from the system.
+5. System updates the pin status and refreshes the reported pins list.
 
 **Failure scenario(s)**:
 
-- 1a. Admin tries to access admin functions without proper permissions.
-  - 1a1. System denies access and redirects to regular user interface.
-- 2a. Content moderation action fails due to system error.
-  - 2a1. System shows error message and allows retry.
+- 4a. Moderation action fails due to network or system error.
+  - 4a1. System shows error message and allows retry.
+- 4b. Pin has already been deleted by another admin or the creator.
+  - 4b1. System shows "Pin not found" error and refreshes the list.
 
 ---
 
