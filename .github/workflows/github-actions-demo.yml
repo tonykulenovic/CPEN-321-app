@@ -1,0 +1,59 @@
+name: Backend Tests CI/CD Pipeline
+run-name: Running backend tests for ${{ github.actor }}'s push to ${{ github.ref_name }}
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  backend-tests:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+
+    steps:
+      - name: Checkout repository code
+        uses: actions/checkout@v5
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "npm"
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install backend dependencies
+        working-directory: backend
+        run: npm ci
+
+      - name: Start MongoDB for testing
+        uses: supercharge/mongodb-github-action@1.10.0
+        with:
+          mongodb-version: "6.0"
+          mongodb-replica-set: test-rs
+          mongodb-port: 27017
+
+      - name: Run backend tests
+        working-directory: backend
+        run: npm test
+        env:
+          NODE_ENV: test
+          MONGODB_URI: mongodb://localhost:27017/test-universe-app
+          JWT_SECRET: test-secret-key-for-github-actions
+
+      - name: Run backend test coverage
+        working-directory: backend
+        run: npm run test:coverage
+        env:
+          NODE_ENV: test
+          MONGODB_URI: mongodb://localhost:27017/test-universe-app
+          JWT_SECRET: test-secret-key-for-github-actions
+
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          directory: backend/coverage
+          fail_ci_if_error: true
