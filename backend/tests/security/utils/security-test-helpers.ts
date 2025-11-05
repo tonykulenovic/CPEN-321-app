@@ -57,6 +57,32 @@ export function createIncompleteUserData() {
 }
 
 /**
+ * Creates XSS attack payload for testing input sanitization
+ */
+export function createXSSPayload(): string {
+  return '<script>alert("XSS Attack")</script>';
+}
+
+/**
+ * Creates SQL injection payload for testing input validation
+ */
+export function createSQLInjectionPayload(): string {
+  return "'; DROP TABLE users; --";
+}
+
+/**
+ * Creates invalid data types for testing Zod validation
+ */
+export function createInvalidDataTypes() {
+  return {
+    title: 12345, // Should be string
+    latitude: "not-a-number", // Should be number
+    longitude: true, // Should be number
+    category: ["array", "instead", "of", "string"] // Should be string
+  };
+}
+
+/**
  * Test user IDs for different scenarios
  */
 export const TEST_USER_IDS = {
