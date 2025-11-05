@@ -101,3 +101,7 @@ httpServer.listen(PORT, () => {
   recommendationScheduler.startScheduler();
   console.log(`⏰ Recommendation scheduler started`);
 });
+
+// Export app for testing
+export default app;
+export { app };
