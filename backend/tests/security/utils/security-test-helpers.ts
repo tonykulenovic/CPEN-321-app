@@ -83,10 +83,79 @@ export function createInvalidDataTypes() {
 }
 
 /**
+ * Creates an expired JWT token (Phase 2 - Advanced JWT testing)
+ */
+export function createExpiredToken(): string {
+  // For now, we'll simulate expired token with a recognizable pattern
+  // In a real implementation, this would generate an actual expired JWT
+  return 'Bearer expired-token-should-be-rejected';
+}
+
+/**
+ * Creates an admin JWT token using the dev bypass system
+ */
+export function createAdminToken(userId: string = '507f1f77bcf86cd799439013'): string {
+  // Using dev bypass system - in real implementation would include admin role
+  return 'Bearer admin-test-token-12345';
+}
+
+/**
+ * Creates a JWT token with invalid signature (Phase 2 Rank 2)
+ */
+export function createInvalidSignatureToken(): string {
+  // Simulate a token with invalid signature
+  return 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.INVALID_SIGNATURE_SHOULD_BE_REJECTED';
+}
+
+/**
+ * Creates a JWT token with tampered payload (Phase 2 Rank 2)
+ */
+export function createTamperedPayloadToken(): string {
+  // Simulate a token with modified payload but valid structure
+  return 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.TAMPERED_PAYLOAD_DATA.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c';
+}
+
+/**
+ * Creates NoSQL injection payload for MongoDB testing
+ */
+export function createNoSQLInjectionPayload(): any {
+  return {
+    $where: "function() { return true; }",
+    $regex: ".*",
+    $ne: null
+  };
+}
+
+/**
+ * Creates privacy test scenarios
+ */
+export function createPrivacyTestScenarios() {
+  return {
+    privateProfile: {
+      profileVisibility: 'private',
+      locationSharing: 'off',
+      friendRequestsAllowed: false
+    },
+    friendOnlyProfile: {
+      profileVisibility: 'friends-only',
+      locationSharing: 'friends-only',
+      friendRequestsAllowed: true
+    },
+    publicProfile: {
+      profileVisibility: 'public',
+      locationSharing: 'public',
+      friendRequestsAllowed: true
+    }
+  };
+}
+
+/**
  * Test user IDs for different scenarios
  */
 export const TEST_USER_IDS = {
   VALID_USER: '507f1f77bcf86cd799439011',
   OTHER_USER: '507f1f77bcf86cd799439012',
-  ADMIN_USER: '507f1f77bcf86cd799439013'
+  ADMIN_USER: '507f1f77bcf86cd799439013',
+  PRIVATE_USER: '507f1f77bcf86cd799439014',
+  FRIEND_USER: '507f1f77bcf86cd799439015'
 };
