@@ -150,6 +150,102 @@ export function createPrivacyTestScenarios() {
 }
 
 /**
+ * Creates a token refresh scenario for testing (Phase 2 Rank 3)
+ */
+export function createTokenRefreshScenario(): { originalToken: string, refreshToken: string } {
+  return {
+    originalToken: 'Bearer original-token-about-to-expire',
+    refreshToken: 'Bearer refreshed-token-12345'
+  };
+}
+
+/**
+ * Creates concurrent session tokens for testing session management
+ */
+export function createConcurrentSessionTokens(): string[] {
+  return [
+    'Bearer session-token-device-1',
+    'Bearer session-token-device-2', 
+    'Bearer session-token-device-3'
+  ];
+}
+
+/**
+ * Creates friend relationship test data
+ */
+export function createFriendRelationshipData() {
+  return {
+    pendingRequest: {
+      senderId: TEST_USER_IDS.VALID_USER,
+      recipientId: TEST_USER_IDS.OTHER_USER,
+      status: 'pending'
+    },
+    acceptedFriendship: {
+      user1: TEST_USER_IDS.VALID_USER,
+      user2: TEST_USER_IDS.FRIEND_USER,
+      status: 'accepted'
+    },
+    blockedUser: {
+      blockerId: TEST_USER_IDS.VALID_USER,
+      blockedId: TEST_USER_IDS.OTHER_USER,
+      status: 'blocked'
+    }
+  };
+}
+
+/**
+ * Creates location sharing test scenarios
+ */
+export function createLocationSharingScenarios() {
+  return {
+    sharingDisabled: {
+      userId: TEST_USER_IDS.PRIVATE_USER,
+      locationSharing: 'disabled',
+      latitude: 49.2827,
+      longitude: -123.1207
+    },
+    friendsOnlySharing: {
+      userId: TEST_USER_IDS.FRIEND_USER,
+      locationSharing: 'friends-only',
+      latitude: 49.2827,
+      longitude: -123.1207
+    },
+    publicSharing: {
+      userId: TEST_USER_IDS.VALID_USER,
+      locationSharing: 'public',
+      latitude: 49.2827,
+      longitude: -123.1207
+    }
+  };
+}
+
+/**
+ * Creates advanced attack combinations for testing
+ */
+export function createAdvancedAttackCombinations() {
+  return {
+    combinedInjection: {
+      title: createXSSPayload(),
+      description: createSQLInjectionPayload(),
+      metadata: createNoSQLInjectionPayload()
+    },
+    sessionHijacking: {
+      stolenToken: 'Bearer stolen-session-token-xyz',
+      originalIp: '192.168.1.100',
+      attackerIp: '10.0.0.1'
+    },
+    privacyBypass: {
+      targetUser: TEST_USER_IDS.PRIVATE_USER,
+      bypassAttempts: [
+        '/users/' + TEST_USER_IDS.PRIVATE_USER + '/profile',
+        '/users/' + TEST_USER_IDS.PRIVATE_USER + '/location',
+        '/users/' + TEST_USER_IDS.PRIVATE_USER + '/friends'
+      ]
+    }
+  };
+}
+
+/**
  * Test user IDs for different scenarios
  */
 export const TEST_USER_IDS = {
@@ -157,5 +253,6 @@ export const TEST_USER_IDS = {
   OTHER_USER: '507f1f77bcf86cd799439012',
   ADMIN_USER: '507f1f77bcf86cd799439013',
   PRIVATE_USER: '507f1f77bcf86cd799439014',
-  FRIEND_USER: '507f1f77bcf86cd799439015'
+  FRIEND_USER: '507f1f77bcf86cd799439015',
+  BLOCKED_USER: '507f1f77bcf86cd799439016'
 };
