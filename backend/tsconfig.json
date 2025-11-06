@@ -5,10 +5,11 @@
     "target": "es2022",
     "strict": true,
     "esModuleInterop": true,
+    "isolatedModules": true,
     "outDir": "./dist",
-    "rootDir": "./src",
-    "typeRoots": ["./node_modules/@types", "./src/types"]
+    "typeRoots": ["./node_modules/@types"],
+    "types": []
   },
-  "include": ["src/**/*"],
+  "include": ["src/**/*", "tests/**/*"],
   "exclude": ["node_modules", "dist"]
 }
