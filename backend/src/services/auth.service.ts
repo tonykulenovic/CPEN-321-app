@@ -63,7 +63,7 @@ export class AuthService {
 
       // Create new user with provided username
       // Check if this is the admin email
-      const isAdmin = googleUserInfo.email === 'tomasfernandes600@gmail.com';
+      const isAdmin = googleUserInfo.email === 'universe.cpen321@gmail.com';
       
       const signUpData = {
         ...googleUserInfo,
@@ -97,8 +97,8 @@ export class AuthService {
       let user = await userModel.findByGoogleId(googleUserInfo.googleId);
       
       // Auto-create admin user if signing in with admin email and user doesn't exist
-      if (!user && googleUserInfo.email === 'tomasfernandes600@gmail.com') {
-        logger.info('Auto-creating admin user for tomasfernandes600@gmail.com');
+      if (!user && googleUserInfo.email === 'universe.cpen321@gmail.com') {
+        logger.info('Auto-creating admin user for universe.cpen321@gmail.com');
         const adminData = {
           googleId: googleUserInfo.googleId,
           email: googleUserInfo.email,

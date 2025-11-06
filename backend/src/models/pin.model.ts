@@ -256,7 +256,22 @@ export class PinModel {
       }
 
       if (filters.latitude && filters.longitude && filters.radius) {
-        pins = pins.filter(p => this.calculateDistance(filters.latitude!, filters.longitude!, p.location.latitude, p.location.longitude) <= filters.radius!);
+        logger.info(`📍 Applying geolocation filter: center=(${filters.latitude}, ${filters.longitude}), radius=${filters.radius}m`);
+        logger.info(`📍 Pins before distance filter: ${pins.length} (${pins.filter(p => p.category === 'study').length} libraries)`);
+        
+        pins = pins.filter(p => {
+          const distance = this.calculateDistance(filters.latitude!, filters.longitude!, p.location.latitude, p.location.longitude);
+          const withinRadius = distance <= filters.radius!;
+          
+          // Log library filtering for debugging
+          if (p.category === 'study') {
+            logger.info(`📚 Library "${p.name}": distance=${distance.toFixed(2)}m, within=${withinRadius}`);
+          }
+          
+          return withinRadius;
+        });
+        
+        logger.info(`📍 Pins after distance filter: ${pins.length} (${pins.filter(p => p.category === 'study').length} libraries)`);
       }
 
       // Apply pagination after all filtering
@@ -369,7 +384,7 @@ export class PinModel {
   }
 
   private calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
-    const R = 6371;
+    const R = 6371000; // Earth's radius in meters (not kilometers!)
     const dLat = this.toRad(lat2 - lat1);
     const dLon = this.toRad(lon2 - lon1);
     const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(this.toRad(lat1)) * Math.cos(this.toRad(lat2)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);

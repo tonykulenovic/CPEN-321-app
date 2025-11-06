@@ -424,8 +424,11 @@ export class PinsController {
         allEarnedBadges = allEarnedBadges.concat(visitBadges);
 
         // Category-specific badge events (only for pre-seeded pins)
+        logger.info(`🔍 Pin visit - isPreSeeded: ${pin.isPreSeeded}, category: ${pin.category}, subtype: ${pin.metadata?.subtype}`);
+        
         if (pin.isPreSeeded) {
           if (pin.category === 'study') {
+            logger.info(`📚 Processing library badge event for: ${pin.name}`);
             const libraryBadges = await BadgeService.processBadgeEvent({
               userId: userId.toString(),
               eventType: BadgeRequirementType.LIBRARIES_VISITED,
@@ -440,7 +443,10 @@ export class PinsController {
           } else if (pin.category === 'shops_services') {
             // Check subtype for specific badge events
             const subtype = pin.metadata?.subtype;
+            logger.info(`🏪 Shops/services pin - subtype: ${subtype}`);
+            
             if (subtype === 'cafe') {
+              logger.info(`☕ Processing cafe badge event for: ${pin.name}`);
               const cafeBadges = await BadgeService.processBadgeEvent({
                 userId: userId.toString(),
                 eventType: BadgeRequirementType.CAFES_VISITED,
@@ -451,8 +457,10 @@ export class PinsController {
                   pinName: pin.name,
                 },
               });
+              logger.info(`☕ Cafe badge event returned ${cafeBadges.length} badges`);
               allEarnedBadges = allEarnedBadges.concat(cafeBadges);
             } else if (subtype === 'restaurant') {
+              logger.info(`🍽️  Processing restaurant badge event for: ${pin.name}`);
               const restaurantBadges = await BadgeService.processBadgeEvent({
                 userId: userId.toString(),
                 eventType: BadgeRequirementType.RESTAURANTS_VISITED,
@@ -464,8 +472,12 @@ export class PinsController {
                 },
               });
               allEarnedBadges = allEarnedBadges.concat(restaurantBadges);
+            } else {
+              logger.warn(`⚠️  Shops/services pin with missing or unknown subtype: ${subtype}`);
             }
           }
+        } else {
+          logger.info(`ℹ️  Pin is not pre-seeded, skipping category-specific badge events`);
         }
 
         if (allEarnedBadges.length > 0) {

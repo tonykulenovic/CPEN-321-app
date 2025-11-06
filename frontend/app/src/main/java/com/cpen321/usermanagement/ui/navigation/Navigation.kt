@@ -349,6 +349,7 @@ private fun AppNavHost(
                     onMapClick = { navController.navigate(NavRoutes.MAIN) {
                         popUpTo(NavRoutes.MAIN) { inclusive = true }
                     } },
+                    onSearchClick = { navController.navigate(NavRoutes.SEARCH_PINS) },
                     onFriendsClick = { navController.navigate(NavRoutes.FRIENDS) },
                     onBadgesClick = { navController.navigate(NavRoutes.BADGES) }
                 )

@@ -2,9 +2,10 @@ import { Router } from 'express';
 import {
   getRecommendations,
   sendRecommendationNotification,
-  recordInteraction,
+  markPinVisited,
   getUserPreferences,
-  getInteractionHistory,
+  getUserActivity,
+  getCurrentWeather,
 } from '../controllers/recommendations.controller';
 import { authenticateToken } from '../middleware/auth.middleware';
 
@@ -28,24 +29,31 @@ router.get('/:mealType', getRecommendations);
 router.post('/notify/:mealType', sendRecommendationNotification);
 
 /**
- * @route POST /recommendations/interaction
- * @desc Record user interaction with a recommendation
+ * @route POST /recommendations/visit
+ * @desc Mark a pin as visited (simplified interaction tracking)
  * @access Private
  */
-router.post('/interaction', recordInteraction);
+router.post('/visit', markPinVisited);
 
 /**
  * @route GET /recommendations/preferences
- * @desc Get user's recommendation preferences
+ * @desc Get user's recommendation preferences (from votes and visits)
  * @access Private
  */
 router.get('/preferences', getUserPreferences);
 
 /**
- * @route GET /recommendations/history
- * @desc Get user's recent interactions
+ * @route GET /recommendations/activity
+ * @desc Get user's recommendation-related activity (votes and visits)
  * @access Private
  */
-router.get('/history', getInteractionHistory);
+router.get('/activity', getUserActivity);
+
+/**
+ * @route GET /recommendations/weather
+ * @desc Get current weather context for recommendations
+ * @access Private
+ */
+router.get('/weather', getCurrentWeather);
 
 export default router;

@@ -191,12 +191,52 @@ export class BadgeService {
    */
   static async initializeDefaultBadges(): Promise<void> {
     try {
+      let createdCount = 0;
+      let existingCount = 0;
+      
       for (const template of this.BADGE_TEMPLATES) {
         const existingBadge = await badgeModel.findAll({ name: template.name });
         if (existingBadge.length === 0) {
           await badgeModel.create(template);
-          logger.info(`Created default badge: ${template.name}`);
+          logger.info(`   ✓ Created badge: ${template.name} (${template.requirements.type})`);
+          createdCount++;
+        } else {
+          existingCount++;
         }
+      }
+      
+      if (createdCount > 0) {
+        logger.info(`   📊 Created ${createdCount} new badge(s), ${existingCount} already existed`);
+      } else {
+        logger.info(`   📊 All ${existingCount} badges already exist`);
+      }
+      
+      // Verify location badges exist and have correct requirements
+      const bookworm = await badgeModel.findAll({ name: 'Bookworm' });
+      const caffeineAddict = await badgeModel.findAll({ name: 'Caffeine Addict' });
+      
+      if (bookworm.length > 0 && caffeineAddict.length > 0) {
+        logger.info(`   ✅ Location-based badges verified:`);
+        logger.info(`      • Bookworm: ${bookworm[0].requirements.type} (target: ${bookworm[0].requirements.target})`);
+        logger.info(`      • Caffeine Addict: ${caffeineAddict[0].requirements.type} (target: ${caffeineAddict[0].requirements.target})`);
+        
+        // Test query to ensure badges can be found by requirements.type
+        const libraryBadges = await badgeModel.findAll({
+          'requirements.type': BadgeRequirementType.LIBRARIES_VISITED,
+          isActive: true,
+        });
+        const cafeBadges = await badgeModel.findAll({
+          'requirements.type': BadgeRequirementType.CAFES_VISITED,
+          isActive: true,
+        });
+        
+        logger.info(`   🔍 Query test: Found ${libraryBadges.length} library badge(s) and ${cafeBadges.length} cafe badge(s)`);
+        
+        if (libraryBadges.length === 0 || cafeBadges.length === 0) {
+          logger.error(`   ⚠️  WARNING: Location badges exist but cannot be found by requirements.type query!`);
+        }
+      } else {
+        logger.warn(`   ⚠️  Location badges not found after initialization!`);
       }
     } catch (error) {
       logger.error('Error initializing default badges:', error);
@@ -212,21 +252,30 @@ export class BadgeService {
       const userId = new mongoose.Types.ObjectId(event.userId);
       const earnedBadges: IUserBadge[] = [];
 
+      logger.info(`🏅 Processing badge event: ${event.eventType} for user ${event.userId}`);
+
       // Get all active badges that match the event type
       const relevantBadges = await badgeModel.findAll({
         'requirements.type': event.eventType,
         isActive: true,
       });
 
+      logger.info(`🏅 Found ${relevantBadges.length} badges matching event type ${event.eventType}`);
+
       for (const badge of relevantBadges) {
+        logger.info(`🏅 Checking badge: ${badge.name} (target: ${badge.requirements.target})`);
+        
         // Check if user already has this badge
         const existingUserBadge = await badgeModel.getUserBadge(userId, badge._id);
         if (existingUserBadge) {
+          logger.info(`🏅 User already has badge: ${badge.name}`);
           continue; // User already has this badge
         }
 
         // Check if user qualifies for this badge
         const qualifies = await this.checkBadgeQualification(userId, badge, event);
+        logger.info(`🏅 Badge ${badge.name} qualification: ${qualifies}`);
+        
         if (qualifies) {
           const progress: BadgeProgress = {
             current: badge.requirements.target,
@@ -237,10 +286,11 @@ export class BadgeService {
 
           const userBadge = await badgeModel.assignBadge(userId, badge._id, progress);
           earnedBadges.push(userBadge);
-          logger.info(`User ${event.userId} earned badge: ${badge.name}`);
+          logger.info(`🎉 User ${event.userId} earned badge: ${badge.name}`);
         }
       }
 
+      logger.info(`🏅 Badge event processing complete: ${earnedBadges.length} badges earned`);
       return earnedBadges;
     } catch (error) {
       logger.error('Error processing badge event:', error);
@@ -395,14 +445,24 @@ export class BadgeService {
 
   /**
    * Check libraries visited requirement
+   * Directly counts pre-seeded library pins from visitedPins array
    */
   private static async checkLibrariesVisited(userId: mongoose.Types.ObjectId, target: number): Promise<boolean> {
     try {
       const User = mongoose.model('User');
-      const user = await User.findById(userId).select('stats.librariesVisited');
-      const count = user?.stats?.librariesVisited || 0;
-      logger.info(`User ${userId} has visited ${count} libraries (cumulative), target: ${target}`);
-      return count >= target;
+      const user = await User.findById(userId).select('visitedPins').populate('visitedPins');
+      
+      if (!user || !user.visitedPins) {
+        return false;
+      }
+
+      // Count pre-seeded library pins (category: 'study')
+      const libraryCount = user.visitedPins.filter((pin: any) => 
+        pin && pin.isPreSeeded === true && pin.category === 'study'
+      ).length;
+
+      logger.info(`User ${userId} has visited ${libraryCount} pre-seeded libraries, target: ${target}`);
+      return libraryCount >= target;
     } catch (error) {
       logger.error('Error checking libraries visited:', error);
       return false;
@@ -411,14 +471,37 @@ export class BadgeService {
 
   /**
    * Check cafes visited requirement
+   * Directly counts pre-seeded cafe pins from visitedPins array
    */
   private static async checkCafesVisited(userId: mongoose.Types.ObjectId, target: number): Promise<boolean> {
     try {
       const User = mongoose.model('User');
-      const user = await User.findById(userId).select('stats.cafesVisited');
-      const count = user?.stats?.cafesVisited || 0;
-      logger.info(`User ${userId} has visited ${count} cafes (cumulative), target: ${target}`);
-      return count >= target;
+      const user = await User.findById(userId).select('visitedPins').populate('visitedPins');
+      
+      if (!user || !user.visitedPins) {
+        logger.warn(`☕ User ${userId} has no visitedPins`);
+        return false;
+      }
+
+      logger.info(`☕ Checking cafes for user ${userId}, total visited pins: ${user.visitedPins.length}`);
+
+      // Count pre-seeded cafe pins (category: 'shops_services' with subtype: 'cafe')
+      const cafePins = user.visitedPins.filter((pin: any) => {
+        const isCafe = pin && pin.isPreSeeded === true && pin.category === 'shops_services' && pin.metadata?.subtype === 'cafe';
+        if (pin && pin.category === 'shops_services') {
+          logger.info(`☕ Checking pin: ${pin.name}, isPreSeeded: ${pin.isPreSeeded}, category: ${pin.category}, subtype: ${pin.metadata?.subtype}, isCafe: ${isCafe}`);
+        }
+        return isCafe;
+      });
+
+      const cafeCount = cafePins.length;
+      logger.info(`☕ User ${userId} has visited ${cafeCount} pre-seeded cafes (target: ${target})`);
+      
+      if (cafeCount > 0) {
+        logger.info(`☕ Cafe visits: ${cafePins.map((p: any) => p.name).join(', ')}`);
+      }
+
+      return cafeCount >= target;
     } catch (error) {
       logger.error('Error checking cafes visited:', error);
       return false;
@@ -438,7 +521,7 @@ export class BadgeService {
 
       // Get user stats for cumulative tracking
       const User = mongoose.model('User');
-      const user = await User.findById(userId).select('stats loginTracking friendsCount');
+      const user = await User.findById(userId).select('stats loginTracking friendsCount visitedPins').populate('visitedPins');
 
       switch (badge.requirements.type) {
         case BadgeRequirementType.PINS_CREATED:
@@ -463,11 +546,17 @@ export class BadgeService {
           break;
         
         case BadgeRequirementType.LIBRARIES_VISITED:
-          current = user?.stats?.librariesVisited || 0;
+          // Count pre-seeded library pins directly from visitedPins
+          current = user?.visitedPins?.filter((pin: any) => 
+            pin && pin.isPreSeeded === true && pin.category === 'study'
+          ).length || 0;
           break;
         
         case BadgeRequirementType.CAFES_VISITED:
-          current = user?.stats?.cafesVisited || 0;
+          // Count pre-seeded cafe pins directly from visitedPins
+          current = user?.visitedPins?.filter((pin: any) => 
+            pin && pin.isPreSeeded === true && pin.category === 'shops_services' && pin.metadata?.subtype === 'cafe'
+          ).length || 0;
           break;
         
         case BadgeRequirementType.RESTAURANTS_VISITED:

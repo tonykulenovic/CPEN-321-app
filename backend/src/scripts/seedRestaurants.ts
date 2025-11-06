@@ -80,7 +80,7 @@ const UBC_SEARCH_REGIONS = [
 ];
 
 const SEARCH_RADIUS = 800; // Smaller radius per region to avoid too much overlap
-const OVERLAP_THRESHOLD = 50; // 50 meters - if restaurant is within this distance of a cafe, exclude it
+const OVERLAP_THRESHOLD = 5; // 5 meters - if restaurant is within this distance of a cafe, exclude it
 
 // Helper function to calculate distance between two points using Haversine formula
 function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
@@ -236,9 +236,12 @@ export async function seedRestaurants(): Promise<void> {
       });
     }
 
-    // Filter out restaurants that overlap with cafes
-    const nonOverlappingRestaurants = [];
+    // Filter out restaurants that have the same name as cafes
+    const nonDuplicateRestaurants = [];
     let excludedCount = 0;
+
+    // Create a set of cafe names (lowercase) for quick lookup
+    const cafeNames = new Set(existingCafes.map(cafe => cafe.name.toLowerCase()));
 
     for (const restaurant of restaurants) {
       const lat = restaurant.location?.latitude ?? restaurant.geometry?.location.lat;
@@ -249,36 +252,24 @@ export async function seedRestaurants(): Promise<void> {
         continue;
       }
 
-      // Check if this restaurant overlaps with any existing cafe
-      let overlaps = false;
-      for (const cafe of existingCafes) {
-        const distance = calculateDistance(
-          lat,
-          lng,
-          cafe.location.latitude,
-          cafe.location.longitude
-        );
-        
-        if (distance <= OVERLAP_THRESHOLD) {
-          overlaps = true;
-          logger.info(`  🚫 Excluding "${restaurant.displayName?.text || restaurant.name}" - overlaps with cafe "${cafe.name}" (${distance.toFixed(1)}m away)`);
-          excludedCount++;
-          break;
-        }
-      }
-
-      if (!overlaps) {
-        nonOverlappingRestaurants.push(restaurant);
+      // Check if this restaurant has the same name as an existing cafe
+      const restaurantName = (restaurant.displayName?.text || restaurant.name || '').toLowerCase();
+      
+      if (cafeNames.has(restaurantName)) {
+        logger.info(`  🚫 Excluding "${restaurant.displayName?.text || restaurant.name}" - duplicate name with cafe`);
+        excludedCount++;
+      } else {
+        nonDuplicateRestaurants.push(restaurant);
       }
     }
 
-    logger.info(`✅ ${nonOverlappingRestaurants.length} restaurants after excluding ${excludedCount} overlaps with cafes`);
+    logger.info(`✅ ${nonDuplicateRestaurants.length} restaurants after excluding ${excludedCount} duplicate names with cafes`);
 
     // Upsert restaurant pins
     let createdCount = 0;
     let updatedCount = 0;
-
-    for (const restaurant of nonOverlappingRestaurants) {
+    
+    for (const restaurant of nonDuplicateRestaurants) {
       try {
         // Extract location from either new or legacy API format
         const lat = restaurant.location?.latitude ?? restaurant.geometry?.location.lat;
@@ -367,11 +358,11 @@ export async function seedRestaurants(): Promise<void> {
     }
 
     // Get current restaurant names for cleanup (use same extraction logic as above)
-    const currentRestaurantNames = nonOverlappingRestaurants
+    const currentRestaurantNames = nonDuplicateRestaurants
       .map((r: PlaceResult) => r.displayName?.text || r.name || 'Unnamed Restaurant')
       .filter((name: string) => name !== 'Unnamed Restaurant');
     
-    // Delete pre-seeded restaurants that are no longer in Google Places results or now overlap with cafes
+    // Delete pre-seeded restaurants that are no longer in Google Places results
     const deleteResult = await pinModel['pin'].deleteMany({
       isPreSeeded: true,
       category: PinCategory.SHOPS_SERVICES,
@@ -379,7 +370,7 @@ export async function seedRestaurants(): Promise<void> {
       name: { $nin: currentRestaurantNames }
     });
 
-    logger.info(`🎉 Restaurant seeding complete! Created: ${createdCount}, Updated: ${updatedCount}, Deleted: ${deleteResult.deletedCount}, Excluded: ${excludedCount}, Total: ${nonOverlappingRestaurants.length}`);
+    logger.info(`🎉 Restaurant seeding complete! Created: ${createdCount}, Updated: ${updatedCount}, Deleted: ${deleteResult.deletedCount}, Excluded: ${excludedCount}, Total: ${nonDuplicateRestaurants.length}`);
     
   } catch (error) {
     logger.error('❌ Restaurant seeding failed:', error);

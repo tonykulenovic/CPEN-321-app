@@ -101,19 +101,19 @@ export class UserController {
 
       const targetUserId = new mongoose.Types.ObjectId(userId);
 
+      // Fetch target user first to ensure they exist
+      const targetUser = await userModel.findById(targetUserId);
+      if (!targetUser) {
+        return res.status(404).json({
+          message: 'User not found',
+        });
+      }
+
       // Check if users are friends
       const areFriends = await friendshipModel.areFriends(currentUser._id, targetUserId);
       if (!areFriends) {
         return res.status(403).json({
           message: 'You can only view profiles of your friends',
-        });
-      }
-
-      // Fetch target user
-      const targetUser = await userModel.findById(targetUserId);
-      if (!targetUser) {
-        return res.status(404).json({
-          message: 'User not found',
         });
       }
 

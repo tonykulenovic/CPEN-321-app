@@ -4,6 +4,9 @@
 
 | **Change Date**                              | **Modified Sections**                         | **Rationale**                                                                                                                                                                                                                                                                        |
 | -------------------------------------------- | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 2025-11-03 ([2b9a2a0](../../commit/2b9a2a0)) | Requirements Specification, Use Cases         | Updated Use Case 10: Admin Review Reported Content - refined admin dashboard workflow with specific moderation actions (Clear Reports vs Delete Pin) and detailed report viewing                                                                                                     |
+| 2025-11-03 ([ab4e5df](../../commit/ab4e5df)) | Requirements Specification, Use Cases         | Added Use Case 11: Remove Pin to Formal Use Case Specifications - documented pin deletion functionality for both users and admins with permission checks and confirmation flow                                                                                                       |
+| 2025-11-03 ([dee9450](../../commit/dee9450)) | Pin Management, Use Cases                     | Updated Remove Pin use case - users can now remove their own pins in addition to admin removal capabilities                                                                                                                                                                          |
 | 2025-10-25 ([041a90c](../../commit/041a90c)) | Frontend, User Management                     | User management changes - enhanced user profile management and UI improvements                                                                                                                                                                                                       |
 | 2025-10-25 ([05af670](../../commit/05af670)) | Gamification, Badge System                    | Functionality for pin-creation-related badges - implemented achievement tracking for users creating pins                                                                                                                                                                             |
 | 2025-10-25 ([09aac5c](../../commit/09aac5c)) | Frontend, Gamification                        | Integrated Badges backend with frontend - complete badge system UI implementation with backend integration                                                                                                                                                                           |
@@ -160,12 +163,10 @@ Target audience: university students who want an easy way to discover study spot
 
 ### **3.1. List of Features**
 
-- **Authentication**: Google OAuth login with credential management and secure token handling.
 - **View Map**: Display pre-seeded pins, user-created pins, and friend locations with real-time updates. Filter pins by category (Study, Events, Chill, Shops/Services).
 - **Manage Pins**: Create, update, and delete community pins (study spaces, events, chill areas, shops). Vote on pins (upvote/downvote), report inappropriate content, and view enhanced pin details with capacity, crowd levels, and opening hours.
 - **Manage Account**: Create, update, or delete an account, view profile attributes, badges, and friends. Control privacy settings including profile visibility, location sharing, and friend request preferences. Receive push notifications for account-related events.
 - **Manage Friends**: Send friend requests, maintain a friends list, and view friend profiles. Share real-time locations with friends (with privacy controls).
-- **Admin Functionality**: Review reported pins, manage user accounts, moderate content, and view system analytics.
 - **Badge System**: Earn badges for activities, view progress, and track achievements.
 - **Recommend Locations**: Suggest location/pins based on user preferences, time of day, and location data.
 
@@ -173,7 +174,19 @@ Target audience: university students who want an easy way to discover study spot
 
 ### **3.2. Use Case Diagram**
 
-![Use Case Diagram](images/use_case_diagram.png)
+Due to the amount of use cases in our app, we elected to create a seperate use case diagram for each feature.
+
+![Use Case Diagrams](images/View_Map.png)
+
+![Use Case Diagrams](images/Manage_Pins.png)
+
+![Use Case Diagrams](images/Manage_Account.png)
+
+![Use Case Diagrams](images/Manage_Friends.png)
+
+![Use Case Diagrams](images/Badge_System.png)
+
+![Use Case Diagrams](images/Recommend_Locations.png)
 
 ---
 
@@ -197,7 +210,7 @@ Target audience: university students who want an easy way to discover study spot
 6. **Vote on Pin**: User can upvote or downvote pins to show approval/disapproval.
 7. **Report Pin**: User reports a community-created pin as unsafe or inappropriate.
 8. **View Reported Pins**: Admin can view and manage reported pins.
-9. **Remove Pin**: Admin can remove pins from the map.
+9. **Remove Pin**: User and admin can remove pins from the map.
 
 ### Feature 3: Manage Account
 10. **Sign Up**: User can sign up for the app with their Google account.
@@ -418,23 +431,54 @@ Target audience: university students who want an easy way to discover study spot
 
 #### Use Case 10: Admin Review Reported Content
 
-**Description**: Admin reviews and moderates reported pins and user content.  
+**Description**: Admin reviews and moderates reported pins through the admin dashboard.  
 **Primary actor(s)**: Admin
 
 **Main success scenario**:
 
-1. Admin accesses the admin dashboard.
-2. Admin views list of reported pins and content.
-3. Admin reviews the reported content and context.
-4. Admin takes action (approve, remove, or dismiss report).
-5. System updates the content status and notifies relevant users.
+1. Admin accesses the admin dashboard and selects "Review Reported Pins".
+2. System displays list of all pins with reports (showing pin name, creator, number of reports, and status).
+3. Admin expands a reported pin to view detailed report information (reporter name, reason, timestamp).
+4. Admin takes action on the pin:
+   - **Clear Reports**: Dismisses all reports and resets pin status to active (if reports were false).
+   - **Delete Pin**: Permanently removes the pin from the system.
+5. System updates the pin status and refreshes the reported pins list.
 
 **Failure scenario(s)**:
 
-- 1a. Admin tries to access admin functions without proper permissions.
-  - 1a1. System denies access and redirects to regular user interface.
-- 2a. Content moderation action fails due to system error.
-  - 2a1. System shows error message and allows retry.
+- 4a. Moderation action fails due to network or system error.
+  - 4a1. System shows error message and allows retry.
+- 4b. Pin has already been deleted by another admin or the creator.
+  - 4b1. System shows "Pin not found" error and refreshes the list.
+
+---
+
+#### Use Case 11: Remove Pin
+
+**Description**: A user or admin deletes a pin from the map. Regular users may only delete pins they created. Admins may delete any user-created pin. Deletion is permanent and requires confirmation.  
+**Primary actor(s)**: Regular User (Pin Owner), Admin User  
+
+**Main success scenario**:
+
+1. Actor selects a pin to remove.  
+2. System displays a delete option (only if actor has permission).  
+3. Actor selects the delete option.  
+4. System shows a confirmation dialog.  
+5. Actor confirms deletion.  
+6. System deletes the pin from storage.  
+7. UI updates and the pin is removed from the map or admin list.  
+8. System displays a success message.  
+
+**Failure scenario(s)**:
+
+- 1a. Actor does not have permission to delete the pin.  
+    - 1a1. Delete button is not shown.  
+- 4a. Actor cancels deletion.  
+    - 4a1. Dialog closes and no changes occur.  
+- 5a. Network or backend error occurs during deletion.  
+    - 5a1. System shows an error message and pin is not removed.  
+- 6a. Pin no longer exists due to simultaneous deletion.  
+    - 6a1. System informs the actor and refreshes the UI.
 
 ---
 
@@ -737,9 +781,20 @@ Target audience: university students who want an easy way to discover study spot
 
 ### **4.6. Use Case Sequence Diagram (5 Most Major Use Cases)**
 
-1. [**[WRITE_NAME_HERE]**](#uc1)\
-[SEQUENCE_DIAGRAM_HERE]
-2. ...
+1. **User Authentication (Google OAuth)**
+   ![User Authentication Sequence Diagram](images/UserAuthenticationUML.png)
+
+2. **Create Pin**
+   ![Create Pin Sequence Diagram](images/CreatePinUML.png)
+
+3. **Vote on Pin**
+   ![Vote on Pin Sequence Diagram](images/VotePinUML.png)
+
+4. **Real-time Location Sharing**
+   ![Real-time Location Sharing Sequence Diagram](images/RealTimeLocationUML.png)
+
+5. **Get Meal Recommendations**
+   ![Get Meal Recommendations Sequence Diagram](images/MealRecommendationUML.png)
 
 ---
 

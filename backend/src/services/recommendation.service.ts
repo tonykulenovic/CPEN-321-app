@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import { pinModel } from '../models/pin.model';
-import { userInteractionModel } from '../models/userInteraction.model';
+import { pinVoteModel } from '../models/pinVote.model';
+import { userModel } from '../models/user.model';
 import { locationModel } from '../models/location.model';
 import { weatherService } from './weather.service';
 import { notificationService } from './notification.service';
@@ -61,8 +62,8 @@ export class RecommendationService {
         userLocation.lng
       );
 
-      // 3. Get user preferences
-      const userPreferences = await userInteractionModel.getUserPreferences(userId);
+      // 3. Get user preferences from existing data
+      const userPreferences = await this.getUserPreferences(userId);
 
       // 4. Get recommendations from both database pins and Places API
       const [dbRecommendations, placesRecommendations] = await Promise.all([
@@ -135,23 +136,53 @@ export class RecommendationService {
         }
       );
 
-      if (sent && topRecommendation.pin) {
-        // Only record interaction for database pins (not Places API results)
-        await userInteractionModel.recordInteraction(
-          userId,
-          topRecommendation.pin._id,
-          'view', // It's a recommendation view
-          {
-            timeOfDay: this.getTimeOfDay(),
-            weatherCondition: topRecommendation.factors.weather > 0 ? 'good' : 'poor',
-          }
-        );
-      }
+      // Note: Recommendation notifications sent successfully
+      // User preference tracking is now handled via existing pin votes and visits
 
       return sent;
     } catch (error) {
       logger.error('Error sending recommendation notification:', error);
       return false;
+    }
+  }
+
+  /**
+   * Get user preferences from existing pin votes and visits (simplified approach)
+   */
+  private async getUserPreferences(userId: mongoose.Types.ObjectId): Promise<{
+    likedPins: mongoose.Types.ObjectId[];
+    visitedPins: mongoose.Types.ObjectId[];
+  }> {
+    try {
+      // Get user's upvoted pins by directly accessing the PinVote collection
+      const PinVote = mongoose.model('PinVote');
+      const upvotedPins = await PinVote
+        .find({ userId, voteType: 'upvote' })
+        .select('pinId')
+        .lean();
+      
+      const likedPins = upvotedPins.map((vote: any) => vote.pinId);
+
+      // Get user's visited pins from user model using Mongoose directly
+      const User = mongoose.model('User');
+      const user = await User.findById(userId).select('visitedPins').lean() as { visitedPins?: string[] };
+      const visitedPinsStrings = user?.visitedPins || [];
+      
+      // Convert string array to ObjectId array
+      const visitedPins = visitedPinsStrings.map((pinId: string) => new mongoose.Types.ObjectId(pinId));
+
+      logger.info(`User ${userId} preferences: ${likedPins.length} liked, ${visitedPins.length} visited pins`);
+      
+      return {
+        likedPins,
+        visitedPins
+      };
+    } catch (error) {
+      logger.error('Error getting user preferences:', error);
+      return {
+        likedPins: [],
+        visitedPins: []
+      };
     }
   }
 
@@ -309,23 +340,25 @@ export class RecommendationService {
   }
 
   /**
-   * Score based on user's past preferences
+   * Score based on user's past preferences (simplified - uses existing votes and visits)
    */
   private scoreUserPreference(pin: IPin, userPreferences: any): number {
     let score = 0;
 
-    // Check if user has liked/visited this pin before
+    // Check if user has upvoted this pin before (strong positive signal)
     if (userPreferences.likedPins.some((id: any) => id.equals(pin._id))) {
-      score += 15; // Loved this place
+      score += 20; // User upvoted this place - strong preference
     }
+    
+    // Check if user has visited this pin before (moderate positive signal)
     if (userPreferences.visitedPins.some((id: any) => id.equals(pin._id))) {
-      score += 10; // Been here before
+      score += 10; // Been here before - moderate preference
     }
 
-    // Cuisine type preferences (simplified - could be more sophisticated)
-    const cuisineTypes = pin.metadata?.cuisineType || [];
-    if (cuisineTypes.length > 0) {
-      score += 5; // Has cuisine info
+    // Give small bonus for pins with good metadata (shows curation)
+    const hasGoodMetadata = pin.metadata?.cuisineType || pin.metadata?.priceRange || pin.metadata?.hasOutdoorSeating;
+    if (hasGoodMetadata) {
+      score += 3; // Has useful info
     }
 
     return Math.min(score, 25); // Cap at 25
@@ -382,7 +415,7 @@ export class RecommendationService {
 
     const cuisineTypes = pin.metadata?.cuisineType;
     if (cuisineTypes && cuisineTypes.length > 0) {
-      reasons.push(`great ${cuisineTypes[0]} food`);
+      reasons.push(`excellent ${cuisineTypes[0]} food`);
     }
 
     if (reasons.length === 0) {
@@ -555,7 +588,7 @@ export class RecommendationService {
     
     // Generate reason
     let reasons = [];
-    if (mealRelevanceScore > 15) reasons.push(`great for ${mealType}`);
+    if (mealRelevanceScore > 15) reasons.push(`a great place for ${mealType}`);
     if (distance < 500) reasons.push('very close');
     if (place.rating >= 4.0) reasons.push('highly rated');
     if (place.isOpen) reasons.push('currently open');

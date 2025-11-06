@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.SubcomposeAsyncImage
+import kotlinx.coroutines.launch
 import com.cpen321.usermanagement.data.remote.api.RetrofitClient
 import com.cpen321.usermanagement.data.remote.dto.Badge
 import com.cpen321.usermanagement.data.remote.dto.BadgeRarity
@@ -68,6 +69,9 @@ fun BadgesScreen(
     
     // Get badge data from BadgeViewModel
     val badgeUiState by badgeViewModel.uiState.collectAsState()
+    
+    // Coroutine scope for launching coroutines
+    val scope = rememberCoroutineScope()
     
     // Load profile if not already loaded
     LaunchedEffect(Unit) {
@@ -147,40 +151,77 @@ fun BadgesScreen(
             )
         }
     ) { paddingValues ->
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(horizontal = 16.dp)
         ) {
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            // Profile Summary Section with real data
-            ProfileSummaryCard(
-                userName = userName,
-                profilePictureUrl = userProfilePicture,
-                totalBadges = totalBadgesEarned,
-                isLoading = profileUiState.isLoadingProfile || badgeUiState.isLoading
-            )
-            
-            Spacer(modifier = Modifier.height(24.dp))
-            
-            // Badges Grid - Always show all badges
-            if (badgeUiState.isLoading && displayBadges.isEmpty()) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator(color = Color(0xFF00BCD4))
-                }
-            } else {
-                BadgesGrid(
-                    badges = displayBadges,
-                    onBadgeClick = { badge ->
-                        selectedBadgeItem = badge
-                        showBadgeDetails = true
-                    }
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp)
+            ) {
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                // Profile Summary Section with real data
+                ProfileSummaryCard(
+                    userName = userName,
+                    profilePictureUrl = userProfilePicture,
+                    totalBadges = totalBadgesEarned,
+                    isLoading = profileUiState.isLoadingProfile || badgeUiState.isLoading
                 )
+                
+                Spacer(modifier = Modifier.height(24.dp))
+                
+                // Badges Grid - Always show all badges
+                if (badgeUiState.isLoading && displayBadges.isEmpty()) {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(color = Color(0xFF00BCD4))
+                    }
+                } else {
+                    BadgesGrid(
+                        badges = displayBadges,
+                        onBadgeClick = { badge ->
+                            selectedBadgeItem = badge
+                            showBadgeDetails = true
+                        }
+                    )
+                }
+            }
+            
+            // Floating refresh button - positioned at bottom right
+            FloatingActionButton(
+                onClick = {
+                    badgeViewModel.loadBadgeProgress(forceRefresh = true)
+                    // Show a quick feedback snackbar
+                    scope.launch {
+                        snackbarHostState.showSnackbar(
+                            message = "Refreshing badges...",
+                            duration = SnackbarDuration.Short
+                        )
+                    }
+                },
+                containerColor = Color(0xFF00BCD4),
+                contentColor = Color.White,
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(bottom = 16.dp, end = 16.dp)
+            ) {
+                if (badgeUiState.isLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
+                        color = Color.White,
+                        strokeWidth = 2.dp
+                    )
+                } else {
+                    Icon(
+                        imageVector = Icons.Default.Refresh,
+                        contentDescription = "Refresh badges"
+                    )
+                }
             }
         }
     }
