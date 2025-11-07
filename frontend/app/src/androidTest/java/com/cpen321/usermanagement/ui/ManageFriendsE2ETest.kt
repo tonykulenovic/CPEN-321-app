@@ -350,16 +350,42 @@ class ManageFriendsE2ETest {
         composeTestRule.onNodeWithTag(TestTags.ADD_FRIEND_SEARCH_FIELD)
             .performTextInput(FRIEND_USERNAME)
         
-        Thread.sleep(2000) // Wait for search results
+        // Step 3: Wait for search results to load (retry up to 5 times)
+        Log.d(TAG, "Step 3: Waiting for search results from backend")
+        var resultsLoaded = false
+        var attempt = 0
+        val maxAttempts = 5
         
-        // Step 3: Verify search results appear
-        Log.d(TAG, "Step 3: Verifying search results")
-        // The user should appear in search results
-        composeTestRule.waitForText(FRIEND_USERNAME, timeoutMillis = 5000, substring = true)
+        while (attempt < maxAttempts && !resultsLoaded) {
+            attempt++
+            Log.d(TAG, "Attempt $attempt/$maxAttempts: Checking for search results...")
+            Thread.sleep(2000) // Wait 2 seconds between checks
+            
+            // Check if username appears in results
+            val usernameFound = composeTestRule.textExists(FRIEND_USERNAME, substring = true)
+            val addButtonFound = composeTestRule.textExists("Add", ignoreCase = true)
+            
+            resultsLoaded = usernameFound && addButtonFound
+            
+            Log.d(TAG, "  - Username found: $usernameFound")
+            Log.d(TAG, "  - Add button found: $addButtonFound")
+            
+            if (resultsLoaded) {
+                Log.d(TAG, "  ✓ Search results loaded!")
+                break
+            }
+        }
+        
+        if (!resultsLoaded) {
+            Log.e(TAG, "!!! SEARCH RESULTS DID NOT LOAD AFTER $maxAttempts ATTEMPTS !!!")
+            Log.e(TAG, "Username searched: '$FRIEND_USERNAME'")
+            Log.e(TAG, "Make sure the account exists and has the correct username.")
+            throw AssertionError("Search results did not load for username '$FRIEND_USERNAME'")
+        }
         
         // Step 4: Click "Add" button to send friend request
         Log.d(TAG, "Step 4: Sending friend request")
-        // Find the "Add" button - it should be visible in the search result
+        Thread.sleep(500) // Small delay to ensure button is clickable
         composeTestRule.onNodeWithText("Add", ignoreCase = true).performClick()
         
         // Step 5: Verify success (sheet closes and/or success message appears)
@@ -369,6 +395,13 @@ class ManageFriendsE2ETest {
         // Verify success message or that button now shows "Pending"
         val successMessageShown = composeTestRule.textExists("Friend request sent", ignoreCase = true)
         Log.d(TAG, "Success message shown: $successMessageShown")
+        
+        // Step 6: Close the add friend sheet
+        Log.d(TAG, "Step 6: Closing add friend sheet")
+        composeTestRule.activityRule.scenario.onActivity { activity ->
+            activity.onBackPressedDispatcher.onBackPressed()
+        }
+        Thread.sleep(1000)
         
         Log.d(TAG, "✓ test6_AddFriend_successScenario: PASSED")
     }
@@ -403,7 +436,14 @@ class ManageFriendsE2ETest {
         composeTestRule.waitForTag(TestTags.NO_USERS_FOUND_TEXT, timeoutMillis = 5000)
         composeTestRule.onNodeWithText("No users found", ignoreCase = true).assertExists()
         
-        Log.d(TAG, "✓ testAddFriend_noUserFound: PASSED")
+        // Step 4: Close the add friend sheet
+        Log.d(TAG, "Step 4: Closing add friend sheet")
+        composeTestRule.activityRule.scenario.onActivity { activity ->
+            activity.onBackPressedDispatcher.onBackPressed()
+        }
+        Thread.sleep(1000)
+        
+        Log.d(TAG, "✓ test1_AddFriend_noUserFound: PASSED")
     }
     
     // ========================================================================
@@ -432,17 +472,43 @@ class ManageFriendsE2ETest {
         composeTestRule.waitForTag(TestTags.FRIEND_REQUESTS_SHEET, timeoutMillis = 3000)
         composeTestRule.onNodeWithText("Friend Requests", substring = true).assertExists()
         
-        // Step 2: Verify there are pending requests
-        Log.d(TAG, "Step 2: Checking for pending requests")
-        Thread.sleep(1000)
+        // Step 2: Wait for pending requests to load (retry up to 5 times)
+        Log.d(TAG, "Step 2: Waiting for pending requests to load from backend")
+        var hasRequests = false
+        var attempt = 0
+        val maxAttempts = 5
         
-        // Check if there are requests or if the empty state is shown
-        val hasRequests = !composeTestRule.textExists("No pending friend requests")
+        while (attempt < maxAttempts && !hasRequests) {
+            attempt++
+            Log.d(TAG, "Attempt $attempt/$maxAttempts: Checking for friend requests...")
+            Thread.sleep(2000) // Wait 2 seconds between checks
+            
+            // Check if there are requests (look for "Accept" button or username)
+            hasRequests = composeTestRule.textExists("Accept", ignoreCase = true) ||
+                          composeTestRule.textExists(FRIEND_USERNAME, substring = true)
+            
+            if (!hasRequests) {
+                val hasEmptyState = composeTestRule.textExists("No pending friend requests")
+                Log.d(TAG, "  - Accept button found: false")
+                Log.d(TAG, "  - Username found: false")
+                Log.d(TAG, "  - Empty state shown: $hasEmptyState")
+            } else {
+                Log.d(TAG, "  ✓ Friend request found!")
+                break
+            }
+        }
         
         if (!hasRequests) {
-            Log.w(TAG, "!!! NO PENDING FRIEND REQUESTS FOUND !!!")
-            Log.w(TAG, "Please ensure User Account 2 (username: '$FRIEND_USERNAME') has sent a friend request")
-            Log.w(TAG, "to User Account 1 (your test account) before running this test.")
+            Log.e(TAG, "!!! NO PENDING FRIEND REQUESTS FOUND AFTER $maxAttempts ATTEMPTS !!!")
+            Log.e(TAG, "Please ensure User Account 2 (username: '$FRIEND_USERNAME') has sent a friend request")
+            Log.e(TAG, "to User Account 1 (your test account) before running this test.")
+            Log.e(TAG, "")
+            Log.e(TAG, "Setup steps:")
+            Log.e(TAG, "1. Sign in to the app with Account 2 (username: '$FRIEND_USERNAME')")
+            Log.e(TAG, "2. Go to Friends tab")
+            Log.e(TAG, "3. Click the + button to add friend")
+            Log.e(TAG, "4. Search for the test account and send a friend request")
+            Log.e(TAG, "5. Sign out and sign in with Account 1 to run this test")
             throw AssertionError("Test requires at least one pending friend request. See setup instructions.")
         }
         
@@ -458,7 +524,18 @@ class ManageFriendsE2ETest {
         val successMessageShown = composeTestRule.textExists("Friend request accepted", ignoreCase = true)
         Log.d(TAG, "Success message shown: $successMessageShown")
         
-        Log.d(TAG, "✓ testAcceptFriendRequest_success: PASSED")
+        // Step 5: Close the friend request sheet
+        Log.d(TAG, "Step 5: Closing friend request sheet")
+        composeTestRule.activityRule.scenario.onActivity { activity ->
+            activity.onBackPressedDispatcher.onBackPressed()
+        }
+        Thread.sleep(1000)
+        
+        // Give extra time for friend to be added to friends list
+        Log.d(TAG, "Waiting for friend to be added to friends list...")
+        Thread.sleep(1000)
+        
+        Log.d(TAG, "✓ test2_AcceptFriendRequest_success: PASSED")
     }
     
     /**
@@ -473,8 +550,8 @@ class ManageFriendsE2ETest {
      * 3. Request is removed from list
      */
     @Test(timeout = 120000)
-    fun test4_DeclineFriendRequest_success() {
-        Log.d(TAG, "=== test4_DeclineFriendRequest_success ===")
+    fun test7_DeclineFriendRequest_success() {
+        Log.d(TAG, "=== test7_DeclineFriendRequest_success ===")
         ensureOnFriendsScreen()
         
         // Step 1: Open friend requests sheet
@@ -482,14 +559,33 @@ class ManageFriendsE2ETest {
         composeTestRule.onNodeWithTag(TestTags.FRIEND_REQUESTS_BUTTON).performClick()
         composeTestRule.waitForTag(TestTags.FRIEND_REQUESTS_SHEET, timeoutMillis = 3000)
         
-        // Step 2: Verify there are pending requests
-        Log.d(TAG, "Step 2: Checking for pending requests")
-        Thread.sleep(1000)
+        // Step 2: Wait for pending requests to load (retry up to 5 times)
+        Log.d(TAG, "Step 2: Waiting for pending requests to load from backend")
+        var hasRequests = false
+        var attempt = 0
+        val maxAttempts = 5
         
-        val hasRequests = !composeTestRule.textExists("No pending friend requests")
+        while (attempt < maxAttempts && !hasRequests) {
+            attempt++
+            Log.d(TAG, "Attempt $attempt/$maxAttempts: Checking for friend requests...")
+            Thread.sleep(2000) // Wait 2 seconds between checks
+            
+            // Check if there are requests (look for "Decline" button)
+            hasRequests = composeTestRule.textExists("Decline", ignoreCase = true)
+            
+            if (!hasRequests) {
+                val hasEmptyState = composeTestRule.textExists("No pending friend requests")
+                Log.d(TAG, "  - Decline button found: false")
+                Log.d(TAG, "  - Empty state shown: $hasEmptyState")
+            } else {
+                Log.d(TAG, "  ✓ Friend request found!")
+                break
+            }
+        }
         
         if (!hasRequests) {
-            Log.w(TAG, "!!! NO PENDING FRIEND REQUESTS FOUND !!!")
+            Log.w(TAG, "!!! NO PENDING FRIEND REQUESTS FOUND AFTER $maxAttempts ATTEMPTS !!!")
+            Log.w(TAG, "This is expected if test2 already accepted all requests.")
             Log.w(TAG, "Skipping test as no requests are available")
             return // Skip test if no requests
         }
@@ -505,7 +601,14 @@ class ManageFriendsE2ETest {
         // Request should be removed from list
         Log.d(TAG, "Request removed from list")
         
-        Log.d(TAG, "✓ testDeclineFriendRequest_success: PASSED")
+        // Step 5: Close the friend request sheet
+        Log.d(TAG, "Step 5: Closing friend request sheet")
+        composeTestRule.activityRule.scenario.onActivity { activity ->
+            activity.onBackPressedDispatcher.onBackPressed()
+        }
+        Thread.sleep(1000)
+        
+        Log.d(TAG, "✓ test7_DeclineFriendRequest_success: PASSED")
     }
     
     /**
@@ -514,8 +617,8 @@ class ManageFriendsE2ETest {
      * Verifies that when there are no pending requests, the empty state is displayed.
      */
     @Test(timeout = 120000)
-    fun test5_ViewFriendRequests_emptyState() {
-        Log.d(TAG, "=== test5_ViewFriendRequests_emptyState ===")
+    fun test8_ViewFriendRequests_emptyState() {
+        Log.d(TAG, "=== test8_ViewFriendRequests_emptyState ===")
         ensureOnFriendsScreen()
         
         // Step 1: Open friend requests sheet
@@ -538,7 +641,14 @@ class ManageFriendsE2ETest {
             "Friend requests sheet should show either empty state or requests"
         }
         
-        Log.d(TAG, "✓ testViewFriendRequests_emptyState: PASSED")
+        // Step 3: Close the friend request sheet
+        Log.d(TAG, "Step 3: Closing friend request sheet")
+        composeTestRule.activityRule.scenario.onActivity { activity ->
+            activity.onBackPressedDispatcher.onBackPressed()
+        }
+        Thread.sleep(1000)
+        
+        Log.d(TAG, "✓ test8_ViewFriendRequests_emptyState: PASSED")
     }
     
     // ========================================================================
@@ -557,51 +667,92 @@ class ManageFriendsE2ETest {
      * 4. Friend is removed from list
      */
     @Test(timeout = 120000)
-    fun test7_RemoveFriend_success() {
-        Log.d(TAG, "=== test7_RemoveFriend_success ===")
+    fun test4_RemoveFriend_success() {
+        Log.d(TAG, "=== test4_RemoveFriend_success ===")
         ensureOnFriendsScreen()
         
-        // Step 1: Check if friends list exists
-        Log.d(TAG, "Step 1: Checking friends list")
-        Thread.sleep(1000)
+        // Step 1: Wait for friends list to load (retry up to 5 times)
+        Log.d(TAG, "Step 1: Waiting for friends list to load from backend")
+        var hasFriends = false
+        var attempt = 0
+        val maxAttempts = 5
         
-        val hasFriends = !composeTestRule.textExists("You haven't added any friends yet")
+        while (attempt < maxAttempts && !hasFriends) {
+            attempt++
+            Log.d(TAG, "Attempt $attempt/$maxAttempts: Checking for friends in list...")
+            Thread.sleep(2000) // Wait 2 seconds between checks
+            
+            // Check if friends exist (look for "More Options" button or absence of empty state)
+            val hasEmptyState = composeTestRule.textExists("You haven't added any friends yet", substring = true)
+            val hasMenuButton = try {
+                composeTestRule.onNodeWithContentDescription("More Options", useUnmergedTree = true).assertExists()
+                true
+            } catch (e: AssertionError) {
+                false
+            }
+            
+            hasFriends = !hasEmptyState || hasMenuButton
+            
+            Log.d(TAG, "  - Empty state shown: $hasEmptyState")
+            Log.d(TAG, "  - Menu button found: $hasMenuButton")
+            Log.d(TAG, "  - Has friends: $hasFriends")
+            
+            if (hasFriends) {
+                Log.d(TAG, "  ✓ Friend found in list!")
+                break
+            }
+        }
         
         if (!hasFriends) {
-            Log.w(TAG, "!!! NO FRIENDS FOUND IN LIST !!!")
-            Log.w(TAG, "Please add at least one friend before running this test")
-            Log.w(TAG, "Skipping test...")
-            return // Skip test if no friends
+            Log.e(TAG, "!!! NO FRIENDS FOUND IN LIST AFTER $maxAttempts ATTEMPTS !!!")
+            Log.e(TAG, "This test expects test2_AcceptFriendRequest_success to have added a friend.")
+            Log.e(TAG, "The friend should have appeared in the list by now.")
+            throw AssertionError("No friends found after waiting 10 seconds. Ensure test2_AcceptFriendRequest_success ran successfully.")
         }
+        
+        Log.d(TAG, "✓ Friends list is not empty")
         
         // Step 2: Click on the menu button for the first friend
-        Log.d(TAG, "Step 2: Opening friend menu")
-        // Find the first friend card and click its menu button
-        // Note: The menu button tags include the friend ID, so we use a filter
-        val menuButtons = composeTestRule.onAllNodes(
-            hasTestTag(TestTags.FRIEND_MENU_BUTTON) or hasAnyDescendant(hasTestTag(TestTags.FRIEND_MENU_BUTTON))
-        )
-        if (menuButtons.fetchSemanticsNodes().isEmpty()) {
-            // Fallback: find by content description
-            composeTestRule.onNodeWithContentDescription("More Options").performClick()
-        } else {
-            menuButtons[0].performClick()
+        Log.d(TAG, "Step 2: Finding and clicking friend menu button")
+        
+        // Try to find the "More Options" button (with contentDescription)
+        var menuClicked = false
+        try {
+            composeTestRule.onNodeWithContentDescription("More Options", useUnmergedTree = true)
+                .performClick()
+            menuClicked = true
+            Log.d(TAG, "✓ Clicked menu via contentDescription")
+        } catch (e: Exception) {
+            Log.w(TAG, "Could not find menu by contentDescription: ${e.message}")
         }
         
-        Thread.sleep(500)
+        if (!menuClicked) {
+            // Fallback: try to find by test tag pattern
+            try {
+                val allMenuButtons = composeTestRule.onAllNodes(
+                    hasContentDescription("More Options"),
+                    useUnmergedTree = true
+                )
+                allMenuButtons.onFirst().performClick()
+                menuClicked = true
+                Log.d(TAG, "✓ Clicked menu via hasContentDescription")
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to find menu button: ${e.message}")
+                throw AssertionError("Could not find 'More Options' button for any friend", e)
+            }
+        }
+        
+        Thread.sleep(1000)
         
         // Step 3: Click "Remove Friend" option
-        Log.d(TAG, "Step 3: Clicking Remove Friend")
+        Log.d(TAG, "Step 3: Clicking Remove Friend option")
         composeTestRule.onNodeWithTag(TestTags.FRIEND_REMOVE_OPTION).performClick()
         
         // Step 4: Verify friend was removed
         Log.d(TAG, "Step 4: Verifying friend removed")
         Thread.sleep(2000)
         
-        // Friend should be removed from list (no specific verification as list updates)
-        Log.d(TAG, "Friend removed from list")
-        
-        Log.d(TAG, "✓ testRemoveFriend_success: PASSED")
+        Log.d(TAG, "✓ test4_RemoveFriend_success: PASSED")
     }
     
     /**
@@ -610,8 +761,8 @@ class ManageFriendsE2ETest {
      * Verifies that when there are no friends, the empty state is displayed.
      */
     @Test(timeout = 120000)
-    fun test8_ViewFriendsList_emptyState() {
-        Log.d(TAG, "=== test8_ViewFriendsList_emptyState ===")
+    fun test5_ViewFriendsList_emptyState() {
+        Log.d(TAG, "=== test5_ViewFriendsList_emptyState ===")
         ensureOnFriendsScreen()
         
         // Check current state
@@ -635,7 +786,7 @@ class ManageFriendsE2ETest {
             "Friends screen should show either empty state or friends list"
         }
         
-        Log.d(TAG, "✓ testViewFriendsList_emptyState: PASSED")
+        Log.d(TAG, "✓ test5_ViewFriendsList_emptyState: PASSED")
     }
     
     /**
@@ -648,14 +799,29 @@ class ManageFriendsE2ETest {
         Log.d(TAG, "=== test3_SearchFriends_filterByName ===")
         ensureOnFriendsScreen()
         
-        // Step 1: Check if friends exist
-        Log.d(TAG, "Step 1: Checking for friends")
-        Thread.sleep(1000)
+        // Step 1: Wait for friends list to load (retry up to 5 times)
+        Log.d(TAG, "Step 1: Waiting for friends list to load")
+        var hasFriends = false
+        var attempt = 0
+        val maxAttempts = 5
         
-        val hasFriends = !composeTestRule.textExists("You haven't added any friends yet")
+        while (attempt < maxAttempts && !hasFriends) {
+            attempt++
+            Log.d(TAG, "Attempt $attempt/$maxAttempts: Checking for friends...")
+            Thread.sleep(2000) // Wait 2 seconds between checks
+            
+            hasFriends = !composeTestRule.textExists("You haven't added any friends yet", substring = true)
+            
+            Log.d(TAG, "  - Has friends: $hasFriends")
+            
+            if (hasFriends) {
+                Log.d(TAG, "  ✓ Friends found!")
+                break
+            }
+        }
         
         if (!hasFriends) {
-            Log.w(TAG, "No friends found, skipping search test")
+            Log.w(TAG, "No friends found after waiting, skipping search test")
             return
         }
         
