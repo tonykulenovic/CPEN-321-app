@@ -221,24 +221,23 @@ Due to the amount of use cases in our app, we elected to create a seperate use c
 15. **Manage Profile**: User can manage their profile for the app.
 16. **Manage Privacy Settings**: User can control profile visibility, location sharing, and friend request preferences.
 17. **Receive Notifications**: User receives push notifications for friend requests, pin updates, and system messages.
-18. **Manage Notification Settings**: User can control notification preferences and FCM token management.
-19. **Manage User Accounts**: Admin can suspend, unsuspend, or delete user accounts.
+18. **Manage User Accounts**: Admin can suspend, unsuspend, or delete user accounts.
 
 ### Feature 4: Manage Friends
-20. **Add Friend**: User searches for a classmate by username/email and sends a request.
-21. **View Friend Profile**: User views a friend's badges and activity (respecting privacy settings).
-22. **Remove Friend**: User can remove a friend from their friend network.
-23. **Manage Friend Requests**: User can accept, decline, or block friend requests.
-24. **Share Location with Friends**: User can optionally share real-time location with friends.
+19. **Add Friend**: User searches for a classmate by username/email and sends a request.
+20. **View Friend Profile**: User views a friend's badges and activity (respecting privacy settings).
+21. **Remove Friend**: User can remove a friend from their friend network.
+22. **Manage Friend Requests**: User can accept, decline, or block friend requests.
+23. **Share Location with Friends**: User can optionally share real-time location with friends.
 
 ### Feature 5: Badge System
-25. **Earn Badge**: User receives a profile badge for activity (e.g., daily logins, time at library).
-26. **View Badges**: User views unlocked profile badges and progress toward new ones.
-27. **Track Badge Progress**: User can see progress toward earning new badges.
+24. **Earn Badge**: User receives a profile badge for activity (e.g., daily logins, time at library).
+25. **View Badges**: User views unlocked profile badges and progress toward new ones.
+26. **Track Badge Progress**: User can see progress toward earning new badges.
 
 ### Feature 6: Recommend Locations
-28. **Get Food Recommendations**: App suggests nearby food options at lunch, coffee break, or dinner times.
-29. **Get Personalized Recommendations**: App suggests pins based on user preferences, time, and location.
+27. **Get Food Recommendations**: App suggests nearby food options at lunch, coffee break, or dinner times.
+28. **Get Personalized Recommendations**: App suggests pins based on user preferences, time, and location.
 
 
 ### **3.5. Formal Use Case Specifications (10 Most Major Use Cases)**
