@@ -115,9 +115,9 @@ class AdminManagePinsE2ETest {
         private var permissionsGranted = false
         
         // Test pin names - must match exactly what's created in setup
-        const val TEST_PIN_1_NAME = "Admin Test Pin 1 - For Clearing Reports"
-        const val TEST_PIN_2_NAME = "Admin Test Pin 2 - For Deletion"
-        const val TEST_PIN_3_NAME = "Admin Test Pin 3 - For Cancel Deletion"
+        const val TEST_PIN_1_NAME = "Admin Test Pin 1"
+        const val TEST_PIN_2_NAME = "Admin Test Pin 2"
+        const val TEST_PIN_3_NAME = "Admin Test Pin 3"
     }
     
     @Before

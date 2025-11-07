@@ -2,10 +2,10 @@
 
 ## What You Need
 
-**3 Google accounts**:
-- **User Account 1** (creates pins)
-- **User Account 2** (Interact/report pins from User 1)
-- **Admin Account**: `universe.cpen321@gmail.com` (moderates pins)
+**2-3 Google accounts** (depending on which tests you run):
+- **User Account 1** (test account - creates pins, manages friends)
+- **User Account 2** (interacts with pins, friend account)
+- **Admin Account**: `universe.cpen321@gmail.com` (optional - only for admin tests)
 
 ---
 
@@ -32,20 +32,44 @@ When prompted, sign in with: **User Account 2**
 
 ---
 
+## Running Manage Friends Tests (ManageFriendsE2ETest)
+
+### Setup (Only 2 accounts needed):
+
+**Create this test account:**
+
+**User Account 2** (Friend Account):
+   - Username: `e2e_test_friend`
+   - Create profile with this exact username
+   - **Important**: From this account, send a friend request TO **User Account 1**
+
+### Run the tests:
+Run ManageFriendsE2ETest.kt in Android Studio
+
+When prompted, sign in with: **User Account 1**
+
+**Note:** The tests will automatically:
+- Search for and add `e2e_test_friend` as a friend
+- Accept/decline the friend request from `e2e_test_friend`
+- Test removing friends
+- Test search functionality
+
+---
+
 ## Running Admin Tests (AdminManagePinsE2ETest)
 
 ### Setup Data:
 
 **Step 1: Create 3 pins with User Account 1**
 
-1. **"Admin Test Pin 1 - For Clearing Reports"**
-   - Category: Study, Visibility: Public
+1. **"Admin Test Pin 1"**
+   - Category: Study, Visibility: Public, Decription: anything
 
-2. **"Admin Test Pin 2 - For Deletion"**
-   - Category: Events, Visibility: Public
+2. **"Admin Test Pin 2"**
+   - Category: Events, Visibility: Public, Decription: anything
 
-3. **"Admin Test Pin 3 - For Cancel Deletion"**
-   - Category: Chill, Visibility: Public
+3. **"Admin Test Pin 3"**
+   - Category: Chill, Visibility: Public, Decription: anything
 
 **Step 2: Report all 3 pins with User Account 2**
 

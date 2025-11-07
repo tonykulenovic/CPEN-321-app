@@ -55,6 +55,34 @@ object TestTags {
     const val ADMIN_DELETE_CANCEL = "admin_delete_cancel"
     const val ADMIN_EMPTY_STATE = "admin_empty_state"
     
+    // FriendsScreen tags
+    const val FRIENDS_SCREEN = "friends_screen"
+    const val FRIENDS_SEARCH_BAR = "friends_search_bar"
+    const val ADD_FRIEND_FAB = "add_friend_fab"
+    const val FRIEND_REQUESTS_BUTTON = "friend_requests_button"
+    const val FRIEND_REQUESTS_BADGE = "friend_requests_badge"
+    const val FRIENDS_LIST = "friends_list"
+    const val FRIEND_CARD = "friend_card"
+    const val FRIEND_MENU_BUTTON = "friend_menu_button"
+    const val FRIEND_VIEW_PROFILE_OPTION = "friend_view_profile_option"
+    const val FRIEND_REMOVE_OPTION = "friend_remove_option"
+    const val EMPTY_FRIENDS_STATE = "empty_friends_state"
+    
+    // Add Friend Bottom Sheet tags
+    const val ADD_FRIEND_SHEET = "add_friend_sheet"
+    const val ADD_FRIEND_SEARCH_FIELD = "add_friend_search_field"
+    const val USER_SEARCH_RESULT_CARD = "user_search_result_card"
+    const val SEND_REQUEST_BUTTON = "send_request_button"
+    const val REQUEST_PENDING_BUTTON = "request_pending_button"
+    const val NO_USERS_FOUND_TEXT = "no_users_found_text"
+    
+    // Friend Requests Bottom Sheet tags
+    const val FRIEND_REQUESTS_SHEET = "friend_requests_sheet"
+    const val FRIEND_REQUEST_CARD = "friend_request_card"
+    const val ACCEPT_REQUEST_BUTTON = "accept_request_button"
+    const val DECLINE_REQUEST_BUTTON = "decline_request_button"
+    const val NO_REQUESTS_TEXT = "no_requests_text"
+    
     // Common tags
     const val LOADING_INDICATOR = "loading_indicator"
     const val ERROR_MESSAGE = "error_message"
@@ -62,7 +90,10 @@ object TestTags {
     const val CONFIRM_DIALOG = "confirm_dialog"
     const val SNACKBAR_HOST = "snackbar_host"
     
-    // Helper function to create dynamic marker tags
+    // Helper functions to create dynamic tags
     fun mapMarkerTag(pinName: String) = "map_marker_${pinName.replace(" ", "_")}"
+    fun friendCardTag(friendId: String) = "friend_card_$friendId"
+    fun userSearchResultTag(userId: String) = "user_search_result_$userId"
+    fun friendRequestCardTag(requestId: String) = "friend_request_card_$requestId"
 }
 

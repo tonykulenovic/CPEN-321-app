@@ -98,6 +98,8 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.ui.platform.testTag
+import com.cpen321.usermanagement.utils.TestTags
 
 // Data class for friends
 data class Friend(
@@ -227,7 +229,8 @@ fun FriendsScreen(
             FloatingActionButton(
                 onClick = { showAddFriendSheet = true },
                 containerColor = Color(0xFF4A90E2),
-                contentColor = Color.White
+                contentColor = Color.White,
+                modifier = Modifier.testTag(TestTags.ADD_FRIEND_FAB)
             ) {
                 Icon(
                     imageVector = Icons.Default.PersonAdd,
@@ -258,21 +261,26 @@ fun FriendsScreen(
             // Search Bar
             SearchBar(
                 searchQuery = searchQuery,
-                onSearchQueryChange = { searchQuery = it }
+                onSearchQueryChange = { searchQuery = it },
+                modifier = Modifier.testTag(TestTags.FRIENDS_SEARCH_BAR)
             )
             
             Spacer(modifier = Modifier.height(16.dp))
             
             // Friends List or Empty State
             if (friends.isEmpty()) {
-                EmptyFriendsState(onFindFriendsClick = { showAddFriendSheet = true })
+                EmptyFriendsState(
+                    onFindFriendsClick = { showAddFriendSheet = true },
+                    modifier = Modifier.testTag(TestTags.EMPTY_FRIENDS_STATE)
+                )
             } else {
                 FriendsList(
                     friends = filteredFriends,
                     onRemoveFriend = { friendId ->
                         friendsViewModel.removeFriend(friendId)  // CHANGED: Call ViewModel
                     },
-                    onViewProfile = onViewFriendProfile
+                    onViewProfile = onViewFriendProfile,
+                    modifier = Modifier.testTag(TestTags.FRIENDS_LIST)
                 )
             }
         }
@@ -325,7 +333,10 @@ private fun FriendsTopBar(
         actions = {
             // Friend Requests Button (keep this)
             Box {
-                IconButton(onClick = onFriendRequestsClick) {
+                IconButton(
+                    onClick = onFriendRequestsClick,
+                    modifier = Modifier.testTag(TestTags.FRIEND_REQUESTS_BUTTON)
+                ) {
                     Icon(
                         imageVector = Icons.Default.Notifications,
                         contentDescription = "Friend Requests",
@@ -338,6 +349,7 @@ private fun FriendsTopBar(
                         modifier = Modifier
                             .align(Alignment.TopEnd)
                             .padding(top = 8.dp, end = 8.dp)
+                            .testTag(TestTags.FRIEND_REQUESTS_BADGE)
                     ) {
                         Text(
                             text = pendingRequestsCount.toString(),
@@ -446,7 +458,8 @@ private fun FriendCard(
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .clickable { onViewProfile() },
+            .clickable { onViewProfile() }
+            .testTag(TestTags.friendCardTag(friend.id)),
         colors = CardDefaults.cardColors(
             containerColor = Color(0xFF1A2332)
         ),
@@ -538,7 +551,10 @@ private fun FriendCard(
             
             // Menu Button
             Box {
-                IconButton(onClick = { showMenu = true }) {
+                IconButton(
+                    onClick = { showMenu = true },
+                    modifier = Modifier.testTag(TestTags.FRIEND_MENU_BUTTON + "_${friend.id}")
+                ) {
                     Icon(
                         imageVector = Icons.Default.MoreVert,
                         contentDescription = "More Options",
@@ -561,7 +577,8 @@ private fun FriendCard(
                         onClick = {
                             showMenu = false
                             onViewProfile()
-                        }
+                        },
+                        modifier = Modifier.testTag(TestTags.FRIEND_VIEW_PROFILE_OPTION)
                     )
                     DropdownMenuItem(
                         text = {
@@ -573,7 +590,8 @@ private fun FriendCard(
                         onClick = {
                             showMenu = false
                             onRemoveFriend()
-                        }
+                        },
+                        modifier = Modifier.testTag(TestTags.FRIEND_REMOVE_OPTION)
                     )
                 }
             }
@@ -674,7 +692,8 @@ private fun AddFriendBottomSheet(
         sheetState = sheetState,
         containerColor = Color(0xFF1A2332),
         contentColor = Color.White,
-        scrimColor = Color.Black.copy(alpha = 0.6f)
+        scrimColor = Color.Black.copy(alpha = 0.6f),
+        modifier = Modifier.testTag(TestTags.ADD_FRIEND_SHEET)
     ) {
         Column(
             modifier = Modifier
@@ -698,7 +717,9 @@ private fun AddFriendBottomSheet(
                     searchQuery = newQuery
                     friendsViewModel.searchUsers(newQuery)
                 },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag(TestTags.ADD_FRIEND_SEARCH_FIELD),
                 placeholder = {
                     Text(
                         "Search by username or name",
@@ -795,7 +816,8 @@ private fun AddFriendBottomSheet(
                         Text(
                             text = "No users found",
                             color = Color(0xFF8B9DAF),
-                            fontSize = 14.sp
+                            fontSize = 14.sp,
+                            modifier = Modifier.testTag(TestTags.NO_USERS_FOUND_TEXT)
                         )
                     }
                 }
@@ -837,7 +859,9 @@ private fun UserSearchResultCard(
     )
     
     Card(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .testTag(TestTags.userSearchResultTag(user._id)),
         colors = CardDefaults.cardColors(
             containerColor = Color(0xFF0F1419)
         ),
@@ -899,7 +923,8 @@ private fun UserSearchResultCard(
                         disabledContentColor = Color(0xFF8B9DAF)
                     ),
                     shape = RoundedCornerShape(8.dp),
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                    modifier = Modifier.testTag(TestTags.REQUEST_PENDING_BUTTON + "_${user._id}")
                 ) {
                     Icon(
                         imageVector = Icons.Default.Schedule,  // Clock/pending icon
@@ -926,10 +951,12 @@ private fun UserSearchResultCard(
                     ),
                     shape = RoundedCornerShape(8.dp),
                     contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                    modifier = Modifier.graphicsLayer {
-                        scaleX = scale
-                        scaleY = scale
-                    }
+                    modifier = Modifier
+                        .graphicsLayer {
+                            scaleX = scale
+                            scaleY = scale
+                        }
+                        .testTag(TestTags.SEND_REQUEST_BUTTON + "_${user._id}")
                 ) {
                     Icon(
                         imageVector = Icons.Default.PersonAdd,
@@ -971,7 +998,8 @@ private fun FriendRequestsBottomSheet(
         sheetState = sheetState,
         containerColor = Color(0xFF1A2332),
         contentColor = Color.White,
-        scrimColor = Color.Black.copy(alpha = 0.6f)
+        scrimColor = Color.Black.copy(alpha = 0.6f),
+        modifier = Modifier.testTag(TestTags.FRIEND_REQUESTS_SHEET)
     ) {
         Column(
             modifier = Modifier
@@ -1007,7 +1035,8 @@ private fun FriendRequestsBottomSheet(
                         text = "No pending friend requests",
                         color = Color(0xFF8B9DAF),
                         fontSize = 16.sp,
-                        textAlign = TextAlign.Center
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.testTag(TestTags.NO_REQUESTS_TEXT)
                     )
                 }
             } else {
@@ -1039,7 +1068,9 @@ private fun FriendRequestCard(
     onDecline: () -> Unit
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag(TestTags.friendRequestCardTag(request.id)),
         colors = CardDefaults.cardColors(
             containerColor = Color(0xFF0F1419)
         ),
@@ -1099,7 +1130,9 @@ private fun FriendRequestCard(
                 // Decline Button
                 androidx.compose.material3.Button(
                     onClick = onDecline,
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier
+                        .weight(1f)
+                        .testTag(TestTags.DECLINE_REQUEST_BUTTON + "_${request.id}"),
                     colors = androidx.compose.material3.ButtonDefaults.buttonColors(
                         containerColor = Color(0xFF2A2A3E),
                         contentColor = Color.White
@@ -1112,7 +1145,9 @@ private fun FriendRequestCard(
                 // Accept Button
                 androidx.compose.material3.Button(
                     onClick = onAccept,
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier
+                        .weight(1f)
+                        .testTag(TestTags.ACCEPT_REQUEST_BUTTON + "_${request.id}"),
                     colors = androidx.compose.material3.ButtonDefaults.buttonColors(
                         containerColor = Color(0xFF4A90E2),
                         contentColor = Color.White
