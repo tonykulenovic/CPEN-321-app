@@ -1,4 +1,4 @@
-git import request from 'supertest';
+import request from 'supertest';
 import express from 'express';
 import mongoose from 'mongoose';
 import { describe, test, beforeEach, expect } from '@jest/globals';
