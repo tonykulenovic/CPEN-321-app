@@ -629,6 +629,10 @@ export class BadgeService {
       return await badgeModel.assignBadge(userId, badgeId, progress);
     } catch (error) {
       logger.error('Error assigning badge to user:', error);
+      // Preserve the original error message if it's an Error instance
+      if (error instanceof Error) {
+        throw error;
+      }
       throw new Error('Failed to assign badge to user');
     }
   }
