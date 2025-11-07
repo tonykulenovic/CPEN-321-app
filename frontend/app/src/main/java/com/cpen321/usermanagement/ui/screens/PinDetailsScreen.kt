@@ -17,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -102,6 +103,7 @@ fun PinDetailsScreen(
         sheetState = sheetState,
         containerColor = Color(0xFF16213E),
         contentColor = Color.White,
+        modifier = Modifier.testTag("pin_details_bottom_sheet"),
         dragHandle = {
             Column(
                 modifier = Modifier
@@ -136,14 +138,20 @@ fun PinDetailsScreen(
                     Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                         // Show edit/delete buttons if user owns the pin
                         if (pin != null && currentUserId != null && pin.createdBy.id == currentUserId) {
-                            IconButton(onClick = { onEditClick(pin.id) }) {
+                            IconButton(
+                                onClick = { onEditClick(pin.id) },
+                                modifier = Modifier.testTag("pin_edit_button")
+                            ) {
                                 Icon(
                                     imageVector = Icons.Default.Edit,
                                     contentDescription = "Edit Pin",
                                     tint = Color.White
                                 )
                             }
-                            IconButton(onClick = { showDeleteDialog = true }) {
+                            IconButton(
+                                onClick = { showDeleteDialog = true },
+                                modifier = Modifier.testTag("pin_delete_button")
+                            ) {
                                 Icon(
                                     imageVector = Icons.Default.Delete,
                                     contentDescription = "Delete Pin",
@@ -158,10 +166,13 @@ fun PinDetailsScreen(
                             pin.createdBy.id != currentUserId &&
                             !pin.isPreSeeded &&
                             pin.visibility != PinVisibility.FRIENDS_ONLY) {
-                            IconButton(onClick = { 
-                                android.util.Log.d("PinDetails", "Report button clicked for pin ${pin.id}")
-                                showReportDialog = true 
-                            }) {
+                            IconButton(
+                                onClick = { 
+                                    android.util.Log.d("PinDetails", "Report button clicked for pin ${pin.id}")
+                                    showReportDialog = true 
+                                },
+                                modifier = Modifier.testTag("pin_report_button")
+                            ) {
                                 Icon(
                                     imageVector = Icons.Default.Report,
                                     contentDescription = "Report Pin",
@@ -462,7 +473,7 @@ private fun PinDetailsContent(
                 val isUpvoted = optimisticUserVote == "upvote"
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Card(
-                        modifier = Modifier.size(68.dp),
+                        modifier = Modifier.size(68.dp).testTag("pin_upvote_button"),
                         colors = CardDefaults.cardColors(
                             containerColor = if (isUpvoted) 
                                 Color(0xFF4CAF50).copy(alpha = 0.2f) 
@@ -532,7 +543,8 @@ private fun PinDetailsContent(
                                     fontWeight = if (isUpvoted) 
                                         FontWeight.Bold 
                                     else 
-                                        FontWeight.Normal
+                                        FontWeight.Normal,
+                                    modifier = Modifier.testTag("pin_upvote_count")
                                 )
                             }
                         }
@@ -553,7 +565,7 @@ private fun PinDetailsContent(
                 val isDownvoted = optimisticUserVote == "downvote"
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Card(
-                        modifier = Modifier.size(68.dp),
+                        modifier = Modifier.size(68.dp).testTag("pin_downvote_button"),
                         colors = CardDefaults.cardColors(
                             containerColor = if (isDownvoted) 
                                 Color(0xFFE74C3C).copy(alpha = 0.2f) 
@@ -623,7 +635,8 @@ private fun PinDetailsContent(
                                     fontWeight = if (isDownvoted) 
                                         FontWeight.Bold 
                                     else 
-                                        FontWeight.Normal
+                                        FontWeight.Normal,
+                                    modifier = Modifier.testTag("pin_downvote_count")
                                 )
                             }
                         }
@@ -667,7 +680,7 @@ private fun PinDetailsContent(
         
         // Location
         Card(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().testTag("pin_location_card"),
             colors = CardDefaults.cardColors(containerColor = Color(0xFF1A1A2E)),
             shape = RoundedCornerShape(12.dp)
         ) {
@@ -760,7 +773,7 @@ private fun PinDetailsContent(
         
         // Creator Info
         Card(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().testTag("pin_creator_card"),
             colors = CardDefaults.cardColors(containerColor = Color(0xFF1A1A2E)),
             shape = RoundedCornerShape(12.dp)
         ) {

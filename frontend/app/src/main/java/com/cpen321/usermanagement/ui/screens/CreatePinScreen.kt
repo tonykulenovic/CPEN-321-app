@@ -16,6 +16,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -134,7 +135,7 @@ fun CreatePinScreen(
                 onValueChange = { name = it },
                 label = { Text("Pin Name *", color = Color(0xFFB0B0B0)) },
                 placeholder = { Text("e.g., Study Room 201", color = Color(0xFF666666)) },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().testTag("pin_name_field"),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedTextColor = Color.White,
                     unfocusedTextColor = Color.White,
@@ -165,7 +166,7 @@ fun CreatePinScreen(
                     label = "Study",
                     isSelected = selectedCategory == PinCategory.STUDY,
                     onClick = { selectedCategory = PinCategory.STUDY },
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f).testTag("category_study")
                 )
                 CategoryChip(
                     category = PinCategory.EVENTS,
@@ -173,7 +174,7 @@ fun CreatePinScreen(
                     label = "Events",
                     isSelected = selectedCategory == PinCategory.EVENTS,
                     onClick = { selectedCategory = PinCategory.EVENTS },
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f).testTag("category_events")
                 )
             }
             Spacer(modifier = Modifier.height(8.dp))
@@ -187,7 +188,7 @@ fun CreatePinScreen(
                     label = "Chill",
                     isSelected = selectedCategory == PinCategory.CHILL,
                     onClick = { selectedCategory = PinCategory.CHILL },
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f).testTag("category_chill")
                 )
                 CategoryChip(
                     category = PinCategory.SHOPS_SERVICES,
@@ -195,7 +196,7 @@ fun CreatePinScreen(
                     label = "Shops",
                     isSelected = selectedCategory == PinCategory.SHOPS_SERVICES,
                     onClick = { selectedCategory = PinCategory.SHOPS_SERVICES },
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f).testTag("category_shops_services")
                 )
             }
             
@@ -219,7 +220,7 @@ fun CreatePinScreen(
                     label = "Public",
                     isSelected = selectedVisibility == PinVisibility.PUBLIC,
                     onClick = { selectedVisibility = PinVisibility.PUBLIC },
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f).testTag("visibility_public")
                 )
                 VisibilityChip(
                     visibility = PinVisibility.FRIENDS_ONLY,
@@ -227,7 +228,7 @@ fun CreatePinScreen(
                     label = "Friends",
                     isSelected = selectedVisibility == PinVisibility.FRIENDS_ONLY,
                     onClick = { selectedVisibility = PinVisibility.FRIENDS_ONLY },
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f).testTag("visibility_friends_only")
                 )
                 VisibilityChip(
                     visibility = PinVisibility.PRIVATE,
@@ -235,7 +236,7 @@ fun CreatePinScreen(
                     label = "Private",
                     isSelected = selectedVisibility == PinVisibility.PRIVATE,
                     onClick = { selectedVisibility = PinVisibility.PRIVATE },
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f).testTag("visibility_private")
                 )
             }
             
@@ -249,7 +250,8 @@ fun CreatePinScreen(
                 placeholder = { Text("Describe this location (min 10 characters)", color = Color(0xFF666666)) },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(120.dp),
+                    .height(120.dp)
+                    .testTag("pin_description_field"),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedTextColor = Color.White,
                     unfocusedTextColor = Color.White,
@@ -275,7 +277,8 @@ fun CreatePinScreen(
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable { onPickLocationClick() },
+                    .clickable { onPickLocationClick() }
+                    .testTag("location_picker_button"),
                 colors = CardDefaults.cardColors(
                     containerColor = Color(0xFF1A1A2E)
                 ),
@@ -506,7 +509,8 @@ fun CreatePinScreen(
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(56.dp),
+                    .height(56.dp)
+                    .testTag("create_pin_button"),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Color(0xFF4A90E2),
                     contentColor = Color.White

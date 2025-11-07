@@ -59,6 +59,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.testTag
 import com.cpen321.usermanagement.data.realtime.LocationTrackingService
 import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
@@ -1071,7 +1072,8 @@ private fun MapContent(
             onClick = { onCreatePinClick() },
             modifier = Modifier
                 .align(Alignment.BottomStart)
-                .padding(bottom = 16.dp, start = 16.dp),
+                .padding(bottom = 16.dp, start = 16.dp)
+                .testTag("create_pin_fab"),
             containerColor = Color(0xFF4A90E2),
             contentColor = Color.White
         ) {
