@@ -213,6 +213,10 @@ export class BadgeModel {
   // UserBadge operations
   async assignBadge(userId: mongoose.Types.ObjectId, badgeId: mongoose.Types.ObjectId, progress?: BadgeProgress): Promise<IUserBadge> {
     try {
+      // Get badge to get target for default progress
+      const badge = await this.badge.findById(badgeId);
+      const defaultTarget = badge?.requirements?.target || 0;
+
       const userBadgeData: any = {
         userId,
         badgeId,
@@ -223,6 +227,14 @@ export class BadgeModel {
       if (progress) {
         userBadgeData.progress = {
           ...progress,
+          lastUpdated: new Date(),
+        };
+      } else {
+        // Provide default progress to satisfy schema requirements
+        userBadgeData.progress = {
+          current: 0,
+          target: defaultTarget,
+          percentage: 0,
           lastUpdated: new Date(),
         };
       }

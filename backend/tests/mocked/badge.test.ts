@@ -105,6 +105,30 @@ describe('Mocked: GET /badges (getAllBadges)', () => {
     expect(mockBadgeModel.findAll).toHaveBeenCalledWith({ category: 'activity' });
   });
 
+  // Mocked behavior: badgeModel.findAll returns filtered badges by isActive=false
+  // Input: authenticated request with isActive=false query param
+  // Expected status code: 200
+  // Expected behavior: returns badges filtered by isActive=false
+  // Expected output: filtered badges array
+  test('Get badges filtered by isActive=false', async () => {
+    const mockBadges = [
+      {
+        _id: new mongoose.Types.ObjectId('507f1f77bcf86cd799439012'),
+        name: 'Inactive Badge',
+        isActive: false,
+      },
+    ];
+
+    mockBadgeModel.findAll.mockResolvedValue(mockBadges as any);
+
+    const response = await request(app)
+      .get('/badges?isActive=false')
+      .expect(200);
+
+    expect(response.body.message).toBe('Badges fetched successfully');
+    expect(mockBadgeModel.findAll).toHaveBeenCalledWith({ isActive: false });
+  });
+
   // Mocked behavior: badgeModel.findAll throws error
   // Input: authenticated request
   // Expected status code: 500
@@ -118,6 +142,38 @@ describe('Mocked: GET /badges (getAllBadges)', () => {
       .expect(500);
 
     expect(response.body.message).toBe('Database connection failed');
+  });
+
+  // Test error case where error.message is falsy (to cover fallback message on line 43)
+  test('Handle error without message when fetching badges', async () => {
+    const errorWithoutMessage = Object.assign(new Error(), { message: '' });
+    mockBadgeModel.findAll.mockRejectedValue(errorWithoutMessage);
+
+    const response = await request(app)
+      .get('/badges')
+      .expect(500);
+
+    expect(response.body.message).toBe('Failed to fetch badges');
+  });
+
+  // Mocked behavior: badgeModel.findAll throws non-Error
+  // Input: authenticated request
+  // Expected status code: 500 (via next)
+  // Expected behavior: calls next with error
+  // Expected output: error passed to next middleware
+  test('Handle non-Error exception when fetching badges', async () => {
+    const mockNext = jest.fn();
+    const req = { query: {} } as any;
+    const res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+    } as any;
+
+    mockBadgeModel.findAll.mockRejectedValue('String error');
+
+    await badgeController.getAllBadges(req, res, mockNext);
+
+    expect(mockNext).toHaveBeenCalledWith('String error');
   });
 });
 
@@ -177,6 +233,37 @@ describe('Mocked: GET /badges/user/earned (getUserBadges)', () => {
 
     expect(response.body.message).toBe('Database error');
   });
+
+  // Test error case where error.message is falsy (to cover fallback message on line 70)
+  test('Handle error without message when fetching user badges', async () => {
+    const errorWithoutMessage = Object.assign(new Error(), { message: '' });
+    mockBadgeModel.getUserBadges.mockRejectedValue(errorWithoutMessage);
+
+    const response = await request(app)
+      .get('/badges/user/earned')
+      .expect(500);
+
+    expect(response.body.message).toBe('Failed to fetch user badges');
+  });
+
+  // Mocked behavior: badgeModel.getUserBadges throws non-Error
+  // Input: authenticated request
+  // Expected status code: 500 (via next)
+  // Expected behavior: calls next with error
+  test('Handle non-Error exception when fetching user badges', async () => {
+    const mockNext = jest.fn();
+    const req = { user: { _id: new mongoose.Types.ObjectId() } } as any;
+    const res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+    } as any;
+
+    mockBadgeModel.getUserBadges.mockRejectedValue('String error');
+
+    await badgeController.getUserBadges(req, res, mockNext);
+
+    expect(mockNext).toHaveBeenCalledWith('String error');
+  });
 });
 
 describe('Mocked: GET /badges/user/available (getAvailableBadges)', () => {
@@ -223,6 +310,37 @@ describe('Mocked: GET /badges/user/available (getAvailableBadges)', () => {
       .expect(500);
 
     expect(response.body.message).toBe('Database error');
+  });
+
+  // Test error case where error.message is falsy (to cover fallback message on line 96)
+  test('Handle error without message when fetching available badges', async () => {
+    const errorWithoutMessage = Object.assign(new Error(), { message: '' });
+    mockBadgeModel.getAvailableBadges.mockRejectedValue(errorWithoutMessage);
+
+    const response = await request(app)
+      .get('/badges/user/available')
+      .expect(500);
+
+    expect(response.body.message).toBe('Failed to fetch available badges');
+  });
+
+  // Mocked behavior: badgeModel.getAvailableBadges throws non-Error
+  // Input: authenticated request
+  // Expected status code: 500 (via next)
+  // Expected behavior: calls next with error
+  test('Handle non-Error exception when fetching available badges', async () => {
+    const mockNext = jest.fn();
+    const req = { user: { _id: new mongoose.Types.ObjectId() } } as any;
+    const res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+    } as any;
+
+    mockBadgeModel.getAvailableBadges.mockRejectedValue('String error');
+
+    await badgeController.getAvailableBadges(req, res, mockNext);
+
+    expect(mockNext).toHaveBeenCalledWith('String error');
   });
 });
 
@@ -281,6 +399,37 @@ describe('Mocked: GET /badges/user/progress (getBadgeProgress)', () => {
 
     expect(response.body.message).toBe('Service error');
   });
+
+  // Test error case where error.message is falsy (to cover fallback message on line 122)
+  test('Handle error without message when fetching badge progress', async () => {
+    const errorWithoutMessage = Object.assign(new Error(), { message: '' });
+    mockBadgeService.getUserBadgeProgress.mockRejectedValue(errorWithoutMessage);
+
+    const response = await request(app)
+      .get('/badges/user/progress')
+      .expect(500);
+
+    expect(response.body.message).toBe('Failed to fetch badge progress');
+  });
+
+  // Mocked behavior: BadgeService.getUserBadgeProgress throws non-Error
+  // Input: authenticated request
+  // Expected status code: 500 (via next)
+  // Expected behavior: calls next with error
+  test('Handle non-Error exception when fetching badge progress', async () => {
+    const mockNext = jest.fn();
+    const req = { user: { _id: new mongoose.Types.ObjectId() } } as any;
+    const res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+    } as any;
+
+    mockBadgeService.getUserBadgeProgress.mockRejectedValue('String error');
+
+    await badgeController.getBadgeProgress(req, res, mockNext);
+
+    expect(mockNext).toHaveBeenCalledWith('String error');
+  });
 });
 
 describe('Mocked: GET /badges/user/stats (getBadgeStats)', () => {
@@ -334,6 +483,39 @@ describe('Mocked: GET /badges/user/stats (getBadgeStats)', () => {
     expect(response.body.message).toBe('Service error');
     expect(response.body.data.totalBadges).toBe(0);
     expect(response.body.data.earnedBadges).toBe(0);
+  });
+
+  // Test error case where error.message is falsy (to cover fallback message on line 148)
+  test('Handle error without message when fetching badge stats', async () => {
+    const errorWithoutMessage = Object.assign(new Error(), { message: '' });
+    mockBadgeService.getUserBadgeStats.mockRejectedValue(errorWithoutMessage);
+
+    const response = await request(app)
+      .get('/badges/user/stats')
+      .expect(500);
+
+    expect(response.body.message).toBe('Failed to fetch badge statistics');
+    expect(response.body.data.totalBadges).toBe(0);
+    expect(response.body.data.earnedBadges).toBe(0);
+  });
+
+  // Mocked behavior: BadgeService.getUserBadgeStats throws non-Error
+  // Input: authenticated request
+  // Expected status code: 500 (via next)
+  // Expected behavior: calls next with error
+  test('Handle non-Error exception when fetching badge stats', async () => {
+    const mockNext = jest.fn();
+    const req = { user: { _id: new mongoose.Types.ObjectId() } } as any;
+    const res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+    } as any;
+
+    mockBadgeService.getUserBadgeStats.mockRejectedValue('String error');
+
+    await badgeController.getBadgeStats(req, res, mockNext);
+
+    expect(mockNext).toHaveBeenCalledWith('String error');
   });
 });
 
@@ -400,5 +582,70 @@ describe('Mocked: POST /badges/user/event (processBadgeEvent)', () => {
 
     expect(response.body.message).toBe('Invalid event type');
   });
+
+  // Test error case where error.message is falsy (to cover fallback message on line 186)
+  test('Handle error without message when processing badge event', async () => {
+    const eventData = {
+      eventType: BadgeRequirementType.PINS_CREATED,
+      value: 1,
+    };
+
+    const errorWithoutMessage = Object.assign(new Error(), { message: '' });
+    mockBadgeService.processBadgeEvent.mockRejectedValue(errorWithoutMessage);
+
+    const response = await request(app)
+      .post('/badges/user/event')
+      .send(eventData)
+      .expect(400);
+
+    expect(response.body.message).toBe('Failed to process badge event');
+  });
+
+  // Mocked behavior: BadgeService.processBadgeEvent throws non-Error
+  // Input: authenticated request
+  // Expected status code: 400 (via next)
+  // Expected behavior: calls next with error
+  test('Handle non-Error exception when processing badge event', async () => {
+    const mockNext = jest.fn();
+    const req = {
+      user: { _id: new mongoose.Types.ObjectId() },
+      body: { eventType: 'test', value: 1 },
+    } as any;
+    const res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+    } as any;
+
+    mockBadgeService.processBadgeEvent.mockRejectedValue('String error');
+
+    await badgeController.processBadgeEvent(req, res, mockNext);
+
+    expect(mockNext).toHaveBeenCalledWith('String error');
+  });
+
+  // Mocked behavior: processBadgeEvent with userId in body
+  // Input: authenticated request with userId in body
+  // Expected status code: 200
+  // Expected behavior: uses userId from body instead of req.user
+  test('Process badge event with userId in body', async () => {
+    const eventData = {
+      eventType: BadgeRequirementType.PINS_CREATED,
+      value: 1,
+      userId: '507f1f77bcf86cd799439099',
+    };
+
+    const mockEarnedBadges: IUserBadge[] = [];
+
+    mockBadgeService.processBadgeEvent.mockResolvedValue(mockEarnedBadges);
+
+    const response = await request(app)
+      .post('/badges/user/event')
+      .send(eventData)
+      .expect(200);
+
+    expect(response.body.message).toBe('Badge event processed successfully');
+    expect(mockBadgeService.processBadgeEvent).toHaveBeenCalled();
+  });
 });
+
 
