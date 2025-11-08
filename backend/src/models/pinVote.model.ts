@@ -25,8 +25,13 @@ export class PinVoteModel {
     pinId: mongoose.Types.ObjectId,
     voteType: 'upvote' | 'downvote'
   ): Promise<{ success: boolean; action: 'added' | 'removed' | 'changed'; upvotes: number; downvotes: number }> {
-    const session = await mongoose.startSession();
-    session.startTransaction();
+    // Skip transactions in test environment (MongoMemoryServer doesn't support replica sets by default)
+    // This follows the same pattern as auth.middleware.ts which checks NODE_ENV
+    const useTransactions = process.env.NODE_ENV !== 'test';
+    const session = useTransactions ? await mongoose.startSession() : null;
+    if (session) {
+      session.startTransaction();
+    }
 
     try {
       const existingVote = await this.voteCollection.findOne({ userId, pinId });
@@ -38,7 +43,7 @@ export class PinVoteModel {
       if (existingVote) {
         if (existingVote.voteType === voteType) {
           // User clicked the same vote button - remove the vote (undo)
-          await this.voteCollection.deleteOne({ userId, pinId }, { session });
+          await this.voteCollection.deleteOne({ userId, pinId }, session ? { session } : {});
           
           if (voteType === 'upvote') {
             upvoteChange = -1;
@@ -49,7 +54,7 @@ export class PinVoteModel {
         } else {
           // User switched vote type
           existingVote.voteType = voteType;
-          await existingVote.save({ session });
+          await existingVote.save(session ? { session } : {});
           
           if (voteType === 'upvote') {
             upvoteChange = 1;
@@ -62,7 +67,7 @@ export class PinVoteModel {
         }
       } else {
         // New vote
-        await this.voteCollection.create([{ userId, pinId, voteType }], { session });
+        await this.voteCollection.create([{ userId, pinId, voteType }], session ? { session } : {});
         
         if (voteType === 'upvote') {
           upvoteChange = 1;
@@ -89,10 +94,12 @@ export class PinVoteModel {
       const updatedPin = await pinCollection.findByIdAndUpdate(
         pinId,
         updateOperations,
-        { session, new: true }
+        session ? { session, new: true } : { new: true }
       );
 
-      await session.commitTransaction();
+      if (session) {
+        await session.commitTransaction();
+      }
       
       return {
         success: true,
@@ -101,11 +108,15 @@ export class PinVoteModel {
         downvotes: updatedPin.rating.downvotes
       };
     } catch (error) {
-      await session.abortTransaction();
+      if (session) {
+        await session.abortTransaction();
+      }
       logger.error('Error voting on pin:', error);
       throw new Error('Failed to vote on pin');
     } finally {
-      session.endSession();
+      if (session) {
+        session.endSession();
+      }
     }
   }
 
