@@ -648,20 +648,4 @@ export class BadgeService {
       throw new Error('Failed to get user badge stats');
     }
   }
-
-  /**
-   * Update badge progress for a user
-   */
-  static async updateBadgeProgress(
-    userId: mongoose.Types.ObjectId,
-    badgeId: mongoose.Types.ObjectId,
-    progress: BadgeProgress
-  ): Promise<IUserBadge | null> {
-    try {
-      return await badgeModel.updateBadgeProgress(userId, badgeId, progress);
-    } catch (error) {
-      logger.error('Error updating badge progress:', error);
-      throw new Error('Failed to update badge progress');
-    }
-  }
 }

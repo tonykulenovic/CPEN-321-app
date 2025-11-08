@@ -263,35 +263,6 @@ export class BadgeModel {
     }
   }
 
-  async updateBadgeProgress(userId: mongoose.Types.ObjectId, badgeId: mongoose.Types.ObjectId, progress: BadgeProgress): Promise<IUserBadge | null> {
-    try {
-      return await this.userBadge.findOneAndUpdate(
-        { userId, badgeId },
-        {
-          $set: {
-            'progress.current': progress.current,
-            'progress.target': progress.target,
-            'progress.percentage': progress.percentage,
-            'progress.lastUpdated': new Date(),
-          },
-        },
-        { new: true }
-      ).populate('badgeId');
-    } catch (error) {
-      logger.error('Error updating badge progress:', error);
-      throw new Error('Failed to update badge progress');
-    }
-  }
-
-  async removeUserBadge(userId: mongoose.Types.ObjectId, badgeId: mongoose.Types.ObjectId): Promise<void> {
-    try {
-      await this.userBadge.deleteOne({ userId, badgeId });
-    } catch (error) {
-      logger.error('Error removing user badge:', error);
-      throw new Error('Failed to remove user badge');
-    }
-  }
-
   async getBadgeStats(userId: mongoose.Types.ObjectId): Promise<{
     totalBadges: number;
     earnedBadges: number;
