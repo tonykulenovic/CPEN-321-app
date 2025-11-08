@@ -28,6 +28,7 @@ import android.util.Log
  * These tests cover:
  * - Adding friends (searching and sending friend requests)
  * - Managing friend requests (accepting and declining)
+ * - Viewing friend profiles
  * - Removing friends
  * - Viewing friends list
  * 
@@ -252,8 +253,8 @@ class ManageFriendsE2ETest {
         // Ensure we're back on the main screen or friends screen
         ensureOnFriendsScreen()
         
-        // Small delay between tests
-        Thread.sleep(2000)
+        // Delay between tests to allow backend operations to complete
+        Thread.sleep(3000) // Increased from 2s to 3s
         
         Log.d(TAG, "========== Test Cleanup Complete ==========")
     }
@@ -335,8 +336,8 @@ class ManageFriendsE2ETest {
      * 4. System confirms request was sent
      */
     @Test(timeout = 120000)
-    fun test6_AddFriend_successScenario() {
-        Log.d(TAG, "=== test6_AddFriend_successScenario ===")
+    fun test7_AddFriend_successScenario() {
+        Log.d(TAG, "=== test7_AddFriend_successScenario ===")
         ensureOnFriendsScreen()
         
         // Step 1: Open Add Friend sheet
@@ -403,7 +404,7 @@ class ManageFriendsE2ETest {
         }
         Thread.sleep(1000)
         
-        Log.d(TAG, "✓ test6_AddFriend_successScenario: PASSED")
+        Log.d(TAG, "✓ test7_AddFriend_successScenario: PASSED")
     }
     
     /**
@@ -533,9 +534,167 @@ class ManageFriendsE2ETest {
         
         // Give extra time for friend to be added to friends list
         Log.d(TAG, "Waiting for friend to be added to friends list...")
-        Thread.sleep(1000)
+        Thread.sleep(3000) // Increased from 1s to 3s to allow friend to appear in list
         
         Log.d(TAG, "✓ test2_AcceptFriendRequest_success: PASSED")
+    }
+    
+    /**
+     * Test: View Friend Profile
+     * 
+     * Precondition:
+     * - test2_AcceptFriendRequest_success must have run successfully (friend added to list)
+     * 
+     * Steps:
+     * 1. Navigate to Friends screen
+     * 2. Wait for friend to appear in friends list
+     * 3. Click on friend card to open their profile
+     * 4. Verify profile screen opens with friend's information
+     * 5. Navigate back to Friends screen
+     */
+    @Test(timeout = 120_000)
+    fun test3_ViewFriendProfile_success() {
+        Log.d(TAG, "=== test3_ViewFriendProfile_success ===")
+        ensureOnFriendsScreen()
+        
+        // Give app time to settle and friends list to load after test2
+        Log.d(TAG, "Giving app extra time to settle after test2...")
+        Thread.sleep(2000)
+        
+        // Step 1: Wait for friend to appear in the friends list (from test2)
+        Log.d(TAG, "Step 1: Waiting for friend to appear in friends list")
+        var friendFound = false
+        var attempt = 0
+        val maxAttempts = 8 // Increased from 5 to 8
+        
+        while (attempt < maxAttempts && !friendFound) {
+            attempt++
+            Log.d(TAG, "Attempt $attempt/$maxAttempts: Checking for friend in list...")
+            Thread.sleep(3000) // Increased from 2s to 3s between checks
+            
+            // Check if friend appears in list by looking for:
+            // 1. Online/Offline status (appears on every friend card)
+            // 2. OR the absence of empty state
+            val hasOnlineStatus = composeTestRule.textExists("Online", ignoreCase = true) ||
+                                  composeTestRule.textExists("Offline", ignoreCase = true)
+            val hasEmptyState = composeTestRule.textExists("You haven't added any friends yet", substring = true)
+            
+            // Friend is found if we see Online/Offline status OR if empty state is NOT shown
+            friendFound = hasOnlineStatus || !hasEmptyState
+            
+            if (!friendFound) {
+                Log.d(TAG, "  - Online/Offline status found: false")
+                Log.d(TAG, "  - Empty state shown: $hasEmptyState")
+            } else {
+                Log.d(TAG, "  ✓ Friend found in list!")
+                Log.d(TAG, "  - Online/Offline status visible: $hasOnlineStatus")
+                Log.d(TAG, "  - Empty state NOT shown: ${!hasEmptyState}")
+                break
+            }
+        }
+        
+        if (!friendFound) {
+            Log.e(TAG, "!!! FRIEND NOT FOUND IN LIST AFTER $maxAttempts ATTEMPTS !!!")
+            Log.e(TAG, "This test expects test2_AcceptFriendRequest_success to have added '$FRIEND_USERNAME' as a friend.")
+            Log.e(TAG, "The friend should have appeared in the list by now.")
+            throw AssertionError("Test requires a friend to be in the friends list. Ensure test2 ran successfully.")
+        }
+        
+        // Step 2: Click on the friend card to open their profile
+        Log.d(TAG, "Step 2: Clicking on friend card to view profile")
+        
+        // The FriendCard is clickable. We'll try to click on visible elements like Online/Offline status
+        var clickSuccessful = false
+        try {
+            // Try to click on "Online" or "Offline" text (which is inside the clickable FriendCard)
+            if (composeTestRule.textExists("Online", ignoreCase = true)) {
+                composeTestRule.onNodeWithText("Online", ignoreCase = true, useUnmergedTree = true)
+                    .performClick()
+                clickSuccessful = true
+                Log.d(TAG, "  ✓ Clicked on friend card (Online status)")
+            } else if (composeTestRule.textExists("Offline", ignoreCase = true)) {
+                composeTestRule.onNodeWithText("Offline", ignoreCase = true, useUnmergedTree = true)
+                    .performClick()
+                clickSuccessful = true
+                Log.d(TAG, "  ✓ Clicked on friend card (Offline status)")
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to click using Online/Offline: ${e.message}")
+        }
+        
+        if (!clickSuccessful) {
+            Log.e(TAG, "Failed to click on friend card")
+            throw AssertionError("Could not click on friend card to view profile")
+        }
+        
+        // Step 3: Wait for profile screen to load
+        Log.d(TAG, "Step 3: Waiting for profile screen to load")
+        Thread.sleep(2000) // Give time for navigation
+        
+        // Verify profile screen is displayed
+        var profileLoaded = false
+        for (checkAttempt in 1..3) {
+            Log.d(TAG, "  Check attempt $checkAttempt/3: Looking for profile screen...")
+            
+            // Check for profile screen elements
+            val hasProfileHeader = try {
+                composeTestRule.onNodeWithTag(TestTags.PROFILE_HEADER).assertExists()
+                true
+            } catch (e: AssertionError) {
+                false
+            }
+            
+            val hasProfileName = try {
+                composeTestRule.onNodeWithTag(TestTags.PROFILE_NAME).assertExists()
+                true
+            } catch (e: AssertionError) {
+                false
+            }
+            
+            val hasUsername = composeTestRule.textExists(FRIEND_USERNAME, substring = true)
+            
+            Log.d(TAG, "    - Profile header found: $hasProfileHeader")
+            Log.d(TAG, "    - Profile name found: $hasProfileName")
+            Log.d(TAG, "    - Username found: $hasUsername")
+            
+            if (hasProfileHeader || hasProfileName || hasUsername) {
+                profileLoaded = true
+                Log.d(TAG, "  ✓ Profile screen loaded!")
+                break
+            }
+            
+            Thread.sleep(1000)
+        }
+        
+        if (!profileLoaded) {
+            Log.e(TAG, "!!! PROFILE SCREEN DID NOT LOAD !!!")
+            Log.e(TAG, "Expected to see profile information for '$FRIEND_USERNAME'")
+            throw AssertionError("Profile screen did not load after clicking on friend card")
+        }
+        
+        // Step 4: Verify we can see the friend's profile information
+        Log.d(TAG, "Step 4: Verifying friend's profile information is displayed")
+        
+        // Profile is confirmed loaded by Step 3 checks
+        // Additional verification: look for profile-related elements
+        val hasProfileElements = composeTestRule.textExists("Edit Profile", ignoreCase = true) ||
+                                 composeTestRule.textExists("Manage Profile", ignoreCase = true) ||
+                                 composeTestRule.textExists("Back", ignoreCase = true)
+        
+        Log.d(TAG, "  - Profile-related elements visible: $hasProfileElements")
+        Log.d(TAG, "  ✓ Successfully viewed friend's profile")
+        
+        // Step 5: Navigate back to Friends screen
+        Log.d(TAG, "Step 5: Navigating back to Friends screen")
+        composeTestRule.activityRule.scenario.onActivity { activity ->
+            activity.onBackPressedDispatcher.onBackPressed()
+        }
+        Thread.sleep(1500)
+        
+        // Verify we're back on Friends screen
+        ensureOnFriendsScreen()
+        
+        Log.d(TAG, "✓ test3_ViewFriendProfile_success: PASSED")
     }
     
     /**
@@ -550,8 +709,8 @@ class ManageFriendsE2ETest {
      * 3. Request is removed from list
      */
     @Test(timeout = 120000)
-    fun test7_DeclineFriendRequest_success() {
-        Log.d(TAG, "=== test7_DeclineFriendRequest_success ===")
+    fun test8_DeclineFriendRequest_success() {
+        Log.d(TAG, "=== test8_DeclineFriendRequest_success ===")
         ensureOnFriendsScreen()
         
         // Step 1: Open friend requests sheet
@@ -608,7 +767,7 @@ class ManageFriendsE2ETest {
         }
         Thread.sleep(1000)
         
-        Log.d(TAG, "✓ test7_DeclineFriendRequest_success: PASSED")
+        Log.d(TAG, "✓ test8_DeclineFriendRequest_success: PASSED")
     }
     
     /**
@@ -617,8 +776,8 @@ class ManageFriendsE2ETest {
      * Verifies that when there are no pending requests, the empty state is displayed.
      */
     @Test(timeout = 120000)
-    fun test8_ViewFriendRequests_emptyState() {
-        Log.d(TAG, "=== test8_ViewFriendRequests_emptyState ===")
+    fun test9_ViewFriendRequests_emptyState() {
+        Log.d(TAG, "=== test9_ViewFriendRequests_emptyState ===")
         ensureOnFriendsScreen()
         
         // Step 1: Open friend requests sheet
@@ -648,7 +807,7 @@ class ManageFriendsE2ETest {
         }
         Thread.sleep(1000)
         
-        Log.d(TAG, "✓ test8_ViewFriendRequests_emptyState: PASSED")
+        Log.d(TAG, "✓ test9_ViewFriendRequests_emptyState: PASSED")
     }
     
     // ========================================================================
@@ -667,8 +826,8 @@ class ManageFriendsE2ETest {
      * 4. Friend is removed from list
      */
     @Test(timeout = 120000)
-    fun test4_RemoveFriend_success() {
-        Log.d(TAG, "=== test4_RemoveFriend_success ===")
+    fun test5_RemoveFriend_success() {
+        Log.d(TAG, "=== test5_RemoveFriend_success ===")
         ensureOnFriendsScreen()
         
         // Step 1: Wait for friends list to load (retry up to 5 times)
@@ -752,7 +911,7 @@ class ManageFriendsE2ETest {
         Log.d(TAG, "Step 4: Verifying friend removed")
         Thread.sleep(2000)
         
-        Log.d(TAG, "✓ test4_RemoveFriend_success: PASSED")
+        Log.d(TAG, "✓ test5_RemoveFriend_success: PASSED")
     }
     
     /**
@@ -761,8 +920,8 @@ class ManageFriendsE2ETest {
      * Verifies that when there are no friends, the empty state is displayed.
      */
     @Test(timeout = 120000)
-    fun test5_ViewFriendsList_emptyState() {
-        Log.d(TAG, "=== test5_ViewFriendsList_emptyState ===")
+    fun test6_ViewFriendsList_emptyState() {
+        Log.d(TAG, "=== test6_ViewFriendsList_emptyState ===")
         ensureOnFriendsScreen()
         
         // Check current state
@@ -786,7 +945,7 @@ class ManageFriendsE2ETest {
             "Friends screen should show either empty state or friends list"
         }
         
-        Log.d(TAG, "✓ test5_ViewFriendsList_emptyState: PASSED")
+        Log.d(TAG, "✓ test6_ViewFriendsList_emptyState: PASSED")
     }
     
     /**
@@ -795,8 +954,8 @@ class ManageFriendsE2ETest {
      * Verifies that the search bar filters friends by name
      */
     @Test(timeout = 120000)
-    fun test3_SearchFriends_filterByName() {
-        Log.d(TAG, "=== test3_SearchFriends_filterByName ===")
+    fun test4_SearchFriends_filterByName() {
+        Log.d(TAG, "=== test4_SearchFriends_filterByName ===")
         ensureOnFriendsScreen()
         
         // Step 1: Wait for friends list to load (retry up to 5 times)

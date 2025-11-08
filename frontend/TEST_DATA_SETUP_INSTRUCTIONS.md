@@ -51,6 +51,7 @@ When prompted, sign in with: **User Account 1**
 **Note:** The tests will automatically:
 - Search for and add `e2e_test_friend` as a friend
 - Accept/decline the friend request from `e2e_test_friend`
+- View friend profiles
 - Test removing friends
 - Test search functionality
 
