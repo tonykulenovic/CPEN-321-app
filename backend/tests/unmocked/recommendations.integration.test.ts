@@ -159,7 +159,7 @@ describe('Unmocked Integration: GET /recommendations/:mealType', () => {
     );
 
     expect(response.status).toBe(400);
-    expect(response.body.message).toBe('Invalid meal type. Allowed values: breakfast, lunch, dinner');
+    expect(response.body.message).toBe('Invalid meal type. Must be breakfast, lunch, or dinner');
   });
 
   // No mocking: recommendationService.getMealRecommendations works for lunch
