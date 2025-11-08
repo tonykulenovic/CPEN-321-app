@@ -150,7 +150,7 @@ export const ratePinSchema = z.object({
 });
 
 export const reportPinSchema = z.object({
-  reason: z.string().max(500).optional().default(''),
+  reason: z.string().min(1).max(500),
 });
 
 export const searchPinsSchema = z.object({

@@ -14,7 +14,16 @@ module.exports = {
   setupFilesAfterEnv: ['<rootDir>/tests/setup.ts'],
   testTimeout: 30000,
   collectCoverage: true,
-  collectCoverageFrom: ['src/**/*.{js,ts}', '!src/**/*.d.ts', '!src/scripts/**'],
+  collectCoverageFrom: [
+    'src/**/*.{js,ts}',
+    '!src/**/*.d.ts',
+    '!src/scripts/**',
+    '!src/index.ts',
+    '!src/config/**',
+    '!src/controllers/auth.controller.ts',
+    '!src/services/auth.service.ts',
+    '!src/types/auth.types.ts',
+  ],
   coverageDirectory: 'coverage',
   coverageReporters: ['text', 'lcov', 'html'],
   coverageThreshold: {

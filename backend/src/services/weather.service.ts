@@ -83,7 +83,7 @@ export class WeatherService {
       };
     }
 
-    if (condition === 'rainy' || condition === 'stormy') {
+    if (condition === 'rainy' || condition === 'stormy' || condition === 'snowy') {
       return {
         preferOutdoor: false,
         suggestions: [
