@@ -83,6 +83,44 @@ object TestTags {
     const val DECLINE_REQUEST_BUTTON = "decline_request_button"
     const val NO_REQUESTS_TEXT = "no_requests_text"
     
+    // ProfileScreen tags
+    const val PROFILE_SCREEN = "profile_screen"
+    const val PROFILE_HEADER = "profile_header"
+    const val PROFILE_NAME = "profile_name"
+    const val PROFILE_USERNAME = "profile_username"
+    const val PROFILE_PICTURE = "profile_picture"
+    const val MANAGE_PROFILE_BUTTON = "manage_profile_button"
+    const val DELETE_ACCOUNT_BUTTON = "delete_account_button"
+    const val LOGOUT_BUTTON = "logout_button"
+    const val DELETE_ACCOUNT_DIALOG = "delete_account_dialog"
+    const val DELETE_ACCOUNT_CONFIRM = "delete_account_confirm"
+    const val DELETE_ACCOUNT_CANCEL = "delete_account_cancel"
+    
+    // ManageProfileScreen tags
+    const val MANAGE_PROFILE_SCREEN = "manage_profile_screen"
+    const val PROFILE_NAME_FIELD = "profile_name_field"
+    const val PROFILE_USERNAME_FIELD = "profile_username_field"
+    const val PROFILE_BIO_FIELD = "profile_bio_field"
+    const val EDIT_PROFILE_PICTURE_BUTTON = "edit_profile_picture_button"
+    const val SAVE_PROFILE_BUTTON = "save_profile_button"
+    const val PRIVACY_SETTINGS_BUTTON = "privacy_settings_button"
+    
+    // PrivacySettingsScreen tags
+    const val PRIVACY_SETTINGS_SCREEN = "privacy_settings_screen"
+    const val LOCATION_SHARING_OFF = "location_sharing_off"
+    const val LOCATION_SHARING_FRIENDS = "location_sharing_friends"
+    const val LOCATION_SHARING_EVERYONE = "location_sharing_everyone"
+    const val PROFILE_VISIBILITY_PRIVATE = "profile_visibility_private"
+    const val PROFILE_VISIBILITY_FRIENDS = "profile_visibility_friends"
+    const val PROFILE_VISIBILITY_PUBLIC = "profile_visibility_public"
+    const val BADGE_VISIBILITY_PRIVATE = "badge_visibility_private"
+    const val BADGE_VISIBILITY_FRIENDS = "badge_visibility_friends"
+    const val BADGE_VISIBILITY_PUBLIC = "badge_visibility_public"
+    const val FRIEND_REQUESTS_EVERYONE = "friend_requests_everyone"
+    const val FRIEND_REQUESTS_FRIENDS_OF_FRIENDS = "friend_requests_friends_of_friends"
+    const val FRIEND_REQUESTS_NO_ONE = "friend_requests_no_one"
+    const val SAVE_PRIVACY_BUTTON = "save_privacy_button"
+    
     // Common tags
     const val LOADING_INDICATOR = "loading_indicator"
     const val ERROR_MESSAGE = "error_message"

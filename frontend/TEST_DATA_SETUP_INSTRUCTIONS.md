@@ -85,9 +85,81 @@ When prompted, sign in with: `universe.cpen321@gmail.com`
 
 ---
 
+## Running Manage Account Tests
+
+### A. Non-Destructive Tests (ManageAccountE2ETest) ✅ SAFE TO RUN
+
+**Setup:** No special test data required! Just sign in with any Google account.
+
+**Run the tests:**
+```bash
+./gradlew connectedDebugAndroidTest --tests "com.cpen321.usermanagement.ui.ManageAccountE2ETest"
+```
+
+Or run in Android Studio: `ManageAccountE2ETest.kt`
+
+When prompted, sign in with: **Any Google Account**
+
+**The tests will automatically verify:**
+- ✅ Sign In - Verifies manual Google sign-in was successful
+- ✅ Sign Up - Verifies profile was created after manual sign-up
+- ✅ View Profile - Views profile information
+- ✅ Edit Profile - Edits name, username, bio and saves
+- ✅ Cancel Edit - Tests canceling profile changes
+- ✅ Privacy Settings - Changes location sharing, profile visibility, etc.
+- ✅ Cancel Privacy - Tests canceling privacy changes
+- ✅ Delete Dialog - Tests delete account dialog (clicks Cancel - NON-DESTRUCTIVE)
+
+**All 8 tests are SAFE** - they won't log you out or delete your account!
+
+---
+
+### B. Logout Test (LogoutE2ETest) ⚠️ DESTRUCTIVE
+
+**⚠️ WARNING:** This test will LOG YOU OUT!
+
+**Run SEPARATELY:**
+```bash
+./gradlew connectedDebugAndroidTest --tests "com.cpen321.usermanagement.ui.LogoutE2ETest"
+```
+
+**What it does:**
+- Logs out the user
+- Verifies user is logged out
+- Verifies app shows login screen
+
+**After running:** Clear app data before running other tests:
+```bash
+adb shell pm clear com.cpen321.usermanagement
+```
+
+---
+
+### C. Delete Account Test (DeleteAccountE2ETest) ⚠️⚠️⚠️ EXTREMELY DESTRUCTIVE
+
+**⚠️⚠️⚠️ WARNING:** This test will PERMANENTLY DELETE the account!
+
+**ONLY use a DISPOSABLE test account!**
+
+**Run SEPARATELY:**
+```bash
+./gradlew connectedDebugAndroidTest --tests "com.cpen321.usermanagement.ui.DeleteAccountE2ETest"
+```
+
+**What it does:**
+- Clicks "Delete Account"
+- Confirms deletion
+- Permanently deletes account from database
+- Verifies account was deleted
+
+**After running:** The test account is GONE FOREVER. That Google account can sign up again as a new user.
+
+---
+
 ## Important
 
 - Pin names must match exactly
 - Backend server must be running
 - All pins must be set to "Public" visibility
+- For Manage Account tests, any Google account will work
 
