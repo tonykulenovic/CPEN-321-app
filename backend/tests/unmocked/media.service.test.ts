@@ -16,6 +16,10 @@ describe('Unmocked: MediaService Unit Tests', () => {
     if (!fs.existsSync(TEST_IMAGES_DIR)) {
       fs.mkdirSync(TEST_IMAGES_DIR);
     }
+    // Create destination images directory if it doesn't exist
+    if (!fs.existsSync('uploads/images')) {
+      fs.mkdirSync('uploads/images', { recursive: true });
+    }
   });
 
   afterEach(() => {
@@ -27,6 +31,19 @@ describe('Unmocked: MediaService Unit Tests', () => {
           fs.unlinkSync(path.join(TEST_IMAGES_DIR, file));
         });
         fs.rmdirSync(TEST_IMAGES_DIR);
+      }
+    } catch (error) {
+      // Ignore cleanup errors
+    }
+
+    // Clean up images directory
+    try {
+      if (fs.existsSync('uploads/images')) {
+        const files = fs.readdirSync('uploads/images');
+        files.forEach(file => {
+          fs.unlinkSync(path.join('uploads/images', file));
+        });
+        // Don't remove the directory as other tests might need it
       }
     } catch (error) {
       // Ignore cleanup errors

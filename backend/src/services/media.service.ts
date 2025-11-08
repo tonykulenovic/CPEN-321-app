@@ -6,6 +6,11 @@ const IMAGES_DIR = 'uploads/images';
 export class MediaService {
   static async saveImage(filePath: string, userId: string): Promise<string> {
     try {
+      // Ensure the images directory exists
+      if (!fs.existsSync(IMAGES_DIR)) {
+        fs.mkdirSync(IMAGES_DIR, { recursive: true });
+      }
+
       const fileExtension = path.extname(filePath);
       const fileName = `${userId}-${Date.now()}${fileExtension}`;
       const newPath = path.join(IMAGES_DIR, fileName);
