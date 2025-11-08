@@ -107,21 +107,10 @@ export const updateBadgeSchema = z.object({
   isActive: z.boolean().optional()
 });
 
-export const assignBadgeSchema = z.object({
-  badgeId: z.string().min(1),
-  userId: z.string().min(1).optional(), // Optional for self-assignment
-  progress: z.object({
-    current: z.number().min(0),
-    target: z.number().positive(),
-    percentage: z.number().min(0).max(100)
-  }).optional()
-});
-
 // Request/Response types
 // ------------------------------------------------------------
 export type CreateBadgeRequest = z.infer<typeof createBadgeSchema>;
 export type UpdateBadgeRequest = z.infer<typeof updateBadgeSchema>;
-export type AssignBadgeRequest = z.infer<typeof assignBadgeSchema>;
 
 export type BadgeResponse = {
   message: string;

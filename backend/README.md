@@ -2,7 +2,7 @@
 
 ## Requirements
 
-- [Node.js](https://nodejs.org/en/download/) 18+ installed on your machine
+- [Node.js](https://nodejs.org/en/download/) 20+ installed on your machine
 - [MongoDB](https://www.mongodb.com/) instance running locally or remotely
 
 ## Setup

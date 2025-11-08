@@ -78,35 +78,6 @@ export class LocationModel {
     }
   }
 
-  async upsert(
-    userId: mongoose.Types.ObjectId,
-    lat: number,
-    lng: number,
-    accuracyM = 0,
-    shared = false,
-    expiresAt: Date
-  ): Promise<ILocation> {
-    try {
-      return await this.location.findOneAndUpdate(
-        { userId },
-        {
-          lat,
-          lng,
-          accuracyM,
-          shared,
-          expiresAt,
-        },
-        {
-          upsert: true,
-          new: true,
-        }
-      );
-    } catch (error) {
-      logger.error('Error upserting location:', error);
-      throw new Error('Failed to upsert location');
-    }
-  }
-
   async findByUserId(userId: mongoose.Types.ObjectId): Promise<ILocation | null> {
     try {
       const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
@@ -155,88 +126,6 @@ export class LocationModel {
     } catch (error) {
       logger.error('Error finding friends locations:', error);
       throw new Error('Failed to find friends locations');
-    }
-  }
-
-  async deleteExpired(): Promise<void> {
-    try {
-      await this.location.deleteMany({
-        expiresAt: { $lt: new Date() },
-      });
-    } catch (error) {
-      logger.error('Error deleting expired locations:', error);
-      throw new Error('Failed to delete expired locations');
-    }
-  }
-
-  async deleteByUserId(userId: mongoose.Types.ObjectId): Promise<void> {
-    try {
-      await this.location.deleteMany({ userId });
-    } catch (error) {
-      logger.error('Error deleting user locations:', error);
-      throw new Error('Failed to delete user locations');
-    }
-  }
-
-  /**
-   * Check if users have been active (shared location) within the last specified minutes
-   * @param userIds - Array of user IDs to check
-   * @param minutesThreshold - Number of minutes to consider as "recently active" (default: 10)
-   * @returns Map of userId -> boolean indicating if they're online
-   */
-  async getOnlineStatus(
-    userIds: mongoose.Types.ObjectId[],
-    minutesThreshold: number = 10
-  ): Promise<Map<string, boolean>> {
-    try {
-      const onlineStatus = new Map<string, boolean>();
-      
-      if (userIds.length === 0) {
-        return onlineStatus;
-      }
-
-      // Calculate threshold time (X minutes ago)
-      const thresholdTime = new Date();
-      thresholdTime.setMinutes(thresholdTime.getMinutes() - minutesThreshold);
-
-      // Find users who have shared location recently
-      const recentLocations = await this.location.aggregate([
-        {
-          $match: {
-            userId: { $in: userIds },
-            shared: true,
-            createdAt: { $gte: thresholdTime }
-          }
-        },
-        {
-          $group: {
-            _id: '$userId',
-            lastActivity: { $max: '$createdAt' }
-          }
-        }
-      ]);
-
-      // Initialize all users as offline
-      userIds.forEach(userId => {
-        onlineStatus.set(userId.toString(), false);
-      });
-
-      // Mark users with recent activity as online
-      recentLocations.forEach(location => {
-        onlineStatus.set(location._id.toString(), true);
-      });
-
-      logger.debug(`📍 Online status check: ${recentLocations.length}/${userIds.length} users online (threshold: ${minutesThreshold}min)`);
-      
-      return onlineStatus;
-    } catch (error) {
-      logger.error('Error getting online status:', error);
-      // Return all users as offline on error
-      const onlineStatus = new Map<string, boolean>();
-      userIds.forEach(userId => {
-        onlineStatus.set(userId.toString(), false);
-      });
-      return onlineStatus;
     }
   }
 }

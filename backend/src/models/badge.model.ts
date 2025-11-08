@@ -213,6 +213,10 @@ export class BadgeModel {
   // UserBadge operations
   async assignBadge(userId: mongoose.Types.ObjectId, badgeId: mongoose.Types.ObjectId, progress?: BadgeProgress): Promise<IUserBadge> {
     try {
+      // Get badge to get target for default progress
+      const badge = await this.badge.findById(badgeId);
+      const defaultTarget = badge?.requirements?.target || 0;
+
       const userBadgeData: any = {
         userId,
         badgeId,
@@ -223,6 +227,14 @@ export class BadgeModel {
       if (progress) {
         userBadgeData.progress = {
           ...progress,
+          lastUpdated: new Date(),
+        };
+      } else {
+        // Provide default progress to satisfy schema requirements
+        userBadgeData.progress = {
+          current: 0,
+          target: defaultTarget,
+          percentage: 0,
           lastUpdated: new Date(),
         };
       }
@@ -260,35 +272,6 @@ export class BadgeModel {
     } catch (error) {
       logger.error('Error getting user badge:', error);
       throw new Error('Failed to get user badge');
-    }
-  }
-
-  async updateBadgeProgress(userId: mongoose.Types.ObjectId, badgeId: mongoose.Types.ObjectId, progress: BadgeProgress): Promise<IUserBadge | null> {
-    try {
-      return await this.userBadge.findOneAndUpdate(
-        { userId, badgeId },
-        {
-          $set: {
-            'progress.current': progress.current,
-            'progress.target': progress.target,
-            'progress.percentage': progress.percentage,
-            'progress.lastUpdated': new Date(),
-          },
-        },
-        { new: true }
-      ).populate('badgeId');
-    } catch (error) {
-      logger.error('Error updating badge progress:', error);
-      throw new Error('Failed to update badge progress');
-    }
-  }
-
-  async removeUserBadge(userId: mongoose.Types.ObjectId, badgeId: mongoose.Types.ObjectId): Promise<void> {
-    try {
-      await this.userBadge.deleteOne({ userId, badgeId });
-    } catch (error) {
-      logger.error('Error removing user badge:', error);
-      throw new Error('Failed to remove user badge');
     }
   }
 

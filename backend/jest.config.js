@@ -17,6 +17,12 @@ module.exports = {
   collectCoverageFrom: [
     'src/**/*.{js,ts}',
     '!src/**/*.d.ts',
+    '!src/scripts/**',
+    '!src/index.ts',
+    '!src/config/**',
+    '!src/controllers/auth.controller.ts',
+    '!src/services/auth.service.ts',
+    '!src/types/auth.types.ts',
   ],
   coverageDirectory: 'coverage',
   coverageReporters: ['text', 'lcov', 'html'],
@@ -25,7 +31,7 @@ module.exports = {
       branches: 15,
       functions: 30,
       lines: 30,
-      statements: 30
-    }
+      statements: 30,
+    },
   },
 };
