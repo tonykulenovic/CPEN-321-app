@@ -1,4 +1,4 @@
-# Test Data Setup Instructions
+# E2E Test Data Setup Instructions
 
 ## What You Need
 
@@ -11,7 +11,7 @@
 
 ## Running User Tests (ManagePinsE2ETest)
 
-### Setup:
+### Setup (2 accounts needed):
 1. Create test pin with **User Account 1** as instructed below
 2. Launch app and wait for the test to prompt you to sign in
 3. Sign in with **User Account 2**
@@ -26,7 +26,7 @@
 - Location: Any location
 
 ### Run the tests:
-Run ManagePinsE2ETest.kt in android studio
+Run `ManagePinsE2ETest.kt` in android studio
 
 When prompted, sign in with: **User Account 2**
 
@@ -34,7 +34,7 @@ When prompted, sign in with: **User Account 2**
 
 ## Running Manage Friends Tests (ManageFriendsE2ETest)
 
-### Setup (Only 2 accounts needed):
+### Setup (2 accounts needed):
 
 **Create this test account:**
 
@@ -44,7 +44,7 @@ When prompted, sign in with: **User Account 2**
    - **Important**: From this account, send a friend request TO **User Account 1**
 
 ### Run the tests:
-Run ManageFriendsE2ETest.kt in Android Studio
+Run `ManageFriendsE2ETest.kt` in Android Studio
 
 When prompted, sign in with: **User Account 1**
 
@@ -58,7 +58,7 @@ When prompted, sign in with: **User Account 1**
 
 ## Running Admin Tests (AdminManagePinsE2ETest)
 
-### Setup Data:
+### Setup (2 accounts needed) & Test Data:
 
 **Step 1: Create 3 pins with User Account 1**
 
@@ -75,91 +75,72 @@ When prompted, sign in with: **User Account 1**
 
 Sign out from User Account 1 and sign in with User Account 2:
 
-Search for each pin and report it with reason: e.g. "Test report for E2E admin testing"
+Search for each pin and report it with reason: e.g. "Test report for E2E admin testing #"
 
 **Step 3: Run admin tests**
 
-Run AdminManagePinsE2ETest.kt in android studio
+Run `AdminManagePinsE2ETest.kt` in android studio
 
 When prompted, sign in with: `universe.cpen321@gmail.com`
 
 ---
 
-## Running Manage Account Tests
+## Running Manage Account Tests (ManageAccountE2ETest)
 
-### A. Non-Destructive Tests (ManageAccountE2ETest) ✅ SAFE TO RUN
+### Setup (Only 1 account needed):
 
-**Setup:** No special test data required! Just sign in with any Google account.
+**Requirement:** One Google account not in the database (this test suite test sign up use case)
+ 
+Run `ManageAccountE2ETest.kt` in android studio
 
-**Run the tests:**
-```bash
-./gradlew connectedDebugAndroidTest --tests "com.cpen321.usermanagement.ui.ManageAccountE2ETest"
-```
+### What Happens During Test
 
-Or run in Android Studio: `ManageAccountE2ETest.kt`
+**You'll need to authenticate TWICE:**
 
-When prompted, sign in with: **Any Google Account**
+1. **First Authentication (Test 01):**
+   - Manually, click "Sign Up with Google"
+   - Authenticate with a ** Google account**
+   - **DO NOT manually enter username/bio** - the test automates this!
+   - The test will automatically:
+     - Enter unique username: `e2e_<timestamp>`
+     - Enter bio: "E2E Test User Bio - Automated testing account"
+     - Click "Save"
+     - Verify profile created
 
-**The tests will automatically verify:**
-- ✅ Sign In - Verifies manual Google sign-in was successful
-- ✅ Sign Up - Verifies profile was created after manual sign-up
-- ✅ View Profile - Views profile information
-- ✅ Edit Profile - Edits name, username, bio and saves
-- ✅ Cancel Edit - Tests canceling profile changes
-- ✅ Privacy Settings - Changes location sharing, profile visibility, etc.
-- ✅ Cancel Privacy - Tests canceling privacy changes
-- ✅ Delete Dialog - Tests delete account dialog (clicks Cancel - NON-DESTRUCTIVE)
+2. **Second Authentication (Test 03):**
+   - After test 02 logs you out, you'll be prompted again
+   - Click "Sign In with Google"
+   - Authenticate with the **SAME account**
+   - Remaining tests (04-10) reuse this authentication and run automatically
 
-**All 8 tests are SAFE** - they won't log you out or delete your account!
+### Complete Test Flow (10 Tests)
 
----
+| # | Test Name | Description |
+|---|-----------|-------------|
+| **01** | Sign Up & Create Profile | Sign up + automate username/bio creation |
+| **02** | Logout | Logs out user | ⚠️ Logout |
+| **03** | Sign In After Logout | Sign in again (tests sign-in flow) |
+| **04** | View Profile | Views profile information |
+| **05** | Edit Profile | Edits name and saves changes |
+| **06** | Cancel Profile Edit | Tests canceling changes |
+| **07** | Manage Privacy Settings | Changes location, profile, badge visibility |
+| **08** | Cancel Privacy Changes | Tests canceling privacy changes |
+| **09** | Delete Account Cancel | Opens delete dialog, clicks Cancel |
+| **10** | Delete Account PERMANENT | **PERMANENTLY DELETES THE ACCOUNT** |
 
-### B. Logout Test (LogoutE2ETest) ⚠️ DESTRUCTIVE
+### After Running
 
-**⚠️ WARNING:** This test will LOG YOU OUT!
-
-**Run SEPARATELY:**
-```bash
-./gradlew connectedDebugAndroidTest --tests "com.cpen321.usermanagement.ui.LogoutE2ETest"
-```
-
-**What it does:**
-- Logs out the user
-- Verifies user is logged out
-- Verifies app shows login screen
-
-**After running:** Clear app data before running other tests:
-```bash
-adb shell pm clear com.cpen321.usermanagement
-```
-
----
-
-### C. Delete Account Test (DeleteAccountE2ETest) ⚠️⚠️⚠️ EXTREMELY DESTRUCTIVE
-
-**⚠️⚠️⚠️ WARNING:** This test will PERMANENTLY DELETE the account!
-
-**ONLY use a DISPOSABLE test account!**
-
-**Run SEPARATELY:**
-```bash
-./gradlew connectedDebugAndroidTest --tests "com.cpen321.usermanagement.ui.DeleteAccountE2ETest"
-```
-
-**What it does:**
-- Clicks "Delete Account"
-- Confirms deletion
-- Permanently deletes account from database
-- Verifies account was deleted
-
-**After running:** The test account is GONE FOREVER. That Google account can sign up again as a new user.
+The test account is **PERMANENTLY DELETED** from the backend. That Google account can sign up again as a brand new user if needed.
 
 ---
 
-## Important
+## Important Notes
 
-- Pin names must match exactly
-- Backend server must be running
-- All pins must be set to "Public" visibility
-- For Manage Account tests, any Google account will work
+- **Pin Tests**: Pin names must match exactly, and all pins must be set to "Public" visibility
+- **Backend**: Backend server must be running at `http://10.0.2.2:3000` (Android emulator)
+- **Test Files**: All tests are in `frontend/app/src/androidTest/java/com/cpen321/usermanagement/ui/`
+  - `ManagePinsE2ETest.kt` - Pin management tests
+  - `ManageFriendsE2ETest.kt` - Friend management tests
+  - `AdminManagePinsE2ETest.kt` - Admin pin management tests
+  - `ManageAccountE2ETest.kt` - Complete account lifecycle (sign up → delete)
 

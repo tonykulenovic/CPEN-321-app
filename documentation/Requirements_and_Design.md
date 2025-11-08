@@ -228,16 +228,15 @@ Due to the amount of use cases in our app, we elected to create a seperate use c
 20. **View Friend Profile**: User views a friend's badges and activity (respecting privacy settings).
 21. **Remove Friend**: User can remove a friend from their friend network.
 22. **Manage Friend Requests**: User can accept, decline, or block friend requests.
-23. **Share Location with Friends**: User can optionally share real-time location with friends.
 
 ### Feature 5: Badge System
-24. **Earn Badge**: User receives a profile badge for activity (e.g., daily logins, time at library).
-25. **View Badges**: User views unlocked profile badges and progress toward new ones.
-26. **Track Badge Progress**: User can see progress toward earning new badges.
+23. **Earn Badge**: User receives a profile badge for activity (e.g., daily logins, time at library).
+24. **View Badges**: User views unlocked profile badges and progress toward new ones.
+25. **Track Badge Progress**: User can see progress toward earning new badges.
 
 ### Feature 6: Recommend Locations
-27. **Get Food Recommendations**: App suggests nearby food options at lunch, coffee break, or dinner times.
-28. **Get Personalized Recommendations**: App suggests pins based on user preferences, time, and location.
+26. **Get Food Recommendations**: App suggests nearby food options at lunch, coffee break, or dinner times.
+27. **Get Personalized Recommendations**: App suggests pins based on user preferences, time, and location.
 
 
 ### **3.5. Formal Use Case Specifications (10 Most Major Use Cases)**
