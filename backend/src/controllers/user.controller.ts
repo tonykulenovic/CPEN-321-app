@@ -69,7 +69,10 @@ export class UserController {
     }
   }
   getProfile(req: Request, res: Response<GetProfileResponse>) {
-    const user = req.user!;
+    const user = req.user;
+    if (!user) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
 
     res.status(200).json({
       message: 'Profile fetched successfully',
@@ -87,7 +90,10 @@ export class UserController {
     next: NextFunction
   ) {
     try {
-      const currentUser = req.user!;
+      const currentUser = req.user;
+      if (!currentUser) {
+        return res.status(401).json({ message: 'Unauthorized' });
+      }
       const { userId } = req.params;
 
       // Validate userId format
@@ -168,7 +174,10 @@ export class UserController {
     next: NextFunction
   ) {
     try {
-      const user = req.user!;
+      const user = req.user;
+      if (!user) {
+        return res.status(401).json({ message: 'Unauthorized' });
+      }
 
       const updatedUser = await userModel.update(user._id, req.body);
 
@@ -197,7 +206,10 @@ export class UserController {
 
   async deleteProfile(req: Request, res: Response, next: NextFunction) {
     try {
-      const user = req.user!;
+      const user = req.user;
+      if (!user) {
+        return res.status(401).json({ message: 'Unauthorized' });
+      }
 
       await MediaService.deleteAllUserImages(user._id.toString());
 
@@ -244,7 +256,11 @@ export class UserController {
       const searchLimit = limit ? parseInt(limit, 10) : 20;
 
       // Get current user to exclude from results
-      const currentUser = req.user!;
+      const currentUser = req.user;
+      if (!currentUser) {
+        res.status(401).json({ message: 'Unauthorized' });
+        return;
+      }
       const currentUserId = currentUser._id;
 
       // 2. Search users by username, name, or email
@@ -312,7 +328,11 @@ export class UserController {
    */
   getMe(req: Request, res: Response): void {
     try {
-      const user = req.user!;
+      const user = req.user;
+      if (!user) {
+        res.status(401).json({ message: 'Unauthorized' });
+        return;
+      }
       
       res.status(200).json({
         message: 'Profile fetched successfully',
@@ -354,7 +374,11 @@ export class UserController {
       }
 
       // 2. Get user ID from auth middleware
-      const currentUser = req.user!;
+      const currentUser = req.user;
+      if (!currentUser) {
+        res.status(401).json({ message: 'Unauthorized' });
+        return;
+      }
       const currentUserId = currentUser._id;
 
       // 3. Update user's privacy settings
@@ -534,7 +558,7 @@ export class UserController {
       
       const userId = req.user._id;
       const userName = req.user.name || 'unknown';
-      logger.info(`👤 [USER-CONTROLLER] FCM token update for user: ${userName} (${userId})`);
+      logger.info(`👤 [USER-CONTROLLER] FCM token update for user: ${userName} (${userId.toString()})`);
       
       const { fcmToken } = req.body;
       logger.debug(`📦 [USER-CONTROLLER] Request body keys: ${Object.keys(req.body)}`);
@@ -561,7 +585,7 @@ export class UserController {
       logger.debug(`⏱️ [USER-CONTROLLER] Database update completed in ${duration}ms`);
 
       if (!updatedUser) {
-        logger.error(`❌ [USER-CONTROLLER] User not found: ${userId}`);
+        logger.error(`❌ [USER-CONTROLLER] User not found: ${userId.toString()}`);
         res.status(404).json({ message: 'User not found' });
         return;
       }

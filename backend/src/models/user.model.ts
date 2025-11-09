@@ -571,20 +571,20 @@ export class UserModel {
           }
         });
 
-        logger.debug(`📅 [RECOMMENDATIONS] Reset daily counters for user ${userId}`);
+        logger.debug(`📅 [RECOMMENDATIONS] Reset daily counters for user ${userId.toString()}`);
         return true; // Can receive recommendation on new day
       }
 
       // Check if already received recommendation for this meal type today
       const alreadyReceived = user.recommendations[mealType];
       if (alreadyReceived) {
-        logger.debug(`⏭️ [RECOMMENDATIONS] User ${userId} already received ${mealType} recommendation today`);
+        logger.debug(`⏭️ [RECOMMENDATIONS] User ${userId.toString()} already received ${mealType} recommendation today`);
         return false;
       }
 
       return true; // Can receive recommendation
     } catch (error) {
-      logger.error(`Error checking recommendation eligibility for user ${userId}:`, error);
+      logger.error(`Error checking recommendation eligibility for user ${userId.toString()}:`, error);
       return false; // Fail safely - don't send if error
     }
   }
@@ -605,14 +605,14 @@ export class UserModel {
       );
 
       if (result) {
-        logger.debug(`✅ [RECOMMENDATIONS] Marked ${mealType} as sent for user ${userId}`);
+        logger.debug(`✅ [RECOMMENDATIONS] Marked ${mealType} as sent for user ${userId.toString()}`);
         return true;
       } else {
-        logger.warn(`User ${userId} not found when marking recommendation sent`);
+        logger.warn(`User ${userId.toString()} not found when marking recommendation sent`);
         return false;
       }
     } catch (error) {
-      logger.error(`Error marking recommendation sent for user ${userId}:`, error);
+      logger.error(`Error marking recommendation sent for user ${userId.toString()}:`, error);
       return false;
     }
   }

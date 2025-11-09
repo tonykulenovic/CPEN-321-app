@@ -352,7 +352,7 @@ export class BadgeService {
       const User = mongoose.model('User');
       const user = await User.findById(userId).select('loginTracking');
       const currentStreak = user?.loginTracking?.currentStreak || 0;
-      logger.info(`User ${userId} login streak: ${currentStreak} days, target: ${target}`);
+      logger.info(`User ${userId.toString()} login streak: ${currentStreak} days, target: ${target}`);
       return currentStreak >= target;
     } catch (error) {
       logger.error('Error checking login streak:', error);
@@ -368,7 +368,7 @@ export class BadgeService {
       const User = mongoose.model('User');
       const user = await User.findById(userId).select('stats.pinsCreated');
       const count = user?.stats?.pinsCreated || 0;
-      logger.info(`User ${userId} has created ${count} pins (cumulative), target: ${target}`);
+      logger.info(`User ${userId.toString()} has created ${count} pins (cumulative), target: ${target}`);
       return count >= target;
     } catch (error) {
       logger.error('Error checking pins created:', error);
@@ -384,7 +384,7 @@ export class BadgeService {
       const User = mongoose.model('User');
       const user = await User.findById(userId).select('stats.pinsVisited');
       const count = user?.stats?.pinsVisited || 0;
-      logger.info(`User ${userId} has visited ${count} pins (cumulative), target: ${target}`);
+      logger.info(`User ${userId.toString()} has visited ${count} pins (cumulative), target: ${target}`);
       return count >= target;
     } catch (error) {
       logger.error('Error checking pins visited:', error);
@@ -400,7 +400,7 @@ export class BadgeService {
       const User = mongoose.model('User');
       const user = await User.findById(userId).select('friendsCount');
       const count = user?.friendsCount || 0;
-      logger.info(`User ${userId} has ${count} friends, target: ${target}`);
+      logger.info(`User ${userId.toString()} has ${count} friends, target: ${target}`);
       return count >= target;
     } catch (error) {
       logger.error('Error checking friends added:', error);
@@ -416,7 +416,7 @@ export class BadgeService {
       const User = mongoose.model('User');
       const user = await User.findById(userId).select('stats.reportsMade');
       const count = user?.stats?.reportsMade || 0;
-      logger.info(`User ${userId} has made ${count} reports (cumulative), target: ${target}`);
+      logger.info(`User ${userId.toString()} has made ${count} reports (cumulative), target: ${target}`);
       return count >= target;
     } catch (error) {
       logger.error('Error checking reports made:', error);
@@ -429,7 +429,7 @@ export class BadgeService {
    */
   private static async checkTimeSpent(userId: mongoose.Types.ObjectId, target: number): Promise<boolean> {
     // This would need to be implemented based on your time tracking system
-    logger.info(`Checking time spent for user ${userId}, target: ${target}`);
+    logger.info(`Checking time spent for user ${userId.toString()}, target: ${target}`);
     return false; // Placeholder - implement based on your time tracking
   }
 
@@ -438,7 +438,7 @@ export class BadgeService {
    */
   private static async checkLocationsExplored(userId: mongoose.Types.ObjectId, target: number): Promise<boolean> {
     // This would need to be implemented based on your location tracking
-    logger.info(`Checking locations explored for user ${userId}, target: ${target}`);
+    logger.info(`Checking locations explored for user ${userId.toString()}, target: ${target}`);
     return false; // Placeholder - implement based on your location tracking
   }
 
@@ -460,7 +460,7 @@ export class BadgeService {
         pin && pin.isPreSeeded === true && pin.category === 'study'
       ).length;
 
-      logger.info(`User ${userId} has visited ${libraryCount} pre-seeded libraries, target: ${target}`);
+      logger.info(`User ${userId.toString()} has visited ${libraryCount} pre-seeded libraries, target: ${target}`);
       return libraryCount >= target;
     } catch (error) {
       logger.error('Error checking libraries visited:', error);
@@ -478,11 +478,11 @@ export class BadgeService {
       const user = await User.findById(userId).select('visitedPins').populate('visitedPins');
       
       if (!user || !user.visitedPins) {
-        logger.warn(`☕ User ${userId} has no visitedPins`);
+        logger.warn(`☕ User ${userId.toString()} has no visitedPins`);
         return false;
       }
 
-      logger.info(`☕ Checking cafes for user ${userId}, total visited pins: ${user.visitedPins.length}`);
+      logger.info(`☕ Checking cafes for user ${userId.toString()}, total visited pins: ${user.visitedPins.length}`);
 
       // Count pre-seeded cafe pins (category: 'shops_services' with subtype: 'cafe')
       const cafePins = user.visitedPins.filter((pin: any) => {
@@ -494,7 +494,7 @@ export class BadgeService {
       });
 
       const cafeCount = cafePins.length;
-      logger.info(`☕ User ${userId} has visited ${cafeCount} pre-seeded cafes (target: ${target})`);
+      logger.info(`☕ User ${userId.toString()} has visited ${cafeCount} pre-seeded cafes (target: ${target})`);
       
       if (cafeCount > 0) {
         logger.info(`☕ Cafe visits: ${cafePins.map((p: any) => p.name).join(', ')}`);

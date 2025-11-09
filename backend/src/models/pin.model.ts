@@ -221,7 +221,7 @@ export class PinModel {
             
             // Default to PUBLIC if visibility is not set (for backward compatibility)
             const visibility = pin.visibility || PinVisibility.PUBLIC;
-            logger.info(`Pin "${pin.name}" visibility: ${visibility}, creator: ${pin.createdBy._id}`);
+            logger.info(`Pin "${pin.name}" visibility: ${visibility}, creator: ${pin.createdBy._id.toString()}`);
             
             // Check visibility
             if (visibility === PinVisibility.PRIVATE) {
@@ -320,7 +320,7 @@ export class PinModel {
         await pin.save();
       }
 
-      logger.info(`Pin ${pinId} reported by user ${userId}. Total reports: ${pin.reports.length}`);
+      logger.info(`Pin ${pinId.toString()} reported by user ${userId.toString()}. Total reports: ${pin.reports.length}`);
       return pin;
     } catch (error) {
       logger.error('Error reporting pin:', error);
@@ -346,7 +346,7 @@ export class PinModel {
       
       logger.info(`Found ${reportedPins.length} reported pins`);
       reportedPins.forEach(pin => {
-        logger.info(`  - Pin ${pin._id}: ${pin.name}, Reports: ${pin.reports.length}, Status: ${pin.status}`);
+        logger.info(`  - Pin ${pin._id.toString()}: ${pin.name}, Reports: ${pin.reports.length}, Status: ${pin.status}`);
       });
       
       return reportedPins as IPin[];
@@ -358,7 +358,7 @@ export class PinModel {
 
   async clearReports(pinId: mongoose.Types.ObjectId): Promise<IPin | null> {
     try {
-      logger.info(`Clearing reports for pin ${pinId}...`);
+      logger.info(`Clearing reports for pin ${pinId.toString()}...`);
       
       const pin = await this.pin.findByIdAndUpdate(
         pinId,
@@ -370,9 +370,9 @@ export class PinModel {
       );
       
       if (pin) {
-        logger.info(`Successfully cleared reports for pin ${pinId}. New status: ${pin.status}, Reports: ${pin.reports.length}`);
+        logger.info(`Successfully cleared reports for pin ${pinId.toString()}. New status: ${pin.status}, Reports: ${pin.reports.length}`);
       } else {
-        logger.warn(`Pin ${pinId} not found when trying to clear reports`);
+        logger.warn(`Pin ${pinId.toString()} not found when trying to clear reports`);
       }
       
       return pin;

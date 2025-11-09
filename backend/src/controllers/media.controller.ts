@@ -19,7 +19,10 @@ export class MediaController {
         });
       }
 
-      const user = req.user!;
+      const user = req.user;
+      if (!user) {
+        return res.status(401).json({ message: 'Unauthorized' });
+      }
       const sanitizedFilePath = sanitizeInput(req.file.path);
       const image = await MediaService.saveImage(
         sanitizedFilePath,
@@ -38,7 +41,7 @@ export class MediaController {
         });
       }
 
-      logger.info(`Profile picture updated for user ${user._id}: ${image}`);
+      logger.info(`Profile picture updated for user ${user._id.toString()}: ${image}`);
 
       res.status(200).json({
         message: 'Image uploaded successfully',

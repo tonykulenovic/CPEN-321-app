@@ -49,7 +49,15 @@ export const authenticateToken: RequestHandler = async (
       return;
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as {
+    const secret = process.env.JWT_SECRET;
+    if (!secret) {
+      res.status(500).json({
+        error: 'Server configuration error',
+        message: 'JWT_SECRET not configured',
+      });
+      return;
+    }
+    const decoded = jwt.verify(token, secret) as {
       id: mongoose.Types.ObjectId;
     };
 

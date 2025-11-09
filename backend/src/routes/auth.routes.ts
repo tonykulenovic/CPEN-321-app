@@ -14,19 +14,19 @@ const authController = new AuthController();
 router.post(
   '/signup',
   validateBody<SignUpUserRequest>(signUpUserSchema),
-  authController.signUp
+  (req, res, next) => void authController.signUp(req, res, next)
 );
 
 router.post(
   '/signin',
   validateBody(authenticateUserSchema),
-  authController.signIn
+  (req, res, next) => void authController.signIn(req, res, next)
 );
 
 router.post(
   '/check',
   validateBody(authenticateUserSchema),
-  authController.checkGoogleAccount
+  (req, res, next) => authController.checkGoogleAccount(req, res, next)
 );
 
 export default router;

@@ -12,7 +12,11 @@ export async function getRecommendations(req: Request, res: Response): Promise<v
   try {
     const { mealType } = req.params;
     const { maxDistance = '2000', limit = '5' } = req.query;
-    const currentUser = req.user!;
+    const currentUser = req.user;
+    if (!currentUser) {
+      res.status(401).json({ message: 'Unauthorized' });
+      return;
+    }
 
     // Validate meal type
     if (!['breakfast', 'lunch', 'dinner'].includes(mealType)) {
@@ -22,7 +26,7 @@ export async function getRecommendations(req: Request, res: Response): Promise<v
       return;
     }
 
-    logger.info(`🍽️ Getting ${mealType} recommendations for user ${currentUser._id}`);
+    logger.info(`🍽️ Getting ${mealType} recommendations for user ${currentUser._id.toString()}`);
 
     const recommendations = await recommendationService.generateRecommendations(
       currentUser._id,
@@ -68,7 +72,11 @@ export async function getRecommendations(req: Request, res: Response): Promise<v
 export async function sendRecommendationNotification(req: Request, res: Response): Promise<void> {
   try {
     const { mealType } = req.params;
-    const currentUser = req.user!;
+    const currentUser = req.user;
+    if (!currentUser) {
+      res.status(401).json({ message: 'Unauthorized' });
+      return;
+    }
 
     // Validate meal type
     if (!['breakfast', 'lunch', 'dinner'].includes(mealType)) {
@@ -78,7 +86,7 @@ export async function sendRecommendationNotification(req: Request, res: Response
       return;
     }
 
-    logger.info(`📲 Sending ${mealType} recommendation notification to user ${currentUser._id}`);
+    logger.info(`📲 Sending ${mealType} recommendation notification to user ${currentUser._id.toString()}`);
 
     const sent = await recommendationService.sendRecommendationNotification(
       currentUser._id,
