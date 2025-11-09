@@ -1,6 +1,0 @@
-@@ -260,1 +260,1 @@
--        logger.info(`ð Pins before distance filter: ${pins.length} (${pins.filter(p => p.category === 'study').length} libraries)`);
-+        logger.info(`ð Pins before distance filter: ${pins.length} (${pins.filter(p => p.category === PinCategory.STUDY).length} libraries)`);
-@@ -274,1 +274,1 @@
--        logger.info(`ð Pins after distance filter: ${pins.length} (${pins.filter(p => p.category === 'study').length} libraries)`);
-+        logger.info(`ð Pins after distance filter: ${pins.length} (${pins.filter(p => p.category === PinCategory.STUDY).length} libraries)`);

@@ -43,6 +43,10 @@ uploads/
 *.swp
 *.swo
 
+# Git merge/patch artifacts
+*.orig
+*.rej
+
 # OS generated files
 .DS_Store
 .DS_Store?
