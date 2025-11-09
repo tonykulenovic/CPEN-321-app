@@ -68,7 +68,7 @@ describe('Mocked: GET /badges (getAllBadges)', () => {
       },
     ];
 
-    mockBadgeModel.findAll.mockResolvedValue(mockBadges as any);
+    mockBadgeModel.findAll.mockResolvedValue(mockBadges as unknown);
 
     const response = await request(app)
       .get('/badges')
@@ -163,11 +163,11 @@ describe('Mocked: GET /badges (getAllBadges)', () => {
   // Expected output: error passed to next middleware
   test('Handle non-Error exception when fetching badges', async () => {
     const mockNext = jest.fn();
-    const req = { query: {} } as any;
+    const req = { query: {} } as unknown;
     const res = {
       status: jest.fn().mockReturnThis(),
       json: jest.fn(),
-    } as any;
+    } as unknown;
 
     mockBadgeModel.findAll.mockRejectedValue('String error');
 
@@ -208,7 +208,7 @@ describe('Mocked: GET /badges/user/earned (getUserBadges)', () => {
       },
     ];
 
-    mockBadgeModel.getUserBadges.mockResolvedValue(mockUserBadges as any);
+    mockBadgeModel.getUserBadges.mockResolvedValue(mockUserBadges as unknown);
 
     const response = await request(app)
       .get('/badges/user/earned')
@@ -286,7 +286,7 @@ describe('Mocked: GET /badges/user/available (getAvailableBadges)', () => {
       },
     ];
 
-    mockBadgeModel.getAvailableBadges.mockResolvedValue(mockAvailableBadges as any);
+    mockBadgeModel.getAvailableBadges.mockResolvedValue(mockAvailableBadges as unknown);
 
     const response = await request(app)
       .get('/badges/user/available')

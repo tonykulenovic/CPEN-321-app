@@ -88,7 +88,7 @@ export class FriendshipModel {
     cursor?: mongoose.Types.ObjectId
   ): Promise<IFriendship[]> {
     try {
-      const query: any = { userId };
+      const query: Record<string, any> = { userId };
       if (status) query.status = status;
       if (cursor) query._id = { $gt: cursor };
 
@@ -109,7 +109,7 @@ export class FriendshipModel {
     cursor?: mongoose.Types.ObjectId
   ): Promise<IFriendship[]> {
     try {
-      const query: any = { friendId: userId, status: 'pending' };
+      const query: Record<string, any> = { friendId: userId, status: 'pending' };
       if (cursor) query._id = { $gt: cursor };
 
       return await this.friendship
@@ -129,7 +129,7 @@ export class FriendshipModel {
     cursor?: mongoose.Types.ObjectId
   ): Promise<IFriendship[]> {
     try {
-      const query: any = { userId, status: 'pending' };
+      const query: Record<string, any> = { userId, status: 'pending' };
       if (cursor) query._id = { $gt: cursor };
 
       return await this.friendship

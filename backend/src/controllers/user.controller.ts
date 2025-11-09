@@ -398,11 +398,7 @@ export class UserController {
         return;
       }
 
-      const users = await userModel['user']
-        .find({})
-        .select('-__v')
-        .sort({ createdAt: -1 })
-        .lean();
+      const users = await userModel.findAllWithAllFields();
 
       res.status(200).json({
         message: 'Users fetched successfully',
@@ -435,11 +431,7 @@ export class UserController {
         return;
       }
 
-      const user = await userModel['user'].findByIdAndUpdate(
-        userId,
-        { isSuspended: true },
-        { new: true }
-      );
+      const user = await userModel.updateSuspensionStatus(userId, true);
 
       if (!user) {
         res.status(404).json({ message: 'User not found' });
@@ -586,7 +578,7 @@ export class UserController {
         message: 'FCM token updated successfully',
         data: {
           userId: updatedUser._id,
-          hasToken: hasToken
+          hasToken
         }
       });
       

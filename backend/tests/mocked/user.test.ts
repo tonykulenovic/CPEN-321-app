@@ -18,7 +18,7 @@ const app = express();
 app.use(express.json());
 
 // Mock authentication middleware directly in routes
-const authenticateToken = (req: any, res: any, next: any) => {
+const authenticateToken = (req: unknown, res: any, next: any) => {
   req.user = {
     _id: new mongoose.Types.ObjectId('507f1f77bcf86cd799439011'),
     name: 'Test User',
@@ -116,9 +116,9 @@ describe('Mocked: GET /users/:userId/profile', () => {
     mockOnlineStatus.set('507f1f77bcf86cd799439012', true);
 
     mockFriendshipModel.areFriends.mockResolvedValueOnce(true);
-    mockUserModel.findById.mockResolvedValueOnce(mockTargetUser as any);
+    mockUserModel.findById.mockResolvedValueOnce(mockTargetUser as unknown);
     mockUserModel.getOnlineStatus.mockResolvedValueOnce(mockOnlineStatus);
-    mockBadgeModel.getUserBadges.mockResolvedValueOnce(mockBadges as any);
+    mockBadgeModel.getUserBadges.mockResolvedValueOnce(mockBadges as unknown);
 
     const response = await request(app)
       .get('/users/507f1f77bcf86cd799439012/profile')
@@ -235,7 +235,7 @@ describe('Mocked: POST /users/profile', () => {
       bio: 'Updated bio'
     };
 
-    mockUserModel.update.mockResolvedValueOnce(mockUpdatedUser as any);
+    mockUserModel.update.mockResolvedValueOnce(mockUpdatedUser as unknown);
 
     const response = await request(app)
       .post('/users/profile')
@@ -343,7 +343,7 @@ describe('Mocked: GET /users/search', () => {
       }
     ];
 
-    mockUserModel.searchUsers.mockResolvedValueOnce(mockSearchResults as any);
+    mockUserModel.searchUsers.mockResolvedValueOnce(mockSearchResults as unknown);
     mockFriendshipModel.areFriends.mockResolvedValueOnce(false); // First user - not friends
     mockFriendshipModel.areFriends.mockResolvedValueOnce(true);  // Second user - are friends
 
@@ -514,7 +514,7 @@ describe('Mocked: PUT /users/me/fcm-token', () => {
       fcmToken: 'new-fcm-token-12345'
     };
 
-    mockUserModel.updateFcmToken.mockResolvedValueOnce(mockUpdatedUser as any);
+    mockUserModel.updateFcmToken.mockResolvedValueOnce(mockUpdatedUser as unknown);
 
     const response = await request(app)
       .put('/users/me/fcm-token')

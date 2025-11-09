@@ -80,7 +80,7 @@ export interface LocationAck {
 }
 
 // Location update event for real-time
-export type LocationUpdateEvent = {
+export interface LocationUpdateEvent {
   type: 'location.update';
   version: 1;
   userId: string;
@@ -139,7 +139,7 @@ export type UpdatePrivacyRequest = z.infer<typeof privacySettingsSchema>;
 export type UpdateLocationRequest = z.infer<typeof updateLocationSchema>;
 
 // API Response types
-export type SendFriendRequestResponse = {
+export interface SendFriendRequestResponse {
   message: string;
   data?: {
     requestId: string;
@@ -147,22 +147,22 @@ export type SendFriendRequestResponse = {
   };
 };
 
-export type FriendRequestsResponse = {
+export interface FriendRequestsResponse {
   message: string;
   data?: FriendRequestSummary[];
 };
 
-export type FriendsListResponse = {
+export interface FriendsListResponse {
   message: string;
   data?: FriendSummary[];
 };
 
-export type UserSearchResponse = {
+export interface UserSearchResponse {
   message: string;
   data?: UserSearchResult[];
 };
 
-export type UpdateLocationResponse = {
+export interface UpdateLocationResponse {
   message: string;
   data?: LocationAck;
 };

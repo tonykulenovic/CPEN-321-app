@@ -11,6 +11,7 @@ import {
 } from '../types/badge.types';
 import { badgeModel } from '../models/badge.model';
 import { pinModel } from '../models/pin.model';
+import { IPin } from '../types/pins.types';
 import logger from '../utils/logger.util';
 
 export class BadgeService {
@@ -34,7 +35,7 @@ export class BadgeService {
       description: 'Log in for 30 consecutive days',
       icon: 'dedicated_student',
       category: BadgeCategory.ACTIVITY,
-      rarity: 'rare' as any,
+      rarity: 'rare' as unknown,
       requirements: {
         type: BadgeRequirementType.LOGIN_STREAK,
         target: 30,
@@ -57,7 +58,7 @@ export class BadgeService {
       description: 'Create 10 pins',
       icon: 'campus_explorer',
       category: BadgeCategory.EXPLORATION,
-      rarity: 'uncommon' as any,
+      rarity: 'uncommon' as unknown,
       requirements: {
         type: BadgeRequirementType.PINS_CREATED,
         target: 10,
@@ -68,7 +69,7 @@ export class BadgeService {
       description: 'Create 25 pins',
       icon: 'pin_master',
       category: BadgeCategory.EXPLORATION,
-      rarity: 'epic' as any,
+      rarity: 'epic' as unknown,
       requirements: {
         type: BadgeRequirementType.PINS_CREATED,
         target: 25,
@@ -123,7 +124,7 @@ export class BadgeService {
       description: 'Add 100 friends',
       icon: 'king_of_campus',
       category: BadgeCategory.SOCIAL,
-      rarity: 'legendary' as any,
+      rarity: 'legendary' as unknown,
       requirements: {
         type: BadgeRequirementType.FRIENDS_ADDED,
         target: 100,
@@ -452,7 +453,7 @@ export class BadgeService {
       const User = mongoose.model('User');
       const user = await User.findById(userId).select('visitedPins').populate('visitedPins');
       
-      if (!user || !user.visitedPins) {
+      if (!user?.visitedPins) {
         return false;
       }
 
@@ -591,7 +592,7 @@ export class BadgeService {
   static async getUserBadgeProgress(userId: mongoose.Types.ObjectId): Promise<{
     earned: IUserBadge[];
     available: IBadge[];
-    progress: Array<{ badge: IBadge; progress: BadgeProgress | null }>;
+    progress: { badge: IBadge; progress: BadgeProgress | null }[];
   }> {
     try {
       const [earned, available] = await Promise.all([

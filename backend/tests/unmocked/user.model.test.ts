@@ -5,7 +5,7 @@ import { SignUpRequest } from '../../src/types/user.types';
 
 describe('Unmocked: User Model', () => {
   let testUserId: mongoose.Types.ObjectId;
-  let testUser: any;
+  let testUser: unknown;
 
   beforeEach(async () => {
     // Clean up any existing test data
@@ -91,9 +91,9 @@ describe('Unmocked: User Model', () => {
       const foundUser = await userModel.findById(testUserId);
       
       expect(foundUser).toBeDefined();
-      expect(foundUser!._id.toString()).toBe(testUserId.toString());
+      expect(foundUser?._id.toString()).toBe(testUserId.toString());
       expect(foundUser!.email).toBe('findbyid@example.com');
-      expect(foundUser!.name).toBe('Find By ID User');
+      expect(foundUser?.name).toBe('Find By ID User');
     });
 
     it('should return null for non-existent user ID', async () => {
@@ -120,8 +120,8 @@ describe('Unmocked: User Model', () => {
       const foundUser = await userModel.findByGoogleId('unique-google-id-12345');
       
       expect(foundUser).toBeDefined();
-      expect(foundUser!.googleId).toBe('unique-google-id-12345');
-      expect(foundUser!.email).toBe('googleuser@example.com');
+      expect(foundUser?.googleId).toBe('unique-google-id-12345');
+      expect(foundUser?.email).toBe('googleuser@example.com');
     });
 
     it('should return null for non-existent Google ID', async () => {
@@ -148,7 +148,7 @@ describe('Unmocked: User Model', () => {
       
       expect(foundUser).toBeDefined();
       expect(foundUser!.username).toBe('uniqueusername123');
-      expect(foundUser!.name).toBe('Username Test');
+      expect(foundUser?.name).toBe('Username Test');
     });
 
     it('should return null for non-existent username', async () => {
@@ -180,10 +180,10 @@ describe('Unmocked: User Model', () => {
       const updatedUser = await userModel.update(testUserId, updateData);
       
       expect(updatedUser).toBeDefined();
-      expect(updatedUser!.name).toBe('Updated Name');
-      expect(updatedUser!.bio).toBe('Updated bio description');
+      expect(updatedUser?.name).toBe('Updated Name');
+      expect(updatedUser?.bio).toBe('Updated bio description');
       expect(updatedUser!.campus).toBe('UBC');
-      expect(updatedUser!.email).toBe('updatetest@example.com'); // Unchanged
+      expect(updatedUser?.email).toBe('updatetest@example.com'); // Unchanged
     });
 
     it('should return null when updating non-existent user', async () => {
@@ -233,7 +233,7 @@ describe('Unmocked: User Model', () => {
       expect(results.length).toBeGreaterThan(0);
       const foundUser = results.find(u => u.username === 'alice_j');
       expect(foundUser).toBeDefined();
-      expect(foundUser!.name).toBe('Alice Johnson');
+      expect(foundUser?.name).toBe('Alice Johnson');
       
       // Check that only expected fields are returned
       expect(foundUser).toHaveProperty('_id');
@@ -285,7 +285,7 @@ describe('Unmocked: User Model', () => {
       const updatedUser = await userModel.updatePrivacy(testUserId, privacyUpdates);
       
       expect(updatedUser).toBeDefined();
-      expect(updatedUser!.privacy.profileVisibleTo).toBe('everyone');
+      expect(updatedUser?.privacy.profileVisibleTo).toBe('everyone');
       expect(updatedUser!.privacy.showBadgesTo).toBe('friends'); // Should remain unchanged
     });
 
@@ -300,8 +300,8 @@ describe('Unmocked: User Model', () => {
       
       expect(updatedUser).toBeDefined();
       expect(updatedUser!.privacy.profileVisibleTo).toBe('private');
-      expect(updatedUser!.privacy.showBadgesTo).toBe('everyone');
-      expect(updatedUser!.privacy.allowFriendRequestsFrom).toBe('friendsOfFriends');
+      expect(updatedUser?.privacy.showBadgesTo).toBe('everyone');
+      expect(updatedUser?.privacy.allowFriendRequestsFrom).toBe('friendsOfFriends');
     });
 
     it('should update location privacy settings', async () => {
@@ -315,8 +315,8 @@ describe('Unmocked: User Model', () => {
       const updatedUser = await userModel.updatePrivacy(testUserId, privacyUpdates);
       
       expect(updatedUser).toBeDefined();
-      expect(updatedUser!.privacy.location.sharing).toBe('live');
-      expect(updatedUser!.privacy.location.precisionMeters).toBe(50);
+      expect(updatedUser?.privacy.location.sharing).toBe('live');
+      expect(updatedUser?.privacy.location.precisionMeters).toBe(50);
     });
 
     it('should handle partial location updates', async () => {
@@ -330,8 +330,8 @@ describe('Unmocked: User Model', () => {
       const updatedUser = await userModel.updatePrivacy(testUserId, privacyUpdates);
       
       expect(updatedUser).toBeDefined();
-      expect(updatedUser!.privacy.location.sharing).toBe('approximate');
-      expect(updatedUser!.privacy.location.precisionMeters).toBe(30); // Default value
+      expect(updatedUser?.privacy.location.sharing).toBe('approximate');
+      expect(updatedUser?.privacy.location.precisionMeters).toBe(30); // Default value
     });
   });
 
@@ -351,14 +351,14 @@ describe('Unmocked: User Model', () => {
       await userModel.incrementFriendsCount(testUserId);
       
       const updatedUser = await userModel.findById(testUserId);
-      expect(updatedUser!.friendsCount).toBe(1);
+      expect(updatedUser?.friendsCount).toBe(1);
     });
 
     it('should increment friends count by specified amount', async () => {
       await userModel.incrementFriendsCount(testUserId, 3);
       
       const updatedUser = await userModel.findById(testUserId);
-      expect(updatedUser!.friendsCount).toBe(3);
+      expect(updatedUser?.friendsCount).toBe(3);
     });
 
     it('should decrement friends count with negative increment', async () => {
@@ -390,7 +390,7 @@ describe('Unmocked: User Model', () => {
       const updatedUser = await userModel.updateFcmToken(testUserId, fcmToken);
       
       expect(updatedUser).toBeDefined();
-      expect(updatedUser!.fcmToken).toBe(fcmToken);
+      expect(updatedUser?.fcmToken).toBe(fcmToken);
       expect(updatedUser).toHaveProperty('_id');
       expect(updatedUser).toHaveProperty('name');
     });
@@ -403,7 +403,7 @@ describe('Unmocked: User Model', () => {
       const updatedUser = await userModel.removeFcmToken(testUserId);
       
       expect(updatedUser).toBeDefined();
-      expect(updatedUser!.fcmToken).toBeUndefined();
+      expect(updatedUser?.fcmToken).toBeUndefined();
     });
 
     it('should return null when updating FCM token for non-existent user', async () => {
@@ -500,7 +500,7 @@ describe('Unmocked: User Model', () => {
       await userModel.updateLastActiveAt(testUserId);
       
       const updatedUser = await userModel.findById(testUserId);
-      expect(updatedUser!.lastActiveAt.getTime()).toBeGreaterThanOrEqual(beforeUpdate.getTime());
+      expect(updatedUser?.lastActiveAt.getTime()).toBeGreaterThanOrEqual(beforeUpdate.getTime());
     });
   });
 
@@ -523,8 +523,8 @@ describe('Unmocked: User Model', () => {
       
       const updatedUser = await userModel.findById(testUserId);
       expect(updatedUser!.loginTracking.currentStreak).toBe(1);
-      expect(updatedUser!.loginTracking.longestStreak).toBe(1);
-      expect(updatedUser!.loginTracking.lastLoginDate).toBeDefined();
+      expect(updatedUser?.loginTracking.longestStreak).toBe(1);
+      expect(updatedUser?.loginTracking.lastLoginDate).toBeDefined();
     });
 
     it('should return same streak for same day login', async () => {
@@ -602,7 +602,7 @@ describe('Unmocked: User Model', () => {
         // Verify it was marked - need to wait for a new day check since canReceiveRecommendation
         // will reset the daily counters if it's a new day
         const user = await userModel.findById(testUserId);
-        expect(user!.recommendations?.lunch).toBe(true);
+        expect(user?.recommendations?.lunch).toBe(true);
       });
 
       it('should handle non-existent user', async () => {
@@ -721,7 +721,7 @@ describe('Unmocked: User Model', () => {
       expect(deletedUser).toBeNull();
       
       // Clear testUserId to avoid cleanup attempt
-      testUserId = null as any;
+      testUserId = null as unknown;
     });
 
     it('should handle deletion of non-existent user gracefully', async () => {

@@ -8,8 +8,8 @@ import logger from '../utils/logger.util';
 dotenv.config();
 
 // Configuration
-const DEV_TOKEN = process.env.DEV_AUTH_TOKEN || 'dev-token-12345';
-const BASE_URL = process.env.API_BASE_URL || 'http://localhost:3000/api';
+const DEV_TOKEN = process.env.DEV_AUTH_TOKEN ?? 'dev-token-12345';
+const BASE_URL = process.env.API_BASE_URL ?? 'http://localhost:3000/api';
 const SIMULATION_DURATION = 5 * 60 * 1000; // 5 minutes
 const UPDATE_INTERVAL = 2000; // 2 seconds
 
@@ -150,11 +150,12 @@ class LocationSimulator {
       if (response.status === 200 || response.status === 201) {
         console.log(`📍 ${user.username}: (${user.currentLocation.lat.toFixed(4)}, ${user.currentLocation.lng.toFixed(4)})`);
       }
-    } catch (error: any) {
-      if (error.code === 'ECONNREFUSED') {
+    } catch (error: unknown) {
+      const err = error as { code?: string; message?: string };
+      if (err.code === 'ECONNREFUSED') {
         console.error(`❌ Cannot connect to server. Make sure backend is running on ${BASE_URL}`);
       } else {
-        console.error(`❌ Failed to update location for ${user.username}:`, error.message);
+        console.error(`❌ Failed to update location for ${user.username}:`, err.message || 'Unknown error');
       }
     }
   }
@@ -195,7 +196,7 @@ class LocationSimulator {
     // Auto-stop after simulation duration
     setTimeout(() => {
       if (this.isRunning) {
-        this.stopSimulation();
+        void this.stopSimulation();
       }
     }, SIMULATION_DURATION);
   }

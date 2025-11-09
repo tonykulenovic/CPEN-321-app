@@ -166,9 +166,16 @@ export class BadgeController {
     next: NextFunction
   ) {
     try {
+      const userId = req.body.userId || req.user?._id?.toString();
+      if (!userId) {
+        return res.status(400).json({
+          message: 'User ID is required',
+        });
+      }
+
       const event: BadgeEarningEvent = {
         ...req.body,
-        userId: req.body.userId || req.user!._id.toString(),
+        userId,
         timestamp: new Date(),
       };
 

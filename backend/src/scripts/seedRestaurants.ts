@@ -111,7 +111,7 @@ export async function seedRestaurants(): Promise<void> {
 
     // First, get all existing cafes to check for overlap
     logger.info('📍 Fetching existing cafes to check for overlap...');
-    const existingCafes = await pinModel['pin'].find({
+    const existingCafes = await (pinModel as any).pin.find({
       isPreSeeded: true,
       category: PinCategory.SHOPS_SERVICES,
       'metadata.subtype': 'cafe' // Only get cafes, not other restaurants
@@ -154,7 +154,7 @@ export async function seedRestaurants(): Promise<void> {
           }
         );
 
-        if (response.data && (response.data.places || response.data.results)) {
+        if (response.data && (response.data.places ?? response.data.results)) {
           const regionRestaurants = response.data.places || response.data.results;
           if (regionRestaurants && regionRestaurants.length > 0) {
             allRestaurants.push(...regionRestaurants);
@@ -183,7 +183,7 @@ export async function seedRestaurants(): Promise<void> {
     for (const restaurant of allRestaurants) {
       const lat = restaurant.location?.latitude ?? restaurant.geometry?.location.lat;
       const lng = restaurant.location?.longitude ?? restaurant.geometry?.location.lng;
-      const name = (restaurant.displayName?.text || restaurant.name || '').toLowerCase().trim();
+      const name = ((restaurant.displayName?.text ?? restaurant.name) || '').toLowerCase().trim();
       
       if (!lat || !lng || !name) continue;
       
@@ -241,7 +241,7 @@ export async function seedRestaurants(): Promise<void> {
     let excludedCount = 0;
 
     // Create a set of cafe names (lowercase) for quick lookup
-    const cafeNames = new Set(existingCafes.map(cafe => cafe.name.toLowerCase()));
+    const cafeNames = new Set(existingCafes.map((cafe: any) => cafe.name.toLowerCase()));
 
     for (const restaurant of restaurants) {
       const lat = restaurant.location?.latitude ?? restaurant.geometry?.location.lat;
@@ -253,7 +253,7 @@ export async function seedRestaurants(): Promise<void> {
       }
 
       // Check if this restaurant has the same name as an existing cafe
-      const restaurantName = (restaurant.displayName?.text || restaurant.name || '').toLowerCase();
+      const restaurantName = ((restaurant.displayName?.text ?? restaurant.name) || '').toLowerCase();
       
       if (cafeNames.has(restaurantName)) {
         logger.info(`  🚫 Excluding "${restaurant.displayName?.text || restaurant.name}" - duplicate name with cafe`);
@@ -280,14 +280,14 @@ export async function seedRestaurants(): Promise<void> {
         }
 
         // Extract name and address from either API format
-        const name = restaurant.displayName?.text || restaurant.name || 'Unnamed Restaurant';
+        const name = (restaurant.displayName?.text ?? restaurant.name) || 'Unnamed Restaurant';
         const address = restaurant.formattedAddress || restaurant.vicinity || 'Restaurant near UBC campus';
         
         // Extract opening hours from either API format
         const isOpen = restaurant.currentOpeningHours?.openNow ?? restaurant.opening_hours?.open_now;
 
         const restaurantData = {
-          name: name,
+          name,
           description: address,
           category: PinCategory.SHOPS_SERVICES,
           location: {
@@ -300,7 +300,7 @@ export async function seedRestaurants(): Promise<void> {
             openingHours: isOpen !== undefined 
               ? (isOpen ? 'Open now' : 'Closed')
               : undefined,
-            amenities: restaurant.types?.filter((t: string) => t !== 'restaurant' && t !== 'point_of_interest') || undefined,
+            amenities: restaurant.types?.filter((t: string) => t !== 'restaurant' && t !== 'point_of_interest') ?? undefined,
           },
           rating: {
             upvotes: Math.floor(restaurant.rating || 0),
@@ -315,7 +315,7 @@ export async function seedRestaurants(): Promise<void> {
         };
 
         // Upsert restaurant pin using name and location as unique identifier
-        const result = await pinModel['pin'].updateOne(
+        const result = await (pinModel as any).pin.updateOne(
           {
             isPreSeeded: true,
             'metadata.subtype': 'restaurant',
@@ -359,7 +359,7 @@ export async function seedRestaurants(): Promise<void> {
 
     // Get current restaurant names for cleanup (use same extraction logic as above)
     const currentRestaurantNames = nonDuplicateRestaurants
-      .map((r: PlaceResult) => r.displayName?.text || r.name || 'Unnamed Restaurant')
+      .map((r: PlaceResult) => (r.displayName?.text ?? r.name) || 'Unnamed Restaurant')
       .filter((name: string) => name !== 'Unnamed Restaurant');
     
     // Delete pre-seeded restaurants that are no longer in Google Places results

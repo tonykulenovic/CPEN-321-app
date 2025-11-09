@@ -48,7 +48,7 @@ export class PlacesApiService {
   private readonly apiKey: string;
 
   private constructor() {
-    this.apiKey = process.env.GOOGLE_MAPS_API_KEY || process.env.MAPS_API_KEY || '';
+    this.apiKey = (process.env.GOOGLE_MAPS_API_KEY ?? process.env.MAPS_API_KEY) || '';
     if (!this.apiKey) {
       logger.warn('⚠️ Google Maps API key not configured. Places API features will be limited.');
     }
@@ -67,7 +67,7 @@ export class PlacesApiService {
   async getNearbyDiningOptions(
     lat: number,
     lng: number,
-    radius: number = 1500, // 1.5km default
+    radius = 1500, // 1.5km default
     mealType: 'breakfast' | 'lunch' | 'dinner' = 'lunch'
   ): Promise<RecommendationPlace[]> {
     if (!this.apiKey) {
@@ -104,7 +104,7 @@ export class PlacesApiService {
         }
       );
 
-      if (!response.data?.places) {
+      if (!response.data.places) {
         logger.info('📍 [PLACES] No places found from API');
         return [];
       }
@@ -150,20 +150,20 @@ export class PlacesApiService {
     const distance = this.calculateDistance(
       userLat,
       userLng,
-      place.location!.latitude,
-      place.location!.longitude
+      place.location?.latitude || 0,
+      place.location?.longitude || 0
     );
 
-    const types = place.types || [];
-    const name = place.displayName?.text || 'Unknown Place';
-    const description = place.editorialSummary?.text || place.formattedAddress || '';
+    const types = place.types ?? [];
+    const name = place.displayName?.text ?? 'Unknown Place';
+    const description = (place.editorialSummary?.text ?? place.formattedAddress) || '';
 
     return {
       id: `places_${name.replace(/\s+/g, '_').toLowerCase()}`,
       name,
-      address: place.formattedAddress || '',
+      address: place.formattedAddress ?? '',
       location: place.location!,
-      rating: place.rating || 0,
+      rating: place.rating ?? 0,
       priceLevel: this.mapPriceLevel(place.priceLevel),
       isOpen: place.currentOpeningHours?.openNow ?? true,
       types,

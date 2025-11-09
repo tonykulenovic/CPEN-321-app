@@ -9,7 +9,7 @@ import {
 } from '../types/user.types';
 import logger from '../utils/logger.util';
 
-import { PrivacySettings } from '../types/friends.types';
+import { PrivacySettings, UpdatePrivacyRequest } from '../types/friends.types';
 
 const PrivacySchema = new Schema<PrivacySettings>(
   {
@@ -327,11 +327,11 @@ export class UserModel {
 
   async updatePrivacy(
     userId: mongoose.Types.ObjectId,
-    privacyUpdates: any
+    privacyUpdates: UpdatePrivacyRequest
   ): Promise<IUser | null> {
     try {
       // Handle partial updates with dot notation for nested objects
-      const updateObject: any = {};
+      const updateObject: Record<string, any> = {};
       
       if (privacyUpdates.profileVisibleTo !== undefined) {
         updateObject['privacy.profileVisibleTo'] = privacyUpdates.profileVisibleTo;
@@ -354,11 +354,13 @@ export class UserModel {
         }
       }
 
-      return await this.user.findByIdAndUpdate(
+      const result = await this.user.findByIdAndUpdate(
         userId,
         { $set: updateObject },
         { new: true }
       );
+      
+      return result;
     } catch (error) {
       logger.error('Error updating privacy settings:', error);
       throw new Error('Failed to update privacy settings');
@@ -376,7 +378,7 @@ export class UserModel {
     } catch (error) {
       logger.error('Error updating friends count:', error);
       throw new Error('Failed to update friends count');
-    };
+    }
   }
 
   async updateFcmToken(
@@ -461,7 +463,7 @@ export class UserModel {
         // daysDiff > 1: streak broken, newStreak = 1 (already set)
       }
 
-      const longestStreak = Math.max(newStreak, user.loginTracking?.longestStreak || 0);
+      const longestStreak = Math.max(newStreak, user.loginTracking.longestStreak || 0);
 
       await this.user.findByIdAndUpdate(userId, {
         $set: {
@@ -495,7 +497,7 @@ export class UserModel {
 
   async getOnlineStatus(
     userIds: mongoose.Types.ObjectId[],
-    minutesThreshold: number = 10
+    minutesThreshold = 10
   ): Promise<Map<string, boolean>> {
     try {
       const onlineStatus = new Map<string, boolean>();
@@ -622,6 +624,33 @@ export class UserModel {
     } catch (error) {
       logger.error('Error finding all users:', error);
       throw new Error('Failed to find users');
+    }
+  }
+
+  async findAllWithAllFields(): Promise<IUser[]> {
+    try {
+      const users = await this.user.find({}).select('-__v').sort({ createdAt: -1 }).lean();
+      return users as IUser[];
+    } catch (error) {
+      logger.error('Error finding all users with all fields:', error);
+      throw new Error('Failed to find users');
+    }
+  }
+
+  async updateSuspensionStatus(
+    userId: mongoose.Types.ObjectId,
+    isSuspended: boolean
+  ): Promise<IUser | null> {
+    try {
+      const user = await this.user.findByIdAndUpdate(
+        userId,
+        { isSuspended },
+        { new: true }
+      );
+      return user;
+    } catch (error) {
+      logger.error('Error updating user suspension status:', error);
+      throw new Error('Failed to update user suspension status');
     }
   }
 }

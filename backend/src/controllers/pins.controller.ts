@@ -10,6 +10,7 @@ import {
   SearchPinsRequest,
   PinResponse,
   PinsListResponse,
+  PinCategory,
 } from '../types/pins.types';
 import logger from '../utils/logger.util';
 import { BadgeService } from '../services/badge.service';
@@ -22,7 +23,10 @@ export class PinsController {
     next: NextFunction
   ) {
     try {
-      const userId = req.user!._id;
+      const userId = req.user?._id;
+      if (!userId) {
+        return res.status(401).json({ message: 'Unauthorized' });
+      }
       const pin = await pinModel.create(userId, req.body);
       
       // Increment user's cumulative pins created counter
@@ -110,7 +114,7 @@ export class PinsController {
     try {
       const pinId = new mongoose.Types.ObjectId(req.params.id);
       const userId = req.user!._id;
-      const isAdmin = req.user!.isAdmin || false;
+      const isAdmin = req.user?.isAdmin || false;
       const deleted = await pinModel.delete(pinId, userId, isAdmin);
       if (!deleted) return res.status(404).json({ message: 'Pin not found or unauthorized' });
       res.status(200).json({ message: 'Pin deleted successfully' });
@@ -138,7 +142,7 @@ export class PinsController {
         search: req.query.search,
         page: req.query.page,
         limit: req.query.limit,
-        userId: userId, // Pass userId for visibility filtering
+        userId, // Pass userId for visibility filtering
       });
       res.status(200).json({ message: 'Pins fetched successfully', data: { pins, total, page: req.query.page || 1, limit: req.query.limit || 20 } });
     } catch (error) {
@@ -379,11 +383,11 @@ export class PinsController {
       }
 
       // Prepare increments based on pin category
-      const increments: any = { 'stats.pinsVisited': 1 };
+      const increments: Record<string, number> = { 'stats.pinsVisited': 1 };
       
       // Track category-specific visits (only for pre-seeded pins)
       if (pin.isPreSeeded) {
-        if (pin.category === 'study') {
+        if (pin.category === PinCategory.STUDY) {
           increments['stats.librariesVisited'] = 1;
           logger.info(`📚 User ${userId} visited pre-seeded library: ${pin.name}`);
         } else if (pin.category === 'shops_services') {

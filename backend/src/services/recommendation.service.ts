@@ -6,7 +6,7 @@ import { locationModel } from '../models/location.model';
 import { weatherService } from './weather.service';
 import { notificationService } from './notification.service';
 import { placesApiService, RecommendationPlace } from './places.service';
-import { MealCategory, IPin } from '../types/pins.types';
+import { MealCategory, IPin, PinCategory } from '../types/pins.types';
 import logger from '../utils/logger.util';
 
 interface RecommendationScore {
@@ -43,8 +43,8 @@ export class RecommendationService {
   async generateRecommendations(
     userId: mongoose.Types.ObjectId,
     mealType: 'breakfast' | 'lunch' | 'dinner',
-    maxDistance: number = 2000, // 2km default
-    limit: number = 5
+    maxDistance = 2000, // 2km default
+    limit = 5
   ): Promise<RecommendationScore[]> {
     try {
       logger.info(`🍽️ Generating ${mealType} recommendations for user ${userId}`);
@@ -83,7 +83,7 @@ export class RecommendationService {
 
       logger.info(`Generated ${allRecommendations.length} recommendations for ${mealType}`);
       allRecommendations.forEach((rec, idx) => {
-        const name = rec.pin?.name || rec.place?.name || 'Unknown';
+        const name = (rec.pin?.name ?? rec.place?.name) || 'Unknown';
         logger.info(`  ${idx + 1}. ${name} (${rec.source}) - Score: ${rec.score}, Distance: ${Math.round(rec.distance)}m`);
       });
 
@@ -110,7 +110,7 @@ export class RecommendationService {
       }
 
       const topRecommendation = recommendations[0];
-      const name = topRecommendation.pin?.name || topRecommendation.place?.name || 'Unknown Place';
+      const name = (topRecommendation.pin?.name ?? topRecommendation.place?.name) || 'Unknown Place';
       const distanceText = topRecommendation.distance < 1000 
         ? `${Math.round(topRecommendation.distance)}m away`
         : `${(topRecommendation.distance / 1000).toFixed(1)}km away`;
@@ -217,7 +217,7 @@ export class RecommendationService {
     try {
       // Get all active SHOPS_SERVICES pins (restaurants/cafes)
       const result = await pinModel.search({
-        category: 'shops_services' as any,
+        category: 'shops_services' as PinCategory,
         latitude: lat,
         longitude: lng,
         radius: maxDistance / 1000, // Convert to km
@@ -235,7 +235,7 @@ export class RecommendationService {
       const currentTime = now.toTimeString().slice(0, 5); // HH:MM format
 
       const openPins = candidates.filter(pin => {
-        const businessHours = (pin.metadata && (pin.metadata as any).businessHours) as
+        const businessHours = (pin.metadata?.businessHours) as
           | Record<string, { open: string; close: string } | null>
           | undefined;
         if (!businessHours || !businessHours[currentDay]) {
@@ -346,17 +346,17 @@ export class RecommendationService {
     let score = 0;
 
     // Check if user has upvoted this pin before (strong positive signal)
-    if (userPreferences.likedPins.some((id: any) => id.equals(pin._id))) {
+    if (userPreferences.likedPins?.some((id: any) => id.equals(pin._id))) {
       score += 20; // User upvoted this place - strong preference
     }
     
     // Check if user has visited this pin before (moderate positive signal)
-    if (userPreferences.visitedPins.some((id: any) => id.equals(pin._id))) {
+    if (userPreferences.visitedPins?.some((id: any) => id.equals(pin._id))) {
       score += 10; // Been here before - moderate preference
     }
 
     // Give small bonus for pins with good metadata (shows curation)
-    const hasGoodMetadata = pin.metadata?.cuisineType || pin.metadata?.priceRange || pin.metadata?.hasOutdoorSeating;
+    const hasGoodMetadata = (pin.metadata?.cuisineType ?? pin.metadata?.priceRange) || pin.metadata?.hasOutdoorSeating;
     if (hasGoodMetadata) {
       score += 3; // Has useful info
     }
@@ -370,8 +370,10 @@ export class RecommendationService {
   private scoreWeather(pin: IPin, weather: any): number {
     if (!weather) return 5; // Default score
 
-    const hasOutdoorSeating = pin.metadata?.hasOutdoorSeating || false;
-    const weatherRec = weatherService.getWeatherRecommendations(weather);
+    const hasOutdoorSeating = pin.metadata?.hasOutdoorSeating ?? false;
+    // Ensure weather has the required structure for WeatherData
+    const weatherData = weather as { condition: 'clear' | 'cloudy' | 'rainy' | 'snowy' | 'stormy'; temperature: number; humidity: number; description: string; isGoodForOutdoor: boolean };
+    const weatherRec = weatherService.getWeatherRecommendations(weatherData);
 
     if (weatherRec.preferOutdoor && hasOutdoorSeating) {
       return 15; // Perfect weather for outdoor dining
@@ -406,12 +408,12 @@ export class RecommendationService {
   private generateRecommendationReason(pin: IPin, factors: any, weather: any): string {
     const reasons = [];
 
-    if (factors.proximity >= 20) reasons.push('very close to you');
-    if (factors.userPreference >= 15) reasons.push('you loved this place before');
-    if (factors.userPreference >= 10) reasons.push('you\'ve been here before');
-    if (factors.weather >= 15) reasons.push('perfect weather for outdoor dining');
-    if (factors.weather >= 10) reasons.push('great indoor spot for this weather');
-    if (factors.popularity >= 8) reasons.push('highly rated by others');
+    if (factors?.proximity >= 20) reasons.push('very close to you');
+    if (factors?.userPreference >= 15) reasons.push('you loved this place before');
+    if (factors?.userPreference >= 10) reasons.push('you\'ve been here before');
+    if (factors?.weather >= 15) reasons.push('perfect weather for outdoor dining');
+    if (factors?.weather >= 10) reasons.push('great indoor spot for this weather');
+    if (factors?.popularity >= 8) reasons.push('highly rated by others');
 
     const cuisineTypes = pin.metadata?.cuisineType;
     if (cuisineTypes && cuisineTypes.length > 0) {

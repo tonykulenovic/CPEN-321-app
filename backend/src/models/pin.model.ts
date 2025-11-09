@@ -100,9 +100,9 @@ export class PinModel {
         const vote = await PinVote.findOne({ userId, pinId: pin._id });
         const userVote = vote ? (vote as any).voteType : null;
         return {
-          ...pin.toObject(),
+          ...(pin as any).toObject(),
           userVote
-        } as any;
+        } as IPin;
       }
 
       return pin;
@@ -139,7 +139,7 @@ export class PinModel {
     }
   }
 
-  async delete(pinId: mongoose.Types.ObjectId, userId: mongoose.Types.ObjectId, isAdmin: boolean = false): Promise<boolean> {
+  async delete(pinId: mongoose.Types.ObjectId, userId: mongoose.Types.ObjectId, isAdmin = false): Promise<boolean> {
     try {
       // Admins can delete any pin, regular users can only delete their own pins
       const query = isAdmin 
@@ -165,9 +165,9 @@ export class PinModel {
     userId?: mongoose.Types.ObjectId;
   }): Promise<{ pins: IPin[]; total: number }> {
     try {
-      const query: any = { status: PinStatus.ACTIVE };
-      const page = filters.page || 1;
-      const limit = filters.limit || 20;
+      const query: Record<string, any> = { status: PinStatus.ACTIVE };
+      const page = filters.page ?? 1;
+      const limit = filters.limit ?? 20;
       const skip = (page - 1) * limit;
 
       if (filters.category) {
@@ -189,7 +189,7 @@ export class PinModel {
         .populate('createdBy', 'name profilePicture')
         .sort({ isPreSeeded: -1, createdAt: -1 }); // Pre-seeded pins first, then by date
 
-      logger.info(`Search pins: Found ${pins.length} pins. UserId: ${filters.userId || 'NOT PROVIDED'}`);
+      logger.info(`Search pins: Found ${pins.length} pins. UserId: ${filters.userId ?? 'NOT PROVIDED'}`);
       // Log pin details for debugging
       pins.forEach(pin => {
         logger.info(`  - Pin: "${pin.name}" | Category: ${pin.category} | PreSeeded: ${pin.isPreSeeded}`);
@@ -209,7 +209,7 @@ export class PinModel {
             }
             
             // Check if createdBy is populated
-            if (!pin.createdBy || !pin.createdBy._id) {
+            if (!pin.createdBy?._id) {
               logger.warn(`Pin "${pin.name}" has no creator, hiding it`);
               return null;
             }
@@ -251,7 +251,7 @@ export class PinModel {
           })
         );
         
-        pins = filteredPins.filter((p) => p !== null) as typeof pins;
+        pins = filteredPins.filter((p) => p !== null);
         logger.info(`Visibility filtering complete. Original: ${filteredPins.length}, Visible: ${pins.length}`);
       }
 
@@ -264,7 +264,7 @@ export class PinModel {
           const withinRadius = distance <= filters.radius!;
           
           // Log library filtering for debugging
-          if (p.category === 'study') {
+          if (p.category === PinCategory.STUDY) {
             logger.info(`📚 Library "${p.name}": distance=${distance.toFixed(2)}m, within=${withinRadius}`);
           }
           
@@ -292,7 +292,7 @@ export class PinModel {
             };
           })
         );
-        return { pins: pinsWithVotes as any, total };
+        return { pins: pinsWithVotes as IPin[], total };
       }
 
       return { pins: paginatedPins, total };

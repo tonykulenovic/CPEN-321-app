@@ -15,7 +15,7 @@ jest.mock('../../src/models/pinVote.model');
 jest.mock('../../src/models/user.model');
 jest.mock('../../src/services/badge.service');
 jest.mock('../../src/middleware/auth.middleware', () => ({
-  authenticateToken: (req: any, res: any, next: any) => {
+  authenticateToken: (req: unknown, res: any, next: any) => {
     req.user = {
       _id: new mongoose.Types.ObjectId('507f1f77bcf86cd799439011'),
       name: 'Test User',
@@ -71,7 +71,7 @@ describe('Mocked: POST /pins', () => {
 
     mockPinModel.create.mockResolvedValueOnce(mockPin as any);
     // Mock mongoose.model('User') for stats update
-    const mockUserModelInstance: any = {
+    const mockUserModelInstance: unknown = {
       findByIdAndUpdate: jest.fn().mockResolvedValue({})
     };
     (mongoose.model as jest.Mock) = jest.fn().mockReturnValue(mockUserModelInstance);
@@ -264,7 +264,7 @@ describe('Mocked: GET /pins/:id', () => {
       }
     };
 
-    mockPinModel.findById.mockResolvedValueOnce(mockPin as any);
+    mockPinModel.findById.mockResolvedValueOnce(mockPin as unknown);
 
     const response = await request(app)
       .get('/pins/507f1f77bcf86cd799439020');
