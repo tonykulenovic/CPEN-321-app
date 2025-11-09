@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import { describe, test, beforeEach, expect } from '@jest/globals';
+import { describe, test, expect } from '@jest/globals';
 import { badgeModel } from '../../src/models/badge.model';
 import { BadgeCategory, BadgeRarity, BadgeRequirementType } from '../../src/types/badge.types';
 

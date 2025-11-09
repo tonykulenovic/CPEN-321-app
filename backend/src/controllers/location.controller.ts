@@ -1,6 +1,5 @@
 import { Request, Response } from 'express';
 import {
-  UpdateLocationRequest,
   updateLocationSchema,
   FriendsLocationsResponse,
 } from '../types/friends.types';

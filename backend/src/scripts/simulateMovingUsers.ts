@@ -2,7 +2,6 @@ import mongoose from 'mongoose';
 import axios from 'axios';
 import dotenv from 'dotenv';
 import { userModel } from '../models/user.model';
-import logger from '../utils/logger.util';
 
 // Load environment variables
 dotenv.config();
@@ -14,7 +13,6 @@ const SIMULATION_DURATION = 5 * 60 * 1000; // 5 minutes
 const UPDATE_INTERVAL = 2000; // 2 seconds
 
 // UBC Vancouver coordinates and boundaries
-const UBC_CENTER = { lat: 49.2606, lng: -123.2460 };
 const UBC_BOUNDS = {
   north: 49.2750,
   south: 49.2450,

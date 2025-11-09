@@ -48,7 +48,7 @@ describe('Security NFR Tests - Phase 2 Rank 3 (Most Complex Scenarios)', () => {
 
     test('Viewing location with sharing disabled should be rejected', async () => {
       const requesterToken = createValidToken(TEST_USER_IDS.VALID_USER);
-      const locationScenarios = createLocationSharingScenarios();
+      createLocationSharingScenarios();
       
       // Try to access location of user with sharing disabled
       const response = await request(testApp)

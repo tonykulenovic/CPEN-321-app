@@ -5,7 +5,6 @@ import {
   BadgeStatsResponse,
   BadgeCategory,
   BadgeEarningEvent,
-  BadgeRequirementType,
 } from '../types/badge.types';
 import { badgeModel } from '../models/badge.model';
 import { BadgeService } from '../services/badge.service';

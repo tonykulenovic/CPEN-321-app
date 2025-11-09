@@ -10,8 +10,6 @@ import {
   IUserBadge,
 } from '../types/badge.types';
 import { badgeModel } from '../models/badge.model';
-import { pinModel } from '../models/pin.model';
-import { IPin } from '../types/pins.types';
 import logger from '../utils/logger.util';
 
 export class BadgeService {
@@ -305,7 +303,7 @@ export class BadgeService {
   private static async checkBadgeQualification(
     userId: mongoose.Types.ObjectId,
     badge: IBadge,
-    event: BadgeEarningEvent
+    _event: BadgeEarningEvent
   ): Promise<boolean> {
     try {
       switch (badge.requirements.type) {

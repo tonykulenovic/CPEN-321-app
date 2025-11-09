@@ -6,7 +6,7 @@ import { jest, describe, test, beforeEach, expect } from '@jest/globals';
 import { BadgeController } from '../../src/controllers/badge.controller';
 import { badgeModel } from '../../src/models/badge.model';
 import { BadgeService } from '../../src/services/badge.service';
-import { BadgeCategory, BadgeRequirementType, IBadge, IUserBadge } from '../../src/types/badge.types';
+import { BadgeCategory, BadgeRequirementType, IUserBadge } from '../../src/types/badge.types';
 
 // Mock all external dependencies
 jest.mock('../../src/models/badge.model');
@@ -68,7 +68,7 @@ describe('Mocked: GET /badges (getAllBadges)', () => {
       },
     ];
 
-    mockBadgeModel.findAll.mockResolvedValue(mockBadges as unknown);
+    mockBadgeModel.findAll.mockResolvedValue(mockBadges as any);
 
     const response = await request(app)
       .get('/badges')
@@ -167,11 +167,11 @@ describe('Mocked: GET /badges (getAllBadges)', () => {
     const res = {
       status: jest.fn().mockReturnThis(),
       json: jest.fn(),
-    } as unknown;
+    } as any;
 
     mockBadgeModel.findAll.mockRejectedValue('String error');
 
-    await badgeController.getAllBadges(req, res, mockNext);
+    await badgeController.getAllBadges(req as any, res, mockNext);
 
     expect(mockNext).toHaveBeenCalledWith('String error');
   });
@@ -208,7 +208,7 @@ describe('Mocked: GET /badges/user/earned (getUserBadges)', () => {
       },
     ];
 
-    mockBadgeModel.getUserBadges.mockResolvedValue(mockUserBadges as unknown);
+    mockBadgeModel.getUserBadges.mockResolvedValue(mockUserBadges as any);
 
     const response = await request(app)
       .get('/badges/user/earned')
@@ -286,7 +286,7 @@ describe('Mocked: GET /badges/user/available (getAvailableBadges)', () => {
       },
     ];
 
-    mockBadgeModel.getAvailableBadges.mockResolvedValue(mockAvailableBadges as unknown);
+    mockBadgeModel.getAvailableBadges.mockResolvedValue(mockAvailableBadges as any);
 
     const response = await request(app)
       .get('/badges/user/available')

@@ -33,7 +33,6 @@ app.use('/pins', pinsRoutes);
 
 const mockPinModel = pinModel as jest.Mocked<typeof pinModel>;
 const mockPinVoteModel = pinVoteModel as jest.Mocked<typeof pinVoteModel>;
-const mockUserModel = userModel as jest.Mocked<typeof userModel>;
 const mockBadgeService = BadgeService as jest.Mocked<typeof BadgeService>;
 
 describe('Mocked: POST /pins', () => {

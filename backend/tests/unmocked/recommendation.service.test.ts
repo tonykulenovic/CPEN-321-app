@@ -1,14 +1,9 @@
 import mongoose from 'mongoose';
 import { describe, test, beforeEach, afterEach, expect, jest } from '@jest/globals';
 import { recommendationService } from '../../src/services/recommendation.service';
-import { userModel } from '../../src/models/user.model';
-import { locationModel } from '../../src/models/location.model';
-import { pinModel } from '../../src/models/pin.model';
 
 describe('Unmocked: RecommendationService Integration Tests', () => {
   let testUserId: mongoose.Types.ObjectId;
-  let testLocationData: unknown;
-  let testPinData: unknown[];
 
   beforeEach(async () => {
     // Reset any mocks before each test
@@ -246,9 +241,6 @@ describe('Unmocked: RecommendationService Integration Tests', () => {
   describe('Business logic validation', () => {
     test('Service calculates distance correctly', async () => {
       // Test the internal distance calculation by exercising the service
-      const vancouverCoords = { lat: 49.2827, lng: -123.1207 };
-      const torontoCoords = { lat: 43.6532, lng: -79.3832 };
-      
       // Both should return empty arrays but exercise distance calculation code
       const nearbyResult = await recommendationService.generateRecommendations(
         testUserId,

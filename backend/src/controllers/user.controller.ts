@@ -6,8 +6,6 @@ import {
   UpdateProfileRequest,
 } from '../types/user.types';
 import {
-  UserSearchQuery,
-  UpdatePrivacyRequest,
   UserSearchResponse,
   userSearchQuerySchema,
   privacySettingsSchema,
@@ -390,7 +388,7 @@ export class UserController {
    * GET /users/admin/all — Get all users (admin only).
    * @return 200 Users list
    */
-  async getAllUsers(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async getAllUsers(req: Request, res: Response, _next: NextFunction): Promise<void> {
     try {
       // Check if user is admin
       if (!req.user?.isAdmin) {
@@ -415,7 +413,7 @@ export class UserController {
    * @param id string - User ID to suspend
    * @return 200 Success
    */
-  async suspendUser(req: Request<{ id: string }>, res: Response, next: NextFunction): Promise<void> {
+  async suspendUser(req: Request<{ id: string }>, res: Response, _next: NextFunction): Promise<void> {
     try {
       // Check if user is admin
       if (!req.user?.isAdmin) {
@@ -453,7 +451,7 @@ export class UserController {
    * @param id string - User ID to unsuspend
    * @return 200 Success
    */
-  async unsuspendUser(req: Request<{ id: string }>, res: Response, next: NextFunction): Promise<void> {
+  async unsuspendUser(req: Request<{ id: string }>, res: Response, _next: NextFunction): Promise<void> {
     try {
       // Check if user is admin
       if (!req.user?.isAdmin) {
@@ -489,7 +487,7 @@ export class UserController {
    * @param id string - User ID to delete
    * @return 200 Success
    */
-  async deleteUserByAdmin(req: Request<{ id: string }>, res: Response, next: NextFunction): Promise<void> {
+  async deleteUserByAdmin(req: Request<{ id: string }>, res: Response, _next: NextFunction): Promise<void> {
     try {
       // Check if user is admin
       if (!req.user?.isAdmin) {

@@ -29,8 +29,6 @@ app.use(express.json());
 app.use('/recommendations', recommendationsRoutes);
 
 const mockRecommendationService = recommendationService as jest.Mocked<typeof recommendationService>;
-const mockWeatherService = weatherService as jest.Mocked<typeof weatherService>;
-const mockLocationModel = locationModel as jest.Mocked<typeof locationModel>;
 
 describe('Mocked: GET /recommendations/:mealType', () => {
   beforeEach(() => {
