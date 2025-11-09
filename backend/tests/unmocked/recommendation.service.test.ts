@@ -7,8 +7,8 @@ import { pinModel } from '../../src/models/pin.model';
 
 describe('Unmocked: RecommendationService Integration Tests', () => {
   let testUserId: mongoose.Types.ObjectId;
-  let testLocationData: any;
-  let testPinData: any[];
+  let testLocationData: unknown;
+  let testPinData: unknown[];
 
   beforeEach(async () => {
     // Reset any mocks before each test

@@ -143,8 +143,7 @@ export interface BadgeEarningEvent {
   userId: string;
   eventType: BadgeRequirementType;
   value: number;
-  metadata?: Record<string, any>;
-  timestamp: Date;
+  metadata?: Record<string, unknown>;  timestamp: Date;
 }
 
 // Badge template for predefined badges

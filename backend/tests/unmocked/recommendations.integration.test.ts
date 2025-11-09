@@ -29,7 +29,7 @@ function createAuthenticatedApp() {
 
     try {
       // Find user in database
-      const user = await userModel['user'].findById(new mongoose.Types.ObjectId(userId));
+      const user = await (userModel as any).user.findById(new mongoose.Types.ObjectId(userId));
       if (!user) {
         return res.status(401).json({
           error: 'User not found',
@@ -54,7 +54,7 @@ function createAuthenticatedApp() {
 }
 
 // Helper function to add authentication to requests
-const withAuth = (user: any) => (requestBuilder: any) => {
+const withAuth = (user: unknown) => (requestBuilder: any) => {
   return requestBuilder
     .set('Authorization', 'Bearer test-token-12345')
     .set('x-dev-user-id', user._id.toString());
@@ -62,9 +62,9 @@ const withAuth = (user: any) => (requestBuilder: any) => {
 
 // Test data
 let testUser1: any;
-let testUser2: any;
-let testPin1: any;
-let testPin2: any;
+let testUser2: unknown;
+let testPin1: unknown;
+let testPin2: unknown;
 
 // Helper function to create test users
 async function createTestUser(
@@ -107,8 +107,8 @@ async function createTestPin(
 describe('Unmocked Integration: GET /recommendations/:mealType', () => {
   beforeEach(async () => {
     // Clear collections before each test
-    await userModel['user'].deleteMany({});
-    await pinModel['pin'].deleteMany({});
+    await (userModel as any).user.deleteMany({});
+    await (pinModel as any).pin.deleteMany({});
 
     // Create test users
     testUser1 = await createTestUser('Test User 1', 'testuser1', 'test1@example.com');

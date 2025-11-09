@@ -11,7 +11,7 @@ import { SignUpRequest } from '../../src/types/user.types';
 // Test the business logic methods that don't require Socket.io
 describe('Unmocked: LocationGateway Business Logic', () => {
   let testUserId: mongoose.Types.ObjectId;
-  let testUser: any;
+  let testUser: unknown;
 
   beforeEach(async () => {
     jest.clearAllMocks();
@@ -42,7 +42,7 @@ describe('Unmocked: LocationGateway Business Logic', () => {
       const downtownLat = 49.2827;
       const downtownLng = -123.1207;
 
-      const distance = (locationGateway as any).calculateDistance(
+      const distance = (locationGateway as unknown).calculateDistance(
         ubcLat, ubcLng, downtownLat, downtownLng
       );
 
@@ -154,7 +154,7 @@ describe('Unmocked: LocationGateway Business Logic', () => {
       // Verify the method executes real location update logic up to the user lookup
       try {
         await locationGateway.reportLocation(testUserId, 49.2827, -123.1207, 10);
-      } catch (error: any) {
+      } catch (error: unknown) {
         // Should reach the user lookup and fail there
         expect(error.message).toBe('User not found');
       }
@@ -306,7 +306,7 @@ describe('Unmocked: LocationGateway Business Logic', () => {
 
   describe('getFriendsLocations method - comprehensive coverage', () => {
     let friendUserId: mongoose.Types.ObjectId;
-    let friendUser: any;
+    let friendUser: unknown;
 
     beforeEach(async () => {
       // Create main test user

@@ -1,0 +1,6 @@
+@@ -207,1 +207,1 @@
+-        logger.info(`    ð Skipping duplicate (${reason}): ${restaurant.displayName?.text || restaurant.name}`);
++        logger.info(`    ð Skipping duplicate (${reason}): ${restaurant.displayName?.text ?? restaurant.name}`);
+@@ -259,1 +259,1 @@
+-        logger.info(`  ð« Excluding "${restaurant.displayName?.text || restaurant.name}" - duplicate name with cafe`);
++        logger.info(`  ð« Excluding "${restaurant.displayName?.text ?? restaurant.name}" - duplicate name with cafe`);

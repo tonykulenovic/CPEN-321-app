@@ -169,14 +169,14 @@ export type RatePinRequest = z.infer<typeof ratePinSchema>;
 export type ReportPinRequest = z.infer<typeof reportPinSchema>;
 export type SearchPinsRequest = z.infer<typeof searchPinsSchema>;
 
-export type PinResponse = {
+export interface PinResponse {
   message: string;
   data?: {
     pin: IPin;
   };
 };
 
-export type PinsListResponse = {
+export interface PinsListResponse {
   message: string;
   data?: {
     pins: IPin[];

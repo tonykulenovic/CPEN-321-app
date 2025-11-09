@@ -193,7 +193,7 @@ describe('Security NFR Tests - Phase 1 (Rank 1 - Simplest)', () => {
       expect([400, 404]).toContain(response.status);
       
       // If response contains data, ensure XSS payload is not reflected back
-      if (response.body && response.body.title) {
+      if (response.body?.title) {
         expect(response.body.title).not.toContain('<script>');
       }
     });

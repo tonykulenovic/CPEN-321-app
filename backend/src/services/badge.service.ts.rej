@@ -1,0 +1,3 @@
+@@ -501,1 +501,1 @@
+-        logger.info(`â Cafe visits: ${cafePins.map((p: any) => p.name).join(', ')}`);
++        logger.info(`â Cafe visits: ${cafePins.map((p: unknown) => p.name).join(', ')}`);

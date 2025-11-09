@@ -1,0 +1,3 @@
+@@ -145,1 +145,1 @@
+-          logger.warn(`â ï¸  Skipping cafe without location: ${cafe.displayName?.text || cafe.name}`);
++          logger.warn(`â ï¸  Skipping cafe without location: ${cafe.displayName?.text ?? cafe.name}`);

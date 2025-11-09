@@ -60,7 +60,7 @@ class FirebaseService {
                     title,
                     body,
                 },
-                data: data ?? {},
+                data: data || {},
                 android: {
                     notification: {
                         channelId: 'friend_activity_channel',
@@ -84,22 +84,21 @@ class FirebaseService {
             logger.info(`✅ [FCM] Successfully sent notification in ${duration}ms`);
             logger.info(`   📧 Message ID: ${response}`);
             return true;
-        } catch (error: unknown) {
-            const firebaseError = error as { code?: string; message?: string; details?: any };
+        } catch (error: any) {
             logger.error(`❌ [FCM] Error sending notification:`, error);
-            logger.error(`   🔢 Error code: ${firebaseError.code || 'N/A'}`);
-            logger.error(`   💬 Error message: ${firebaseError.message || 'N/A'}`);
-            logger.error(`   📊 Error details: ${JSON.stringify(firebaseError.details || {})}`);
+            logger.error(`   🔢 Error code: ${error.code || 'N/A'}`);
+            logger.error(`   💬 Error message: ${error.message || 'N/A'}`);
+            logger.error(`   📊 Error details: ${JSON.stringify(error.details || {})}`);
             
             // Log specific Firebase error codes with solutions
-            if (firebaseError.code === 'messaging/invalid-registration-token' || 
-                firebaseError.code === 'messaging/registration-token-not-registered') {
+            if (error.code === 'messaging/invalid-registration-token' || 
+                error.code === 'messaging/registration-token-not-registered') {
                 logger.error('   🔧 → FCM token is invalid or expired. User needs to re-login.');
-            } else if (firebaseError.code === 'messaging/invalid-argument') {
+            } else if (error.code === 'messaging/invalid-argument') {
                 logger.error('   🔧 → Invalid message format. Check notification payload.');
-            } else if (firebaseError.code === 'messaging/authentication-error') {
+            } else if (error.code === 'messaging/authentication-error') {
                 logger.error('   🔧 → Firebase authentication failed. Check service account.');
-            } else if (firebaseError.code === 'messaging/invalid-data-payload-key') {
+            } else if (error.code === 'messaging/invalid-data-payload-key') {
                 logger.error('   🔧 → Invalid data payload. All values must be strings.');
             }
             

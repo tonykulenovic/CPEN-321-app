@@ -1,0 +1,3 @@
+@@ -245,1 +245,1 @@
+-    logger.info(`ð Raw requestId: "${requestId}" (type: ${typeof requestId}, length: ${requestId?.length})`);
++    logger.info(`ð Raw requestId: "${requestId}" (type: ${typeof requestId}, length: ${requestId.length})`);

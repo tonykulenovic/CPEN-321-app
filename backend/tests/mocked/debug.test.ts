@@ -22,7 +22,7 @@ const app = express();
 app.use(express.json());
 
 // Mock authentication middleware
-const authenticateToken = (req: any, res: any, next: any) => {
+const authenticateToken = (req: unknown, res: any, next: any) => {
   req.user = {
     _id: new mongoose.Types.ObjectId('507f1f77bcf86cd799439011'),
     name: 'Test User',
@@ -56,7 +56,7 @@ describe('Mocked: POST /debug/notification/test', () => {
       fcmToken: 'test-fcm-token-12345678901234567890',
     };
 
-    mockUserModel.findById.mockResolvedValue(testUser as any);
+    mockUserModel.findById.mockResolvedValue(testUser as unknown);
     mockFirebaseService.sendNotification.mockResolvedValue(true);
 
     const response = await request(app)
@@ -195,8 +195,8 @@ describe('Mocked: POST /debug/notification/friend-request', () => {
     };
 
     mockUserModel.findById
-      .mockResolvedValueOnce(toUser as any)
-      .mockResolvedValueOnce(fromUser as any);
+      .mockResolvedValueOnce(toUser as unknown)
+      .mockResolvedValueOnce(fromUser as unknown);
     mockNotificationService.sendFriendRequestNotification.mockResolvedValue();
 
     const response = await request(app)
@@ -243,7 +243,7 @@ describe('Mocked: POST /debug/notification/friend-request', () => {
     const fromUserId = '507f1f77bcf86cd799439999';
 
     mockUserModel.findById
-      .mockResolvedValueOnce({ _id: toUserId } as any)
+      .mockResolvedValueOnce({ _id: toUserId } as unknown)
       .mockResolvedValueOnce(null);
 
     const response = await request(app)
@@ -288,7 +288,7 @@ describe('Mocked: GET /debug/users/tokens', () => {
       },
     ];
 
-    mockUserModel.findAll.mockResolvedValue(mockUsers as any);
+    mockUserModel.findAll.mockResolvedValue(mockUsers as unknown);
 
     const response = await request(app)
       .get('/debug/users/tokens')

@@ -7,7 +7,7 @@
 /**
  * Creates a valid test JWT token using the dev bypass system
  */
-export function createValidToken(userId: string = '507f1f77bcf86cd799439011'): string {
+export function createValidToken(userId = '507f1f77bcf86cd799439011'): string {
   return 'Bearer test-token-12345';
 }
 
@@ -28,7 +28,7 @@ export function createMissingToken(): undefined {
 /**
  * Creates oversized input string for testing size limits
  */
-export function createOversizedInput(sizeInMB: number = 1): string {
+export function createOversizedInput(sizeInMB = 1): string {
   const oneMB = 'a'.repeat(1024 * 1024);
   return oneMB.repeat(sizeInMB);
 }
@@ -94,7 +94,7 @@ export function createExpiredToken(): string {
 /**
  * Creates an admin JWT token using the dev bypass system
  */
-export function createAdminToken(userId: string = '507f1f77bcf86cd799439013'): string {
+export function createAdminToken(userId = '507f1f77bcf86cd799439013'): string {
   // Using dev bypass system - in real implementation would include admin role
   return 'Bearer admin-test-token-12345';
 }
@@ -118,7 +118,7 @@ export function createTamperedPayloadToken(): string {
 /**
  * Creates NoSQL injection payload for MongoDB testing
  */
-export function createNoSQLInjectionPayload(): any {
+export function createNoSQLInjectionPayload(): unknown {
   return {
     $where: "function() { return true; }",
     $regex: ".*",

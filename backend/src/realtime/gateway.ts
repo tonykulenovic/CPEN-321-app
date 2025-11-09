@@ -9,6 +9,7 @@ import { pinModel } from '../models/pin.model';
 import { LocationUpdateEvent, ILocation } from '../types/friends.types';
 import { BadgeService } from '../services/badge.service';
 import { BadgeRequirementType } from '../types/badge.types';
+import { PinCategory } from '../types/pins.types';
 import logger from '../utils/logger.util';
 
 // Location tracking subscription map
@@ -160,7 +161,7 @@ export class LocationGateway {
 
         // Apply approximation if needed
         if (locationSharing === 'approximate') {
-          const precision = friend.privacy.location?.precisionMeters || 30;
+          const precision = friend.privacy.location.precisionMeters || 30;
           const offset = precision / 111000;
           location.lat += (Math.random() - 0.5) * offset;
           location.lng += (Math.random() - 0.5) * offset;
@@ -195,7 +196,7 @@ export class LocationGateway {
 
       // 2. Check friend's privacy settings
       const friend = await userModel.findById(friendId);
-      const locationSharing = friend?.privacy.location?.sharing || 'off';
+      const locationSharing = friend?.privacy.location?.sharing ?? 'off';
       if (!friend || locationSharing === 'off') {
         throw new Error('Friend has location sharing disabled');
       }
@@ -207,7 +208,7 @@ export class LocationGateway {
       if (!locationTrackers.has(friendIdStr)) {
         locationTrackers.set(friendIdStr, new Set());
       }
-      locationTrackers.get(friendIdStr)!.add(viewerIdStr);
+      locationTrackers.get(friendIdStr)?.add(viewerIdStr);
 
       // 4. Send current location if available
       const currentLocation = await locationModel.findByUserId(friendId);
@@ -316,7 +317,7 @@ export class LocationGateway {
       try {
         const token = socket.handshake.auth.token;
         if (!token) {
-          return next(new Error('Authentication error: No token provided'));
+          next(new Error('Authentication error: No token provided')); return;
         }
 
         // Development bypass with dev token
@@ -327,12 +328,12 @@ export class LocationGateway {
           console.log(`[DEV] Socket.io using dev token bypass for user ID: ${devUserId}`);
           
           if (!mongoose.Types.ObjectId.isValid(devUserId)) {
-            return next(new Error('Invalid dev user ID'));
+            next(new Error('Invalid dev user ID')); return;
           }
 
           const user = await userModel.findById(new mongoose.Types.ObjectId(devUserId));
           if (!user) {
-            return next(new Error('Dev user not found'));
+            next(new Error('Dev user not found')); return;
           }
 
           // Store user ID in socket data
@@ -344,7 +345,7 @@ export class LocationGateway {
         }
 
         // Verify JWT token
-        const decoded = jwt.verify(token, process.env.JWT_SECRET!) as any;
+        const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { id: string };
         const userId = new mongoose.Types.ObjectId(decoded.id);
         
         // Store user ID in socket data
@@ -366,7 +367,7 @@ export class LocationGateway {
       logger.info(`🟢 User ${userId} connected to realtime namespace (Socket ID: ${socket.id})`);
 
       // Update lastActiveAt immediately on connection
-      userModel.updateLastActiveAt(userId).catch(error => {
+      userModel.updateLastActiveAt(userId).catch((error: unknown) => {
         logger.error('Error updating lastActiveAt on connect:', error);
       });
 
@@ -511,7 +512,7 @@ export class LocationGateway {
         limit: 1000, // High limit to ensure we get all pins within radius
       });
 
-      const librariesInSearch = nearbyPins.pins.filter(p => p.category === 'study').length;
+      const librariesInSearch = nearbyPins.pins.filter(p => p.category === PinCategory.STUDY).length;
       logger.info(`🔍 Checking ${nearbyPins.pins.length} nearby pins for visits (${librariesInSearch} libraries). Already visited: ${visitedPinIds.size} pins.`);
 
       // Check each pin for exact proximity (50m)
@@ -519,7 +520,7 @@ export class LocationGateway {
         // Skip if already visited
         if (visitedPinIds.has(pin._id.toString())) {
           // Log libraries at INFO level to debug badge issues
-          if (pin.category === 'study') {
+          if (pin.category === PinCategory.STUDY) {
             logger.info(`⏭️  Skipping already visited LIBRARY: ${pin.name}`);
           } else {
             logger.debug(`⏭️  Skipping already visited pin: ${pin.name}`);
@@ -536,7 +537,7 @@ export class LocationGateway {
         );
 
         // Log distance for ALL unvisited pins (especially libraries)
-        if (pin.category === 'study' || (pin.category === 'shops_services' && pin.metadata?.subtype === 'cafe')) {
+        if (pin.category === PinCategory.STUDY || (pin.category === 'shops_services' && pin.metadata?.subtype === 'cafe')) {
           logger.info(`📏 Distance to ${pin.name} (${pin.category}${pin.metadata?.subtype ? '/' + pin.metadata.subtype : ''}): ${distance.toFixed(2)}m`);
         }
 
@@ -545,11 +546,11 @@ export class LocationGateway {
           logger.info(`📍 User ${userId} is within ${distance.toFixed(2)}m of pin ${pin._id} (${pin.name}). Auto-visiting...`);
 
           // Prepare increments based on pin category
-          const increments: any = { 'stats.pinsVisited': 1 };
+          const increments: Record<string, number> = { 'stats.pinsVisited': 1 };
 
           // Track category-specific visits (only for pre-seeded pins)
           if (pin.isPreSeeded) {
-            if (pin.category === 'study') {
+            if (pin.category === PinCategory.STUDY) {
               increments['stats.librariesVisited'] = 1;
               logger.info(`📚 Incrementing library visit count (pre-seeded)`);
             } else if (pin.category === 'shops_services') {

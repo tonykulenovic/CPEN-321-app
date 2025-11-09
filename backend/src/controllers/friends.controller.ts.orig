@@ -499,7 +499,7 @@ export async function listFriends(req: Request, res: Response): Promise<void> {
     // 5. Format friend summary data with online status
     const formattedFriends = acceptedFriendships.map((friendship) => {
       const friend = friendship.friendId as any; // populated by the model
-      const isOnline = onlineStatusMap.get(friend._id.toString()) ?? false;
+      const isOnline = onlineStatusMap.get(friend._id.toString()) || false;
       
       return {
         userId: friend._id.toString(),
@@ -507,7 +507,7 @@ export async function listFriends(req: Request, res: Response): Promise<void> {
         photoUrl: friend.profilePicture,
         bio: friend.bio,
         shareLocation: friendship.shareLocation,
-        isOnline
+        isOnline: isOnline
       };
     });
 

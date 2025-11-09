@@ -13,8 +13,8 @@ interface MealTimeConfig {
 
 export class RecommendationSchedulerService {
   private static instance: RecommendationSchedulerService;
-  private scheduledJobs: Map<string, any> = new Map();
-  private isRunning: boolean = false;
+  private scheduledJobs = new Map<string, any>();
+  private isRunning = false;
 
   // Meal time configurations
   private readonly mealTimes: MealTimeConfig[] = [
@@ -160,7 +160,7 @@ export class RecommendationSchedulerService {
         const batch = batches[i];
         logger.info(`📦 [SCHEDULER] Processing batch ${i + 1}/${batches.length} (${batch.length} users)`);
 
-        const batchPromises = batch.map(async (user) => {
+        const batchPromises = batch.map(async (user: any) => {
           try {
             // Check if user can receive recommendation for this meal type today
             const canReceive = await userModel.canReceiveRecommendation(user._id, mealTime.name);
@@ -209,7 +209,7 @@ export class RecommendationSchedulerService {
   /**
    * Get users eligible for recommendations
    */
-  private async getEligibleUsers(): Promise<any[]> {
+  private async getEligibleUsers(): Promise<unknown[]> {
     try {
       // Get all users (in production you would add filtering criteria)
       const allUsers = await userModel.findAll();

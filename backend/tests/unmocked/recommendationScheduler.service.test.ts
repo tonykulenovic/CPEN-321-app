@@ -103,7 +103,7 @@ describe('Unmocked: RecommendationScheduler Integration Tests', () => {
     }, 30000);
 
     test('should handle invalid meal types gracefully', async () => {
-      // @ts-ignore - Testing invalid input
+      // @ts-expect-error - Testing invalid input
       await expect(recommendationScheduler.testRecommendations('invalid')).resolves.not.toThrow();
     });
 

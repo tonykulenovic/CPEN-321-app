@@ -16,7 +16,7 @@ function createAuthenticatedApp() {
   app.use(express.json());
   
   // Add authentication middleware that populates req.user from database
-  app.use(async (req: any, res: any, next: any) => {
+  app.use(async (req: unknown, res: any, next: any) => {
     const userId = req.headers['x-dev-user-id'];
     const authHeader = req.headers.authorization;
     
@@ -55,16 +55,16 @@ function createAuthenticatedApp() {
 }
 
 // Helper function to add authentication to requests
-const withAuth = (user: any) => (requestBuilder: any) => {
+const withAuth = (user: unknown) => (requestBuilder: any) => {
   return requestBuilder
     .set('Authorization', 'Bearer test-token-12345')
     .set('x-dev-user-id', user._id.toString());
 };
 
 // Test data
-let testUser1: any;
-let testUser2: any;
-let testUser3: any;
+let testUser1: unknown;
+let testUser2: unknown;
+let testUser3: unknown;
 
 // Helper function to create test users
 async function createTestUser(
@@ -86,7 +86,7 @@ async function createTestUser(
   const privacy = { ...defaultPrivacy, ...privacyOverrides };
 
   // Create user using direct mongoose model to avoid validation issues
-  const user = await userModel['user'].create({
+  const user = await (userModel as any).user.create({
     name,
     username,
     email,
@@ -103,9 +103,9 @@ async function createTestUser(
 describe('Unmocked User Integration Tests', () => {
   beforeEach(async () => {
     // Clean up test data before each test
-    await userModel['user'].deleteMany({});
-    await friendshipModel['friendship'].deleteMany({});
-    await badgeModel['badge'].deleteMany({});
+    await (userModel as any).user.deleteMany({});
+    await (friendshipModel as any).friendship.deleteMany({});
+    await (badgeModel as any).badge.deleteMany({});
 
     // Create test users
     testUser1 = await createTestUser(
@@ -233,7 +233,7 @@ describe('Unmocked User Integration Tests', () => {
       const tempApp = createAuthenticatedApp();
 
       // Create some test badges for testUser2
-      const badge = await badgeModel['badge'].create({
+      const badge = await (badgeModel as any).badge.create({
         name: 'Explorer',
         description: 'Visit 10 locations',
         icon: 'explore',
@@ -249,7 +249,7 @@ describe('Unmocked User Integration Tests', () => {
       });
 
       // Assign the badge to testUser2
-      await badgeModel['userBadge'].create({
+      await (badgeModel as any).userBadge.create({
         userId: testUser2._id,
         badgeId: badge._id,
         earnedAt: new Date(),
@@ -326,7 +326,7 @@ describe('Unmocked User Integration Tests', () => {
       expect(response.body.data).toBeInstanceOf(Array);
       
       // Should find other test users but not self
-      const usernames = response.body.data.map((user: any) => user.username);
+      const usernames = response.body.data.map((user: unknown) => user.username);
       expect(usernames).not.toContain('testuser1'); // Current user excluded
       expect(response.body.data.length).toBeGreaterThan(0);
     });
@@ -342,7 +342,7 @@ describe('Unmocked User Integration Tests', () => {
       expect(response.body.data).toBeInstanceOf(Array);
       
       // Should find testuser2
-      const foundUser = response.body.data.find((user: any) => user.username === 'testuser2');
+      const foundUser = response.body.data.find((user: unknown) => user.username === 'testuser2');
       expect(foundUser).toBeDefined();
       expect(foundUser.displayName).toBe('Test User 2');
     });
@@ -549,7 +549,7 @@ describe('Unmocked User Integration Tests', () => {
 
       expect(tempUser).not.toBeNull();
 
-      const response = await withAuth(tempUser!)(
+      const response = await withAuth(tempUser)(
         request(tempApp).delete('/users/profile')
       );
 
@@ -557,7 +557,7 @@ describe('Unmocked User Integration Tests', () => {
       expect(response.body.message).toBe('User deleted successfully');
 
       // Verify user is deleted from database
-      const deletedUser = await userModel.findById(tempUser!._id);
+      const deletedUser = await userModel.findById(tempUser?._id);
       expect(deletedUser).toBeNull();
     });
   });

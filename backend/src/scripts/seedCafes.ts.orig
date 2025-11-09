@@ -148,7 +148,7 @@ export async function seedCafes(): Promise<void> {
 
         // Extract name and address from either API format
         const name = cafe.displayName?.text || cafe.name || 'Unnamed Cafe';
-        const address = (cafe.formattedAddress ?? cafe.vicinity) || 'Cafe near UBC campus';
+        const address = cafe.formattedAddress || cafe.vicinity || 'Cafe near UBC campus';
         
         // Extract opening hours from either API format
         const isOpen = cafe.currentOpeningHours?.openNow ?? cafe.opening_hours?.open_now;
@@ -160,17 +160,17 @@ export async function seedCafes(): Promise<void> {
           location: {
             latitude: lat,
             longitude: lng,
-            address,
+            address: address,
           },
           metadata: {
             subtype: 'cafe', // Add subtype to distinguish from restaurants
             openingHours: isOpen !== undefined 
               ? (isOpen ? 'Open now' : 'Closed')
               : undefined,
-            amenities: cafe.types?.filter((t: string) => t !== 'cafe' && t !== 'point_of_interest') ?? undefined,
+            amenities: cafe.types?.filter((t: string) => t !== 'cafe' && t !== 'point_of_interest') || undefined,
           },
           rating: {
-            upvotes: Math.floor(cafe.rating ?? 0),
+            upvotes: Math.floor(cafe.rating || 0),
             downvotes: 0,
             voters: [],
           },
@@ -182,7 +182,7 @@ export async function seedCafes(): Promise<void> {
         };
 
         // Upsert cafe pin using name and location as unique identifier
-        const result = await (pinModel as any).pin.updateOne(
+        const result = await pinModel['pin'].updateOne(
           {
             isPreSeeded: true,
             'metadata.subtype': 'cafe',
@@ -230,7 +230,7 @@ export async function seedCafes(): Promise<void> {
       .filter((name: string) => name !== 'Unnamed Cafe');
     
     // Delete pre-seeded cafes that are no longer in Google Places results
-    const deleteResult = await (pinModel as any).pin.deleteMany({
+    const deleteResult = await pinModel['pin'].deleteMany({
       isPreSeeded: true,
       category: PinCategory.SHOPS_SERVICES,
       'metadata.subtype': 'cafe',

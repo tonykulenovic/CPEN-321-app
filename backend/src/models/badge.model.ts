@@ -185,7 +185,7 @@ export class BadgeModel {
     }
   }
 
-  async update(badgeId: mongoose.Types.ObjectId, updateData: any): Promise<IBadge | null> {
+  async update(badgeId: mongoose.Types.ObjectId, updateData: unknown): Promise<IBadge | null> {
     try {
       const validatedData = updateBadgeSchema.parse(updateData);
       return await this.badge.findByIdAndUpdate(badgeId, validatedData, { new: true });
@@ -215,7 +215,7 @@ export class BadgeModel {
     try {
       // Get badge to get target for default progress
       const badge = await this.badge.findById(badgeId);
-      const defaultTarget = badge?.requirements?.target || 0;
+      const defaultTarget = badge?.requirements?.target ?? 0;
 
       const userBadgeData: any = {
         userId,
@@ -240,8 +240,8 @@ export class BadgeModel {
       }
 
       return await this.userBadge.create(userBadgeData);
-    } catch (error: any) {
-      if (error.code === 11000) {
+    } catch (error: unknown) {
+      if (error && typeof error === 'object' && 'code' in error && (error as any).code === 11000) {
         throw new Error('User already has this badge');
       }
       logger.error('Error assigning badge:', error);
@@ -290,10 +290,17 @@ export class BadgeModel {
       // Filter out user badges where badgeId is null (badge was deleted)
       const validUserBadges = userBadges.filter(ub => ub.badgeId != null);
 
+      // Initialize all categories to 0
       const categoryBreakdown = Object.values(BadgeCategory).reduce((acc, category) => {
         acc[category] = validUserBadges.filter(ub => (ub.badgeId as any).category === category).length;
         return acc;
-      }, {} as Record<BadgeCategory, number>);
+      }, {
+        [BadgeCategory.ACTIVITY]: 0,
+        [BadgeCategory.SOCIAL]: 0,
+        [BadgeCategory.EXPLORATION]: 0,
+        [BadgeCategory.ACHIEVEMENT]: 0,
+        [BadgeCategory.SPECIAL]: 0,
+      } as Record<BadgeCategory, number>);
 
       return {
         totalBadges,

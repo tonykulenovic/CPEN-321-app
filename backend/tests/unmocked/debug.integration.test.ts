@@ -26,7 +26,7 @@ function createAuthenticatedApp() {
 
     try {
       // Find user in database
-      const user = await userModel['user'].findById(new mongoose.Types.ObjectId(userId));
+      const user = await (userModel as any).user.findById(new mongoose.Types.ObjectId(userId));
       if (!user) {
         return res.status(401).json({
           error: 'User not found',
@@ -58,10 +58,10 @@ describe('Integration: Debug Controller', () => {
     app = createAuthenticatedApp();
 
     // Clean up existing data
-    await userModel['user'].deleteMany({});
+    await (userModel as any).user.deleteMany({});
 
     // Create test users
-    const testUser = new userModel['user']({
+    const testUser = new (userModel as any).user({
       googleId: 'test-google-id-123',
       name: 'Test User',
       email: 'test@example.com',
@@ -73,7 +73,7 @@ describe('Integration: Debug Controller', () => {
     await testUser.save();
     testUserId = testUser._id.toString();
 
-    const secondUser = new userModel['user']({
+    const secondUser = new (userModel as any).user({
       googleId: 'test-google-id-456',
       name: 'Second User',
       email: 'second@example.com',
@@ -291,8 +291,8 @@ describe('Integration: Debug Controller', () => {
       expect(response.body.data.users).toHaveLength(2);
 
       // Find the users in the response
-      const userWithToken = response.body.data.users.find((u: any) => u.hasToken);
-      const userWithoutToken = response.body.data.users.find((u: any) => !u.hasToken);
+      const userWithToken = response.body.data.users.find((u: unknown) => u.hasToken);
+      const userWithoutToken = response.body.data.users.find((u: unknown) => !u.hasToken);
 
       expect(userWithToken).toBeDefined();
       expect(userWithToken.name).toBe('Test User');

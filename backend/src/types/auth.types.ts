@@ -25,7 +25,7 @@ export type AuthenticateUserResponse = {
 
 // Generic types
 // ------------------------------------------------------------
-export type AuthResult = {
+export interface AuthResult {
   token: string;
   user: IUser;
 };

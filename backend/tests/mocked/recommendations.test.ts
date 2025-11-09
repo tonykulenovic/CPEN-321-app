@@ -13,7 +13,7 @@ jest.mock('../../src/services/recommendation.service');
 jest.mock('../../src/services/weather.service');
 jest.mock('../../src/models/location.model');
 jest.mock('../../src/middleware/auth.middleware', () => ({
-  authenticateToken: (req: any, res: any, next: any) => {
+  authenticateToken: (req: unknown, res: any, next: any) => {
     req.user = {
       _id: new mongoose.Types.ObjectId('507f1f77bcf86cd799439011'),
       name: 'Test User',

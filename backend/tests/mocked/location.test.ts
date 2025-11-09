@@ -222,7 +222,7 @@ describe('Mocked: GET /friends/locations', () => {
       }
     ];
 
-    mockLocationGateway.getFriendsLocations.mockResolvedValueOnce(mockFriendLocations as any);
+    mockLocationGateway.getFriendsLocations.mockResolvedValueOnce(mockFriendLocations as unknown);
 
     const response = await request(app).get('/friends/locations');
 
@@ -283,7 +283,7 @@ describe('Mocked: GET /friends/locations', () => {
       }
     ];
 
-    mockLocationGateway.getFriendsLocations.mockResolvedValueOnce(mockApproximateLocations as any);
+    mockLocationGateway.getFriendsLocations.mockResolvedValueOnce(mockApproximateLocations as unknown);
 
     const response = await request(app).get('/friends/locations');
 

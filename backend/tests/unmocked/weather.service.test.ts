@@ -27,12 +27,12 @@ describe('Unmocked: WeatherService Integration Tests', () => {
       // Validate types and ranges
       expect(['clear', 'cloudy', 'rainy']).toContain(weather!.condition);
       expect(typeof weather!.temperature).toBe('number');
-      expect(weather!.temperature).toBeGreaterThanOrEqual(5);
+      expect(weather?.temperature).toBeGreaterThanOrEqual(5);
       expect(weather!.temperature).toBeLessThanOrEqual(35);
-      expect(typeof weather!.humidity).toBe('number');
-      expect(weather!.humidity).toBeGreaterThanOrEqual(30);
-      expect(weather!.humidity).toBeLessThanOrEqual(80);
-      expect(typeof weather!.isGoodForOutdoor).toBe('boolean');
+      expect(typeof weather?.humidity).toBe('number');
+      expect(weather?.humidity).toBeGreaterThanOrEqual(30);
+      expect(weather?.humidity).toBeLessThanOrEqual(80);
+      expect(typeof weather?.isGoodForOutdoor).toBe('boolean');
       expect(weather!.description).toContain('Mock');
     });
 
@@ -46,8 +46,8 @@ describe('Unmocked: WeatherService Integration Tests', () => {
       }
       
       // Check that we get some variety (not all the same)
-      const conditions = new Set(results.map(w => w!.condition));
-      const temperatures = results.map(w => w!.temperature);
+      const conditions = new Set(results.map(w => w?.condition));
+      const temperatures = results.map(w => w?.temperature);
       
       expect(conditions.size).toBeGreaterThan(0); // At least one condition type
       expect(Math.max(...temperatures) - Math.min(...temperatures)).toBeGreaterThan(0); // Temperature variation
@@ -411,7 +411,7 @@ describe('Unmocked: WeatherService Integration Tests', () => {
 
   describe('Mock weather variety and realism', () => {
     test('should generate realistic weather patterns', async () => {
-      const results: any[] = [];
+      const results: unknown[] = [];
       
       // Generate 50 weather samples to check distribution
       for (let i = 0; i < 50; i++) {
@@ -425,7 +425,7 @@ describe('Unmocked: WeatherService Integration Tests', () => {
       // Check we get reasonable variety
       const conditions = new Set(results.map(w => w!.condition));
       const temperatures = results.map(w => w!.temperature);
-      const humidities = results.map(w => w!.humidity);
+      const humidities = results.map(w => w?.humidity);
       
       // Should have at least 2 different conditions in 50 samples
       expect(conditions.size).toBeGreaterThanOrEqual(1);
@@ -456,7 +456,7 @@ describe('Unmocked: WeatherService Integration Tests', () => {
       
       samples.forEach(weather => {
         // Check logical correlation between condition and outdoor suitability
-        if (weather!.condition === 'rainy') {
+        if (weather?.condition === 'rainy') {
           // Rainy weather might still be marked as outdoor-suitable in mock mode
           // but temperature should be reasonable
           expect(weather!.temperature).toBeGreaterThanOrEqual(5);
