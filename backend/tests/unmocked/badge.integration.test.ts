@@ -67,7 +67,6 @@ const withAuth = (user: unknown) => (requestBuilder: any) => {
 let testUser1: unknown;
 let testUser2: unknown;
 let testBadge1: unknown;
-let testBadge2: unknown;
 
 // Helper function to create test users
 async function createTestUser(
@@ -1953,12 +1952,10 @@ describe('Unmocked Integration: BadgeService Error Handling and Coverage', () =>
 
     // Mock badgeModel.create to not create location badges (so they won't be found)
     const originalCreate = badgeModel.create;
-    let createCallCount = 0;
     badgeModel.create = jest.fn().mockImplementation(async (badgeData: any) => {
       // Skip creating location badges to trigger line 239
       if (badgeData.requirements?.type === BadgeRequirementType.LIBRARIES_VISITED ||
           badgeData.requirements?.type === BadgeRequirementType.CAFES_VISITED) {
-        createCallCount++;
         // Return a mock badge but don't actually create it
         return {
           _id: new mongoose.Types.ObjectId(),

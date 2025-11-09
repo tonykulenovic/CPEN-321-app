@@ -6,7 +6,7 @@ import { locationModel } from '../models/location.model';
 import { friendshipModel } from '../models/friendship.model';
 import { userModel } from '../models/user.model';
 import { pinModel } from '../models/pin.model';
-import { LocationUpdateEvent, ILocation } from '../types/friends.types';
+import { ILocation } from '../types/friends.types';
 import { BadgeService } from '../services/badge.service';
 import { BadgeRequirementType } from '../types/badge.types';
 import { PinCategory } from '../types/pins.types';
@@ -267,18 +267,6 @@ export class LocationGateway {
     
     if (trackers && trackers.size > 0) {
       logger.info(`📡 Broadcasting to ${trackers.size} friends tracking user ${userIdStr}`);
-      const locationEvent: LocationUpdateEvent = {
-        type: 'location.update',
-        version: 1,
-        userId: userIdStr,
-        lat: locationData.lat,
-        lng: locationData.lng,
-        accuracyM: locationData.accuracyM,
-        ts: locationData.ts,
-        ttlSec: 1800, // 30 minutes
-        approx: false, // Will be determined by privacy settings
-        idempotencyKey: `${userIdStr}-${Date.now()}`,
-      };
 
       // Send to each subscriber
       for (const viewerId of trackers) {

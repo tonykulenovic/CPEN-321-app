@@ -1,14 +1,12 @@
 import request from 'supertest';
 import express from 'express';
 import mongoose from 'mongoose';
-import { jest } from '@jest/globals';
 
 import userRoutes from '../../src/routes/user.routes';
 import { userModel } from '../../src/models/user.model';
 import { friendshipModel } from '../../src/models/friendship.model';
 import { badgeModel } from '../../src/models/badge.model';
 import { PrivacySettings } from '../../src/types/friends.types';
-import { IUser } from '../../src/types/user.types';
 
 // Create Express app with routes and authentication middleware
 function createAuthenticatedApp() {

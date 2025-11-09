@@ -1,7 +1,7 @@
 import request from 'supertest';
 import express from 'express';
 import mongoose from 'mongoose';
-import { jest, describe, test, beforeEach, expect } from '@jest/globals';
+import { describe, test, beforeEach, expect } from '@jest/globals';
 
 // Import models in order - Friendship must be registered before Pin routes use it
 import { friendshipModel } from '../../src/models/friendship.model'; // Register Friendship model FIRST
@@ -26,7 +26,7 @@ const createAuthenticatedApp = () => {
   return app;
 };
 
-const withAuth = (user: IUser, isAdmin = false) => (requestBuilder: unknown) => {
+const withAuth = (user: IUser, _isAdmin = false) => (requestBuilder: unknown) => {
   return requestBuilder
     .set('Authorization', 'Bearer test-token-12345')
     .set('x-dev-user-id', user._id.toString());
@@ -35,7 +35,6 @@ const withAuth = (user: IUser, isAdmin = false) => (requestBuilder: unknown) => 
 // Test user variables for consistent testing
 let testUser1: IUser;
 let testUser2: IUser;
-let testAdmin: IUser;
 
 describe('Unmocked Integration: Pins API', () => {
   beforeEach(async () => {

@@ -1,9 +1,6 @@
 import { Request, Response } from 'express';
 import mongoose from 'mongoose';
 import {
-  SendFriendRequestRequest,
-  FriendRequestsQuery,
-  UpdateFriendSettingsRequest,
   sendFriendRequestSchema,
   friendRequestsQuerySchema,
   updateFriendSettingsSchema,
@@ -13,7 +10,6 @@ import {
 } from '../types/friends.types';
 import { friendshipModel } from '../models/friendship.model';
 import { userModel } from '../models/user.model';
-import { locationModel } from '../models/location.model';
 import { notificationService } from '../services/notification.service';
 import logger from '../utils/logger.util';
 import { BadgeService } from '../services/badge.service';

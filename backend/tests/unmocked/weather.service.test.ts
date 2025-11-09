@@ -319,7 +319,7 @@ describe('Unmocked: WeatherService Integration Tests', () => {
       
       const results = await Promise.all(weatherCalls);
       
-      results.forEach((weather, index) => {
+      results.forEach((weather) => {
         expect(weather).not.toBeNull();
         expect(['clear', 'cloudy', 'rainy']).toContain(weather!.condition);
         

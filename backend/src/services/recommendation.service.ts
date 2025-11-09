@@ -1,12 +1,10 @@
 import mongoose from 'mongoose';
 import { pinModel } from '../models/pin.model';
-import { pinVoteModel } from '../models/pinVote.model';
-import { userModel } from '../models/user.model';
 import { locationModel } from '../models/location.model';
 import { weatherService } from './weather.service';
 import { notificationService } from './notification.service';
 import { placesApiService, RecommendationPlace } from './places.service';
-import { MealCategory, IPin, PinCategory } from '../types/pins.types';
+import { IPin, PinCategory, MealCategory } from '../types/pins.types';
 import logger from '../utils/logger.util';
 
 interface RecommendationScore {
@@ -212,7 +210,7 @@ export class RecommendationService {
     lng: number,
     maxDistance: number,
     // mealCategories kept for signature compatibility but not required
-    mealCategories: MealCategory[]
+    _mealCategories: MealCategory[]
   ): Promise<IPin[]> {
     try {
       // Get all active SHOPS_SERVICES pins (restaurants/cafes)
@@ -405,7 +403,7 @@ export class RecommendationService {
   /**
    * Generate human-readable reason for recommendation
    */
-  private generateRecommendationReason(pin: IPin, factors: any, weather: any): string {
+  private generateRecommendationReason(pin: IPin, factors: any, _weather: any): string {
     const reasons = [];
 
     if (factors?.proximity >= 20) reasons.push('very close to you');
@@ -561,7 +559,7 @@ export class RecommendationService {
     userLocation: { lat: number; lng: number },
     mealType: 'breakfast' | 'lunch' | 'dinner',
     weather: any,
-    userPreferences: any
+    _userPreferences: any
   ): RecommendationScore {
     const distance = place.distance;
     

@@ -7,7 +7,7 @@
 /**
  * Creates a valid test JWT token using the dev bypass system
  */
-export function createValidToken(userId = '507f1f77bcf86cd799439011'): string {
+export function createValidToken(_userId = '507f1f77bcf86cd799439011'): string {
   return 'Bearer test-token-12345';
 }
 
@@ -94,7 +94,7 @@ export function createExpiredToken(): string {
 /**
  * Creates an admin JWT token using the dev bypass system
  */
-export function createAdminToken(userId = '507f1f77bcf86cd799439013'): string {
+export function createAdminToken(_userId = '507f1f77bcf86cd799439013'): string {
   // Using dev bypass system - in real implementation would include admin role
   return 'Bearer admin-test-token-12345';
 }

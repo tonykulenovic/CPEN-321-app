@@ -63,8 +63,6 @@ const withAuth = (user: unknown) => (requestBuilder: any) => {
 // Test data
 let testUser1: any;
 let testUser2: unknown;
-let testPin1: unknown;
-let testPin2: unknown;
 
 // Helper function to create test users
 async function createTestUser(
