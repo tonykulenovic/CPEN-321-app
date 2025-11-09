@@ -54,7 +54,10 @@ export class BadgeController {
     next: NextFunction
   ) {
     try {
-      const user = req.user!;
+      const user = req.user;
+      if (!user) {
+        return res.status(401).json({ message: 'Unauthorized' });
+      }
       const userBadges = await badgeModel.getUserBadges(user._id);
 
       res.status(200).json({
@@ -80,7 +83,10 @@ export class BadgeController {
     next: NextFunction
   ) {
     try {
-      const user = req.user!;
+      const user = req.user;
+      if (!user) {
+        return res.status(401).json({ message: 'Unauthorized' });
+      }
       const availableBadges = await badgeModel.getAvailableBadges(user._id);
 
       res.status(200).json({
@@ -106,7 +112,10 @@ export class BadgeController {
     next: NextFunction
   ) {
     try {
-      const user = req.user!;
+      const user = req.user;
+      if (!user) {
+        return res.status(401).json({ message: 'Unauthorized' });
+      }
       const progress = await BadgeService.getUserBadgeProgress(user._id);
 
       res.status(200).json({
@@ -132,7 +141,19 @@ export class BadgeController {
     next: NextFunction
   ) {
     try {
-      const user = req.user!;
+      const user = req.user;
+      if (!user) {
+        res.status(401).json({ 
+          message: 'Unauthorized',
+          data: {
+            totalBadges: 0,
+            earnedBadges: 0,
+            recentBadges: [],
+            categoryBreakdown: {} as Record<BadgeCategory, number>,
+          }
+        });
+        return;
+      }
       const stats = await BadgeService.getUserBadgeStats(user._id);
 
       res.status(200).json({
