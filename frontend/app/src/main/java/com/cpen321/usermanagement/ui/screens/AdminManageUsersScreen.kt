@@ -10,6 +10,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -17,6 +18,7 @@ import androidx.compose.ui.unit.sp
 import coil.compose.SubcomposeAsyncImage
 import com.cpen321.usermanagement.data.remote.dto.User
 import com.cpen321.usermanagement.ui.viewmodels.AdminViewModel
+import com.cpen321.usermanagement.utils.TestTags
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import kotlinx.coroutines.launch
 
@@ -64,6 +66,7 @@ fun AdminManageUsersScreen(
     }
     
     Scaffold(
+        modifier = Modifier.testTag(TestTags.ADMIN_MANAGE_USERS_SCREEN),
         topBar = {
             TopAppBar(
                 title = {
@@ -109,8 +112,10 @@ fun AdminManageUsersScreen(
                     color = Color(0xFF4A90E2)
                 )
             } else {
-                // Filter out admins from the list
-                val nonAdminUsers = adminUiState.users.filter { !it.isAdmin }
+                // Filter out admins and system accounts from the list
+                val nonAdminUsers = adminUiState.users.filter { 
+                    !it.isAdmin && it.email != "system@universe.app"
+                }
                 
                 if (nonAdminUsers.isEmpty()) {
                     Column(
@@ -213,7 +218,9 @@ private fun UserManagementCard(
     onDeleteClick: () -> Unit
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag(TestTags.adminUserCardTag(user._id)),
         colors = CardDefaults.cardColors(
             containerColor = if (user.isSuspended) Color(0xFF2E1A1A) else Color(0xFF1A1A2E)
         )
@@ -307,6 +314,10 @@ private fun UserManagementCard(
                 // Suspend/Unsuspend Button
                 IconButton(
                     onClick = if (user.isSuspended) onUnsuspendClick else onSuspendClick,
+                    modifier = Modifier.testTag(
+                        if (user.isSuspended) TestTags.adminUnsuspendButtonTag(user._id) 
+                        else TestTags.adminSuspendButtonTag(user._id)
+                    ),
                     colors = IconButtonDefaults.iconButtonColors(
                         contentColor = if (user.isSuspended) Color(0xFF2ECC71) else Color(0xFFF39C12)
                     )
@@ -320,6 +331,7 @@ private fun UserManagementCard(
                 // Delete Button
                 IconButton(
                     onClick = onDeleteClick,
+                    modifier = Modifier.testTag(TestTags.adminDeleteUserButtonTag(user._id)),
                     colors = IconButtonDefaults.iconButtonColors(
                         contentColor = Color(0xFFE74C3C)
                     )
@@ -364,6 +376,7 @@ private fun UserActionDialog(
     
     AlertDialog(
         onDismissRequest = onDismiss,
+        modifier = Modifier.testTag(TestTags.ADMIN_USER_ACTION_DIALOG),
         title = {
             Text(text = title, color = Color.White)
         },
@@ -373,6 +386,7 @@ private fun UserActionDialog(
         confirmButton = {
             TextButton(
                 onClick = onConfirm,
+                modifier = Modifier.testTag(TestTags.ADMIN_USER_ACTION_CONFIRM),
                 colors = ButtonDefaults.textButtonColors(
                     contentColor = confirmColor
                 )
@@ -381,7 +395,10 @@ private fun UserActionDialog(
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
+            TextButton(
+                onClick = onDismiss,
+                modifier = Modifier.testTag(TestTags.ADMIN_USER_ACTION_CANCEL)
+            ) {
                 Text("Cancel", color = Color.White)
             }
         },
