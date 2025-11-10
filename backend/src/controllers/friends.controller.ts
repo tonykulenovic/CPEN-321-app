@@ -487,7 +487,10 @@ export async function declineFriendRequest(req: Request, res: Response): Promise
     }
 
     // 4. Verify user is the recipient (friendId) and request is still pending
-    if (friendshipRequest.friendId.toString() !== currentUserId.toString()) {
+    // Extract the actual ObjectId from the populated friendId field
+    const friendId = friendshipRequest.friendId._id || friendshipRequest.friendId;
+    
+    if (friendId.toString() !== currentUserId.toString()) {
       res.status(403).json({
         message: 'You are not authorized to decline this friend request',
       });
@@ -501,14 +504,14 @@ export async function declineFriendRequest(req: Request, res: Response): Promise
       return;
     }
 
-    // 5. Update status to 'declined'
-    await friendshipModel.updateStatus(friendshipRequest._id, 'declined');
+    // 5. Delete the friend request (no need to keep declined requests)
+    await friendshipModel.deleteById(friendshipRequest._id);
 
     // 6. Return success response
     res.status(200).json({
       message: 'Friend request declined successfully',
       data: {
-        status: 'declined',
+        status: 'deleted',
       },
     });
   } catch (error) {
