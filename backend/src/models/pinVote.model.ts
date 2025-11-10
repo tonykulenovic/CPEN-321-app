@@ -25,9 +25,9 @@ export class PinVoteModel {
     pinId: mongoose.Types.ObjectId,
     voteType: 'upvote' | 'downvote'
   ): Promise<{ success: boolean; action: 'added' | 'removed' | 'changed'; upvotes: number; downvotes: number }> {
-    // Skip transactions in test environment (MongoMemoryServer doesn't support replica sets by default)
-    // This follows the same pattern as auth.middleware.ts which checks NODE_ENV
-    const useTransactions = process.env.NODE_ENV !== 'test';
+    // Skip transactions in test and development environments
+    // Transactions require MongoDB replica set which may not be configured locally
+    const useTransactions = process.env.NODE_ENV === 'production';
     const session = useTransactions ? await mongoose.startSession() : null;
     if (session) {
       session.startTransaction();
@@ -97,6 +97,20 @@ export class PinVoteModel {
         session ? { session, new: true } : { new: true }
       );
 
+      if (!updatedPin) {
+        if (session) {
+          await session.abortTransaction();
+        }
+        throw new Error('Pin not found');
+      }
+
+      if (!updatedPin.rating) {
+        if (session) {
+          await session.abortTransaction();
+        }
+        throw new Error('Pin rating structure is invalid');
+      }
+
       if (session) {
         await session.commitTransaction();
       }
@@ -104,8 +118,8 @@ export class PinVoteModel {
       return {
         success: true,
         action,
-        upvotes: updatedPin.rating.upvotes,
-        downvotes: updatedPin.rating.downvotes
+        upvotes: updatedPin.rating.upvotes || 0,
+        downvotes: updatedPin.rating.downvotes || 0
       };
     } catch (error) {
       if (session) {
