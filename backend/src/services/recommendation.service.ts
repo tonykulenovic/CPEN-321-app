@@ -120,7 +120,7 @@ export class RecommendationService {
       const body = `Try ${name} - ${distanceText}. ${topRecommendation.reason}`;
 
       // Determine ID for notification (pin ID or place ID)
-      const locationId = (topRecommendation.pin?._id?.toString() ?? topRecommendation.place?.id) ?? 'unknown';
+      const locationId = (topRecommendation.pin?._id.toString() ?? topRecommendation.place?.id) ?? 'unknown';
 
       const sent = await notificationService.sendLocationRecommendationNotification(
         userId.toString(),
@@ -164,7 +164,7 @@ export class RecommendationService {
       // Get user's visited pins from user model using Mongoose directly
       const User = mongoose.model('User');
       const user = await User.findById(userId).select('visitedPins').lean() as { visitedPins?: string[] };
-      const visitedPinsStrings = user?.visitedPins ?? [];
+      const visitedPinsStrings = user.visitedPins ?? [];
       
       // Convert string array to ObjectId array
       const visitedPins = visitedPinsStrings.map((pinId: string) => new mongoose.Types.ObjectId(pinId));
@@ -236,7 +236,7 @@ export class RecommendationService {
         const businessHours = (pin.metadata?.businessHours) as
           | Record<string, { open: string; close: string } | null>
           | undefined;
-        if (!businessHours || !businessHours[currentDay]) {
+        if (!businessHours?.[currentDay]) {
           return true; // If no hours specified, assume open
         }
 
@@ -260,8 +260,8 @@ export class RecommendationService {
     pin: IPin,
     userLocation: { lat: number; lng: number },
     mealType: 'breakfast' | 'lunch' | 'dinner',
-    weather: any,
-    userPreferences: any
+    weather: unknown,
+    userPreferences: unknown
   ): Promise<RecommendationScore> {
     const distance = this.calculateDistance(
       userLocation.lat,
@@ -341,16 +341,18 @@ export class RecommendationService {
   /**
    * Score based on user's past preferences (simplified - uses existing votes and visits)
    */
-  private scoreUserPreference(pin: IPin, userPreferences: any): number {
+  private scoreUserPreference(pin: IPin, userPreferences: unknown): number {
     let score = 0;
 
     // Check if user has upvoted this pin before (strong positive signal)
-    if (userPreferences.likedPins?.some((id: any) => id.equals(pin._id))) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+    if ((userPreferences as any).likedPins?.some((id: any) => id.equals(pin._id))) {
       score += 20; // User upvoted this place - strong preference
     }
     
     // Check if user has visited this pin before (moderate positive signal)
-    if (userPreferences.visitedPins?.some((id: any) => id.equals(pin._id))) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+    if ((userPreferences as any).visitedPins?.some((id: any) => id.equals(pin._id))) {
       score += 10; // Been here before - moderate preference
     }
 
@@ -366,7 +368,7 @@ export class RecommendationService {
   /**
    * Score based on weather conditions
    */
-  private scoreWeather(pin: IPin, weather: any): number {
+  private scoreWeather(pin: IPin, weather: unknown): number {
     if (!weather) return 5; // Default score
 
     const hasOutdoorSeating = pin.metadata?.hasOutdoorSeating ?? false;
@@ -560,7 +562,7 @@ export class RecommendationService {
     userLocation: { lat: number; lng: number },
     mealType: 'breakfast' | 'lunch' | 'dinner',
     weather: any,
-    _userPreferences: any
+    _userPreferences: unknown
   ): RecommendationScore {
     const distance = place.distance;
     

@@ -121,9 +121,9 @@ describe('Unmocked Integration: Pins API', () => {
       // Verify pin was created in database
       const pin = await pinModel.findById(new mongoose.Types.ObjectId(response.body.data.pin._id));
       expect(pin).toBeTruthy();
-      expect(pin!.name).toBe('Test Study Spot');
+      expect(pin?.name).toBe('Test Study Spot');
       // Handle populated createdBy (object) or ObjectId
-      const createdBy = pin!.createdBy as unknown; // Type assertion for flexibility
+      const createdBy = pin?.createdBy as unknown; // Type assertion for flexibility
       const createdById = (createdBy && typeof createdBy === 'object' && '_id' in createdBy)
         ? createdBy._id.toString()
         : createdBy.toString();

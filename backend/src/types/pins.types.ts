@@ -174,7 +174,7 @@ export interface PinResponse {
   data?: {
     pin: IPin;
   };
-};
+}
 
 export interface PinsListResponse {
   message: string;

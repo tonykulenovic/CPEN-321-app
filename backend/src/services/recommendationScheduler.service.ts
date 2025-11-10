@@ -124,7 +124,7 @@ export class RecommendationSchedulerService {
   /**
    * Manually trigger recommendations for a specific meal type
    */
-  public async triggerMealRecommendations(mealTime: MealTimeConfig, forceExecute: boolean = false): Promise<void> {
+  public async triggerMealRecommendations(mealTime: MealTimeConfig, forceExecute = false): Promise<void> {
     const currentHour = new Date().getHours();
     
     // Check if we're in the correct time window (unless forced)

@@ -331,7 +331,7 @@ export class UserModel {
   ): Promise<IUser | null> {
     try {
       // Handle partial updates with dot notation for nested objects
-      const updateObject: Record<string, any> = {};
+      const updateObject: Record<string, unknown> = {};
       
       if (privacyUpdates.profileVisibleTo !== undefined) {
         updateObject['privacy.profileVisibleTo'] = privacyUpdates.profileVisibleTo;
@@ -447,7 +447,7 @@ export class UserModel {
 
       let newStreak = 1;
 
-      if (user.loginTracking?.lastLoginDate) {
+      if (user.loginTracking.lastLoginDate) {
         const lastLogin = new Date(user.loginTracking.lastLoginDate);
         const lastLoginDate = new Date(lastLogin.getFullYear(), lastLogin.getMonth(), lastLogin.getDate());
 
@@ -559,7 +559,7 @@ export class UserModel {
       today.setHours(0, 0, 0, 0); // Start of today
 
       // If no recommendations data or different date, reset for new day
-      if (!user.recommendations || !user.recommendations.currentDate || 
+      if (!user.recommendations?.currentDate || 
           user.recommendations.currentDate.getTime() !== today.getTime()) {
         
         await this.user.findByIdAndUpdate(userId, {

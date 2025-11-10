@@ -144,7 +144,7 @@ export class BadgeModel {
   }
 
   // Badge CRUD operations
-  async create(badgeData: any): Promise<IBadge> {
+  async create(badgeData: unknown): Promise<IBadge> {
     try {
       const validatedData = createBadgeSchema.parse(badgeData);
       return await this.badge.create(validatedData);
@@ -167,7 +167,7 @@ export class BadgeModel {
     }
   }
 
-  async findAll(filters: any = {}): Promise<IBadge[]> {
+  async findAll(filters: Record<string, any> = {}): Promise<IBadge[]> {
     try {
       return await this.badge.find(filters).sort({ createdAt: -1 });
     } catch (error) {
@@ -215,9 +215,9 @@ export class BadgeModel {
     try {
       // Get badge to get target for default progress
       const badge = await this.badge.findById(badgeId);
-      const defaultTarget = badge?.requirements?.target ?? 0;
+      const defaultTarget = badge?.requirements.target ?? 0;
 
-      const userBadgeData: any = {
+      const userBadgeData: Record<string, any> = {
         userId,
         badgeId,
         earnedAt: new Date(),

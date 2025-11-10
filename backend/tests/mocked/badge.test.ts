@@ -16,7 +16,7 @@ const app = express();
 app.use(express.json());
 
 // Mock authentication middleware
-const authenticateToken = (req: any, res: any, next: any) => {
+const authenticateToken = (req: unknown, res: any, next: any) => {
   req.user = {
     _id: new mongoose.Types.ObjectId('507f1f77bcf86cd799439011'),
     name: 'Test User',
@@ -68,7 +68,7 @@ describe('Mocked: GET /badges (getAllBadges)', () => {
       },
     ];
 
-    mockBadgeModel.findAll.mockResolvedValue(mockBadges as any);
+    mockBadgeModel.findAll.mockResolvedValue(mockBadges as unknown);
 
     const response = await request(app)
       .get('/badges')
@@ -167,11 +167,11 @@ describe('Mocked: GET /badges (getAllBadges)', () => {
     const res = {
       status: jest.fn().mockReturnThis(),
       json: jest.fn(),
-    } as any;
+    } as unknown;
 
     mockBadgeModel.findAll.mockRejectedValue('String error');
 
-    await badgeController.getAllBadges(req as any, res, mockNext);
+    await badgeController.getAllBadges(req as unknown, res, mockNext);
 
     expect(mockNext).toHaveBeenCalledWith('String error');
   });
@@ -208,7 +208,7 @@ describe('Mocked: GET /badges/user/earned (getUserBadges)', () => {
       },
     ];
 
-    mockBadgeModel.getUserBadges.mockResolvedValue(mockUserBadges as any);
+    mockBadgeModel.getUserBadges.mockResolvedValue(mockUserBadges as unknown);
 
     const response = await request(app)
       .get('/badges/user/earned')
@@ -252,7 +252,7 @@ describe('Mocked: GET /badges/user/earned (getUserBadges)', () => {
   // Expected behavior: calls next with error
   test('Handle non-Error exception when fetching user badges', async () => {
     const mockNext = jest.fn();
-    const req = { user: { _id: new mongoose.Types.ObjectId() } } as any;
+    const req = { user: { _id: new mongoose.Types.ObjectId() } } as unknown;
     const res = {
       status: jest.fn().mockReturnThis(),
       json: jest.fn(),
@@ -286,7 +286,7 @@ describe('Mocked: GET /badges/user/available (getAvailableBadges)', () => {
       },
     ];
 
-    mockBadgeModel.getAvailableBadges.mockResolvedValue(mockAvailableBadges as any);
+    mockBadgeModel.getAvailableBadges.mockResolvedValue(mockAvailableBadges as unknown);
 
     const response = await request(app)
       .get('/badges/user/available')
@@ -374,7 +374,7 @@ describe('Mocked: GET /badges/user/progress (getBadgeProgress)', () => {
       ],
     };
 
-    mockBadgeService.getUserBadgeProgress.mockResolvedValue(mockProgress as any);
+    mockBadgeService.getUserBadgeProgress.mockResolvedValue(mockProgress as unknown);
 
     const response = await request(app)
       .get('/badges/user/progress')
@@ -550,7 +550,7 @@ describe('Mocked: POST /badges/user/event (processBadgeEvent)', () => {
       },
     ];
 
-    mockBadgeService.processBadgeEvent.mockResolvedValue(mockEarnedBadges as any);
+    mockBadgeService.processBadgeEvent.mockResolvedValue(mockEarnedBadges as unknown);
 
     const response = await request(app)
       .post('/badges/user/event')

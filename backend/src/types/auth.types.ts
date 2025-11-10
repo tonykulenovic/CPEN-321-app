@@ -18,7 +18,7 @@ export const signUpUserSchema = z.object({
 export type AuthenticateUserRequest = z.infer<typeof authenticateUserSchema>;
 export type SignUpUserRequest = z.infer<typeof signUpUserSchema>;
 
-export type AuthenticateUserResponse = {
+export interface AuthenticateUserResponse {
   message: string;
   data?: AuthResult;
 };
@@ -28,7 +28,7 @@ export type AuthenticateUserResponse = {
 export interface AuthResult {
   token: string;
   user: IUser;
-};
+}
 
 declare global {
   namespace Express {

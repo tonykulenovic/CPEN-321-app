@@ -18,7 +18,6 @@ import { seedCafes } from './scripts/seedCafes';
 import { seedRestaurants } from './scripts/seedRestaurants';
 import { firebaseService } from './config/firebase';
 import { recommendationScheduler } from './services/recommendationScheduler.service';
-dotenv.config();
 
 
 const app = express();

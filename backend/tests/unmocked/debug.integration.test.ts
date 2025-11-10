@@ -12,7 +12,7 @@ function createAuthenticatedApp() {
   app.use(express.json());
 
   // Add authentication middleware that populates req.user from database
-  app.use(async (req: any, res: any, next: any) => {
+  app.use(async (req: unknown, res: any, next: any) => {
     const userId = req.headers['x-dev-user-id'];
     const authHeader = req.headers.authorization;
 
@@ -26,7 +26,7 @@ function createAuthenticatedApp() {
 
     try {
       // Find user in database
-      const user = await (userModel as any).user.findById(new mongoose.Types.ObjectId(userId));
+      const user = await (userModel as unknown).user.findById(new mongoose.Types.ObjectId(userId));
       if (!user) {
         return res.status(401).json({
           error: 'User not found',
@@ -58,10 +58,10 @@ describe('Integration: Debug Controller', () => {
     app = createAuthenticatedApp();
 
     // Clean up existing data
-    await (userModel as any).user.deleteMany({});
+    await (userModel as unknown).user.deleteMany({});
 
     // Create test users
-    const testUser = new (userModel as any).user({
+    const testUser = new (userModel as unknown).user({
       googleId: 'test-google-id-123',
       name: 'Test User',
       email: 'test@example.com',
@@ -73,7 +73,7 @@ describe('Integration: Debug Controller', () => {
     await testUser.save();
     testUserId = testUser._id.toString();
 
-    const secondUser = new (userModel as any).user({
+    const secondUser = new (userModel as unknown).user({
       googleId: 'test-google-id-456',
       name: 'Second User',
       email: 'second@example.com',

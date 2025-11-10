@@ -13,7 +13,7 @@ import { userModel } from '../../src/models/user.model';
 jest.mock('../../src/services/media.service');
 jest.mock('../../src/models/user.model');
 jest.mock('../../src/middleware/auth.middleware', () => ({
-  authenticateToken: (req: unknown, res: any, next: any) => {
+  authenticateToken: (req: unknown, res: unknown, next: any) => {
     req.user = {
       _id: new mongoose.Types.ObjectId('507f1f77bcf86cd799439011'),
       name: 'Test User',
