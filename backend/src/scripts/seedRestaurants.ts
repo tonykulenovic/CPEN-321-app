@@ -277,7 +277,7 @@ export async function seedRestaurants(): Promise<void> {
           location: {
             latitude: lat,
             longitude: lng,
-            address: address,
+            address,
           },
           metadata: {
             subtype: 'restaurant', // Add subtype to distinguish from cafes
@@ -348,7 +348,8 @@ export async function seedRestaurants(): Promise<void> {
       .filter((name: string) => name !== 'Unnamed Restaurant');
     
     // Delete pre-seeded restaurants that are no longer in Google Places results
-    const deleteResult = await pinModel['pin'].deleteMany({
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    const deleteResult = await (pinModel as any).pin.deleteMany({
       isPreSeeded: true,
       category: PinCategory.SHOPS_SERVICES,
       'metadata.subtype': 'restaurant',

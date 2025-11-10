@@ -479,7 +479,7 @@ export class BadgeService {
       const User = mongoose.model('User');
       const user = await User.findById(userId).select('visitedPins').populate('visitedPins');
       
-      if (!user || !user.visitedPins) {
+      if (!user?.visitedPins) {
         logger.warn(`☕ User ${userId.toString()} has no visitedPins`);
         return false;
       }

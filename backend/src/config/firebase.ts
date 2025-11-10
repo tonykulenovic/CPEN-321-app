@@ -45,7 +45,7 @@ class FirebaseService {
         token: string,
         title: string,
         body: string,
-        data?: { [key: string]: string }
+        data?: Record<string, string>
     ): Promise<boolean> {
         const messaging = this.getMessaging();
         if (!messaging) {
@@ -85,7 +85,7 @@ class FirebaseService {
             logger.info(`   📧 Message ID: ${response}`);
             return true;
         } catch (error: unknown) {
-            const firebaseError = error as { code?: string; message?: string; details?: any };
+            const firebaseError = error as { code?: string; message?: string; details?: unknown };
             logger.error(`❌ [FCM] Error sending notification:`, error);
             logger.error(`   🔢 Error code: ${firebaseError.code ?? 'N/A'}`);
             logger.error(`   💬 Error message: ${firebaseError.message ?? 'N/A'}`);

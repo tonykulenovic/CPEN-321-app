@@ -54,7 +54,7 @@ describe('Unmocked: LocationGateway Business Logic', () => {
       const lat = 49.2827;
       const lng = -123.1207;
 
-      const distance = (locationGateway as any).calculateDistance(
+      const distance = (locationGateway as unknown).calculateDistance(
         lat, lng, lat, lng
       );
 

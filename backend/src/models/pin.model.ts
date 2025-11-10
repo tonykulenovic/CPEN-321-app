@@ -165,7 +165,7 @@ export class PinModel {
     userId?: mongoose.Types.ObjectId;
   }): Promise<{ pins: IPin[]; total: number }> {
     try {
-      const query: Record<string, any> = { status: PinStatus.ACTIVE };
+      const query: Record<string, unknown> = { status: PinStatus.ACTIVE };
       const page = filters.page ?? 1;
       const limit = filters.limit ?? 20;
       const skip = (page - 1) * limit;
@@ -218,7 +218,7 @@ export class PinModel {
             }
             
             // User can always see their own pins
-            if (pin.createdBy._id.equals(filters.userId!)) {
+            if (pin.createdBy._id.equals(filters.userId)) {
               logger.info(`Pin "${pin.name}" belongs to current user, showing`);
               return pin;
             }

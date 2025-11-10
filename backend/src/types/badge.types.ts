@@ -49,7 +49,7 @@ export interface BadgeRequirements {
   type: BadgeRequirementType;
   target: number;
   timeframe?: string; // e.g., 'daily', 'weekly', 'monthly', 'all-time'
-  conditions?: Record<string, any>; // Additional conditions
+  conditions?: Record<string, unknown>; // Additional conditions
 }
 
 export enum BadgeRequirementType {
@@ -112,7 +112,7 @@ export const updateBadgeSchema = z.object({
 export type CreateBadgeRequest = z.infer<typeof createBadgeSchema>;
 export type UpdateBadgeRequest = z.infer<typeof updateBadgeSchema>;
 
-export type BadgeResponse = {
+export interface BadgeResponse {
   message: string;
   data?: {
     badge?: IBadge;
@@ -122,13 +122,12 @@ export type BadgeResponse = {
     progress?: BadgeProgress | {
       earned: IUserBadge[];
       available: IBadge[];
-      progress: Array<{ badge: IBadge; progress: BadgeProgress | null }>;
+      progress: { badge: IBadge; progress: BadgeProgress | null }[];
     };
   };
 };
 
-export type BadgeStatsResponse = {
-  message: string;
+export interface BadgeStatsResponse {  message: string;
   data: {
     totalBadges: number;
     earnedBadges: number;

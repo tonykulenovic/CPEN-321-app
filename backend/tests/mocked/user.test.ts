@@ -18,7 +18,7 @@ const app = express();
 app.use(express.json());
 
 // Mock authentication middleware directly in routes
-const authenticateToken = (req: unknown, res: any, next: any) => {
+const authenticateToken = (req: unknown, res: unknown, next: any) => {
   req.user = {
     _id: new mongoose.Types.ObjectId('507f1f77bcf86cd799439011'),
     name: 'Test User',
@@ -38,7 +38,7 @@ app.get('/users/profile', authenticateToken, (req, res) => userController.getPro
 app.post('/users/profile', authenticateToken, (req, res, next) => void userController.updateProfile(req, res, next));
 app.delete('/users/profile', authenticateToken, (req, res, next) => void userController.deleteProfile(req, res, next));
 app.get('/users/search', authenticateToken, (req, res) => void userController.searchUsers(req, res));
-app.get('/users/me', authenticateToken, (req, res) => userController.getMe(req, res));
+app.get('/users/me', authenticateToken, (req, res) => { userController.getMe(req, res); });
 app.patch('/users/me/privacy', authenticateToken, (req, res) => void userController.updatePrivacy(req, res));
 app.put('/users/me/fcm-token', authenticateToken, (req, res) => void userController.updateFcmToken(req, res));
 app.delete('/users/me/fcm-token', authenticateToken, (req, res) => void userController.removeFcmToken(req, res));
@@ -166,7 +166,7 @@ describe('Mocked: GET /users/:userId/profile', () => {
       }
     };
 
-    mockUserModel.findById.mockResolvedValueOnce(mockTargetUser as any);
+    mockUserModel.findById.mockResolvedValueOnce(mockTargetUser as unknown);
     mockFriendshipModel.areFriends.mockResolvedValueOnce(false);
     mockUserModel.getOnlineStatus.mockResolvedValueOnce(new Map()); // Add missing mock
 
@@ -454,7 +454,7 @@ describe('Mocked: PATCH /users/me/privacy', () => {
       }
     };
 
-    mockUserModel.updatePrivacy.mockResolvedValueOnce(mockUpdatedUser as any);
+    mockUserModel.updatePrivacy.mockResolvedValueOnce(mockUpdatedUser as unknown);
 
     const response = await request(app)
       .patch('/users/me/privacy')
@@ -583,7 +583,7 @@ describe('Mocked: DELETE /users/me/fcm-token', () => {
       fcmToken: null
     };
 
-    mockUserModel.removeFcmToken.mockResolvedValueOnce(mockUpdatedUser as any);
+    mockUserModel.removeFcmToken.mockResolvedValueOnce(mockUpdatedUser as unknown);
 
     const response = await request(app)
       .delete('/users/me/fcm-token')

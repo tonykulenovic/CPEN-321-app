@@ -18,7 +18,7 @@ function createAuthenticatedApp() {
   app.use(express.json());
 
   // Add authentication middleware that populates req.user from database
-  app.use(async (req: unknown, res: any, next: any) => {
+  app.use(async (req: unknown, res: unknown, next: any) => {
     const userId = req.headers['x-dev-user-id'];
     const authHeader = req.headers.authorization;
 
@@ -32,7 +32,7 @@ function createAuthenticatedApp() {
 
     try {
       // Find user in database
-      const user = await (userModel as any).user.findById(new mongoose.Types.ObjectId(userId));
+      const user = await (userModel as unknown).user.findById(new mongoose.Types.ObjectId(userId));
       if (!user) {
         return res.status(401).json({
           error: 'User not found',
@@ -57,7 +57,7 @@ function createAuthenticatedApp() {
 }
 
 // Helper function to add authentication to requests
-const withAuth = (user: unknown) => (requestBuilder: any) => {
+const withAuth = (user: unknown) => (requestBuilder: unknown) => {
   return requestBuilder
     .set('Authorization', 'Bearer test-token-12345')
     .set('x-dev-user-id', user._id.toString());
@@ -112,9 +112,9 @@ async function createTestBadge(
 describe('Unmocked Integration: GET /badges (getAllBadges)', () => {
   beforeEach(async () => {
     // Clear collections before each test
-    await (badgeModel as any).badge.deleteMany({});
-    await (badgeModel as any).userBadge.deleteMany({});
-    await (userModel as any).user.deleteMany({});
+    await (badgeModel as unknown).badge.deleteMany({});
+    await (badgeModel as unknown).userBadge.deleteMany({});
+    await (userModel as unknown).user.deleteMany({});
 
     // Create test badges
     testBadge1 = await createTestBadge(
@@ -190,7 +190,7 @@ describe('Unmocked Integration: GET /badges (getAllBadges)', () => {
       BadgeRequirementType.LOGIN_STREAK,
       10
     );
-    await (badgeModel as any).badge.updateOne(
+    await (badgeModel as unknown).badge.updateOne(
       { name: 'Inactive Badge' },
       { isActive: false }
     );
@@ -207,9 +207,9 @@ describe('Unmocked Integration: GET /badges (getAllBadges)', () => {
 
 describe('Unmocked Integration: GET /badges/user/earned (getUserBadges)', () => {
   beforeEach(async () => {
-    await badgeModel['badge'].deleteMany({});
-    await badgeModel['userBadge'].deleteMany({});
-    await userModel['user'].deleteMany({});
+    await badgeModel.badge.deleteMany({});
+    await badgeModel.userBadge.deleteMany({});
+    await userModel.user.deleteMany({});
 
     testUser1 = await createTestUser('Test User 1', 'testuser1', 'test1@example.com');
     testBadge1 = await createTestBadge(
@@ -437,7 +437,7 @@ describe('Unmocked Integration: POST /badges/user/event (processBadgeEvent)', ()
     const app = createAuthenticatedApp();
 
     // Update user stats to qualify for badge
-    await (userModel as any).user.updateOne(
+    await (userModel as unknown).user.updateOne(
       { _id: testUser1._id },
       { $set: { 'stats.pinsCreated': 1 } }
     );
@@ -687,7 +687,7 @@ describe('Unmocked Integration: BadgeModel methods', () => {
 
     // Mock badge.findById to return null
     const originalFindById = (badgeModel as unknown).badge.findById;
-    (badgeModel as any).badge.findById = jest.fn().mockResolvedValue(null);
+    (badgeModel as unknown).badge.findById = jest.fn().mockResolvedValue(null);
 
     // Mock userBadge.create to succeed
     const originalCreate = (badgeModel as unknown).userBadge.create;
@@ -718,14 +718,14 @@ describe('Unmocked Integration: BadgeModel methods', () => {
     const badgeId = new mongoose.Types.ObjectId();
 
     // Mock badge.findById to return badge without requirements
-    const originalFindById = (badgeModel as any).badge.findById;
+    const originalFindById = (badgeModel as unknown).badge.findById;
     (badgeModel as unknown).badge.findById = jest.fn().mockResolvedValue({
       _id: badgeId,
       requirements: null,
     });
 
     // Mock userBadge.create to succeed
-    const originalCreate = (badgeModel as any).userBadge.create;
+    const originalCreate = (badgeModel as unknown).userBadge.create;
     const mockUserBadge = {
       _id: new mongoose.Types.ObjectId(),
       userId: user._id,
@@ -734,7 +734,7 @@ describe('Unmocked Integration: BadgeModel methods', () => {
       earnedAt: new Date(),
       isDisplayed: true,
     };
-    (badgeModel as any).userBadge.create = jest.fn().mockResolvedValue(mockUserBadge);
+    (badgeModel as unknown).userBadge.create = jest.fn().mockResolvedValue(mockUserBadge);
 
     // Should still work but use defaultTarget of 0
     const userBadge = await badgeModel.assignBadge(user._id, badgeId);
@@ -743,8 +743,8 @@ describe('Unmocked Integration: BadgeModel methods', () => {
     expect(userBadge.progress?.target).toBe(0); // Should use default 0 when requirements is null
 
     // Restore
-    (badgeModel as any).badge.findById = originalFindById;
-    (badgeModel as any).userBadge.create = originalCreate;
+    (badgeModel as unknown).badge.findById = originalFindById;
+    (badgeModel as unknown).userBadge.create = originalCreate;
   });
 
   // Test assignBadge with badge missing target (line 218 - branch coverage)
@@ -754,7 +754,7 @@ describe('Unmocked Integration: BadgeModel methods', () => {
     
     // Mock badge.findById to return badge with requirements but no target
     const originalFindById = (badgeModel as any).badge.findById;
-    (badgeModel as any).badge.findById = jest.fn().mockResolvedValue({
+    (badgeModel as unknown).badge.findById = jest.fn().mockResolvedValue({
       _id: badgeId,
       requirements: { type: BadgeRequirementType.LOGIN_STREAK }, // No target property
     });
@@ -764,7 +764,7 @@ describe('Unmocked Integration: BadgeModel methods', () => {
     const mockUserBadge = {
       _id: new mongoose.Types.ObjectId(),
       userId: user._id,
-      badgeId: badgeId,
+      badgeId,
       progress: { current: 0, target: 0, percentage: 0, lastUpdated: new Date() },
       earnedAt: new Date(),
       isDisplayed: true,
@@ -1110,7 +1110,7 @@ describe('Unmocked Integration: BadgeService.checkBadgeQualification', () => {
     expect(refreshedUser?.visitedPins.length).toBe(3);
     
     // Verify pins have correct properties
-    const libraryPins = (refreshedUser?.visitedPins as unknown[]).filter((pin: any) => 
+    const libraryPins = (refreshedUser?.visitedPins as unknown[]).filter((pin: unknown) => 
       pin && pin.isPreSeeded === true && pin.category === 'study'
     );
     expect(libraryPins.length).toBe(3);
@@ -1173,7 +1173,7 @@ describe('Unmocked Integration: BadgeService.checkBadgeQualification', () => {
     expect(refreshedUser?.visitedPins.length).toBe(3);
     
     // Verify pins have correct properties
-    const cafePins = (refreshedUser?.visitedPins as unknown[]).filter((pin: any) => 
+    const cafePins = (refreshedUser?.visitedPins as unknown[]).filter((pin: unknown) => 
       pin && pin.isPreSeeded === true && pin.category === 'shops_services' && pin.metadata?.subtype === 'cafe'
     );
     expect(cafePins.length).toBe(3);
@@ -1307,7 +1307,7 @@ describe('Unmocked Integration: BadgeService.checkBadgeQualification', () => {
     });
 
     // Delete user to cause error in qualification check
-    await (userModel as any).user.deleteOne({ _id: testUser1._id });
+    await (userModel as unknown).user.deleteOne({ _id: testUser1._id });
 
     const event: BadgeEarningEvent = {
       eventType: BadgeRequirementType.LOGIN_STREAK,
@@ -1546,7 +1546,7 @@ describe('Unmocked Integration: BadgeService Error Handling and Coverage', () =>
   // Test error handling in checkBadgeQualification catch block (line 342-344)
   test('checkBadgeQualification handles error in qualification check', async () => {
     // Delete user to cause error in qualification check
-    await userModel['user'].deleteOne({ _id: testUser1._id });
+    await userModel.user.deleteOne({ _id: testUser1._id });
 
     const event: BadgeEarningEvent = {
       eventType: BadgeRequirementType.LOGIN_STREAK,
@@ -1757,8 +1757,8 @@ describe('Unmocked Integration: BadgeService Error Handling and Coverage', () =>
     };
 
     // Mock checkLoginStreak to throw error (which will be caught in checkBadgeQualification)
-    const originalCheckLoginStreak = (BadgeService as any).checkLoginStreak;
-    (BadgeService as any).checkLoginStreak = jest.fn().mockRejectedValue(new Error('Database error'));
+    const originalCheckLoginStreak = (BadgeService as unknown).checkLoginStreak;
+    (BadgeService as unknown).checkLoginStreak = jest.fn().mockRejectedValue(new Error('Database error'));
 
     const result = await (BadgeService as unknown).checkBadgeQualification(testUser1._id, badge, event);
     expect(result).toBe(false);
@@ -1875,7 +1875,7 @@ describe('Unmocked Integration: BadgeService Error Handling and Coverage', () =>
   // Test initializeDefaultBadges warning paths (lines 236-243, 238-240)
   test('initializeDefaultBadges handles missing location badges gracefully', async () => {
     // Delete location badges to trigger warning path
-    await (badgeModel as any).badge.deleteMany({
+    await (badgeModel as unknown).badge.deleteMany({
       'requirements.type': { $in: [BadgeRequirementType.LIBRARIES_VISITED, BadgeRequirementType.CAFES_VISITED] },
     });
 
@@ -1892,7 +1892,7 @@ describe('Unmocked Integration: BadgeService Error Handling and Coverage', () =>
   // Test initializeDefaultBadges warning when badges exist but can't be found (line 236-237)
   test('initializeDefaultBadges warns when location badges exist but cannot be found by query', async () => {
     // Create badges manually with incorrect query structure to trigger warning
-    await badgeModel['badge'].deleteMany({
+    await badgeModel.badge.deleteMany({
       'requirements.type': { $in: [BadgeRequirementType.LIBRARIES_VISITED, BadgeRequirementType.CAFES_VISITED] },
     });
 
@@ -1952,7 +1952,7 @@ describe('Unmocked Integration: BadgeService Error Handling and Coverage', () =>
 
     // Mock badgeModel.create to not create location badges (so they won't be found)
     const originalCreate = badgeModel.create;
-    badgeModel.create = jest.fn().mockImplementation(async (badgeData: any) => {
+    badgeModel.create = jest.fn().mockImplementation(async (badgeData: unknown) => {
       // Skip creating location badges to trigger line 239
       if (badgeData.requirements?.type === BadgeRequirementType.LIBRARIES_VISITED ||
           badgeData.requirements?.type === BadgeRequirementType.CAFES_VISITED) {
@@ -1960,7 +1960,7 @@ describe('Unmocked Integration: BadgeService Error Handling and Coverage', () =>
         return {
           _id: new mongoose.Types.ObjectId(),
           ...badgeData,
-        } as any;
+        } as unknown;
       }
       // Otherwise use original implementation
       return originalCreate.call(badgeModel, badgeData);

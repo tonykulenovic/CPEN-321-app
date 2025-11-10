@@ -22,7 +22,7 @@ const app = express();
 app.use(express.json());
 
 // Mock authentication middleware
-const authenticateToken = (req: any, res: any, next: any) => {
+const authenticateToken = (req: unknown, res: any, next: any) => {
   req.user = {
     _id: new mongoose.Types.ObjectId('507f1f77bcf86cd799439011'),
     name: 'Test User',
@@ -131,7 +131,7 @@ describe('Mocked: POST /debug/notification/test', () => {
       fcmToken: null,
     };
 
-    mockUserModel.findById.mockResolvedValue(testUser as any);
+    mockUserModel.findById.mockResolvedValue(testUser as unknown);
 
     const response = await request(app)
       .post('/debug/notification/test')

@@ -276,7 +276,7 @@ export class PinsController {
             timestamp: new Date(),
             metadata: {
               pinId: pinId.toString(),
-              reason: reason,
+              reason,
             },
           });
 
@@ -429,7 +429,7 @@ export class PinsController {
 
       // Process badge events for pin visit
       try {
-        let allEarnedBadges: any[] = [];
+        let allEarnedBadges: unknown[] = [];
 
         // General pin visit event
         const visitBadges = await BadgeService.processBadgeEvent({

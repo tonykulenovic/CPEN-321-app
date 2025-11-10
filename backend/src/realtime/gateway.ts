@@ -200,7 +200,7 @@ export class LocationGateway {
 
       // 2. Check friend's privacy settings
       const friend = await userModel.findById(friendId);
-      const locationSharing = friend?.privacy.location?.sharing ?? 'off';
+      const locationSharing = friend?.privacy.location.sharing ?? 'off';
       if (!friend || locationSharing === 'off') {
         throw new Error('Friend has location sharing disabled');
       }
@@ -227,7 +227,7 @@ export class LocationGateway {
 
       // 5. Auto-unsubscribe after duration
       setTimeout(() => {
-        this.untrackFriendLocation(viewerId, friendId);
+        void this.untrackFriendLocation(viewerId, friendId);
       }, durationSec * 1000);
 
     } catch (error) {
@@ -551,7 +551,7 @@ export class LocationGateway {
             if (pin.category === PinCategory.STUDY) {
               increments['stats.librariesVisited'] = 1;
               logger.info(`📚 Incrementing library visit count (pre-seeded)`);
-            } else if (pin.category === 'shops_services') {
+            } else if (pin.category === PinCategory.SHOPS_SERVICES) {
               // Check subtype to distinguish cafes from restaurants
               const subtype = pin.metadata?.subtype;
               if (subtype === 'cafe') {
@@ -572,7 +572,7 @@ export class LocationGateway {
 
           // Process badge events for pin visit
           try {
-            let allEarnedBadges: any[] = [];
+            let allEarnedBadges: unknown[] = [];
 
             // General pin visit event
             const visitBadges = await BadgeService.processBadgeEvent({
@@ -584,7 +584,7 @@ export class LocationGateway {
                 pinId: pin._id.toString(),
                 pinName: pin.name,
                 category: pin.category,
-                distance: distance,
+                distance,
               },
             });
             allEarnedBadges = allEarnedBadges.concat(visitBadges);

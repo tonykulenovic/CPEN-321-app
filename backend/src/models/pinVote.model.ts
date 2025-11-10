@@ -80,7 +80,7 @@ export class PinVoteModel {
       // Access the Pin model directly to avoid circular dependency
       const pinCollection = mongoose.model('Pin');
       
-      const updateOperations: any = {
+      const updateOperations: Record<string, any> = {
         $inc: { 'rating.upvotes': upvoteChange, 'rating.downvotes': downvoteChange }
       };
 
@@ -101,11 +101,13 @@ export class PinVoteModel {
         await session.commitTransaction();
       }
       
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      const pin = updatedPin as any;
       return {
         success: true,
         action,
-        upvotes: updatedPin.rating.upvotes,
-        downvotes: updatedPin.rating.downvotes
+        upvotes: pin.rating.upvotes,
+        downvotes: pin.rating.downvotes
       };
     } catch (error) {
       if (session) {

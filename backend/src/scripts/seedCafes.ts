@@ -154,7 +154,7 @@ export async function seedCafes(): Promise<void> {
         const isOpen = cafe.currentOpeningHours?.openNow ?? cafe.opening_hours?.open_now;
 
         const cafeData = {
-          name: name,
+          name,
           description: address,
           category: PinCategory.SHOPS_SERVICES,
           location: {

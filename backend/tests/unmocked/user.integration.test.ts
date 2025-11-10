@@ -14,7 +14,7 @@ function createAuthenticatedApp() {
   app.use(express.json());
   
   // Add authentication middleware that populates req.user from database
-  app.use(async (req: unknown, res: any, next: any) => {
+  app.use(async (req: unknown, res: unknown, next: any) => {
     const userId = req.headers['x-dev-user-id'];
     const authHeader = req.headers.authorization;
     
@@ -28,7 +28,7 @@ function createAuthenticatedApp() {
     
     try {
       // Find user in database
-      const user = await userModel['user'].findById(new mongoose.Types.ObjectId(userId));
+      const user = await userModel.user.findById(new mongoose.Types.ObjectId(userId));
       if (!user) {
         return res.status(401).json({
           error: 'User not found',
@@ -53,7 +53,7 @@ function createAuthenticatedApp() {
 }
 
 // Helper function to add authentication to requests
-const withAuth = (user: unknown) => (requestBuilder: any) => {
+const withAuth = (user: unknown) => (requestBuilder: unknown) => {
   return requestBuilder
     .set('Authorization', 'Bearer test-token-12345')
     .set('x-dev-user-id', user._id.toString());
@@ -84,7 +84,7 @@ async function createTestUser(
   const privacy = { ...defaultPrivacy, ...privacyOverrides };
 
   // Create user using direct mongoose model to avoid validation issues
-  const user = await (userModel as any).user.create({
+  const user = await (userModel as unknown).user.create({
     name,
     username,
     email,
@@ -101,9 +101,9 @@ async function createTestUser(
 describe('Unmocked User Integration Tests', () => {
   beforeEach(async () => {
     // Clean up test data before each test
-    await (userModel as any).user.deleteMany({});
-    await (friendshipModel as any).friendship.deleteMany({});
-    await (badgeModel as any).badge.deleteMany({});
+    await (userModel as unknown).user.deleteMany({});
+    await (friendshipModel as unknown).friendship.deleteMany({});
+    await (badgeModel as unknown).badge.deleteMany({});
 
     // Create test users
     testUser1 = await createTestUser(
@@ -149,9 +149,9 @@ describe('Unmocked User Integration Tests', () => {
 
   afterEach(async () => {
     // Clean up test data after each test
-    await userModel['user'].deleteMany({});
-    await friendshipModel['friendship'].deleteMany({});
-    await badgeModel['badge'].deleteMany({});
+    await userModel.user.deleteMany({});
+    await friendshipModel.friendship.deleteMany({});
+    await badgeModel.badge.deleteMany({});
   });
 
   describe('Profile Management', () => {
@@ -231,7 +231,7 @@ describe('Unmocked User Integration Tests', () => {
       const tempApp = createAuthenticatedApp();
 
       // Create some test badges for testUser2
-      const badge = await (badgeModel as any).badge.create({
+      const badge = await (badgeModel as unknown).badge.create({
         name: 'Explorer',
         description: 'Visit 10 locations',
         icon: 'explore',
@@ -247,7 +247,7 @@ describe('Unmocked User Integration Tests', () => {
       });
 
       // Assign the badge to testUser2
-      await (badgeModel as any).userBadge.create({
+      await (badgeModel as unknown).userBadge.create({
         userId: testUser2._id,
         badgeId: badge._id,
         earnedAt: new Date(),

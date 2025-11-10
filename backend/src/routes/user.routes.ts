@@ -20,7 +20,7 @@ router.delete('/profile', (req, res, next) => void userController.deleteProfile(
 
 // New friends-related routes
 router.get('/search', (req, res) => void userController.searchUsers(req, res));
-router.get('/me', (req, res) => userController.getMe(req, res));
+router.get('/me', (req, res) => { userController.getMe(req, res); });
 router.patch('/me/privacy', (req, res) => void userController.updatePrivacy(req, res));
 
 // FCM token management for push notifications

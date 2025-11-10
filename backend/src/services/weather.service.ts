@@ -44,7 +44,7 @@ export class WeatherService {
       });
 
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      const data = response.data as any; // OpenWeather API response
+      const data = response.data; // OpenWeather API response
       const weatherCode = data.weather[0].id as number;
       const temperature = data.main.temp as number;
       const humidity = data.main.humidity as number;
