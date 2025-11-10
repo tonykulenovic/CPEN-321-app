@@ -1,6 +1,5 @@
 import { Request, Response } from 'express';
 import {
-  UpdateLocationRequest,
   updateLocationSchema,
   FriendsLocationsResponse,
 } from '../types/friends.types';
@@ -29,7 +28,11 @@ export async function upsertMyLocation(req: Request, res: Response): Promise<voi
     const { lat, lng, accuracyM = 0 } = validation.data;
 
     // 2. Get user ID from auth middleware
-    const currentUser = req.user!;
+    const currentUser = req.user;
+    if (!currentUser) {
+      res.status(401).json({ message: 'Unauthorized' });
+      return;
+    }
     const currentUserId = currentUser._id;
 
     // 3. Use gateway to report location (handles all privacy, storage, and broadcasting)

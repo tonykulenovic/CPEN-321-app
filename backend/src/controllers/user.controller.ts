@@ -6,8 +6,6 @@ import {
   UpdateProfileRequest,
 } from '../types/user.types';
 import {
-  UserSearchQuery,
-  UpdatePrivacyRequest,
   UserSearchResponse,
   userSearchQuerySchema,
   privacySettingsSchema,
@@ -71,7 +69,10 @@ export class UserController {
     }
   }
   getProfile(req: Request, res: Response<GetProfileResponse>) {
-    const user = req.user!;
+    const user = req.user;
+    if (!user) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
 
     res.status(200).json({
       message: 'Profile fetched successfully',
@@ -89,7 +90,10 @@ export class UserController {
     next: NextFunction
   ) {
     try {
-      const currentUser = req.user!;
+      const currentUser = req.user;
+      if (!currentUser) {
+        return res.status(401).json({ message: 'Unauthorized' });
+      }
       const { userId } = req.params;
 
       // Validate userId format
@@ -170,7 +174,10 @@ export class UserController {
     next: NextFunction
   ) {
     try {
-      const user = req.user!;
+      const user = req.user;
+      if (!user) {
+        return res.status(401).json({ message: 'Unauthorized' });
+      }
 
       const updatedUser = await userModel.update(user._id, req.body);
 
@@ -199,7 +206,10 @@ export class UserController {
 
   async deleteProfile(req: Request, res: Response, next: NextFunction) {
     try {
-      const user = req.user!;
+      const user = req.user;
+      if (!user) {
+        return res.status(401).json({ message: 'Unauthorized' });
+      }
 
       await MediaService.deleteAllUserImages(user._id.toString());
 
@@ -246,7 +256,11 @@ export class UserController {
       const searchLimit = limit ? parseInt(limit, 10) : 20;
 
       // Get current user to exclude from results
-      const currentUser = req.user!;
+      const currentUser = req.user;
+      if (!currentUser) {
+        res.status(401).json({ message: 'Unauthorized' });
+        return;
+      }
       const currentUserId = currentUser._id;
 
       // 2. Search users by username, name, or email
@@ -314,7 +328,11 @@ export class UserController {
    */
   getMe(req: Request, res: Response): void {
     try {
-      const user = req.user!;
+      const user = req.user;
+      if (!user) {
+        res.status(401).json({ message: 'Unauthorized' });
+        return;
+      }
       
       res.status(200).json({
         message: 'Profile fetched successfully',
@@ -356,7 +374,11 @@ export class UserController {
       }
 
       // 2. Get user ID from auth middleware
-      const currentUser = req.user!;
+      const currentUser = req.user;
+      if (!currentUser) {
+        res.status(401).json({ message: 'Unauthorized' });
+        return;
+      }
       const currentUserId = currentUser._id;
 
       // 3. Update user's privacy settings
@@ -390,7 +412,7 @@ export class UserController {
    * GET /users/admin/all — Get all users (admin only).
    * @return 200 Users list
    */
-  async getAllUsers(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async getAllUsers(req: Request, res: Response, _next: NextFunction): Promise<void> {
     try {
       // Check if user is admin
       if (!req.user?.isAdmin) {
@@ -398,11 +420,7 @@ export class UserController {
         return;
       }
 
-      const users = await userModel['user']
-        .find({})
-        .select('-__v')
-        .sort({ createdAt: -1 })
-        .lean();
+      const users = await userModel.findAllWithAllFields();
 
       res.status(200).json({
         message: 'Users fetched successfully',
@@ -419,7 +437,7 @@ export class UserController {
    * @param id string - User ID to suspend
    * @return 200 Success
    */
-  async suspendUser(req: Request<{ id: string }>, res: Response, next: NextFunction): Promise<void> {
+  async suspendUser(req: Request<{ id: string }>, res: Response, _next: NextFunction): Promise<void> {
     try {
       // Check if user is admin
       if (!req.user?.isAdmin) {
@@ -435,11 +453,7 @@ export class UserController {
         return;
       }
 
-      const user = await userModel['user'].findByIdAndUpdate(
-        userId,
-        { isSuspended: true },
-        { new: true }
-      );
+      const user = await userModel.updateSuspensionStatus(userId, true);
 
       if (!user) {
         res.status(404).json({ message: 'User not found' });
@@ -461,7 +475,7 @@ export class UserController {
    * @param id string - User ID to unsuspend
    * @return 200 Success
    */
-  async unsuspendUser(req: Request<{ id: string }>, res: Response, next: NextFunction): Promise<void> {
+  async unsuspendUser(req: Request<{ id: string }>, res: Response, _next: NextFunction): Promise<void> {
     try {
       // Check if user is admin
       if (!req.user?.isAdmin) {
@@ -497,7 +511,7 @@ export class UserController {
    * @param id string - User ID to delete
    * @return 200 Success
    */
-  async deleteUserByAdmin(req: Request<{ id: string }>, res: Response, next: NextFunction): Promise<void> {
+  async deleteUserByAdmin(req: Request<{ id: string }>, res: Response, _next: NextFunction): Promise<void> {
     try {
       // Check if user is admin
       if (!req.user?.isAdmin) {
@@ -544,7 +558,7 @@ export class UserController {
       
       const userId = req.user._id;
       const userName = req.user.name || 'unknown';
-      logger.info(`👤 [USER-CONTROLLER] FCM token update for user: ${userName} (${userId})`);
+      logger.info(`👤 [USER-CONTROLLER] FCM token update for user: ${userName} (${userId.toString()})`);
       
       const { fcmToken } = req.body;
       logger.debug(`📦 [USER-CONTROLLER] Request body keys: ${Object.keys(req.body)}`);
@@ -571,7 +585,7 @@ export class UserController {
       logger.debug(`⏱️ [USER-CONTROLLER] Database update completed in ${duration}ms`);
 
       if (!updatedUser) {
-        logger.error(`❌ [USER-CONTROLLER] User not found: ${userId}`);
+        logger.error(`❌ [USER-CONTROLLER] User not found: ${userId.toString()}`);
         res.status(404).json({ message: 'User not found' });
         return;
       }
@@ -586,7 +600,7 @@ export class UserController {
         message: 'FCM token updated successfully',
         data: {
           userId: updatedUser._id,
-          hasToken: hasToken
+          hasToken
         }
       });
       

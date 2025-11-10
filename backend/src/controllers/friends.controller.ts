@@ -1,9 +1,6 @@
 import { Request, Response } from 'express';
 import mongoose from 'mongoose';
 import {
-  SendFriendRequestRequest,
-  FriendRequestsQuery,
-  UpdateFriendSettingsRequest,
   sendFriendRequestSchema,
   friendRequestsQuerySchema,
   updateFriendSettingsSchema,
@@ -13,7 +10,6 @@ import {
 } from '../types/friends.types';
 import { friendshipModel } from '../models/friendship.model';
 import { userModel } from '../models/user.model';
-import { locationModel } from '../models/location.model';
 import { notificationService } from '../services/notification.service';
 import logger from '../utils/logger.util';
 import { BadgeService } from '../services/badge.service';
@@ -37,7 +33,11 @@ export async function sendFriendRequest(req: Request, res: Response): Promise<vo
     }
 
     const { toUserId } = validation.data;
-    const fromUser = req.user!; // Authenticated user from middleware
+    const fromUser = req.user; // Authenticated user from middleware
+    if (!fromUser) {
+      res.status(401).json({ message: 'Unauthorized' });
+      return;
+    }
     const fromUserId = fromUser._id;
 
     // Check if user is trying to send request to themselves
@@ -72,7 +72,7 @@ export async function sendFriendRequest(req: Request, res: Response): Promise<vo
         return;
       } else if (existingFriendship.status === 'declined' || existingFriendship.status === 'blocked') {
         // Clean up old declined/blocked records to allow fresh start
-        logger.info(`Cleaning up old ${existingFriendship.status} friendship record between ${fromUserId} and ${targetUser._id}`);
+        logger.info(`Cleaning up old ${existingFriendship.status} friendship record between ${fromUserId.toString()} and ${targetUser._id.toString()}`);
         await friendshipModel.deleteFriendship(fromUserId, targetUser._id);
       }
     }
@@ -90,7 +90,7 @@ export async function sendFriendRequest(req: Request, res: Response): Promise<vo
       return;
     } else if (reverseFriendship && (reverseFriendship.status === 'declined' || reverseFriendship.status === 'blocked')) {
       // Clean up old reverse records as well
-      logger.info(`Cleaning up old reverse ${reverseFriendship.status} friendship record from ${targetUser._id} to ${fromUserId}`);
+      logger.info(`Cleaning up old reverse ${reverseFriendship.status} friendship record from ${targetUser._id.toString()} to ${fromUserId.toString()}`);
       await friendshipModel.deleteFriendship(targetUser._id, fromUserId);
     }
 
@@ -171,7 +171,11 @@ export async function listFriendRequests(req: Request, res: Response): Promise<v
     const requestLimit = limit ? parseInt(limit, 10) : 20; // Default limit of 20
 
     // 2. Get user ID from auth middleware
-    const currentUser = req.user!;
+    const currentUser = req.user;
+    if (!currentUser) {
+      res.status(401).json({ message: 'Unauthorized' });
+      return;
+    }
     const currentUserId = currentUser._id;
 
     // 3. Fetch pending requests (inbox or outbox)
@@ -260,7 +264,11 @@ export async function acceptFriendRequest(req: Request, res: Response): Promise<
     }
 
     // 2. Get user ID from auth middleware
-    const currentUser = req.user!;
+    const currentUser = req.user;
+    if (!currentUser) {
+      res.status(401).json({ message: 'Unauthorized' });
+      return;
+    }
     const currentUserId = currentUser._id;
 
     // 3. Find the pending friendship request
@@ -359,7 +367,7 @@ export async function acceptFriendRequest(req: Request, res: Response): Promise<
         logger.info(`User ${currentUserId} earned ${currentUserBadges.length} badge(s) from adding a friend`);
       }
       if (friendUserBadges.length > 0) {
-        logger.info(`User ${userId} earned ${friendUserBadges.length} badge(s) from adding a friend`);
+        logger.info(`User ${userId.toString()} earned ${friendUserBadges.length} badge(s) from adding a friend`);
       }
 
       // If current user earned badges, include them in response
@@ -410,7 +418,11 @@ export async function declineFriendRequest(req: Request, res: Response): Promise
     }
 
     // 2. Get user ID from auth middleware
-    const currentUser = req.user!;
+    const currentUser = req.user;
+    if (!currentUser) {
+      res.status(401).json({ message: 'Unauthorized' });
+      return;
+    }
     const currentUserId = currentUser._id;
 
     // 3. Find the pending friendship request
@@ -481,7 +493,11 @@ export async function listFriends(req: Request, res: Response): Promise<void> {
     const friendLimit = limit ? parseInt(limit, 10) : 50; // Default limit of 50 for friends list
 
     // 2. Get user ID from auth middleware
-    const currentUser = req.user!;
+    const currentUser = req.user;
+    if (!currentUser) {
+      res.status(401).json({ message: 'Unauthorized' });
+      return;
+    }
     const currentUserId = currentUser._id;
 
     // 3. Fetch accepted friendships
@@ -502,7 +518,7 @@ export async function listFriends(req: Request, res: Response): Promise<void> {
     // 5. Format friend summary data with online status
     const formattedFriends = acceptedFriendships.map((friendship) => {
       const friend = friendship.friendId as any; // populated by the model
-      const isOnline = onlineStatusMap.get(friend._id.toString()) || false;
+      const isOnline = onlineStatusMap.get(friend._id.toString()) ?? false;
       
       return {
         userId: friend._id.toString(),
@@ -510,7 +526,7 @@ export async function listFriends(req: Request, res: Response): Promise<void> {
         photoUrl: friend.profilePicture,
         bio: friend.bio,
         shareLocation: friendship.shareLocation,
-        isOnline: isOnline
+        isOnline
       };
     });
 
@@ -568,7 +584,11 @@ export async function updateFriend(req: Request, res: Response): Promise<void> {
     }
 
     // 3. Get user ID from auth middleware
-    const currentUser = req.user!;
+    const currentUser = req.user;
+    if (!currentUser) {
+      res.status(401).json({ message: 'Unauthorized' });
+      return;
+    }
     const currentUserId = currentUser._id;
 
     // Check if user is trying to update themselves
@@ -649,7 +669,11 @@ export async function removeFriend(req: Request, res: Response): Promise<void> {
     }
 
     // 2. Get user ID from auth middleware
-    const currentUser = req.user!;
+    const currentUser = req.user;
+    if (!currentUser) {
+      res.status(401).json({ message: 'Unauthorized' });
+      return;
+    }
     const currentUserId = currentUser._id;
     const friendObjectId = new mongoose.Types.ObjectId(friendId);
 

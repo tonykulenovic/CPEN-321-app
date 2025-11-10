@@ -55,5 +55,5 @@ async function migratePinVisibility() {
   }
 }
 
-migratePinVisibility();
+void migratePinVisibility();
 

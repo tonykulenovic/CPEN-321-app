@@ -9,17 +9,17 @@ const router = Router();
 router.use(authenticateToken);
 
 // Friend request routes
-router.post('/requests', friendsController.sendFriendRequest);
-router.get('/requests', friendsController.listFriendRequests);
-router.post('/requests/:id/accept', friendsController.acceptFriendRequest);
-router.post('/requests/:id/decline', friendsController.declineFriendRequest);
+router.post('/requests', (req, res) => void friendsController.sendFriendRequest(req, res));
+router.get('/requests', (req, res) => void friendsController.listFriendRequests(req, res));
+router.post('/requests/:id/accept', (req, res) => void friendsController.acceptFriendRequest(req, res));
+router.post('/requests/:id/decline', (req, res) => void friendsController.declineFriendRequest(req, res));
 
 // Friends management routes
-router.get('/', friendsController.listFriends);
-router.patch('/:friendId', friendsController.updateFriend);
-router.delete('/:friendId', friendsController.removeFriend);
+router.get('/', (req, res) => void friendsController.listFriends(req, res));
+router.patch('/:friendId', (req, res) => void friendsController.updateFriend(req, res));
+router.delete('/:friendId', (req, res) => void friendsController.removeFriend(req, res));
 
 // Location routes
-router.get('/locations', locationController.getFriendsLocations);
+router.get('/locations', (req, res) => void locationController.getFriendsLocations(req, res));
 
 export default router;

@@ -299,7 +299,7 @@ describe('Unmocked: MediaService Unit Tests', () => {
       const imagesDir = 'uploads/images';
       if (fs.existsSync(imagesDir)) {
         const files = fs.readdirSync(imagesDir);
-        files.forEach(file => fs.unlinkSync(path.join(imagesDir, file)));
+        files.forEach(file => { fs.unlinkSync(path.join(imagesDir, file)); });
         fs.rmdirSync(imagesDir);
       }
 

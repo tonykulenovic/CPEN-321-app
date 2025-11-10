@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import { describe, test, beforeEach, expect } from '@jest/globals';
+import { describe, test, expect } from '@jest/globals';
 import { badgeModel } from '../../src/models/badge.model';
 import { BadgeCategory, BadgeRarity, BadgeRequirementType } from '../../src/types/badge.types';
 
@@ -21,7 +21,7 @@ describe('Unmocked Integration: BadgeModel Error Handling for 100% Coverage', ()
 
     // Mock the internal badge model to throw a non-ZodError
     const originalCreate = (badgeModel as any).badge.create;
-    (badgeModel as any).badge.create = jest.fn().mockRejectedValue(new Error('Database connection failed'));
+    (badgeModel as unknown).badge.create = jest.fn().mockRejectedValue(new Error('Database connection failed'));
 
     await expect(badgeModel.create(badgeData)).rejects.toThrow('Failed to create badge');
 
@@ -34,8 +34,8 @@ describe('Unmocked Integration: BadgeModel Error Handling for 100% Coverage', ()
     const badgeId = new mongoose.Types.ObjectId();
 
     // Mock the internal badge model to throw error
-    const originalFindById = (badgeModel as any).badge.findById;
-    (badgeModel as any).badge.findById = jest.fn().mockRejectedValue(new Error('Database error'));
+    const originalFindById = (badgeModel as unknown).badge.findById;
+    (badgeModel as unknown).badge.findById = jest.fn().mockRejectedValue(new Error('Database error'));
 
     await expect(badgeModel.findById(badgeId)).rejects.toThrow('Failed to find badge');
 
@@ -46,7 +46,7 @@ describe('Unmocked Integration: BadgeModel Error Handling for 100% Coverage', ()
   // Test error handling in findAll (line 174-175)
   test('findAll handles database error', async () => {
     // Mock the internal badge model to throw error
-    const originalFind = (badgeModel as any).badge.find;
+    const originalFind = (badgeModel as unknown).badge.find;
     (badgeModel as any).badge.find = jest.fn().mockReturnValue({
       sort: jest.fn().mockRejectedValue(new Error('Database error')),
     });
@@ -54,7 +54,7 @@ describe('Unmocked Integration: BadgeModel Error Handling for 100% Coverage', ()
     await expect(badgeModel.findAll({})).rejects.toThrow('Failed to find badges');
 
     // Restore
-    (badgeModel as any).badge.find = originalFind;
+    (badgeModel as unknown).badge.find = originalFind;
   });
 
   // Test error handling in findByCategory (line 183-184)
@@ -83,7 +83,7 @@ describe('Unmocked Integration: BadgeModel Error Handling for 100% Coverage', ()
 
     // Mock findByIdAndUpdate to throw non-ZodError
     const originalFindByIdAndUpdate = (badgeModel as any).badge.findByIdAndUpdate;
-    (badgeModel as any).badge.findByIdAndUpdate = jest.fn().mockRejectedValue(new Error('Database error'));
+    (badgeModel as unknown).badge.findByIdAndUpdate = jest.fn().mockRejectedValue(new Error('Database error'));
 
     await expect(badgeModel.update(badgeId, updateData)).rejects.toThrow('Failed to update badge');
 
@@ -98,12 +98,12 @@ describe('Unmocked Integration: BadgeModel Error Handling for 100% Coverage', ()
 
     // Mock the internal badge model to throw error
     const originalFindByIdAndDelete = (badgeModel as any).badge.findByIdAndDelete;
-    (badgeModel as any).badge.findByIdAndDelete = jest.fn().mockRejectedValue(new Error('Database error'));
+    (badgeModel as unknown).badge.findByIdAndDelete = jest.fn().mockRejectedValue(new Error('Database error'));
 
     await expect(badgeModel.delete(badgeId)).rejects.toThrow('Failed to delete badge');
 
     // Restore
-    (badgeModel as any).badge.findByIdAndDelete = originalFindByIdAndDelete;
+    (badgeModel as unknown).badge.findByIdAndDelete = originalFindByIdAndDelete;
   });
 
   // Test error handling in assignBadge (non-duplicate error - line 247-248)
@@ -112,12 +112,12 @@ describe('Unmocked Integration: BadgeModel Error Handling for 100% Coverage', ()
     const badgeId = new mongoose.Types.ObjectId();
 
     // Mock badge.findById to return a badge
-    (badgeModel as any).badge.findById = jest.fn().mockResolvedValue({
+    (badgeModel as unknown).badge.findById = jest.fn().mockResolvedValue({
       requirements: { target: 5 },
     });
 
     // Mock userBadge.create to throw non-duplicate error
-    const originalCreate = (badgeModel as any).userBadge.create;
+    const originalCreate = (badgeModel as unknown).userBadge.create;
     (badgeModel as any).userBadge.create = jest.fn().mockRejectedValue(new Error('Database error'));
 
     await expect(badgeModel.assignBadge(userId, badgeId)).rejects.toThrow('Failed to assign badge');
@@ -131,8 +131,8 @@ describe('Unmocked Integration: BadgeModel Error Handling for 100% Coverage', ()
     const userId = new mongoose.Types.ObjectId();
 
     // Mock the internal userBadge model to throw error
-    const originalFind = (badgeModel as any).userBadge.find;
-    (badgeModel as any).userBadge.find = jest.fn().mockReturnValue({
+    const originalFind = (badgeModel as unknown).userBadge.find;
+    (badgeModel as unknown).userBadge.find = jest.fn().mockReturnValue({
       populate: jest.fn().mockReturnValue({
         sort: jest.fn().mockRejectedValue(new Error('Database error')),
       }),
@@ -141,7 +141,7 @@ describe('Unmocked Integration: BadgeModel Error Handling for 100% Coverage', ()
     await expect(badgeModel.getUserBadges(userId)).rejects.toThrow('Failed to get user badges');
 
     // Restore
-    (badgeModel as any).userBadge.find = originalFind;
+    (badgeModel as unknown).userBadge.find = originalFind;
   });
 
   // Test error handling in getUserBadge (line 273-274)
@@ -150,15 +150,15 @@ describe('Unmocked Integration: BadgeModel Error Handling for 100% Coverage', ()
     const badgeId = new mongoose.Types.ObjectId();
 
     // Mock the internal userBadge model to throw error
-    const originalFindOne = (badgeModel as any).userBadge.findOne;
-    (badgeModel as any).userBadge.findOne = jest.fn().mockReturnValue({
+    const originalFindOne = (badgeModel as unknown).userBadge.findOne;
+    (badgeModel as unknown).userBadge.findOne = jest.fn().mockReturnValue({
       populate: jest.fn().mockRejectedValue(new Error('Database error')),
     });
 
     await expect(badgeModel.getUserBadge(userId, badgeId)).rejects.toThrow('Failed to get user badge');
 
     // Restore
-    (badgeModel as any).userBadge.findOne = originalFindOne;
+    (badgeModel as unknown).userBadge.findOne = originalFindOne;
   });
 
   // Test error handling in getBadgeStats (line 305-306)
@@ -166,13 +166,13 @@ describe('Unmocked Integration: BadgeModel Error Handling for 100% Coverage', ()
     const userId = new mongoose.Types.ObjectId();
 
     // Mock the internal badge model countDocuments to throw error (getBadgeStats uses Promise.all with both)
-    const originalCountDocuments = (badgeModel as any).badge.countDocuments;
-    (badgeModel as any).badge.countDocuments = jest.fn().mockRejectedValue(new Error('Database error'));
+    const originalCountDocuments = (badgeModel as unknown).badge.countDocuments;
+    (badgeModel as unknown).badge.countDocuments = jest.fn().mockRejectedValue(new Error('Database error'));
 
     await expect(badgeModel.getBadgeStats(userId)).rejects.toThrow('Failed to get badge stats');
 
     // Restore
-    (badgeModel as any).badge.countDocuments = originalCountDocuments;
+    (badgeModel as unknown).badge.countDocuments = originalCountDocuments;
   });
 
   // Test error handling in getAvailableBadges (line 318-319)
@@ -181,11 +181,11 @@ describe('Unmocked Integration: BadgeModel Error Handling for 100% Coverage', ()
 
     // Mock the internal userBadge model to throw error
     const originalDistinct = (badgeModel as any).userBadge.distinct;
-    (badgeModel as any).userBadge.distinct = jest.fn().mockRejectedValue(new Error('Database error'));
+    (badgeModel as unknown).userBadge.distinct = jest.fn().mockRejectedValue(new Error('Database error'));
 
     await expect(badgeModel.getAvailableBadges(userId)).rejects.toThrow('Failed to get available badges');
 
     // Restore
-    (badgeModel as any).userBadge.distinct = originalDistinct;
+    (badgeModel as unknown).userBadge.distinct = originalDistinct;
   });
 });

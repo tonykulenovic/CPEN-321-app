@@ -1,7 +1,7 @@
 import request from 'supertest';
 import express from 'express';
 import mongoose from 'mongoose';
-import { jest, describe, test, beforeEach, expect } from '@jest/globals';
+import { describe, test, beforeEach, expect } from '@jest/globals';
 
 // Import models in order - Friendship must be registered before Pin routes use it
 import { friendshipModel } from '../../src/models/friendship.model'; // Register Friendship model FIRST
@@ -26,7 +26,7 @@ const createAuthenticatedApp = () => {
   return app;
 };
 
-const withAuth = (user: IUser, isAdmin = false) => (requestBuilder: any) => {
+const withAuth = (user: IUser, _isAdmin = false) => (requestBuilder: unknown) => {
   return requestBuilder
     .set('Authorization', 'Bearer test-token-12345')
     .set('x-dev-user-id', user._id.toString());
@@ -35,7 +35,6 @@ const withAuth = (user: IUser, isAdmin = false) => (requestBuilder: any) => {
 // Test user variables for consistent testing
 let testUser1: IUser;
 let testUser2: IUser;
-let testAdmin: IUser;
 
 describe('Unmocked Integration: Pins API', () => {
   beforeEach(async () => {
@@ -87,7 +86,7 @@ describe('Unmocked Integration: Pins API', () => {
     testAdmin = await userModel.create({
       ...testAdminData,
       isAdmin: true
-    } as any); // Type assertion needed because create accepts GoogleUserInfo but createUserSchema has more fields
+    } as unknown); // Type assertion needed because create accepts GoogleUserInfo but createUserSchema has more fields
   });
 
   describe('POST /pins', () => {
@@ -124,7 +123,7 @@ describe('Unmocked Integration: Pins API', () => {
       expect(pin).toBeTruthy();
       expect(pin!.name).toBe('Test Study Spot');
       // Handle populated createdBy (object) or ObjectId
-      const createdBy = pin!.createdBy as any; // Type assertion for flexibility
+      const createdBy = pin!.createdBy as unknown; // Type assertion for flexibility
       const createdById = (createdBy && typeof createdBy === 'object' && '_id' in createdBy)
         ? createdBy._id.toString()
         : createdBy.toString();
@@ -363,7 +362,7 @@ describe('Unmocked Integration: Pins API', () => {
 
       // Verify pin was updated in database
       const updatedPin = await pinModel.findById(testPin._id);
-      expect(updatedPin!.description).toBe('Updated description with more details');
+      expect(updatedPin?.description).toBe('Updated description with more details');
     });
 
     test('Cannot update pin owned by another user', async () => {
@@ -380,7 +379,7 @@ describe('Unmocked Integration: Pins API', () => {
 
       // Verify pin was not updated
       const unchangedPin = await pinModel.findById(testPin._id);
-      expect(unchangedPin!.description).toBe('A quiet study space');
+      expect(unchangedPin?.description).toBe('A quiet study space');
     });
 
     test('Cannot update non-existent pin', async () => {
@@ -559,7 +558,7 @@ describe('Unmocked Integration: Pins API', () => {
 
       // Verify pin was reported
       const reportedPin = await pinModel.findById(testPin._id);
-      expect(reportedPin!.reports.length).toBeGreaterThan(0);
+      expect(reportedPin?.reports.length).toBeGreaterThan(0);
     });
 
     test('Cannot report pin twice (duplicate report)', async () => {
@@ -630,7 +629,7 @@ describe('Unmocked Integration: Pins API', () => {
 
       // Verify pin was added to user's visited pins
       const user = await userModel.findById(testUser2._id);
-      expect(user!.visitedPins.some((id: mongoose.Types.ObjectId) => 
+      expect(user?.visitedPins.some((id: mongoose.Types.ObjectId) => 
         id.toString() === testPin._id.toString()
       )).toBe(true);
     });

@@ -5,7 +5,6 @@ import {
   PinCategory,
   PinStatus,
   PinVisibility,
-  MealCategory,
   CreatePinRequest,
   UpdatePinRequest,
   createPinSchema,
@@ -100,9 +99,9 @@ export class PinModel {
         const vote = await PinVote.findOne({ userId, pinId: pin._id });
         const userVote = vote ? (vote as any).voteType : null;
         return {
-          ...pin.toObject(),
+          ...(pin as any).toObject(),
           userVote
-        } as any;
+        } as IPin;
       }
 
       return pin;
@@ -139,7 +138,7 @@ export class PinModel {
     }
   }
 
-  async delete(pinId: mongoose.Types.ObjectId, userId: mongoose.Types.ObjectId, isAdmin: boolean = false): Promise<boolean> {
+  async delete(pinId: mongoose.Types.ObjectId, userId: mongoose.Types.ObjectId, isAdmin = false): Promise<boolean> {
     try {
       // Admins can delete any pin, regular users can only delete their own pins
       const query = isAdmin 
@@ -165,9 +164,9 @@ export class PinModel {
     userId?: mongoose.Types.ObjectId;
   }): Promise<{ pins: IPin[]; total: number }> {
     try {
-      const query: any = { status: PinStatus.ACTIVE };
-      const page = filters.page || 1;
-      const limit = filters.limit || 20;
+      const query: Record<string, any> = { status: PinStatus.ACTIVE };
+      const page = filters.page ?? 1;
+      const limit = filters.limit ?? 20;
       const skip = (page - 1) * limit;
 
       if (filters.category) {
@@ -189,7 +188,7 @@ export class PinModel {
         .populate('createdBy', 'name profilePicture')
         .sort({ isPreSeeded: -1, createdAt: -1 }); // Pre-seeded pins first, then by date
 
-      logger.info(`Search pins: Found ${pins.length} pins. UserId: ${filters.userId || 'NOT PROVIDED'}`);
+      logger.info(`Search pins: Found ${pins.length} pins. UserId: ${filters.userId ?? 'NOT PROVIDED'}`);
       // Log pin details for debugging
       pins.forEach(pin => {
         logger.info(`  - Pin: "${pin.name}" | Category: ${pin.category} | PreSeeded: ${pin.isPreSeeded}`);
@@ -209,7 +208,7 @@ export class PinModel {
             }
             
             // Check if createdBy is populated
-            if (!pin.createdBy || !pin.createdBy._id) {
+            if (!pin.createdBy?._id) {
               logger.warn(`Pin "${pin.name}" has no creator, hiding it`);
               return null;
             }
@@ -222,7 +221,7 @@ export class PinModel {
             
             // Default to PUBLIC if visibility is not set (for backward compatibility)
             const visibility = pin.visibility || PinVisibility.PUBLIC;
-            logger.info(`Pin "${pin.name}" visibility: ${visibility}, creator: ${pin.createdBy._id}`);
+            logger.info(`Pin "${pin.name}" visibility: ${visibility}, creator: ${pin.createdBy._id.toString()}`);
             
             // Check visibility
             if (visibility === PinVisibility.PRIVATE) {
@@ -251,7 +250,7 @@ export class PinModel {
           })
         );
         
-        pins = filteredPins.filter((p) => p !== null) as typeof pins;
+        pins = filteredPins.filter((p) => p !== null);
         logger.info(`Visibility filtering complete. Original: ${filteredPins.length}, Visible: ${pins.length}`);
       }
 
@@ -264,7 +263,7 @@ export class PinModel {
           const withinRadius = distance <= filters.radius!;
           
           // Log library filtering for debugging
-          if (p.category === 'study') {
+          if (p.category === PinCategory.STUDY) {
             logger.info(`📚 Library "${p.name}": distance=${distance.toFixed(2)}m, within=${withinRadius}`);
           }
           
@@ -292,7 +291,7 @@ export class PinModel {
             };
           })
         );
-        return { pins: pinsWithVotes as any, total };
+        return { pins: pinsWithVotes as IPin[], total };
       }
 
       return { pins: paginatedPins, total };
@@ -321,7 +320,7 @@ export class PinModel {
         await pin.save();
       }
 
-      logger.info(`Pin ${pinId} reported by user ${userId}. Total reports: ${pin.reports.length}`);
+      logger.info(`Pin ${pinId.toString()} reported by user ${userId.toString()}. Total reports: ${pin.reports.length}`);
       return pin;
     } catch (error) {
       logger.error('Error reporting pin:', error);
@@ -347,7 +346,7 @@ export class PinModel {
       
       logger.info(`Found ${reportedPins.length} reported pins`);
       reportedPins.forEach(pin => {
-        logger.info(`  - Pin ${pin._id}: ${pin.name}, Reports: ${pin.reports.length}, Status: ${pin.status}`);
+        logger.info(`  - Pin ${pin._id.toString()}: ${pin.name}, Reports: ${pin.reports.length}, Status: ${pin.status}`);
       });
       
       return reportedPins as IPin[];
@@ -359,7 +358,7 @@ export class PinModel {
 
   async clearReports(pinId: mongoose.Types.ObjectId): Promise<IPin | null> {
     try {
-      logger.info(`Clearing reports for pin ${pinId}...`);
+      logger.info(`Clearing reports for pin ${pinId.toString()}...`);
       
       const pin = await this.pin.findByIdAndUpdate(
         pinId,
@@ -371,9 +370,9 @@ export class PinModel {
       );
       
       if (pin) {
-        logger.info(`Successfully cleared reports for pin ${pinId}. New status: ${pin.status}, Reports: ${pin.reports.length}`);
+        logger.info(`Successfully cleared reports for pin ${pinId.toString()}. New status: ${pin.status}, Reports: ${pin.reports.length}`);
       } else {
-        logger.warn(`Pin ${pinId} not found when trying to clear reports`);
+        logger.warn(`Pin ${pinId.toString()} not found when trying to clear reports`);
       }
       
       return pin;

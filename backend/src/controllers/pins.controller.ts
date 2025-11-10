@@ -10,6 +10,7 @@ import {
   SearchPinsRequest,
   PinResponse,
   PinsListResponse,
+  PinCategory,
 } from '../types/pins.types';
 import logger from '../utils/logger.util';
 import { BadgeService } from '../services/badge.service';
@@ -22,7 +23,10 @@ export class PinsController {
     next: NextFunction
   ) {
     try {
-      const userId = req.user!._id;
+      const userId = req.user?._id;
+      if (!userId) {
+        return res.status(401).json({ message: 'Unauthorized' });
+      }
       const pin = await pinModel.create(userId, req.body);
       
       // Increment user's cumulative pins created counter
@@ -49,7 +53,7 @@ export class PinsController {
         });
         
         if (earnedBadges.length > 0) {
-          logger.info(`User ${userId} earned ${earnedBadges.length} badge(s) from creating a pin`);
+          logger.info(`User ${userId.toString()} earned ${earnedBadges.length} badge(s) from creating a pin`);
         }
       } catch (badgeError) {
         // Log badge processing error but don't fail the pin creation
@@ -93,7 +97,10 @@ export class PinsController {
   ) {
     try {
       const pinId = new mongoose.Types.ObjectId(req.params.id);
-      const userId = req.user!._id;
+      const userId = req.user?._id;
+      if (!userId) {
+        return res.status(401).json({ message: 'Unauthorized' });
+      }
       const pin = await pinModel.update(pinId, userId, req.body);
       if (!pin) return res.status(404).json({ message: 'Pin not found or unauthorized' });
       res.status(200).json({ message: 'Pin updated successfully', data: { pin } });
@@ -109,8 +116,11 @@ export class PinsController {
   async deletePin(req: Request<{ id: string }>, res: Response, next: NextFunction) {
     try {
       const pinId = new mongoose.Types.ObjectId(req.params.id);
-      const userId = req.user!._id;
-      const isAdmin = req.user!.isAdmin || false;
+      const userId = req.user?._id;
+      if (!userId) {
+        return res.status(401).json({ message: 'Unauthorized' });
+      }
+      const isAdmin = req.user?.isAdmin || false;
       const deleted = await pinModel.delete(pinId, userId, isAdmin);
       if (!deleted) return res.status(404).json({ message: 'Pin not found or unauthorized' });
       res.status(200).json({ message: 'Pin deleted successfully' });
@@ -138,7 +148,7 @@ export class PinsController {
         search: req.query.search,
         page: req.query.page,
         limit: req.query.limit,
-        userId: userId, // Pass userId for visibility filtering
+        userId, // Pass userId for visibility filtering
       });
       res.status(200).json({ message: 'Pins fetched successfully', data: { pins, total, page: req.query.page || 1, limit: req.query.limit || 20 } });
     } catch (error) {
@@ -157,7 +167,10 @@ export class PinsController {
   ) {
     try {
       const pinId = new mongoose.Types.ObjectId(req.params.id);
-      const userId = req.user!._id;
+      const userId = req.user?._id;
+      if (!userId) {
+        return res.status(401).json({ message: 'Unauthorized' });
+      }
       const { voteType } = req.body;
       
       const result = await pinVoteModel.vote(userId, pinId, voteType);
@@ -192,7 +205,10 @@ export class PinsController {
   ) {
     try {
       const pinId = new mongoose.Types.ObjectId(req.params.id);
-      const userId = req.user!._id;
+      const userId = req.user?._id;
+      if (!userId) {
+        return res.status(401).json({ message: 'Unauthorized' });
+      }
       
       const userVote = await pinVoteModel.getUserVote(userId, pinId);
       
@@ -217,7 +233,10 @@ export class PinsController {
   ) {
     try {
       const pinId = new mongoose.Types.ObjectId(req.params.id);
-      const userId = req.user!._id;
+      const userId = req.user?._id;
+      if (!userId) {
+        return res.status(401).json({ message: 'Unauthorized' });
+      }
       const { reason } = req.body;
       
       // Check if user has already reported this pin
@@ -243,7 +262,7 @@ export class PinsController {
             $push: { reportedPins: pinId },
             $inc: { 'stats.reportsMade': 1 },
           });
-          logger.info(`📝 User ${userId} reported pin ${pinId} (unique report #${(user.stats?.reportsMade || 0) + 1})`);
+          logger.info(`📝 User ${userId.toString()} reported pin ${pinId.toString()} (unique report #${(user.stats?.reportsMade || 0) + 1})`);
         } catch (statsError) {
           logger.error('Error updating user stats:', statsError);
         }
@@ -262,7 +281,7 @@ export class PinsController {
           });
 
           if (earnedBadges.length > 0) {
-            logger.info(`User ${userId} earned ${earnedBadges.length} badge(s) from reporting a pin`);
+            logger.info(`User ${userId.toString()} earned ${earnedBadges.length} badge(s) from reporting a pin`);
             return res.status(200).json({ 
               message: 'Pin reported successfully',
               data: { earnedBadges, firstReport: true }
@@ -278,7 +297,7 @@ export class PinsController {
           data: { firstReport: true }
         });
       } else {
-        logger.info(`📝 User ${userId} reported pin ${pinId} again (duplicate report, not counted)`);
+        logger.info(`📝 User ${userId.toString()} reported pin ${pinId.toString()} again (duplicate report, not counted)`);
         return res.status(200).json({ 
           message: 'Pin reported successfully (already reported by you)',
           data: { firstReport: false }
@@ -351,7 +370,10 @@ export class PinsController {
   ) {
     try {
       const pinId = new mongoose.Types.ObjectId(req.params.id);
-      const userId = req.user!._id;
+      const userId = req.user?._id;
+      if (!userId) {
+        return res.status(401).json({ message: 'Unauthorized' });
+      }
 
       // Verify pin exists
       const pin = await pinModel.findById(pinId);
@@ -379,22 +401,22 @@ export class PinsController {
       }
 
       // Prepare increments based on pin category
-      const increments: any = { 'stats.pinsVisited': 1 };
+      const increments: Record<string, number> = { 'stats.pinsVisited': 1 };
       
       // Track category-specific visits (only for pre-seeded pins)
       if (pin.isPreSeeded) {
-        if (pin.category === 'study') {
+        if (pin.category === PinCategory.STUDY) {
           increments['stats.librariesVisited'] = 1;
-          logger.info(`📚 User ${userId} visited pre-seeded library: ${pin.name}`);
+          logger.info(`📚 User ${userId.toString()} visited pre-seeded library: ${pin.name}`);
         } else if (pin.category === 'shops_services') {
           // Check subtype to distinguish cafes from restaurants
           const subtype = pin.metadata?.subtype;
           if (subtype === 'cafe') {
             increments['stats.cafesVisited'] = 1;
-            logger.info(`☕ User ${userId} visited pre-seeded cafe: ${pin.name}`);
+            logger.info(`☕ User ${userId.toString()} visited pre-seeded cafe: ${pin.name}`);
           } else if (subtype === 'restaurant') {
             increments['stats.restaurantsVisited'] = 1;
-            logger.info(`🍽️  User ${userId} visited pre-seeded restaurant: ${pin.name}`);
+            logger.info(`🍽️  User ${userId.toString()} visited pre-seeded restaurant: ${pin.name}`);
           }
         }
       }
@@ -481,7 +503,7 @@ export class PinsController {
         }
 
         if (allEarnedBadges.length > 0) {
-          logger.info(`User ${userId} earned ${allEarnedBadges.length} badge(s) from visiting a pin`);
+          logger.info(`User ${userId.toString()} earned ${allEarnedBadges.length} badge(s) from visiting a pin`);
           return res.status(200).json({ 
             message: 'Pin visited successfully', 
             data: { 

@@ -59,10 +59,10 @@ describe('Mocked: POST /friends/requests', () => {
       status: 'pending'
     };
     
-    mockUserModel.findById.mockResolvedValueOnce(mockTargetUser as any);
+    mockUserModel.findById.mockResolvedValueOnce(mockTargetUser as unknown);
     mockFriendshipModel.findByUserAndFriend.mockResolvedValueOnce(null);
     mockFriendshipModel.findByUserAndFriend.mockResolvedValueOnce(null);
-    mockFriendshipModel.create.mockResolvedValueOnce(mockFriendship as any);
+    mockFriendshipModel.create.mockResolvedValueOnce(mockFriendship as unknown);
     mockNotificationService.sendFriendRequestNotification.mockResolvedValueOnce(undefined);
 
     const response = await request(app)
@@ -180,7 +180,7 @@ describe('Mocked: GET /friends/requests', () => {
       }
     ];
 
-    mockFriendshipModel.findOutgoingRequests.mockResolvedValueOnce(mockRequests as any);
+    mockFriendshipModel.findOutgoingRequests.mockResolvedValueOnce(mockRequests as unknown);
 
     const response = await request(app).get('/friends/requests');
 
@@ -208,7 +208,7 @@ describe('Mocked: GET /friends/requests', () => {
       }
     ];
 
-    mockFriendshipModel.findIncomingRequests.mockResolvedValueOnce(mockRequests as any);
+    mockFriendshipModel.findIncomingRequests.mockResolvedValueOnce(mockRequests as unknown);
 
     const response = await request(app).get('/friends/requests?inbox=true');
 
@@ -273,10 +273,10 @@ describe('Mocked: POST /friends/requests/:id/accept', () => {
       name: 'Friend User'
     };
     
-    mockFriendshipModel.findById.mockResolvedValueOnce(mockFriendRequest as any);
+    mockFriendshipModel.findById.mockResolvedValueOnce(mockFriendRequest as unknown);
     mockFriendshipModel.updateStatus.mockResolvedValueOnce(mockFriendRequest as any);
-    mockFriendshipModel.create.mockResolvedValueOnce({} as any);
-    mockUserModel.findById.mockResolvedValueOnce(mockUser as any);
+    mockFriendshipModel.create.mockResolvedValueOnce({} as unknown);
+    mockUserModel.findById.mockResolvedValueOnce(mockUser as unknown);
     mockBadgeService.processBadgeEvent.mockResolvedValueOnce([]);
 
     const response = await request(app)
@@ -472,7 +472,7 @@ describe('Mocked: GET /friends', () => {
     const mockOnlineStatus = new Map();
     mockOnlineStatus.set('507f1f77bcf86cd799439012', true);
     
-    mockFriendshipModel.findUserFriendships.mockResolvedValueOnce(mockFriendships as any);
+    mockFriendshipModel.findUserFriendships.mockResolvedValueOnce(mockFriendships as unknown);
     mockUserModel.getOnlineStatus.mockResolvedValueOnce(mockOnlineStatus);
 
     const response = await request(app).get('/friends');
@@ -525,8 +525,8 @@ describe('Mocked: PATCH /friends/:friendId', () => {
       closeFriend: false
     };
 
-    mockFriendshipModel.findByUserAndFriend.mockResolvedValueOnce(mockFriendship as any);
-    mockFriendshipModel.updateSettings.mockResolvedValueOnce(mockUpdatedFriendship as any);
+    mockFriendshipModel.findByUserAndFriend.mockResolvedValueOnce(mockFriendship as unknown);
+    mockFriendshipModel.updateSettings.mockResolvedValueOnce(mockUpdatedFriendship as unknown);
 
     const response = await request(app)
       .patch('/friends/507f1f77bcf86cd799439012')
@@ -615,7 +615,7 @@ describe('Mocked: DELETE /friends/:friendId', () => {
 
     // Mock both directions of friendship lookup (Promise.all in controller)
     mockFriendshipModel.findByUserAndFriend.mockResolvedValueOnce(mockFriendship as any);
-    mockFriendshipModel.findByUserAndFriend.mockResolvedValueOnce(mockReverseFriendship as any);
+    mockFriendshipModel.findByUserAndFriend.mockResolvedValueOnce(mockReverseFriendship as unknown);
     mockFriendshipModel.deleteFriendship.mockResolvedValueOnce(undefined);
     mockUserModel.incrementFriendsCount.mockResolvedValueOnce(undefined);
 

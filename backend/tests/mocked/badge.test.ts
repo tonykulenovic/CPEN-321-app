@@ -6,7 +6,7 @@ import { jest, describe, test, beforeEach, expect } from '@jest/globals';
 import { BadgeController } from '../../src/controllers/badge.controller';
 import { badgeModel } from '../../src/models/badge.model';
 import { BadgeService } from '../../src/services/badge.service';
-import { BadgeCategory, BadgeRequirementType, IBadge, IUserBadge } from '../../src/types/badge.types';
+import { BadgeCategory, BadgeRequirementType, IUserBadge } from '../../src/types/badge.types';
 
 // Mock all external dependencies
 jest.mock('../../src/models/badge.model');
@@ -163,7 +163,7 @@ describe('Mocked: GET /badges (getAllBadges)', () => {
   // Expected output: error passed to next middleware
   test('Handle non-Error exception when fetching badges', async () => {
     const mockNext = jest.fn();
-    const req = { query: {} } as any;
+    const req = { query: {} } as unknown;
     const res = {
       status: jest.fn().mockReturnThis(),
       json: jest.fn(),
@@ -171,7 +171,7 @@ describe('Mocked: GET /badges (getAllBadges)', () => {
 
     mockBadgeModel.findAll.mockRejectedValue('String error');
 
-    await badgeController.getAllBadges(req, res, mockNext);
+    await badgeController.getAllBadges(req as any, res, mockNext);
 
     expect(mockNext).toHaveBeenCalledWith('String error');
   });
