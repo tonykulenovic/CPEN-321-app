@@ -198,7 +198,7 @@ export class PinModel {
         .populate('createdBy', 'name profilePicture')
         .sort({ isPreSeeded: -1, createdAt: -1 }); // Pre-seeded pins first, then by date
 
-      logger.info(`Search pins: Found ${pins.length} pins. UserId: ${filters.userId ?? 'NOT PROVIDED'}`);
+      logger.info(`Search pins: Found ${pins.length} pins. UserId: ${filters.userId ? filters.userId.toString() : 'NOT PROVIDED'}`);
       // Log pin details for debugging
       pins.forEach(pin => {
         logger.info(`  - Pin: "${pin.name}" | Category: ${pin.category} | PreSeeded: ${pin.isPreSeeded}`);
@@ -206,7 +206,7 @@ export class PinModel {
 
       // Apply visibility filtering
       if (filters.userId) {
-        logger.info(`Applying visibility filtering for user: ${filters.userId}`);
+        logger.info(`Applying visibility filtering for user: ${filters.userId.toString()}`);
         const friendshipModel = mongoose.model('Friendship');
         
         const filteredPins = await Promise.all(
@@ -218,7 +218,7 @@ export class PinModel {
             }
             
             // Check if createdBy is populated
-            if (!pin.createdBy?._id) {
+            if (pin.createdBy && !pin.createdBy._id) {
               logger.warn(`Pin "${pin.name}" has no creator, hiding it`);
               return null;
             }
@@ -230,7 +230,7 @@ export class PinModel {
             }
             
             // Default to PUBLIC if visibility is not set (for backward compatibility)
-            const visibility = pin.visibility ?? PinVisibility.PUBLIC;
+            const visibility = pin.visibility || PinVisibility.PUBLIC;
             logger.info(`Pin "${pin.name}" visibility: ${visibility}, creator: ${pin.createdBy._id.toString()}`);
             
             // Check visibility
@@ -269,8 +269,11 @@ export class PinModel {
         logger.info(`📍 Pins before distance filter: ${pins.length} (${pins.filter(p => p.category === PinCategory.STUDY).length} libraries)`);
         
         pins = pins.filter(p => {
-          const distance = this.calculateDistance(filters.latitude!, filters.longitude!, p.location.latitude, p.location.longitude);
-          const withinRadius = distance <= filters.radius!;
+          if (!filters.latitude || !filters.longitude || !filters.radius) {
+            return false;
+          }
+          const distance = this.calculateDistance(filters.latitude, filters.longitude, p.location.latitude, p.location.longitude);
+          const withinRadius = distance <= filters.radius;
           
           // Log library filtering for debugging
           if (p.category === PinCategory.STUDY) {
@@ -316,7 +319,7 @@ export class PinModel {
       // Simply add the report (allow multiple reports from same user)
       const pin = await this.pin.findByIdAndUpdate(
         pinId,
-        { $push: { reports: { reportedBy: userId, reason: reason ?? 'No reason provided', timestamp: new Date() } } },
+        { $push: { reports: { reportedBy: userId, reason: reason || 'No reason provided', timestamp: new Date() } } },
         { new: true }
       );
 

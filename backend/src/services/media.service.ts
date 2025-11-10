@@ -23,7 +23,7 @@ export class MediaService {
       if (fs.existsSync(filePath)) {
         fs.unlinkSync(filePath);
       }
-      throw new Error(`Failed to save profile picture: ${error}`);
+      throw new Error(`Failed to save profile picture: ${String(error)}`);
     }
   }
 

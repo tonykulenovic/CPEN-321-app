@@ -55,7 +55,7 @@ export class LocationGateway {
         throw new Error('User not found');
       }
 
-      const locationPrivacy = user.privacy.location ?? { sharing: 'off', precisionMeters: 30 };
+      const locationPrivacy = user.privacy.location || { sharing: 'off', precisionMeters: 30 };
       logger.info(`🔒 User ${userId.toString()} privacy settings: sharing=${locationPrivacy.sharing}`);
 
       // 2. ALWAYS check for nearby pins first (even if sharing is off)
@@ -137,7 +137,7 @@ export class LocationGateway {
 
       // 2. Get fresh locations for those friends (within last 5 minutes)
       const friendIds = friendsWithLocationSharing.map(f => 
-        f.friendId._id ?? f.friendId
+        (f.friendId as { _id?: mongoose.Types.ObjectId })._id || f.friendId
       );
       const freshLocations = await locationModel.findFriendsLocations(friendIds);
 
@@ -153,7 +153,7 @@ export class LocationGateway {
         }
 
         // Handle both old and new privacy format
-        const locationSharing = friend.privacy.location?.sharing ?? 'off';
+        const locationSharing = friend.privacy.location?.sharing || 'off';
         
         // Skip if location sharing is explicitly disabled
         // Handle legacy "on" value as "live"
@@ -163,7 +163,7 @@ export class LocationGateway {
 
         // Apply approximation if needed
         if (locationSharing === 'approximate') {
-          const precision = friend.privacy.location.precisionMeters ?? 30;
+          const precision = friend.privacy.location.precisionMeters || 30;
           const offset = precision / 111000;
           // eslint-disable-next-line security/detect-insecure-randomness
           location.lat += (Math.random() - 0.5) * offset;
@@ -200,7 +200,7 @@ export class LocationGateway {
 
       // 2. Check friend's privacy settings
       const friend = await userModel.findById(friendId);
-      const locationSharing = friend?.privacy.location.sharing ?? 'off';
+      const locationSharing = friend?.privacy.location.sharing || 'off';
       if (!friend || locationSharing === 'off') {
         throw new Error('Friend has location sharing disabled');
       }
@@ -370,13 +370,15 @@ export class LocationGateway {
       });
 
       // Set up heartbeat to update lastActiveAt every 5 minutes
-      const heartbeatInterval = setInterval(async () => {
-        try {
-          await userModel.updateLastActiveAt(userId);
-          logger.debug(`💓 Heartbeat: Updated lastActiveAt for user ${userId.toString()}`);
-        } catch (error) {
-          logger.error('Error in heartbeat update:', error);
-        }
+      const heartbeatInterval = setInterval(() => {
+        void (async () => {
+          try {
+            await userModel.updateLastActiveAt(userId);
+            logger.debug(`💓 Heartbeat: Updated lastActiveAt for user ${userId.toString()}`);
+          } catch (error) {
+            logger.error('Error in heartbeat update:', error);
+          }
+        })();
       }, 5 * 60 * 1000); // 5 minutes
 
       userHeartbeats.set(userIdStr, heartbeatInterval);
@@ -498,7 +500,7 @@ export class LocationGateway {
       const user = await User.findById(userId).select('visitedPins');
       if (!user) return;
 
-      const visitedPinIds = new Set(user.visitedPins.map((id: mongoose.Types.ObjectId) => id.toString()));
+      const visitedPinIds = new Set((user.visitedPins as mongoose.Types.ObjectId[]).map((id: mongoose.Types.ObjectId) => id.toString()));
 
       // Search for pins within a reasonable radius (100m to be safe)
       // Use a high limit to get ALL nearby pins (pagination would cut off results)

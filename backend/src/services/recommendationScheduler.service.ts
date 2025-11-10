@@ -13,7 +13,7 @@ interface MealTimeConfig {
 }
 
 export class RecommendationSchedulerService {
-  private static instance: RecommendationSchedulerService;
+  private static instance: RecommendationSchedulerService | undefined;
   private scheduledJobs = new Map<string, unknown>();
   private isRunning = false;
 

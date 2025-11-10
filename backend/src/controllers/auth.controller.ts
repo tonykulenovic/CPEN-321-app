@@ -17,7 +17,7 @@ export class AuthController {
     try {
       const { idToken, username } = req.body;
 
-      const data = await authService.signUpWithGoogle(idToken, username);
+      const data = await authService.signUpWithGoogle(String(idToken), String(username));
 
       return res.status(201).json({
         message: 'User signed up successfully',
@@ -64,7 +64,7 @@ export class AuthController {
     try {
       const { idToken } = req.body;
 
-      const data = await authService.signInWithGoogle(idToken);
+      const data = await authService.signInWithGoogle(String(idToken));
 
       return res.status(200).json({
         message: 'User signed in successfully',

@@ -53,7 +53,7 @@ class LocationSimulator {
         }
 
         const objectId = new mongoose.Types.ObjectId(userId);
-        console.log(`🔍 Looking for user with ObjectId: ${objectId}`);
+        console.log(`🔍 Looking for user with ObjectId: ${objectId.toString()}`);
         
         const user = await userModel.findById(objectId);
         console.log(`🔍 Query result:`, user ? `Found user: ${user.name}` : 'No user found');
@@ -84,7 +84,7 @@ class LocationSimulator {
         simulatedUser.path.push({ ...simulatedUser.currentLocation });
 
         this.simulatedUsers.push(simulatedUser);
-        console.log(`👤 Added user to simulation: ${user.name} (@${user.username}) - ID: ${user._id}`);
+        console.log(`👤 Added user to simulation: ${user.name} (@${user.username}) - ID: ${user._id.toString()}`);
       }
 
       if (this.simulatedUsers.length === 0) {
@@ -179,22 +179,24 @@ class LocationSimulator {
     let updateCount = 0;
     const maxUpdates = SIMULATION_DURATION / UPDATE_INTERVAL;
 
-    this.intervalId = setInterval(async () => {
-      updateCount++;
-      console.log(`\n🔄 Update ${updateCount}/${maxUpdates}`);
+    this.intervalId = setInterval(() => {
+      void (async () => {
+        updateCount++;
+        console.log(`\n🔄 Update ${updateCount}/${maxUpdates}`);
 
-      // Move and update each user
-      const updatePromises = this.simulatedUsers.map(async (user) => {
-        this.moveUserTowardsTarget(user);
-        await this.updateUserLocation(user);
-      });
+        // Move and update each user
+        const updatePromises = this.simulatedUsers.map(async (user) => {
+          this.moveUserTowardsTarget(user);
+          await this.updateUserLocation(user);
+        });
 
-      await Promise.all(updatePromises);
+        await Promise.all(updatePromises);
 
-      // Stop after duration
-      if (updateCount >= maxUpdates) {
-        await this.stopSimulation();
-      }
+        // Stop after duration
+        if (updateCount >= maxUpdates) {
+          await this.stopSimulation();
+        }
+      })();
     }, UPDATE_INTERVAL);
 
     // Auto-stop after simulation duration
@@ -324,10 +326,12 @@ async function main() {
     await simulator.startSimulation();
 
     // Cleanup on exit
-    process.on('SIGINT', async () => {
-      console.log('\n🛑 Received interrupt signal');
-      await simulator.stopSimulation();
-      process.exit(0);
+    process.on('SIGINT', () => {
+      void (async () => {
+        console.log('\n🛑 Received interrupt signal');
+        await simulator.stopSimulation();
+        process.exit(0);
+      })();
     });
 
   } catch (error) {

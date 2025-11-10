@@ -39,7 +39,7 @@ export class BadgeController {
 
       if (error instanceof Error) {
         return res.status(500).json({
-          message: error.message ?? 'Failed to fetch badges',
+          message: error.message || 'Failed to fetch badges',
         });
       }
 
@@ -69,7 +69,7 @@ export class BadgeController {
 
       if (error instanceof Error) {
         return res.status(500).json({
-          message: error.message ?? 'Failed to fetch user badges',
+          message: error.message || 'Failed to fetch user badges',
         });
       }
 
@@ -98,7 +98,7 @@ export class BadgeController {
 
       if (error instanceof Error) {
         return res.status(500).json({
-          message: error.message ?? 'Failed to fetch available badges',
+          message: error.message || 'Failed to fetch available badges',
         });
       }
 
@@ -127,7 +127,7 @@ export class BadgeController {
 
       if (error instanceof Error) {
         return res.status(500).json({
-          message: error.message ?? 'Failed to fetch badge progress',
+          message: error.message || 'Failed to fetch badge progress',
         });
       }
 
@@ -165,7 +165,7 @@ export class BadgeController {
 
       if (error instanceof Error) {
         return res.status(500).json({
-          message: error.message ?? 'Failed to fetch badge statistics',
+          message: error.message || 'Failed to fetch badge statistics',
           data: {
             totalBadges: 0,
             earnedBadges: 0,
@@ -186,7 +186,7 @@ export class BadgeController {
     next: NextFunction
   ) {
     try {
-      const userId = req.body.userId ?? req.user?._id?.toString();
+      const userId = req.body.userId || req.user?._id?.toString();
       if (!userId) {
         return res.status(400).json({
           message: 'User ID is required',
@@ -210,7 +210,7 @@ export class BadgeController {
 
       if (error instanceof Error) {
         return res.status(400).json({
-          message: error.message ?? 'Failed to process badge event',
+          message: error.message || 'Failed to process badge event',
         });
       }
 

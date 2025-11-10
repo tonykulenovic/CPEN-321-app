@@ -10,7 +10,7 @@ interface WeatherData {
 }
 
 export class WeatherService {
-  private static instance: WeatherService;
+  private static instance: WeatherService | undefined;
   private readonly API_KEY = process.env.OPENWEATHER_API_KEY;
   private readonly BASE_URL = 'https://api.openweathermap.org/data/2.5/weather';
 

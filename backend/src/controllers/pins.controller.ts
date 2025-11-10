@@ -64,7 +64,7 @@ export class PinsController {
     } catch (error) {
       logger.error('Failed to create pin:', error as Error);
       if (error instanceof Error) {
-        return res.status(400).json({ message: error.message ?? 'Failed to create pin' });
+        return res.status(400).json({ message: error.message || 'Failed to create pin' });
       }
       next(error);
     }
@@ -84,7 +84,7 @@ export class PinsController {
     } catch (error) {
       logger.error('Failed to get pin:', error as Error);
       if (error instanceof Error) {
-        return res.status(500).json({ message: error.message ?? 'Failed to get pin' });
+        return res.status(500).json({ message: error.message || 'Failed to get pin' });
       }
       next(error);
     }
@@ -107,7 +107,7 @@ export class PinsController {
     } catch (error) {
       logger.error('Failed to update pin:', error as Error);
       if (error instanceof Error) {
-        return res.status(500).json({ message: error.message ?? 'Failed to update pin' });
+        return res.status(500).json({ message: error.message || 'Failed to update pin' });
       }
       next(error);
     }
@@ -127,7 +127,7 @@ export class PinsController {
     } catch (error) {
       logger.error('Failed to delete pin:', error as Error);
       if (error instanceof Error) {
-        return res.status(500).json({ message: error.message ?? 'Failed to delete pin' });
+        return res.status(500).json({ message: error.message || 'Failed to delete pin' });
       }
       next(error);
     }
@@ -154,7 +154,7 @@ export class PinsController {
     } catch (error) {
       logger.error('Failed to search pins:', error as Error);
       if (error instanceof Error) {
-        return res.status(500).json({ message: error.message ?? 'Failed to search pins' });
+        return res.status(500).json({ message: error.message || 'Failed to search pins' });
       }
       next(error);
     }
@@ -173,7 +173,7 @@ export class PinsController {
       }
       const { voteType } = req.body;
       
-      const result = await pinVoteModel.vote(userId, pinId, voteType);
+      const result = await pinVoteModel.vote(userId, pinId, String(voteType) as 'upvote' | 'downvote');
       
       // Get the user's current vote status after the action
       const currentVote = await pinVoteModel.getUserVote(userId, pinId);
@@ -192,7 +192,7 @@ export class PinsController {
     } catch (error) {
       logger.error('Failed to rate pin:', error as Error);
       if (error instanceof Error) {
-        return res.status(500).json({ message: error.message ?? 'Failed to rate pin' });
+        return res.status(500).json({ message: error.message || 'Failed to rate pin' });
       }
       next(error);
     }
@@ -220,7 +220,7 @@ export class PinsController {
     } catch (error) {
       logger.error('Failed to get user vote:', error as Error);
       if (error instanceof Error) {
-        return res.status(500).json({ message: error.message ?? 'Failed to get user vote' });
+        return res.status(500).json({ message: error.message || 'Failed to get user vote' });
       }
       next(error);
     }
@@ -252,7 +252,7 @@ export class PinsController {
       );
 
       // Report the pin (adds to pin's reports array)
-      await pinModel.reportPin(pinId, userId, reason);
+      await pinModel.reportPin(pinId, userId, String(reason));
 
       // Only increment counter and trigger badge if this is a new unique pin being reported
       if (!alreadyReported) {
@@ -306,7 +306,7 @@ export class PinsController {
     } catch (error) {
       logger.error('Failed to report pin:', error as Error);
       if (error instanceof Error) {
-        return res.status(500).json({ message: error.message ?? 'Failed to report pin' });
+        return res.status(500).json({ message: error.message || 'Failed to report pin' });
       }
       next(error);
     }
@@ -330,7 +330,7 @@ export class PinsController {
     } catch (error) {
       logger.error('Failed to fetch reported pins:', error as Error);
       if (error instanceof Error) {
-        return res.status(500).json({ message: error.message ?? 'Failed to fetch reported pins' });
+        return res.status(500).json({ message: error.message || 'Failed to fetch reported pins' });
       }
       next(error);
     }
@@ -357,7 +357,7 @@ export class PinsController {
     } catch (error) {
       logger.error('Failed to clear reports:', error as Error);
       if (error instanceof Error) {
-        return res.status(500).json({ message: error.message ?? 'Failed to clear reports' });
+        return res.status(500).json({ message: error.message || 'Failed to clear reports' });
       }
       next(error);
     }
@@ -523,7 +523,7 @@ export class PinsController {
     } catch (error) {
       logger.error('Failed to visit pin:', error as Error);
       if (error instanceof Error) {
-        return res.status(500).json({ message: error.message ?? 'Failed to visit pin' });
+        return res.status(500).json({ message: error.message || 'Failed to visit pin' });
       }
       next(error);
     }

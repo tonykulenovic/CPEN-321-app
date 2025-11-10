@@ -263,7 +263,7 @@ export class BadgeModel {
       // After populate, badgeId can be null if the badge was deleted
       return userBadges.filter(ub => {
         const badge = ub.badgeId;
-        return badge !== null && badge !== undefined;
+        return badge != null;
       });
     } catch (error) {
       logger.error('Error getting user badges:', error);

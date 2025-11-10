@@ -32,7 +32,7 @@ const MEAL_KEYWORDS: Record<string, string[]> = {
 };
 
 export class RecommendationService {
-  private static instance: RecommendationService;
+  private static instance: RecommendationService | undefined;
 
   private constructor() {}
 
@@ -255,7 +255,7 @@ export class RecommendationService {
         }
 
         const todayHours = businessHours[currentDay];
-        if (!todayHours) return false; // Closed today
+        if (todayHours === undefined || todayHours === null) return false; // Closed today
 
         return currentTime >= todayHours.open && currentTime <= todayHours.close;
       });
@@ -324,9 +324,9 @@ export class RecommendationService {
    */
   private scoreMealRelevance(pin: IPin, mealType: string): number {
     // Heuristic-based meal relevance using pin name / description / category
-    const name = (pin.name ?? '').toLowerCase();
-    const description = (pin.description ?? '').toLowerCase();
-    const category = (pin.category ?? '').toLowerCase();
+    const name = (pin.name || '').toLowerCase();
+    const description = (pin.description || '').toLowerCase();
+    const category = (pin.category || '').toLowerCase();
     const searchText = `${name} ${description} ${category}`;
 
     // Use simple string matching instead of regex - safer and avoids ReDoS
@@ -404,8 +404,8 @@ export class RecommendationService {
    * Score based on pin popularity
    */
   private scorePopularity(pin: IPin): number {
-    const upvotes = pin.rating.upvotes ?? 0;
-    const downvotes = pin.rating.downvotes ?? 0;
+    const upvotes = pin.rating.upvotes || 0;
+    const downvotes = pin.rating.downvotes || 0;
     const totalVotes = upvotes + downvotes;
 
     if (totalVotes === 0) return 5; // No votes yet

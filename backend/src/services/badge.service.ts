@@ -460,7 +460,7 @@ export class BadgeService {
       // Count pre-seeded library pins (category: 'study')
       const libraryCount = user.visitedPins.filter((pin: unknown) => {
         const pinObj = pin as { isPreSeeded?: boolean; category?: string };
-        return pinObj && pinObj.isPreSeeded === true && pinObj.category === PinCategory.STUDY;
+        return Boolean(pinObj && pinObj.isPreSeeded === true && pinObj.category === PinCategory.STUDY);
       }).length;
 
       logger.info(`User ${userId.toString()} has visited ${libraryCount} pre-seeded libraries, target: ${target}`);
@@ -490,8 +490,8 @@ export class BadgeService {
       // Count pre-seeded cafe pins (category: 'shops_services' with subtype: 'cafe')
       const cafePins = user.visitedPins.filter((pin: unknown) => {
         const pinObj = pin as { isPreSeeded?: boolean; category?: string; metadata?: { subtype?: string }; name?: string };
-        const isCafe = pinObj && pinObj.isPreSeeded === true && pinObj.category === PinCategory.SHOPS_SERVICES && pinObj.metadata?.subtype === 'cafe';
-        if (pinObj && pinObj.category === PinCategory.SHOPS_SERVICES) {
+        const isCafe = Boolean(pinObj && pinObj.isPreSeeded === true && pinObj.category === PinCategory.SHOPS_SERVICES && pinObj.metadata?.subtype === 'cafe');
+        if (Boolean(pinObj && pinObj.category === PinCategory.SHOPS_SERVICES)) {
           logger.info(`☕ Checking pin: ${pinObj.name ?? 'unknown'}, isPreSeeded: ${pinObj.isPreSeeded}, category: ${pinObj.category}, subtype: ${pinObj.metadata?.subtype}, isCafe: ${isCafe}`);
         }
         return isCafe;
@@ -563,7 +563,7 @@ export class BadgeService {
           // Count pre-seeded cafe pins directly from visitedPins
           current = (user?.visitedPins?.filter((pin: unknown) => {
             const pinObj = pin as { isPreSeeded?: boolean; category?: string; metadata?: { subtype?: string } };
-            return pinObj && pinObj.isPreSeeded === true && pinObj.category === PinCategory.SHOPS_SERVICES && pinObj.metadata?.subtype === 'cafe';
+            return Boolean(pinObj && pinObj.isPreSeeded === true && pinObj.category === PinCategory.SHOPS_SERVICES && pinObj.metadata?.subtype === 'cafe');
           }) ?? []).length ?? 0;
           break;
         
