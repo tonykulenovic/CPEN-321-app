@@ -455,15 +455,15 @@ export class UserModel {
 
         if (daysDiff === 0) {
           // Same day, don't update streak
-          return user.loginTracking.currentStreak || 0;
+          return user.loginTracking.currentStreak ?? 0;
         } else if (daysDiff === 1) {
           // Consecutive day, increment streak
-          newStreak = (user.loginTracking.currentStreak || 0) + 1;
+          newStreak = (user.loginTracking.currentStreak ?? 0) + 1;
         }
         // daysDiff > 1: streak broken, newStreak = 1 (already set)
       }
 
-      const longestStreak = Math.max(newStreak, user.loginTracking.longestStreak || 0);
+      const longestStreak = Math.max(newStreak, user.loginTracking.longestStreak ?? 0);
 
       await this.user.findByIdAndUpdate(userId, {
         $set: {
@@ -473,7 +473,7 @@ export class UserModel {
         },
       });
 
-      logger.info(`User ${userId} login streak updated: ${newStreak} days`);
+      logger.info(`User ${userId.toString()} login streak updated: ${newStreak} days`);
       return newStreak;
     } catch (error) {
       logger.error('Error updating login streak:', error);
@@ -551,7 +551,7 @@ export class UserModel {
     try {
       const user = await this.user.findById(userId).select('recommendations');
       if (!user) {
-        logger.warn(`User ${userId} not found for recommendation check`);
+        logger.warn(`User ${userId.toString()} not found for recommendation check`);
         return false;
       }
 

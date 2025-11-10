@@ -1,3 +1,4 @@
+/* eslint-disable security/detect-console-log-non-literal */
 /**
  * Friends Performance Tests - Complete NFR Validation
  * 

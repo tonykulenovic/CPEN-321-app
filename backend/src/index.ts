@@ -1,6 +1,7 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
+/* eslint-disable security/detect-console-log-non-literal */
 import express from 'express';
 import { createServer } from 'http';
 import { connectDB } from './config/database';

@@ -190,7 +190,7 @@ export class FriendshipModel {
         ]
       });
       
-      logger.info(`Deleted ${deleteResult.deletedCount} friendship records between users ${userId} and ${friendId}`);
+      logger.info(`Deleted ${deleteResult.deletedCount} friendship records between users ${userId.toString()} and ${friendId.toString()}`);
     } catch (error) {
       logger.error('Error deleting friendship:', error);
       throw new Error('Failed to delete friendship');

@@ -2,6 +2,7 @@ import mongoose, { Schema } from 'mongoose';
 import { z } from 'zod';
 import {
   IPin,
+  IPinVote,
   PinCategory,
   PinStatus,
   PinVisibility,
@@ -97,9 +98,9 @@ export class PinModel {
         // Query vote directly to avoid circular dependency
         const PinVote = mongoose.model('PinVote');
         const vote = await PinVote.findOne({ userId, pinId: pin._id });
-        const userVote = vote ? (vote as any).voteType : null;
+        const userVote = vote ? (vote as IPinVote).voteType : null;
         return {
-          ...(pin as any).toObject(),
+          ...pin.toObject(),
           userVote
         } as IPin;
       }
@@ -175,7 +176,10 @@ export class PinModel {
 
       // Simple case-insensitive search using regex (frontend does the heavy lifting)
       if (filters.search && filters.search.trim() !== '') {
-        const searchRegex = new RegExp(filters.search.trim(), 'i');
+        // Escape special regex characters to prevent injection
+        const escapedSearch = filters.search.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        // eslint-disable-next-line security/detect-non-literal-regexp
+        const searchRegex = new RegExp(escapedSearch, 'i');
         query.$or = [
           { name: { $regex: searchRegex } },
           { description: { $regex: searchRegex } },
@@ -220,7 +224,7 @@ export class PinModel {
             }
             
             // Default to PUBLIC if visibility is not set (for backward compatibility)
-            const visibility = pin.visibility || PinVisibility.PUBLIC;
+            const visibility = pin.visibility ?? PinVisibility.PUBLIC;
             logger.info(`Pin "${pin.name}" visibility: ${visibility}, creator: ${pin.createdBy._id.toString()}`);
             
             // Check visibility
@@ -256,7 +260,7 @@ export class PinModel {
 
       if (filters.latitude && filters.longitude && filters.radius) {
         logger.info(`📍 Applying geolocation filter: center=(${filters.latitude}, ${filters.longitude}), radius=${filters.radius}m`);
-        logger.info(`📍 Pins before distance filter: ${pins.length} (${pins.filter(p => p.category === 'study').length} libraries)`);
+        logger.info(`📍 Pins before distance filter: ${pins.length} (${pins.filter(p => p.category === PinCategory.STUDY).length} libraries)`);
         
         pins = pins.filter(p => {
           const distance = this.calculateDistance(filters.latitude!, filters.longitude!, p.location.latitude, p.location.longitude);
@@ -270,7 +274,7 @@ export class PinModel {
           return withinRadius;
         });
         
-        logger.info(`📍 Pins after distance filter: ${pins.length} (${pins.filter(p => p.category === 'study').length} libraries)`);
+        logger.info(`📍 Pins after distance filter: ${pins.length} (${pins.filter(p => p.category === PinCategory.STUDY).length} libraries)`);
       }
 
       // Apply pagination after all filtering
@@ -284,7 +288,7 @@ export class PinModel {
         const pinsWithVotes = await Promise.all(
           paginatedPins.map(async (pin) => {
             const vote = await PinVote.findOne({ userId: filters.userId, pinId: pin._id });
-            const userVote = vote ? (vote as any).voteType : null;
+            const userVote = vote ? (vote as IPinVote).voteType : null;
             return {
               ...pin.toObject(),
               userVote
@@ -306,7 +310,7 @@ export class PinModel {
       // Simply add the report (allow multiple reports from same user)
       const pin = await this.pin.findByIdAndUpdate(
         pinId,
-        { $push: { reports: { reportedBy: userId, reason: reason || 'No reason provided', timestamp: new Date() } } },
+        { $push: { reports: { reportedBy: userId, reason: reason ?? 'No reason provided', timestamp: new Date() } } },
         { new: true }
       );
 

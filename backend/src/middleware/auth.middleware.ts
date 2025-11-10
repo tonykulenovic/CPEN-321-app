@@ -25,6 +25,7 @@ export const authenticateToken: RequestHandler = async (
     const devUserId = req.headers['x-dev-user-id'] as string;
     
     if (devToken && token === devToken && devUserId && process.env.NODE_ENV !== 'production') {
+      // eslint-disable-next-line security/detect-console-log-non-literal
       console.log(`[DEV] Using dev token bypass for user ID: ${devUserId}`);
       
       if (!mongoose.Types.ObjectId.isValid(devUserId)) {

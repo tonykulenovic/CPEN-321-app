@@ -14,6 +14,7 @@ import { notificationService } from '../services/notification.service';
 import logger from '../utils/logger.util';
 import { BadgeService } from '../services/badge.service';
 import { BadgeRequirementType } from '../types/badge.types';
+import { IUser } from '../types/user.types';
 
 /**
  * POST /friends/requests — Send friend request.
@@ -192,24 +193,26 @@ export async function listFriendRequests(req: Request, res: Response): Promise<v
     const formattedRequests = friendRequests.map((request) => {
       if (isInbox) {
         // For incoming requests, show the sender (userId)
-        const sender = request.userId as any; // populated by the model
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        const sender = request.userId as unknown as IUser; // populated by the model
         return {
           _id: request._id.toString(),
           from: {
             userId: sender._id.toString(),
-            displayName: sender.name || sender.username,
+            displayName: sender.name ?? sender.username,
             photoUrl: sender.profilePicture,
           },
           createdAt: request.createdAt.toISOString(),
         };
       } else {
         // For outgoing requests, show the recipient (friendId)
-        const recipient = request.friendId as any; // populated by the model
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        const recipient = request.friendId as unknown as IUser; // populated by the model
         return {
           _id: request._id.toString(),
           from: {
             userId: recipient._id.toString(),
-            displayName: recipient.name || recipient.username,
+            displayName: recipient.name ?? recipient.username,
             photoUrl: recipient.profilePicture,
           },
           createdAt: request.createdAt.toISOString(),
@@ -284,10 +287,10 @@ export async function acceptFriendRequest(req: Request, res: Response): Promise<
     }
 
     // 4. Verify user is the recipient (friendId) and request is still pending
-    logger.info(`🔍 Accept request debug: requestId=${requestId}, currentUserId=${currentUserId}, friendRequest.friendId=${friendshipRequest.friendId}, friendRequest.userId=${friendshipRequest.userId}, status=${friendshipRequest.status}`);
+    logger.info(`🔍 Accept request debug: requestId=${requestId}, currentUserId=${currentUserId.toString()}, friendRequest.friendId=${friendshipRequest.friendId.toString()}, friendRequest.userId=${friendshipRequest.userId.toString()}, status=${friendshipRequest.status}`);
     
     // Extract the actual ObjectId from the populated friendId field
-    const friendId = friendshipRequest.friendId._id || friendshipRequest.friendId;
+    const friendId = friendshipRequest.friendId._id ?? friendshipRequest.friendId;
     
     if (friendId.toString() !== currentUserId.toString()) {
       logger.error(`❌ Authorization failed: friendId=${friendId} !== currentUserId=${currentUserId}`);
@@ -309,7 +312,7 @@ export async function acceptFriendRequest(req: Request, res: Response): Promise<
 
     // 6. Create reciprocal friendship record
     // Extract the actual ObjectId from the populated userId field
-    const userId = friendshipRequest.userId._id || friendshipRequest.userId;
+    const userId = friendshipRequest.userId._id ?? friendshipRequest.userId;
     
     const reciprocalFriendshipData = {
       userId: currentUserId,
@@ -364,7 +367,7 @@ export async function acceptFriendRequest(req: Request, res: Response): Promise<
       const [currentUserBadges, friendUserBadges] = await Promise.all(badgePromises);
 
       if (currentUserBadges.length > 0) {
-        logger.info(`User ${currentUserId} earned ${currentUserBadges.length} badge(s) from adding a friend`);
+        logger.info(`User ${currentUserId.toString()} earned ${currentUserBadges.length} badge(s) from adding a friend`);
       }
       if (friendUserBadges.length > 0) {
         logger.info(`User ${userId.toString()} earned ${friendUserBadges.length} badge(s) from adding a friend`);
@@ -506,7 +509,8 @@ export async function listFriends(req: Request, res: Response): Promise<void> {
 
     // 4. Get online status for all friends (based on recent location activity)
     const friendUserIds = acceptedFriendships.map(friendship => {
-      const friend = friendship.friendId as any;
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      const friend = friendship.friendId as unknown as IUser;
       return friend._id;
     });
     
@@ -514,12 +518,13 @@ export async function listFriends(req: Request, res: Response): Promise<void> {
 
     // 5. Format friend summary data with online status
     const formattedFriends = acceptedFriendships.map((friendship) => {
-      const friend = friendship.friendId as any; // populated by the model
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      const friend = friendship.friendId as unknown as IUser; // populated by the model
       const isOnline = onlineStatusMap.get(friend._id.toString()) ?? false;
       
       return {
         userId: friend._id.toString(),
-        displayName: friend.name || friend.username,
+        displayName: friend.name ?? friend.username,
         photoUrl: friend.profilePicture,
         bio: friend.bio,
         shareLocation: friendship.shareLocation,

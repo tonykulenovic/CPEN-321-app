@@ -64,7 +64,7 @@ export class PinsController {
     } catch (error) {
       logger.error('Failed to create pin:', error as Error);
       if (error instanceof Error) {
-        return res.status(400).json({ message: error.message || 'Failed to create pin' });
+        return res.status(400).json({ message: error.message ?? 'Failed to create pin' });
       }
       next(error);
     }
@@ -84,7 +84,7 @@ export class PinsController {
     } catch (error) {
       logger.error('Failed to get pin:', error as Error);
       if (error instanceof Error) {
-        return res.status(500).json({ message: error.message || 'Failed to get pin' });
+        return res.status(500).json({ message: error.message ?? 'Failed to get pin' });
       }
       next(error);
     }
@@ -107,7 +107,7 @@ export class PinsController {
     } catch (error) {
       logger.error('Failed to update pin:', error as Error);
       if (error instanceof Error) {
-        return res.status(500).json({ message: error.message || 'Failed to update pin' });
+        return res.status(500).json({ message: error.message ?? 'Failed to update pin' });
       }
       next(error);
     }
@@ -120,14 +120,14 @@ export class PinsController {
       if (!userId) {
         return res.status(401).json({ message: 'Unauthorized' });
       }
-      const isAdmin = req.user?.isAdmin || false;
+      const isAdmin = req.user?.isAdmin ?? false;
       const deleted = await pinModel.delete(pinId, userId, isAdmin);
       if (!deleted) return res.status(404).json({ message: 'Pin not found or unauthorized' });
       res.status(200).json({ message: 'Pin deleted successfully' });
     } catch (error) {
       logger.error('Failed to delete pin:', error as Error);
       if (error instanceof Error) {
-        return res.status(500).json({ message: error.message || 'Failed to delete pin' });
+        return res.status(500).json({ message: error.message ?? 'Failed to delete pin' });
       }
       next(error);
     }
@@ -150,11 +150,11 @@ export class PinsController {
         limit: req.query.limit,
         userId, // Pass userId for visibility filtering
       });
-      res.status(200).json({ message: 'Pins fetched successfully', data: { pins, total, page: req.query.page || 1, limit: req.query.limit || 20 } });
+      res.status(200).json({ message: 'Pins fetched successfully', data: { pins, total, page: req.query.page ?? 1, limit: req.query.limit ?? 20 } });
     } catch (error) {
       logger.error('Failed to search pins:', error as Error);
       if (error instanceof Error) {
-        return res.status(500).json({ message: error.message || 'Failed to search pins' });
+        return res.status(500).json({ message: error.message ?? 'Failed to search pins' });
       }
       next(error);
     }
@@ -192,7 +192,7 @@ export class PinsController {
     } catch (error) {
       logger.error('Failed to rate pin:', error as Error);
       if (error instanceof Error) {
-        return res.status(500).json({ message: error.message || 'Failed to rate pin' });
+        return res.status(500).json({ message: error.message ?? 'Failed to rate pin' });
       }
       next(error);
     }
@@ -220,7 +220,7 @@ export class PinsController {
     } catch (error) {
       logger.error('Failed to get user vote:', error as Error);
       if (error instanceof Error) {
-        return res.status(500).json({ message: error.message || 'Failed to get user vote' });
+        return res.status(500).json({ message: error.message ?? 'Failed to get user vote' });
       }
       next(error);
     }
@@ -262,7 +262,7 @@ export class PinsController {
             $push: { reportedPins: pinId },
             $inc: { 'stats.reportsMade': 1 },
           });
-          logger.info(`📝 User ${userId.toString()} reported pin ${pinId.toString()} (unique report #${(user.stats?.reportsMade || 0) + 1})`);
+          logger.info(`📝 User ${userId.toString()} reported pin ${pinId.toString()} (unique report #${(user.stats?.reportsMade ?? 0) + 1})`);
         } catch (statsError) {
           logger.error('Error updating user stats:', statsError);
         }
@@ -306,7 +306,7 @@ export class PinsController {
     } catch (error) {
       logger.error('Failed to report pin:', error as Error);
       if (error instanceof Error) {
-        return res.status(500).json({ message: error.message || 'Failed to report pin' });
+        return res.status(500).json({ message: error.message ?? 'Failed to report pin' });
       }
       next(error);
     }
@@ -330,7 +330,7 @@ export class PinsController {
     } catch (error) {
       logger.error('Failed to fetch reported pins:', error as Error);
       if (error instanceof Error) {
-        return res.status(500).json({ message: error.message || 'Failed to fetch reported pins' });
+        return res.status(500).json({ message: error.message ?? 'Failed to fetch reported pins' });
       }
       next(error);
     }
@@ -357,7 +357,7 @@ export class PinsController {
     } catch (error) {
       logger.error('Failed to clear reports:', error as Error);
       if (error instanceof Error) {
-        return res.status(500).json({ message: error.message || 'Failed to clear reports' });
+        return res.status(500).json({ message: error.message ?? 'Failed to clear reports' });
       }
       next(error);
     }
@@ -408,7 +408,7 @@ export class PinsController {
         if (pin.category === PinCategory.STUDY) {
           increments['stats.librariesVisited'] = 1;
           logger.info(`📚 User ${userId.toString()} visited pre-seeded library: ${pin.name}`);
-        } else if (pin.category === 'shops_services') {
+        } else if (pin.category === PinCategory.SHOPS_SERVICES) {
           // Check subtype to distinguish cafes from restaurants
           const subtype = pin.metadata?.subtype;
           if (subtype === 'cafe') {
@@ -449,7 +449,7 @@ export class PinsController {
         logger.info(`🔍 Pin visit - isPreSeeded: ${pin.isPreSeeded}, category: ${pin.category}, subtype: ${pin.metadata?.subtype}`);
         
         if (pin.isPreSeeded) {
-          if (pin.category === 'study') {
+          if (pin.category === PinCategory.STUDY) {
             logger.info(`📚 Processing library badge event for: ${pin.name}`);
             const libraryBadges = await BadgeService.processBadgeEvent({
               userId: userId.toString(),
@@ -462,7 +462,7 @@ export class PinsController {
               },
             });
             allEarnedBadges = allEarnedBadges.concat(libraryBadges);
-          } else if (pin.category === 'shops_services') {
+          } else if (pin.category === PinCategory.SHOPS_SERVICES) {
             // Check subtype for specific badge events
             const subtype = pin.metadata?.subtype;
             logger.info(`🏪 Shops/services pin - subtype: ${subtype}`);
@@ -523,7 +523,7 @@ export class PinsController {
     } catch (error) {
       logger.error('Failed to visit pin:', error as Error);
       if (error instanceof Error) {
-        return res.status(500).json({ message: error.message || 'Failed to visit pin' });
+        return res.status(500).json({ message: error.message ?? 'Failed to visit pin' });
       }
       next(error);
     }

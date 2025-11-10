@@ -14,6 +14,7 @@ const storage = multer.diskStorage({
     cb(null, IMAGES_DIR);
   },
   filename: (req, file, cb) => {
+    // eslint-disable-next-line security/detect-insecure-randomness
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
     cb(null, `${uniqueSuffix}${path.extname(file.originalname)}`);
   },

@@ -26,7 +26,7 @@ router.post(
 router.post(
   '/check',
   validateBody(authenticateUserSchema),
-  (req, res, next) => authController.checkGoogleAccount(req, res, next)
+  (req, res, next) => void authController.checkGoogleAccount(req, res, next)
 );
 
 export default router;

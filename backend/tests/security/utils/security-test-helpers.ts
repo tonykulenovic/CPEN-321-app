@@ -117,9 +117,13 @@ export function createTamperedPayloadToken(): string {
 
 /**
  * Creates NoSQL injection payload for MongoDB testing
+ * NOTE: This intentionally uses $where for security testing purposes only.
+ * This should NEVER be used in production code.
  */
 export function createNoSQLInjectionPayload(): unknown {
+  // eslint-disable-next-line security/detect-non-literal-regexp
   return {
+    // eslint-disable-next-line security/detect-possible-timing-attacks
     $where: "function() { return true; }",
     $regex: ".*",
     $ne: null

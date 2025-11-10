@@ -94,6 +94,7 @@ export async function seedRestaurants(): Promise<void> {
 
     // First, get all existing cafes to check for overlap
     logger.info('📍 Fetching existing cafes to check for overlap...');
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     const existingCafes = await (pinModel as any).pin.find({
       isPreSeeded: true,
       category: PinCategory.SHOPS_SERVICES,
@@ -138,7 +139,7 @@ export async function seedRestaurants(): Promise<void> {
         );
 
         if (response.data && (response.data.places ?? response.data.results)) {
-          const regionRestaurants = response.data.places || response.data.results;
+          const regionRestaurants = response.data.places ?? response.data.results;
           if (regionRestaurants && regionRestaurants.length > 0) {
             allRestaurants.push(...regionRestaurants);
             logger.info(`    ✓ Found ${regionRestaurants.length} restaurants in ${region.name}`);
@@ -166,7 +167,7 @@ export async function seedRestaurants(): Promise<void> {
     for (const restaurant of allRestaurants) {
       const lat = restaurant.location?.latitude ?? restaurant.geometry?.location.lat;
       const lng = restaurant.location?.longitude ?? restaurant.geometry?.location.lng;
-      const name = ((restaurant.displayName?.text ?? restaurant.name) || '').toLowerCase().trim();
+      const name = ((restaurant.displayName?.text ?? restaurant.name) ?? '').toLowerCase().trim();
       
       if (!lat || !lng || !name) continue;
       
@@ -187,7 +188,7 @@ export async function seedRestaurants(): Promise<void> {
           : isDuplicateLocation 
             ? 'location' 
             : 'name';
-        logger.info(`    🔄 Skipping duplicate (${reason}): ${restaurant.displayName?.text || restaurant.name}`);
+        logger.info(`    🔄 Skipping duplicate (${reason}): ${restaurant.displayName?.text ?? restaurant.name}`);
       }
     }
     
@@ -231,15 +232,15 @@ export async function seedRestaurants(): Promise<void> {
       const lng = restaurant.location?.longitude ?? restaurant.geometry?.location.lng;
       
       if (!lat || !lng) {
-        logger.warn(`⚠️  Skipping restaurant without location: ${restaurant.displayName?.text || restaurant.name}`);
+        logger.warn(`⚠️  Skipping restaurant without location: ${restaurant.displayName?.text ?? restaurant.name}`);
         continue;
       }
 
       // Check if this restaurant has the same name as an existing cafe
-      const restaurantName = ((restaurant.displayName?.text ?? restaurant.name) || '').toLowerCase();
+      const restaurantName = ((restaurant.displayName?.text ?? restaurant.name) ?? '').toLowerCase();
       
       if (cafeNames.has(restaurantName)) {
-        logger.info(`  🚫 Excluding "${restaurant.displayName?.text || restaurant.name}" - duplicate name with cafe`);
+        logger.info(`  🚫 Excluding "${restaurant.displayName?.text ?? restaurant.name}" - duplicate name with cafe`);
         excludedCount++;
       } else {
         nonDuplicateRestaurants.push(restaurant);
@@ -263,8 +264,8 @@ export async function seedRestaurants(): Promise<void> {
         }
 
         // Extract name and address from either API format
-        const name = (restaurant.displayName?.text ?? restaurant.name) || 'Unnamed Restaurant';
-        const address = restaurant.formattedAddress || restaurant.vicinity || 'Restaurant near UBC campus';
+        const name = (restaurant.displayName?.text ?? restaurant.name) ?? 'Unnamed Restaurant';
+        const address = (restaurant.formattedAddress ?? restaurant.vicinity) ?? 'Restaurant near UBC campus';
         
         // Extract opening hours from either API format
         const isOpen = restaurant.currentOpeningHours?.openNow ?? restaurant.opening_hours?.open_now;
@@ -286,7 +287,7 @@ export async function seedRestaurants(): Promise<void> {
             amenities: restaurant.types?.filter((t: string) => t !== 'restaurant' && t !== 'point_of_interest') ?? undefined,
           },
           rating: {
-            upvotes: Math.floor(restaurant.rating || 0),
+            upvotes: Math.floor(restaurant.rating ?? 0),
             downvotes: 0,
             voters: [],
           },
@@ -298,6 +299,7 @@ export async function seedRestaurants(): Promise<void> {
         };
 
         // Upsert restaurant pin using name and location as unique identifier
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         const result = await (pinModel as any).pin.updateOne(
           {
             isPreSeeded: true,
@@ -342,7 +344,7 @@ export async function seedRestaurants(): Promise<void> {
 
     // Get current restaurant names for cleanup (use same extraction logic as above)
     const currentRestaurantNames = nonDuplicateRestaurants
-      .map((r: PlaceResult) => (r.displayName?.text ?? r.name) || 'Unnamed Restaurant')
+      .map((r: PlaceResult) => (r.displayName?.text ?? r.name) ?? 'Unnamed Restaurant')
       .filter((name: string) => name !== 'Unnamed Restaurant');
     
     // Delete pre-seeded restaurants that are no longer in Google Places results

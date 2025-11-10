@@ -33,9 +33,9 @@ const authenticateToken = (req: any, res: any, next: any) => {
 };
 
 // Set up routes with authentication middleware
-app.post('/debug/notification/test', authenticateToken, debugController.sendTestNotification);
-app.post('/debug/notification/friend-request', authenticateToken, debugController.sendTestFriendRequest);
-app.get('/debug/users/tokens', authenticateToken, debugController.listUsersWithTokens);
+app.post('/debug/notification/test', authenticateToken, (req, res) => void debugController.sendTestNotification(req, res));
+app.post('/debug/notification/friend-request', authenticateToken, (req, res) => void debugController.sendTestFriendRequest(req, res));
+app.get('/debug/users/tokens', authenticateToken, (req, res) => void debugController.listUsersWithTokens(req, res));
 
 describe('Mocked: POST /debug/notification/test', () => {
   beforeEach(() => {

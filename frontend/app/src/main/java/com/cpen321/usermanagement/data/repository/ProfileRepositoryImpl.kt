@@ -72,6 +72,18 @@ class ProfileRepositoryImpl @Inject constructor(
                 Log.e(TAG, "Failed to get friend profile: $errorMessage")
                 Result.failure(Exception(errorMessage))
             }
+        } catch (e: java.net.SocketTimeoutException) {
+            Log.e(TAG, "Network timeout getting friend profile", e)
+            Result.failure(e)
+        } catch (e: java.net.UnknownHostException) {
+            Log.e(TAG, "Network connection failed getting friend profile", e)
+            Result.failure(e)
+        } catch (e: java.io.IOException) {
+            Log.e(TAG, "IO error getting friend profile", e)
+            Result.failure(e)
+        } catch (e: retrofit2.HttpException) {
+            Log.e(TAG, "HTTP error getting friend profile: ${e.code()}", e)
+            Result.failure(e)
         } catch (e: Exception) {
             Log.e(TAG, "Error getting friend profile", e)
             Result.failure(e)
@@ -93,6 +105,18 @@ class ProfileRepositoryImpl @Inject constructor(
                 Log.e(TAG, "Update profile failed: $errorMessage")
                 Result.failure(Exception(errorMessage))
             }
+        } catch (e: java.net.SocketTimeoutException) {
+            Log.e(TAG, "Network timeout updating profile", e)
+            Result.failure(e)
+        } catch (e: java.net.UnknownHostException) {
+            Log.e(TAG, "Network connection failed updating profile", e)
+            Result.failure(e)
+        } catch (e: java.io.IOException) {
+            Log.e(TAG, "IO error updating profile", e)
+            Result.failure(e)
+        } catch (e: retrofit2.HttpException) {
+            Log.e(TAG, "HTTP error updating profile: ${e.code()}", e)
+            Result.failure(e)
         } catch (e: Exception) {
             Log.e(TAG, "Error updating profile", e)
             Result.failure(e)
@@ -116,6 +140,18 @@ class ProfileRepositoryImpl @Inject constructor(
                 Log.e(TAG, "Failed to upload profile picture: $errorMessage")
                 Result.failure(Exception(errorMessage))
             }
+        } catch (e: java.net.SocketTimeoutException) {
+            Log.e(TAG, "Network timeout uploading profile picture", e)
+            Result.failure(e)
+        } catch (e: java.net.UnknownHostException) {
+            Log.e(TAG, "Network connection failed uploading profile picture", e)
+            Result.failure(e)
+        } catch (e: java.io.IOException) {
+            Log.e(TAG, "IO error uploading profile picture", e)
+            Result.failure(e)
+        } catch (e: retrofit2.HttpException) {
+            Log.e(TAG, "HTTP error uploading profile picture: ${e.code()}", e)
+            Result.failure(e)
         } catch (e: Exception) {
             Log.e(TAG, "Exception while uploading profile picture", e)
             Result.failure(e)
@@ -217,6 +253,18 @@ class ProfileRepositoryImpl @Inject constructor(
                 Log.e(TAG, "Failed to remove FCM token: $errorMessage")
                 Result.failure(Exception(errorMessage))
             }
+        } catch (e: java.net.SocketTimeoutException) {
+            Log.e(TAG, "Network timeout removing FCM token", e)
+            Result.failure(e)
+        } catch (e: java.net.UnknownHostException) {
+            Log.e(TAG, "Network connection failed removing FCM token", e)
+            Result.failure(e)
+        } catch (e: java.io.IOException) {
+            Log.e(TAG, "IO error removing FCM token", e)
+            Result.failure(e)
+        } catch (e: retrofit2.HttpException) {
+            Log.e(TAG, "HTTP error removing FCM token: ${e.code()}", e)
+            Result.failure(e)
         } catch (e: Exception) {
             Log.e(TAG, "Error removing FCM token", e)
             Result.failure(e)
@@ -236,6 +284,18 @@ class ProfileRepositoryImpl @Inject constructor(
                 Log.e(TAG, "Failed to update privacy settings: $errorMessage")
                 Result.failure(Exception(errorMessage))
             }
+        } catch (e: java.net.SocketTimeoutException) {
+            Log.e(TAG, "Network timeout updating privacy settings", e)
+            Result.failure(e)
+        } catch (e: java.net.UnknownHostException) {
+            Log.e(TAG, "Network connection failed updating privacy settings", e)
+            Result.failure(e)
+        } catch (e: java.io.IOException) {
+            Log.e(TAG, "IO error updating privacy settings", e)
+            Result.failure(e)
+        } catch (e: retrofit2.HttpException) {
+            Log.e(TAG, "HTTP error updating privacy settings: ${e.code()}", e)
+            Result.failure(e)
         } catch (e: Exception) {
             Log.e(TAG, "Error updating privacy settings", e)
             Result.failure(e)

@@ -45,12 +45,12 @@ export class RecommendationService {
     limit = 5
   ): Promise<RecommendationScore[]> {
     try {
-      logger.info(`🍽️ Generating ${mealType} recommendations for user ${userId}`);
+      logger.info(`🍽️ Generating ${mealType} recommendations for user ${userId.toString()}`);
 
       // 1. Get user's current/recent location
       const userLocation = await this.getUserLocation(userId);
       if (!userLocation) {
-        logger.warn(`No location found for user ${userId}`);
+        logger.warn(`No location found for user ${userId.toString()}`);
         return [];
       }
 
@@ -81,7 +81,7 @@ export class RecommendationService {
 
       logger.info(`Generated ${allRecommendations.length} recommendations for ${mealType}`);
       allRecommendations.forEach((rec, idx) => {
-        const name = (rec.pin?.name ?? rec.place?.name) || 'Unknown';
+        const name = (rec.pin?.name ?? rec.place?.name) ?? 'Unknown';
         logger.info(`  ${idx + 1}. ${name} (${rec.source}) - Score: ${rec.score}, Distance: ${Math.round(rec.distance)}m`);
       });
 
@@ -103,12 +103,12 @@ export class RecommendationService {
       const recommendations = await this.generateRecommendations(userId, mealType, 2000, 3);
       
       if (recommendations.length === 0) {
-        logger.info(`No recommendations to send for user ${userId} (${mealType})`);
+        logger.info(`No recommendations to send for user ${userId.toString()} (${mealType})`);
         return false;
       }
 
       const topRecommendation = recommendations[0];
-      const name = (topRecommendation.pin?.name ?? topRecommendation.place?.name) || 'Unknown Place';
+      const name = (topRecommendation.pin?.name ?? topRecommendation.place?.name) ?? 'Unknown Place';
       const distanceText = topRecommendation.distance < 1000 
         ? `${Math.round(topRecommendation.distance)}m away`
         : `${(topRecommendation.distance / 1000).toFixed(1)}km away`;
@@ -120,7 +120,7 @@ export class RecommendationService {
       const body = `Try ${name} - ${distanceText}. ${topRecommendation.reason}`;
 
       // Determine ID for notification (pin ID or place ID)
-      const locationId = topRecommendation.pin?._id?.toString() || topRecommendation.place?.id || 'unknown';
+      const locationId = (topRecommendation.pin?._id?.toString() ?? topRecommendation.place?.id) ?? 'unknown';
 
       const sent = await notificationService.sendLocationRecommendationNotification(
         userId.toString(),
@@ -164,12 +164,12 @@ export class RecommendationService {
       // Get user's visited pins from user model using Mongoose directly
       const User = mongoose.model('User');
       const user = await User.findById(userId).select('visitedPins').lean() as { visitedPins?: string[] };
-      const visitedPinsStrings = user?.visitedPins || [];
+      const visitedPinsStrings = user?.visitedPins ?? [];
       
       // Convert string array to ObjectId array
       const visitedPins = visitedPinsStrings.map((pinId: string) => new mongoose.Types.ObjectId(pinId));
 
-      logger.info(`User ${userId} preferences: ${likedPins.length} liked, ${visitedPins.length} visited pins`);
+      logger.info(`User ${userId.toString()} preferences: ${likedPins.length} liked, ${visitedPins.length} visited pins`);
       
       return {
         likedPins,
@@ -309,9 +309,9 @@ export class RecommendationService {
    */
   private scoreMealRelevance(pin: IPin, mealType: string): number {
     // Heuristic-based meal relevance using pin name / description / category
-    const name = (pin.name || '').toLowerCase();
-    const description = (pin.description || '').toLowerCase();
-    const category = (pin.category || '').toLowerCase();
+    const name = (pin.name ?? '').toLowerCase();
+    const description = (pin.description ?? '').toLowerCase();
+    const category = (pin.category ?? '').toLowerCase();
 
     const keywords: Record<string, string[]> = {
       breakfast: ['breakfast', 'cafe', 'café', 'coffee', 'bakery', 'pastry', 'brunch', 'bagel', 'espresso', 'loafe'],
@@ -319,10 +319,11 @@ export class RecommendationService {
       dinner: ['dinner', 'restaurant', 'bar', 'grill', 'steak', 'pizzeria', 'sushi', 'tapas', 'bistro'],
     };
 
-    const kwList = keywords[mealType] || [];
+    const kwList = keywords[mealType] ?? [];
     let matchCount = 0;
 
     for (const kw of kwList) {
+      // eslint-disable-next-line security/detect-non-literal-regexp
       const re = new RegExp(`\\b${kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
       if (re.test(name) || re.test(description) || re.test(category)) {
         matchCount++;
@@ -354,7 +355,7 @@ export class RecommendationService {
     }
 
     // Give small bonus for pins with good metadata (shows curation)
-    const hasGoodMetadata = (pin.metadata?.cuisineType ?? pin.metadata?.priceRange) || pin.metadata?.hasOutdoorSeating;
+    const hasGoodMetadata = (pin.metadata?.cuisineType ?? pin.metadata?.priceRange) ?? pin.metadata?.hasOutdoorSeating;
     if (hasGoodMetadata) {
       score += 3; // Has useful info
     }
@@ -387,8 +388,8 @@ export class RecommendationService {
    * Score based on pin popularity
    */
   private scorePopularity(pin: IPin): number {
-    const upvotes = pin.rating.upvotes || 0;
-    const downvotes = pin.rating.downvotes || 0;
+    const upvotes = pin.rating.upvotes ?? 0;
+    const downvotes = pin.rating.downvotes ?? 0;
     const totalVotes = upvotes + downvotes;
 
     if (totalVotes === 0) return 5; // No votes yet

@@ -1,3 +1,6 @@
+/* eslint-disable security/detect-non-literal-fs-filename */
+/* eslint-disable security/detect-non-literal-regexp */
+/* eslint-disable security/detect-console-log-non-literal */
 import mongoose from 'mongoose';
 import axios from 'axios';
 import dotenv from 'dotenv';
@@ -72,6 +75,7 @@ class LocationSimulator {
           username: user.username,
           currentLocation: this.generateRandomLocationInUBC(),
           targetLocation: this.generateRandomLocationInUBC(),
+          // eslint-disable-next-line security/detect-insecure-randomness
           speed: 0.0001 + Math.random() * 0.0002, // Random walking speed
           path: [],
         };
@@ -96,7 +100,9 @@ class LocationSimulator {
 
   private generateRandomLocationInUBC(): { lat: number; lng: number } {
     return {
+      // eslint-disable-next-line security/detect-insecure-randomness
       lat: UBC_BOUNDS.south + Math.random() * (UBC_BOUNDS.north - UBC_BOUNDS.south),
+      // eslint-disable-next-line security/detect-insecure-randomness
       lng: UBC_BOUNDS.west + Math.random() * (UBC_BOUNDS.east - UBC_BOUNDS.west),
     };
   }
@@ -153,7 +159,7 @@ class LocationSimulator {
       if (err.code === 'ECONNREFUSED') {
         console.error(`❌ Cannot connect to server. Make sure backend is running on ${BASE_URL}`);
       } else {
-        console.error(`❌ Failed to update location for ${user.username}:`, err.message || 'Unknown error');
+        console.error(`❌ Failed to update location for ${user.username}:`, err.message ?? 'Unknown error');
       }
     }
   }
