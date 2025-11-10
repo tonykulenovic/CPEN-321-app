@@ -159,7 +159,13 @@ export class RecommendationService {
         .select('pinId')
         .lean();
       
-      const likedPins = upvotedPins.map((vote: any) => vote.pinId);
+      const likedPins = upvotedPins.map((vote: Record<string, unknown>) => {
+        const pinId = vote.pinId;
+        if (pinId instanceof mongoose.Types.ObjectId) {
+          return pinId;
+        }
+        return new mongoose.Types.ObjectId(String(pinId));
+      });
 
       // Get user's visited pins from user model using Mongoose directly
       const User = mongoose.model('User');
@@ -261,7 +267,7 @@ export class RecommendationService {
     userLocation: { lat: number; lng: number },
     mealType: 'breakfast' | 'lunch' | 'dinner',
     weather: unknown,
-    userPreferences: unknown
+    userPreferences: { likedPins: mongoose.Types.ObjectId[]; visitedPins: mongoose.Types.ObjectId[] }
   ): Promise<RecommendationScore> {
     const distance = this.calculateDistance(
       userLocation.lat,
@@ -341,18 +347,19 @@ export class RecommendationService {
   /**
    * Score based on user's past preferences (simplified - uses existing votes and visits)
    */
-  private scoreUserPreference(pin: IPin, userPreferences: unknown): number {
+  private scoreUserPreference(
+    pin: IPin,
+    userPreferences: { likedPins: mongoose.Types.ObjectId[]; visitedPins: mongoose.Types.ObjectId[] }
+  ): number {
     let score = 0;
 
     // Check if user has upvoted this pin before (strong positive signal)
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
-    if ((userPreferences as any).likedPins?.some((id: any) => id.equals(pin._id))) {
+    if (userPreferences.likedPins.some(id => id.equals(pin._id))) {
       score += 20; // User upvoted this place - strong preference
     }
     
     // Check if user has visited this pin before (moderate positive signal)
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
-    if ((userPreferences as any).visitedPins?.some((id: any) => id.equals(pin._id))) {
+    if (userPreferences.visitedPins.some(id => id.equals(pin._id))) {
       score += 10; // Been here before - moderate preference
     }
 
@@ -482,7 +489,7 @@ export class RecommendationService {
     maxDistance: number,
     mealType: 'breakfast' | 'lunch' | 'dinner',
     weather: any,
-    userPreferences: any
+    userPreferences: { likedPins: mongoose.Types.ObjectId[]; visitedPins: mongoose.Types.ObjectId[] }
   ): Promise<RecommendationScore[]> {
     try {
       // Get relevant pins from database using existing logic
@@ -523,7 +530,7 @@ export class RecommendationService {
     maxDistance: number,
     mealType: 'breakfast' | 'lunch' | 'dinner',
     weather: any,
-    userPreferences: any
+    userPreferences: { likedPins: mongoose.Types.ObjectId[]; visitedPins: mongoose.Types.ObjectId[] }
   ): Promise<RecommendationScore[]> {
     try {
       const places = await placesApiService.getNearbyDiningOptions(

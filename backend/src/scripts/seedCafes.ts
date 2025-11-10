@@ -182,8 +182,8 @@ export async function seedCafes(): Promise<void> {
         };
 
         // Upsert cafe pin using name and location as unique identifier
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        const result = await (pinModel as any).pin.updateOne(
+        const Pin = mongoose.model('Pin');
+        const result = await Pin.updateOne(
           {
             isPreSeeded: true,
             'metadata.subtype': 'cafe',
@@ -231,8 +231,8 @@ export async function seedCafes(): Promise<void> {
       .filter((name: string) => name !== 'Unnamed Cafe');
     
     // Delete pre-seeded cafes that are no longer in Google Places results
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    const deleteResult = await (pinModel as any).pin.deleteMany({
+    const Pin = mongoose.model('Pin');
+    const deleteResult = await Pin.deleteMany({
       isPreSeeded: true,
       category: PinCategory.SHOPS_SERVICES,
       'metadata.subtype': 'cafe',

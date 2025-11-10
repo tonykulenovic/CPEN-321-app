@@ -485,12 +485,7 @@ export class UserController {
 
       const userId = new mongoose.Types.ObjectId(req.params.id);
 
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-      const user = await (userModel as any).user.findByIdAndUpdate(
-        userId,
-        { isSuspended: false },
-        { new: true }
-      );
+      const user = await userModel.updateSuspensionStatus(userId, false);
 
       if (!user) {
         res.status(404).json({ message: 'User not found' });

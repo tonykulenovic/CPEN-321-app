@@ -101,13 +101,17 @@ export class PinVoteModel {
         await session.commitTransaction();
       }
       
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-      const pin = updatedPin as any;
+      if (!updatedPin) {
+        throw new Error('Pin not found after update');
+      }
+      
+      // Type assertion is safe here because we know the schema structure
+      const pin = updatedPin as { rating: { upvotes: number; downvotes: number } };
       return {
         success: true,
         action,
-        upvotes: pin.rating.upvotes,
-        downvotes: pin.rating.downvotes
+        upvotes: pin.rating.upvotes ?? 0,
+        downvotes: pin.rating.downvotes ?? 0
       };
     } catch (error) {
       if (session) {
