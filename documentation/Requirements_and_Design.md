@@ -4,6 +4,7 @@
 
 | **Change Date**                              | **Modified Sections**                         | **Rationale**                                                                                                                                                                                                                                                                        |
 | -------------------------------------------- | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 2025-11-10 ([9a30c85](../../commit/2b9a2a0)) | Requirements Specification, Use Cases         | Adjusted the use cases for accuracy. Specifically removed unimplemented use cases and moved 'Receive Notifications' use case to renamed feature 6                                                          |
 | 2025-11-03 ([2b9a2a0](../../commit/2b9a2a0)) | Requirements Specification, Use Cases         | Updated Use Case 10: Admin Review Reported Content - refined admin dashboard workflow with specific moderation actions (Clear Reports vs Delete Pin) and detailed report viewing                                                                                                     |
 | 2025-11-03 ([ab4e5df](../../commit/ab4e5df)) | Requirements Specification, Use Cases         | Added Use Case 11: Remove Pin to Formal Use Case Specifications - documented pin deletion functionality for both users and admins with permission checks and confirmation flow                                                                                                       |
 | 2025-11-03 ([dee9450](../../commit/dee9450)) | Pin Management, Use Cases                     | Updated Remove Pin use case - users can now remove their own pins in addition to admin removal capabilities                                                                                                                                                                          |
@@ -220,23 +221,23 @@ Due to the amount of use cases in our app, we elected to create a seperate use c
 14. **Create Profile**: User can create a profile for the app.
 15. **Manage Profile**: User can manage their profile for the app.
 16. **Manage Privacy Settings**: User can control profile visibility, location sharing, and friend request preferences.
-17. **Receive Notifications**: User receives push notifications for friend requests, pin updates, and system messages.
-18. **Manage User Accounts**: Admin can suspend, unsuspend, or delete user accounts.
+17. **Manage User Accounts**: Admin can suspend, unsuspend, or delete user accounts.
 
 ### Feature 4: Manage Friends
-19. **Add Friend**: User searches for a classmate by username/email and sends a request.
-20. **View Friend Profile**: User views a friend's badges and activity (respecting privacy settings).
-21. **Remove Friend**: User can remove a friend from their friend network.
-22. **Manage Friend Requests**: User can accept, decline, or block friend requests.
+18. **Add Friend**: User searches for a classmate by username/email and sends a request.
+19. **View Friend Profile**: User views a friend's badges and activity (respecting privacy settings).
+20. **Remove Friend**: User can remove a friend from their friend network.
+21. **Manage Friend Requests**: User can accept, decline, or block friend requests.
 
 ### Feature 5: Badge System
-23. **Earn Badge**: User receives a profile badge for activity (e.g., daily logins, time at library).
-24. **View Badges**: User views unlocked profile badges and progress toward new ones.
-25. **Track Badge Progress**: User can see progress toward earning new badges.
+22. **Earn Badge**: User receives a profile badge for activity (e.g., daily logins, time at library).
+23. **View Badges**: User views unlocked profile badges and progress toward new ones.
+24. **Track Badge Progress**: User can see progress toward earning new badges.
 
-### Feature 6: Recommend Locations
-26. **Get Food Recommendations**: App suggests nearby food options at lunch, coffee break, or dinner times.
-27. **Get Personalized Recommendations**: App suggests pins based on user preferences, time, and location.
+### Feature 6: Smart Notifications & Recommendations
+25. **Receive Notifications**: User receives push notifications for friend requests, system messages, and personalized recommendations.
+26. **Get Food Recommendations**: App sends contextual food suggestions (e.g., lunch, coffee break, or dinner times).
+27. **Get Personalized Recommendations**: App notifies users of relevant pins based on preferences, time, and location.
 
 
 ### **3.5. Formal Use Case Specifications (10 Most Major Use Cases)**
