@@ -57,6 +57,34 @@ When prompted, sign in with: **User Account 1**
 
 ---
 
+## Running Decline Friend Request Test (DeclineFriendRequestE2ETest)
+
+### Setup (2 accounts needed):
+
+**You need TWO accounts:**
+- **User Account 1** (Sender): Will send the friend request
+- **User Account 2** (Recipient): Will receive and decline the friend request
+
+**Step 1: Send a friend request FROM User Account 1 TO User Account 2**
+
+1. Sign in with **User Account 1**
+2. Go to Friends tab
+3. Click the + button to add friend
+4. Search for **User Account 2**
+5. Send a friend request
+6. **Sign out** (important!)
+
+**Step 2: Run the test WITH User Account 2**
+
+Run `DeclineFriendRequestE2ETest.kt` in Android Studio
+
+**CRITICAL**: When prompted, sign in with **User Account 2** (the RECIPIENT)
+- DO NOT sign in with User Account 1 (the sender)
+- Only the recipient can decline a friend request!
+- The test will detect if you're using the wrong account
+
+---
+
 ## Running Admin Tests (AdminManagePinsE2ETest)
 
 ### Setup (2 accounts needed) & Test Data:
@@ -83,6 +111,30 @@ Search for each pin and report it with reason: e.g. "Test report for E2E admin t
 Run `AdminManagePinsE2ETest.kt` in android studio
 
 When prompted, sign in with: `universe.cpen321@gmail.com`
+
+---
+
+## Running Admin User Management Tests (AdminManageUsersE2ETest)
+
+### Setup (2 user accounts + 1 admin account):
+
+**Step 1: Create 2 user accounts**
+
+Sign up with 2 disposable Google accounts (these will be managed/deleted by admin):
+
+1. Launch the app
+2. Sign up with **User Account 1** (any disposable Gmail)
+3. Complete profile setup (username/bio)
+4. Sign out
+5. Sign up with **User Account 2** (another disposable Gmail)
+6. Complete profile setup (username/bio)
+7. Sign out
+
+**Step 2: Run the tests**
+
+Run `AdminManageUsersE2ETest.kt` in Android Studio
+
+When prompted, sign in with: `universe.cpen321@gmail.com` (admin account)
 
 ---
 
@@ -142,6 +194,8 @@ The test account is **PERMANENTLY DELETED** from the backend. That Google accoun
 - **Test Files**: All tests are in `frontend/app/src/androidTest/java/com/cpen321/usermanagement/ui/`
   - `ManagePinsE2ETest.kt` - Pin management tests
   - `ManageFriendsE2ETest.kt` - Friend management tests
+  - `DeclineFriendRequestE2ETest.kt` - Standalone test for declining friend requests
   - `AdminManagePinsE2ETest.kt` - Admin pin management tests
+  - `AdminManageUsersE2ETest.kt` - Admin user management tests
   - `ManageAccountE2ETest.kt` - Complete account lifecycle (sign up → delete)
 

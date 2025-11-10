@@ -43,6 +43,16 @@ object TestTags {
     const val ADMIN_REPORTED_PINS_BUTTON = "admin_reported_pins_button"
     const val ADMIN_MANAGE_USERS_BUTTON = "admin_manage_users_button"
     
+    // AdminManageUsers tags
+    const val ADMIN_MANAGE_USERS_SCREEN = "admin_manage_users_screen"
+    const val ADMIN_USER_CARD = "admin_user_card"
+    const val ADMIN_SUSPEND_USER_BUTTON = "admin_suspend_user_button"
+    const val ADMIN_UNSUSPEND_USER_BUTTON = "admin_unsuspend_user_button"
+    const val ADMIN_DELETE_USER_BUTTON = "admin_delete_user_button"
+    const val ADMIN_USER_ACTION_DIALOG = "admin_user_action_dialog"
+    const val ADMIN_USER_ACTION_CONFIRM = "admin_user_action_confirm"
+    const val ADMIN_USER_ACTION_CANCEL = "admin_user_action_cancel"
+    
     // AdminReportedPins tags
     const val ADMIN_REPORTED_PINS_SCREEN = "admin_reported_pins_screen"
     const val REPORTED_PINS_LIST = "reported_pins_list"
@@ -133,5 +143,9 @@ object TestTags {
     fun friendCardTag(friendId: String) = "friend_card_$friendId"
     fun userSearchResultTag(userId: String) = "user_search_result_$userId"
     fun friendRequestCardTag(requestId: String) = "friend_request_card_$requestId"
+    fun adminUserCardTag(userId: String) = "admin_user_card_$userId"
+    fun adminSuspendButtonTag(userId: String) = "admin_suspend_button_$userId"
+    fun adminUnsuspendButtonTag(userId: String) = "admin_unsuspend_button_$userId"
+    fun adminDeleteUserButtonTag(userId: String) = "admin_delete_user_button_$userId"
 }
 

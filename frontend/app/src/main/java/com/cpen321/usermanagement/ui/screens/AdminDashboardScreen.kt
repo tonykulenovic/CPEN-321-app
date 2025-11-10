@@ -11,9 +11,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.cpen321.usermanagement.utils.TestTags
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import kotlinx.coroutines.launch
 
@@ -39,6 +41,7 @@ fun AdminDashboardScreen(
     }
     
     Scaffold(
+        modifier = Modifier.testTag(TestTags.ADMIN_DASHBOARD_SCREEN),
         topBar = {
             TopAppBar(
                 title = {
@@ -120,7 +123,8 @@ fun AdminDashboardScreen(
                 icon = Icons.Default.Flag,
                 title = "Review Reported Pins",
                 description = "View and moderate pins reported by users",
-                onClick = onReportedPinsClick
+                onClick = onReportedPinsClick,
+                testTag = TestTags.ADMIN_REPORTED_PINS_BUTTON
             )
             
             // Manage Pins
@@ -128,7 +132,8 @@ fun AdminDashboardScreen(
                 icon = Icons.Default.LocationOn,
                 title = "Manage Pins",
                 description = "View, edit, or remove community pins",
-                onClick = onManagePinsClick
+                onClick = onManagePinsClick,
+                testTag = TestTags.ADMIN_MANAGE_PINS_BUTTON
             )
             
             // User Management
@@ -136,7 +141,8 @@ fun AdminDashboardScreen(
                 icon = Icons.Default.People,
                 title = "User Management",
                 description = "Suspend or restore user accounts",
-                onClick = onManageUsersClick
+                onClick = onManageUsersClick,
+                testTag = TestTags.ADMIN_MANAGE_USERS_BUTTON
             )
         }
     }
@@ -147,11 +153,13 @@ private fun AdminActionCard(
     icon: ImageVector,
     title: String,
     description: String,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    testTag: String? = null
 ) {
     Card(
         modifier = Modifier
-            .fillMaxWidth(),
+            .fillMaxWidth()
+            .then(testTag?.let { Modifier.testTag(it) } ?: Modifier),
         colors = CardDefaults.cardColors(
             containerColor = Color(0xFF1A1A2E)
         ),
