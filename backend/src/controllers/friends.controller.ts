@@ -14,6 +14,7 @@ import { notificationService } from '../services/notification.service';
 import logger from '../utils/logger.util';
 import { BadgeService } from '../services/badge.service';
 import { BadgeRequirementType } from '../types/badge.types';
+import { IUser } from '../types/user.types';
 
 /**
  * POST /friends/requests — Send friend request.
@@ -33,6 +34,7 @@ export async function sendFriendRequest(req: Request, res: Response): Promise<vo
     }
 
     const { toUserId } = validation.data;
+    const toUserIdStr = String(toUserId);
     const fromUser = req.user; // Authenticated user from middleware
     if (!fromUser) {
       res.status(401).json({ message: 'Unauthorized' });
@@ -41,7 +43,7 @@ export async function sendFriendRequest(req: Request, res: Response): Promise<vo
     const fromUserId = fromUser._id;
 
     // Check if user is trying to send request to themselves
-    if (fromUserId.toString() === toUserId) {
+    if (fromUserId.toString() === toUserIdStr) {
       res.status(400).json({
         message: 'Cannot send friend request to yourself',
       });
@@ -49,7 +51,7 @@ export async function sendFriendRequest(req: Request, res: Response): Promise<vo
     }
 
     // 2. Check if target user exists
-    const targetUser = await userModel.findById(new mongoose.Types.ObjectId(toUserId));
+    const targetUser = await userModel.findById(new mongoose.Types.ObjectId(toUserIdStr));
     if (!targetUser) {
       res.status(404).json({
         message: 'User not found',
@@ -71,6 +73,7 @@ export async function sendFriendRequest(req: Request, res: Response): Promise<vo
         res.status(409).json({ message: 'Friend request already sent' });
         return;
       } else if (existingFriendship.status === 'declined' || existingFriendship.status === 'blocked') {
+        // Status check is necessary for business logic
         // Clean up old declined/blocked records to allow fresh start
         logger.info(`Cleaning up old ${existingFriendship.status} friendship record between ${fromUserId.toString()} and ${targetUser._id.toString()}`);
         await friendshipModel.deleteFriendship(fromUserId, targetUser._id);
@@ -105,9 +108,33 @@ export async function sendFriendRequest(req: Request, res: Response): Promise<vo
     }
 
     if (allowFriendRequestsFrom === 'friendsOfFriends') {
-      // TODO: Implement mutual friends check when we have that logic
-      // For now, we'll allow all requests
-      logger.info('Friends of friends check not implemented yet, allowing request');
+      // Check if users have mutual friends
+      const fromUserFriends = await friendshipModel.findUserFriendships(fromUserId, 'accepted');
+      const targetUserFriends = await friendshipModel.findUserFriendships(targetUser._id, 'accepted');
+      
+      // Helper to extract user ID from populated or unpopulated field
+      const getUserId = (field: mongoose.Types.ObjectId | IUser): string => {
+        if (field instanceof mongoose.Types.ObjectId) {
+          return field.toString();
+        }
+        return (field as IUser)._id.toString();
+      };
+      
+      const fromUserFriendIds = new Set(
+        fromUserFriends.map(f => getUserId(f.friendId))
+      );
+      
+      const hasMutualFriend = targetUserFriends.some(f => {
+        const friendId = getUserId(f.friendId);
+        return fromUserFriendIds.has(friendId);
+      });
+      
+      if (!hasMutualFriend) {
+        res.status(403).json({
+          message: 'This user only accepts friend requests from friends of friends',
+        });
+        return;
+      }
     }
 
     // 5. Create friendship record
@@ -124,7 +151,7 @@ export async function sendFriendRequest(req: Request, res: Response): Promise<vo
 
     // 6. Send notification to target user
     await notificationService.sendFriendRequestNotification(
-      toUserId,
+      toUserIdStr,
       fromUserId.toString(),
       fromUser.name
     );
@@ -168,7 +195,7 @@ export async function listFriendRequests(req: Request, res: Response): Promise<v
 
     const { inbox, limit } = validation.data;
     const isInbox = inbox === 'true';
-    const requestLimit = limit ? parseInt(limit, 10) : 20; // Default limit of 20
+    const requestLimit = limit ? parseInt(String(limit), 10) : 20; // Default limit of 20
 
     // 2. Get user ID from auth middleware
     const currentUser = req.user;
@@ -188,28 +215,46 @@ export async function listFriendRequests(req: Request, res: Response): Promise<v
       friendRequests = await friendshipModel.findOutgoingRequests(currentUserId, requestLimit);
     }
 
+    // Helper to extract user data from populated or unpopulated field
+    const getUserData = (field: mongoose.Types.ObjectId | IUser): { _id: string; name?: string; username: string; profilePicture?: string } => {
+      if (field instanceof mongoose.Types.ObjectId) {
+        // If not populated, we can't get name/profilePicture, so return minimal data
+        return {
+          _id: field.toString(),
+          username: '',
+        };
+      }
+      const user = field as IUser;
+      return {
+        _id: user._id.toString(),
+        name: user.name,
+        username: user.username,
+        profilePicture: user.profilePicture,
+      };
+    };
+
     // 4. Format response data
     const formattedRequests = friendRequests.map((request) => {
       if (isInbox) {
         // For incoming requests, show the sender (userId)
-        const sender = request.userId as any; // populated by the model
+        const sender = getUserData(request.userId);
         return {
           _id: request._id.toString(),
           from: {
-            userId: sender._id.toString(),
-            displayName: sender.name || sender.username,
+            userId: sender._id,
+            displayName: sender.name ?? sender.username,
             photoUrl: sender.profilePicture,
           },
           createdAt: request.createdAt.toISOString(),
         };
       } else {
         // For outgoing requests, show the recipient (friendId)
-        const recipient = request.friendId as any; // populated by the model
+        const recipient = getUserData(request.friendId);
         return {
           _id: request._id.toString(),
           from: {
-            userId: recipient._id.toString(),
-            displayName: recipient.name || recipient.username,
+            userId: recipient._id,
+            displayName: recipient.name ?? recipient.username,
             photoUrl: recipient.profilePicture,
           },
           createdAt: request.createdAt.toISOString(),
@@ -246,7 +291,7 @@ export async function acceptFriendRequest(req: Request, res: Response): Promise<
     // 1. Validate friend request ID parameter format (sanitize and validate)
     let requestId = req.params.id;
     
-    logger.info(`🔍 Raw requestId: "${requestId}" (type: ${typeof requestId}, length: ${requestId?.length})`);
+    logger.info(`🔍 Raw requestId: "${requestId}" (type: ${typeof requestId}, length: ${requestId.length})`);
     
     // Sanitize the parameter - remove any potential CRLF characters
     if (typeof requestId === 'string') {
@@ -283,14 +328,22 @@ export async function acceptFriendRequest(req: Request, res: Response): Promise<
       return;
     }
 
+    // Helper to extract ObjectId from populated or unpopulated field
+    const getObjectId = (field: mongoose.Types.ObjectId | IUser): mongoose.Types.ObjectId => {
+      if (field instanceof mongoose.Types.ObjectId) {
+        return field;
+      }
+      return (field as IUser)._id;
+    };
+
     // 4. Verify user is the recipient (friendId) and request is still pending
-    logger.info(`🔍 Accept request debug: requestId=${requestId}, currentUserId=${currentUserId}, friendRequest.friendId=${friendshipRequest.friendId}, friendRequest.userId=${friendshipRequest.userId}, status=${friendshipRequest.status}`);
+    logger.info(`🔍 Accept request debug: requestId=${requestId}, currentUserId=${currentUserId.toString()}, friendRequest.friendId=${getObjectId(friendshipRequest.friendId).toString()}, friendRequest.userId=${getObjectId(friendshipRequest.userId).toString()}, status=${friendshipRequest.status}`);
     
-    // Extract the actual ObjectId from the populated friendId field
-    const friendId = friendshipRequest.friendId._id || friendshipRequest.friendId;
+    // Extract the actual ObjectId from the populated or unpopulated friendId field
+    const friendId = getObjectId(friendshipRequest.friendId);
     
     if (friendId.toString() !== currentUserId.toString()) {
-      logger.error(`❌ Authorization failed: friendId=${friendId} !== currentUserId=${currentUserId}`);
+      logger.error(`❌ Authorization failed: friendId=${friendId.toString()} !== currentUserId=${currentUserId.toString()}`);
       res.status(403).json({
         message: 'You are not authorized to accept this friend request',
       });
@@ -308,8 +361,8 @@ export async function acceptFriendRequest(req: Request, res: Response): Promise<
     await friendshipModel.updateStatus(friendshipRequest._id, 'accepted');
 
     // 6. Create reciprocal friendship record
-    // Extract the actual ObjectId from the populated userId field
-    const userId = friendshipRequest.userId._id || friendshipRequest.userId;
+    // Extract the actual ObjectId from the populated or unpopulated userId field
+    const userId = getObjectId(friendshipRequest.userId);
     
     const reciprocalFriendshipData = {
       userId: currentUserId,
@@ -364,7 +417,7 @@ export async function acceptFriendRequest(req: Request, res: Response): Promise<
       const [currentUserBadges, friendUserBadges] = await Promise.all(badgePromises);
 
       if (currentUserBadges.length > 0) {
-        logger.info(`User ${currentUserId} earned ${currentUserBadges.length} badge(s) from adding a friend`);
+        logger.info(`User ${currentUserId.toString()} earned ${currentUserBadges.length} badge(s) from adding a friend`);
       }
       if (friendUserBadges.length > 0) {
         logger.info(`User ${userId.toString()} earned ${friendUserBadges.length} badge(s) from adding a friend`);
@@ -435,9 +488,17 @@ export async function declineFriendRequest(req: Request, res: Response): Promise
       return;
     }
 
+    // Helper to extract ObjectId from populated or unpopulated field
+    const getObjectId = (field: mongoose.Types.ObjectId | IUser): mongoose.Types.ObjectId => {
+      if (field instanceof mongoose.Types.ObjectId) {
+        return field;
+      }
+      return (field as IUser)._id;
+    };
+
     // 4. Verify user is the recipient (friendId) and request is still pending
-    // Extract the actual ObjectId from the populated friendId field
-    const friendId = friendshipRequest.friendId._id || friendshipRequest.friendId;
+    // Extract the actual ObjectId from the populated or unpopulated friendId field
+    const friendId = getObjectId(friendshipRequest.friendId);
     
     if (friendId.toString() !== currentUserId.toString()) {
       res.status(403).json({
@@ -490,7 +551,7 @@ export async function listFriends(req: Request, res: Response): Promise<void> {
     }
 
     const { limit } = validation.data;
-    const friendLimit = limit ? parseInt(limit, 10) : 50; // Default limit of 50 for friends list
+    const friendLimit = limit ? parseInt(String(limit), 10) : 50; // Default limit of 50 for friends list
 
     // 2. Get user ID from auth middleware
     const currentUser = req.user;
@@ -507,17 +568,46 @@ export async function listFriends(req: Request, res: Response): Promise<void> {
       friendLimit
     );
 
+    // Helper to extract user ID from populated or unpopulated field
+    const getFriendUserId = (field: mongoose.Types.ObjectId | IUser): mongoose.Types.ObjectId => {
+      if (field instanceof mongoose.Types.ObjectId) {
+        return field;
+      }
+      return (field as IUser)._id;
+    };
+
+    // Helper to extract user data from populated or unpopulated field
+    const getFriendData = (field: mongoose.Types.ObjectId | IUser): IUser | null => {
+      if (field instanceof mongoose.Types.ObjectId) {
+        return null; // Not populated
+      }
+      return field as IUser;
+    };
+
     // 4. Get online status for all friends (based on recent location activity)
-    const friendUserIds = acceptedFriendships.map(friendship => {
-      const friend = friendship.friendId as any;
-      return friend._id;
-    });
+    const friendUserIds = acceptedFriendships.map(friendship => 
+      getFriendUserId(friendship.friendId)
+    );
     
     const onlineStatusMap = await userModel.getOnlineStatus(friendUserIds, 10); // 10 minutes threshold
 
     // 5. Format friend summary data with online status
     const formattedFriends = acceptedFriendships.map((friendship) => {
-      const friend = friendship.friendId as any; // populated by the model
+      const friend = getFriendData(friendship.friendId);
+      if (!friend) {
+        // If friend data is not populated, we can't return full info
+        // This shouldn't happen if populate is working correctly
+        const friendId = getFriendUserId(friendship.friendId);
+        return {
+          userId: friendId.toString(),
+          displayName: '',
+          photoUrl: undefined,
+          bio: undefined,
+          shareLocation: friendship.shareLocation,
+          isOnline: onlineStatusMap.get(friendId.toString()) ?? false
+        };
+      }
+      
       const isOnline = onlineStatusMap.get(friend._id.toString()) ?? false;
       
       return {
@@ -576,7 +666,7 @@ export async function updateFriend(req: Request, res: Response): Promise<void> {
     const settings = validation.data;
 
     // Check if at least one setting is provided
-    if (Object.keys(settings).length === 0) {
+    if (Object.keys(settings as Record<string, unknown>).length === 0) {
       res.status(400).json({
         message: 'At least one setting must be provided',
       });
@@ -623,7 +713,7 @@ export async function updateFriend(req: Request, res: Response): Promise<void> {
     const updatedFriendship = await friendshipModel.updateSettings(
       currentUserId,
       new mongoose.Types.ObjectId(friendId),
-      settings
+      settings as Partial<Pick<import('../types/friends.types').IFriendship, 'shareLocation' | 'closeFriend'>>
     );
 
     if (!updatedFriendship) {
@@ -701,7 +791,7 @@ export async function removeFriend(req: Request, res: Response): Promise<void> {
 
     // Verify that the reciprocal friendship exists
     if (!friendToUsershipship || friendToUsershipship.status !== 'accepted') {
-      logger.warn(`Reciprocal friendship missing for users ${currentUserId} and ${friendId}`);
+      logger.warn(`Reciprocal friendship missing for users ${currentUserId.toString()} and ${friendId.toString()}`);
     }
 
     // 4. Delete both friendship records

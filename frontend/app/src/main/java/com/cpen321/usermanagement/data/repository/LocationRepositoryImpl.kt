@@ -41,7 +41,19 @@ class LocationRepositoryImpl @Inject constructor(
                 Log.w(TAG, "Location update failed: $errorMessage")
                 Result.failure(Exception("Location update failed: $errorMessage"))
             }
-        } catch (e: Exception) {
+        } catch (e: java.net.SocketTimeoutException) {
+            Log.e(TAG, "Network timeout updating location", e)
+            Result.failure(e)
+        } catch (e: java.net.UnknownHostException) {
+            Log.e(TAG, "Network connection failed updating location", e)
+            Result.failure(e)
+        } catch (e: java.io.IOException) {
+            Log.e(TAG, "IO error updating location", e)
+            Result.failure(e)
+        } catch (e: retrofit2.HttpException) {
+            Log.e(TAG, "HTTP error updating location: ${e.code()}", e)
+            Result.failure(e)
+        } catch (e: RuntimeException) {
             Log.e(TAG, "Error updating location", e)
             Result.failure(e)
         }

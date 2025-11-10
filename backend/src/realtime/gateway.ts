@@ -15,7 +15,7 @@ import logger from '../utils/logger.util';
 // Location tracking subscription map
 const locationTrackers = new Map<string, Set<string>>(); // friendId -> Set<viewerIds>
 const socketToUser = new Map<string, mongoose.Types.ObjectId>(); // socketId -> userId
-const userHeartbeats = new Map<string, NodeJS.Timeout>(); // userId -> heartbeat interval
+const userHeartbeats = new Map<string, ReturnType<typeof setInterval>>(); // userId -> heartbeat interval
 
 /**
  * Location Gateway - Single source of truth for all location operations
@@ -89,7 +89,9 @@ export class LocationGateway {
         
         // Add some random offset within precision range
         const offset = precision / 111000; // Convert meters to degrees (approximate)
+        // eslint-disable-next-line security/detect-insecure-randomness
         finalLat += (Math.random() - 0.5) * offset;
+        // eslint-disable-next-line security/detect-insecure-randomness
         finalLng += (Math.random() - 0.5) * offset;
       }
 
@@ -135,7 +137,7 @@ export class LocationGateway {
 
       // 2. Get fresh locations for those friends (within last 5 minutes)
       const friendIds = friendsWithLocationSharing.map(f => 
-        f.friendId._id || f.friendId
+        (f.friendId as { _id?: mongoose.Types.ObjectId })._id || f.friendId
       );
       const freshLocations = await locationModel.findFriendsLocations(friendIds);
 
@@ -163,7 +165,9 @@ export class LocationGateway {
         if (locationSharing === 'approximate') {
           const precision = friend.privacy.location.precisionMeters || 30;
           const offset = precision / 111000;
+          // eslint-disable-next-line security/detect-insecure-randomness
           location.lat += (Math.random() - 0.5) * offset;
+          // eslint-disable-next-line security/detect-insecure-randomness
           location.lng += (Math.random() - 0.5) * offset;
           location.accuracyM = Math.max(location.accuracyM, precision);
         }
@@ -196,7 +200,7 @@ export class LocationGateway {
 
       // 2. Check friend's privacy settings
       const friend = await userModel.findById(friendId);
-      const locationSharing = friend?.privacy.location?.sharing ?? 'off';
+      const locationSharing = friend?.privacy.location.sharing || 'off';
       if (!friend || locationSharing === 'off') {
         throw new Error('Friend has location sharing disabled');
       }
@@ -223,7 +227,7 @@ export class LocationGateway {
 
       // 5. Auto-unsubscribe after duration
       setTimeout(() => {
-        this.untrackFriendLocation(viewerId, friendId);
+        void this.untrackFriendLocation(viewerId, friendId);
       }, durationSec * 1000);
 
     } catch (error) {
@@ -313,6 +317,7 @@ export class LocationGateway {
         const devUserId = socket.handshake.headers['x-dev-user-id'] as string;
         
         if (devToken && token === devToken && devUserId && process.env.NODE_ENV !== 'production') {
+          // eslint-disable-next-line security/detect-console-log-non-literal
           console.log(`[DEV] Socket.io using dev token bypass for user ID: ${devUserId}`);
           
           if (!mongoose.Types.ObjectId.isValid(devUserId)) {
@@ -326,7 +331,7 @@ export class LocationGateway {
 
           // Store user ID in socket data
           socket.data.userId = new mongoose.Types.ObjectId(devUserId);
-          socketToUser.set(socket.id, new mongoose.Types.ObjectId(devUserId));
+          socketToUser.set(String(socket.id), new mongoose.Types.ObjectId(devUserId));
           
           next();
           return;
@@ -343,7 +348,7 @@ export class LocationGateway {
         
         // Store user ID in socket data
         socket.data.userId = userId;
-        socketToUser.set(socket.id, userId);
+        socketToUser.set(String(socket.id), userId);
         
         next();
       } catch (error) {
@@ -365,13 +370,15 @@ export class LocationGateway {
       });
 
       // Set up heartbeat to update lastActiveAt every 5 minutes
-      const heartbeatInterval = setInterval(async () => {
-        try {
-          await userModel.updateLastActiveAt(userId);
-          logger.debug(`💓 Heartbeat: Updated lastActiveAt for user ${userId.toString()}`);
-        } catch (error) {
-          logger.error('Error in heartbeat update:', error);
-        }
+      const heartbeatInterval = setInterval(() => {
+        void (async () => {
+          try {
+            await userModel.updateLastActiveAt(userId);
+            logger.debug(`💓 Heartbeat: Updated lastActiveAt for user ${userId.toString()}`);
+          } catch (error) {
+            logger.error('Error in heartbeat update:', error);
+          }
+        })();
       }, 5 * 60 * 1000); // 5 minutes
 
       userHeartbeats.set(userIdStr, heartbeatInterval);
@@ -380,7 +387,7 @@ export class LocationGateway {
       socket.on('location:track', async (payload: { friendId: string; durationSec?: number }) => {
         try {
           const friendId = new mongoose.Types.ObjectId(payload.friendId);
-          const duration = payload.durationSec || 300; // 5 minutes default
+          const duration = payload.durationSec ?? 300; // 5 minutes default
 
           await this.trackFriendLocation(userId, friendId, duration);
           
@@ -455,7 +462,7 @@ export class LocationGateway {
           }
         }
         
-        socketToUser.delete(socket.id);
+        socketToUser.delete(String(socket.id));
       });
     });
   }
@@ -493,7 +500,7 @@ export class LocationGateway {
       const user = await User.findById(userId).select('visitedPins');
       if (!user) return;
 
-      const visitedPinIds = new Set(user.visitedPins.map((id: mongoose.Types.ObjectId) => id.toString()));
+      const visitedPinIds = new Set((user.visitedPins as mongoose.Types.ObjectId[]).map((id: mongoose.Types.ObjectId) => id.toString()));
 
       // Search for pins within a reasonable radius (100m to be safe)
       // Use a high limit to get ALL nearby pins (pagination would cut off results)
@@ -530,7 +537,7 @@ export class LocationGateway {
         );
 
         // Log distance for ALL unvisited pins (especially libraries)
-        if (pin.category === PinCategory.STUDY || (pin.category === 'shops_services' && pin.metadata?.subtype === 'cafe')) {
+        if (pin.category === PinCategory.STUDY || (pin.category === PinCategory.SHOPS_SERVICES && pin.metadata?.subtype === 'cafe')) {
           logger.info(`📏 Distance to ${pin.name} (${pin.category}${pin.metadata?.subtype ? '/' + pin.metadata.subtype : ''}): ${distance.toFixed(2)}m`);
         }
 
@@ -546,7 +553,7 @@ export class LocationGateway {
             if (pin.category === PinCategory.STUDY) {
               increments['stats.librariesVisited'] = 1;
               logger.info(`📚 Incrementing library visit count (pre-seeded)`);
-            } else if (pin.category === 'shops_services') {
+            } else if (pin.category === PinCategory.SHOPS_SERVICES) {
               // Check subtype to distinguish cafes from restaurants
               const subtype = pin.metadata?.subtype;
               if (subtype === 'cafe') {
@@ -567,7 +574,7 @@ export class LocationGateway {
 
           // Process badge events for pin visit
           try {
-            let allEarnedBadges: any[] = [];
+            let allEarnedBadges: unknown[] = [];
 
             // General pin visit event
             const visitBadges = await BadgeService.processBadgeEvent({
@@ -579,7 +586,7 @@ export class LocationGateway {
                 pinId: pin._id.toString(),
                 pinName: pin.name,
                 category: pin.category,
-                distance: distance,
+                distance,
               },
             });
             allEarnedBadges = allEarnedBadges.concat(visitBadges);
@@ -588,7 +595,7 @@ export class LocationGateway {
             logger.info(`🔍 [REALTIME] Pin visit - isPreSeeded: ${pin.isPreSeeded}, category: ${pin.category}, subtype: ${pin.metadata?.subtype}`);
             
             if (pin.isPreSeeded) {
-              if (pin.category === 'study') {
+              if (pin.category === PinCategory.STUDY) {
                 logger.info(`📚 [REALTIME] Processing library badge event for: ${pin.name}`);
                 const libraryBadges = await BadgeService.processBadgeEvent({
                   userId: userId.toString(),
@@ -602,7 +609,7 @@ export class LocationGateway {
                 });
                 logger.info(`📚 [REALTIME] Library badge event returned ${libraryBadges.length} badges`);
                 allEarnedBadges = allEarnedBadges.concat(libraryBadges);
-              } else if (pin.category === 'shops_services') {
+              } else if (pin.category === PinCategory.SHOPS_SERVICES) {
                 // Check subtype for specific badge events
                 const subtype = pin.metadata?.subtype;
                 logger.info(`🏪 [REALTIME] Shops/services pin - subtype: ${subtype}`);

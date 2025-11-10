@@ -3,7 +3,7 @@ import * as path from 'path';
 import logger from '../utils/logger.util';
 
 class FirebaseService {
-    private static instance: FirebaseService;
+    private static instance: FirebaseService | undefined;
     private app: admin.app.App | null = null;
 
     private constructor() {}
@@ -45,7 +45,7 @@ class FirebaseService {
         token: string,
         title: string,
         body: string,
-        data?: { [key: string]: string }
+        data?: Record<string, string>
     ): Promise<boolean> {
         const messaging = this.getMessaging();
         if (!messaging) {
@@ -74,7 +74,7 @@ class FirebaseService {
             logger.info(`   📱 Token: ${token.substring(0, 30)}...${token.substring(token.length - 10)}`);
             logger.info(`   📰 Title: "${title}"`);
             logger.info(`   💬 Body: "${body}"`);
-            logger.info(`   📦 Data: ${JSON.stringify(data || {})}`);
+            logger.info(`   📦 Data: ${JSON.stringify(data ?? {})}`);
             logger.info(`   🤖 Android Channel: friend_activity_channel`);
             
             const startTime = Date.now();
@@ -85,11 +85,11 @@ class FirebaseService {
             logger.info(`   📧 Message ID: ${response}`);
             return true;
         } catch (error: unknown) {
-            const firebaseError = error as { code?: string; message?: string; details?: any };
+            const firebaseError = error as { code?: string; message?: string; details?: unknown };
             logger.error(`❌ [FCM] Error sending notification:`, error);
-            logger.error(`   🔢 Error code: ${firebaseError.code || 'N/A'}`);
-            logger.error(`   💬 Error message: ${firebaseError.message || 'N/A'}`);
-            logger.error(`   📊 Error details: ${JSON.stringify(firebaseError.details || {})}`);
+            logger.error(`   🔢 Error code: ${firebaseError.code ?? 'N/A'}`);
+            logger.error(`   💬 Error message: ${firebaseError.message ?? 'N/A'}`);
+            logger.error(`   📊 Error details: ${JSON.stringify(firebaseError.details ?? {})}`);
             
             // Log specific Firebase error codes with solutions
             if (firebaseError.code === 'messaging/invalid-registration-token' || 
@@ -126,7 +126,7 @@ class FirebaseService {
                     title,
                     body,
                 },
-                data: data || {},
+                data: data ?? {},
                 android: {
                     notification: {
                         channelId: 'friend_activity_channel',
@@ -147,7 +147,7 @@ class FirebaseService {
                 });
             }
 
-            return response.successCount;
+            return Number(response.successCount);
         } catch (error) {
             logger.error('Error sending multicast notification:', error);
             return 0;

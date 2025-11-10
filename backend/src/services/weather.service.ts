@@ -10,7 +10,7 @@ interface WeatherData {
 }
 
 export class WeatherService {
-  private static instance: WeatherService;
+  private static instance: WeatherService | undefined;
   private readonly API_KEY = process.env.OPENWEATHER_API_KEY;
   private readonly BASE_URL = 'https://api.openweathermap.org/data/2.5/weather';
 
@@ -43,7 +43,8 @@ export class WeatherService {
         timeout: 5000, // 5 second timeout
       });
 
-      const data = response.data as any; // OpenWeather API response
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      const data = response.data; // OpenWeather API response
       const weatherCode = data.weather[0].id as number;
       const temperature = data.main.temp as number;
       const humidity = data.main.humidity as number;
@@ -154,12 +155,15 @@ export class WeatherService {
   private getMockWeather(): WeatherData {
     // Generate somewhat realistic mock data
     const conditions: WeatherData['condition'][] = ['clear', 'cloudy', 'rainy'];
+    // eslint-disable-next-line security/detect-insecure-randomness
     const randomCondition = conditions[Math.floor(Math.random() * conditions.length)];
+    // eslint-disable-next-line security/detect-insecure-randomness
     const temperature = Math.floor(Math.random() * 30) + 5; // 5-35°C
     
     return {
       condition: randomCondition,
       temperature,
+      // eslint-disable-next-line security/detect-insecure-randomness
       humidity: Math.floor(Math.random() * 50) + 30, // 30-80%
       description: `Mock ${randomCondition} weather`,
       isGoodForOutdoor: randomCondition === 'clear' && temperature > 10 && temperature < 30,

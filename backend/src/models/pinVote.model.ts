@@ -80,7 +80,7 @@ export class PinVoteModel {
       // Access the Pin model directly to avoid circular dependency
       const pinCollection = mongoose.model('Pin');
       
-      const updateOperations: any = {
+      const updateOperations: Record<string, unknown> = {
         $inc: { 'rating.upvotes': upvoteChange, 'rating.downvotes': downvoteChange }
       };
 
@@ -115,11 +115,17 @@ export class PinVoteModel {
         await session.commitTransaction();
       }
       
+      if (!updatedPin) {
+        throw new Error('Pin not found after update');
+      }
+      
+      // Type assertion is safe here because we know the schema structure
+      const pin = updatedPin as { rating: { upvotes: number; downvotes: number } };
       return {
         success: true,
         action,
-        upvotes: updatedPin.rating.upvotes || 0,
-        downvotes: updatedPin.rating.downvotes || 0
+        upvotes: pin.rating.upvotes || 0,
+        downvotes: pin.rating.downvotes || 0
       };
     } catch (error) {
       if (session) {
@@ -129,7 +135,7 @@ export class PinVoteModel {
       throw new Error('Failed to vote on pin');
     } finally {
       if (session) {
-        session.endSession();
+        void session.endSession();
       }
     }
   }

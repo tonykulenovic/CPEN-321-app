@@ -1,3 +1,4 @@
+/* eslint-disable security/detect-insecure-randomness */
 import { describe, test, beforeEach, afterEach, expect, jest } from '@jest/globals';
 import { weatherService } from '../../src/services/weather.service';
 
@@ -25,15 +26,15 @@ describe('Unmocked: WeatherService Integration Tests', () => {
       expect(weather).toHaveProperty('isGoodForOutdoor');
       
       // Validate types and ranges
-      expect(['clear', 'cloudy', 'rainy']).toContain(weather!.condition);
-      expect(typeof weather!.temperature).toBe('number');
+      expect(['clear', 'cloudy', 'rainy']).toContain(weather?.condition);
+      expect(typeof weather?.temperature).toBe('number');
       expect(weather?.temperature).toBeGreaterThanOrEqual(5);
-      expect(weather!.temperature).toBeLessThanOrEqual(35);
+      expect(weather?.temperature).toBeLessThanOrEqual(35);
       expect(typeof weather?.humidity).toBe('number');
       expect(weather?.humidity).toBeGreaterThanOrEqual(30);
       expect(weather?.humidity).toBeLessThanOrEqual(80);
       expect(typeof weather?.isGoodForOutdoor).toBe('boolean');
-      expect(weather!.description).toContain('Mock');
+      expect(weather?.description).toContain('Mock');
     });
 
     test('should generate varied mock weather data', async () => {
@@ -423,8 +424,8 @@ describe('Unmocked: WeatherService Integration Tests', () => {
       }
       
       // Check we get reasonable variety
-      const conditions = new Set(results.map(w => w!.condition));
-      const temperatures = results.map(w => w!.temperature);
+      const conditions = new Set(results.map(w => w?.condition));
+      const temperatures = results.map(w => w?.temperature);
       const humidities = results.map(w => w?.humidity);
       
       // Should have at least 2 different conditions in 50 samples
@@ -459,7 +460,7 @@ describe('Unmocked: WeatherService Integration Tests', () => {
         if (weather?.condition === 'rainy') {
           // Rainy weather might still be marked as outdoor-suitable in mock mode
           // but temperature should be reasonable
-          expect(weather!.temperature).toBeGreaterThanOrEqual(5);
+          expect(weather.temperature).toBeGreaterThanOrEqual(5);
         }
         
         // All weather should have consistent structure

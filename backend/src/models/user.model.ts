@@ -235,7 +235,7 @@ export class UserModel {
 
       const updatedUser = await this.user.findByIdAndUpdate(
         userId,
-        validatedData,
+        validatedData as mongoose.UpdateQuery<IUser>,
         {
           new: true,
         }
@@ -331,7 +331,7 @@ export class UserModel {
   ): Promise<IUser | null> {
     try {
       // Handle partial updates with dot notation for nested objects
-      const updateObject: Record<string, any> = {};
+      const updateObject: Record<string, unknown> = {};
       
       if (privacyUpdates.profileVisibleTo !== undefined) {
         updateObject['privacy.profileVisibleTo'] = privacyUpdates.profileVisibleTo;
@@ -447,7 +447,7 @@ export class UserModel {
 
       let newStreak = 1;
 
-      if (user.loginTracking?.lastLoginDate) {
+      if (user.loginTracking.lastLoginDate) {
         const lastLogin = new Date(user.loginTracking.lastLoginDate);
         const lastLoginDate = new Date(lastLogin.getFullYear(), lastLogin.getMonth(), lastLogin.getDate());
 
@@ -473,7 +473,7 @@ export class UserModel {
         },
       });
 
-      logger.info(`User ${userId} login streak updated: ${newStreak} days`);
+      logger.info(`User ${userId.toString()} login streak updated: ${newStreak} days`);
       return newStreak;
     } catch (error) {
       logger.error('Error updating login streak:', error);
@@ -551,7 +551,7 @@ export class UserModel {
     try {
       const user = await this.user.findById(userId).select('recommendations');
       if (!user) {
-        logger.warn(`User ${userId} not found for recommendation check`);
+        logger.warn(`User ${userId.toString()} not found for recommendation check`);
         return false;
       }
 
@@ -559,7 +559,7 @@ export class UserModel {
       today.setHours(0, 0, 0, 0); // Start of today
 
       // If no recommendations data or different date, reset for new day
-      if (!user.recommendations || !user.recommendations.currentDate || 
+      if (!user.recommendations?.currentDate || 
           user.recommendations.currentDate.getTime() !== today.getTime()) {
         
         await this.user.findByIdAndUpdate(userId, {

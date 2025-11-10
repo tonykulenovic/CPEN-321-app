@@ -88,7 +88,7 @@ export class FriendshipModel {
     cursor?: mongoose.Types.ObjectId
   ): Promise<IFriendship[]> {
     try {
-      const query: Record<string, any> = { userId };
+      const query: Record<string, unknown> = { userId };
       if (status) query.status = status;
       if (cursor) query._id = { $gt: cursor };
 
@@ -109,7 +109,7 @@ export class FriendshipModel {
     cursor?: mongoose.Types.ObjectId
   ): Promise<IFriendship[]> {
     try {
-      const query: Record<string, any> = { friendId: userId, status: 'pending' };
+      const query: Record<string, unknown> = { friendId: userId, status: 'pending' };
       if (cursor) query._id = { $gt: cursor };
 
       return await this.friendship
@@ -129,7 +129,7 @@ export class FriendshipModel {
     cursor?: mongoose.Types.ObjectId
   ): Promise<IFriendship[]> {
     try {
-      const query: Record<string, any> = { userId, status: 'pending' };
+      const query: Record<string, unknown> = { userId, status: 'pending' };
       if (cursor) query._id = { $gt: cursor };
 
       return await this.friendship
@@ -190,7 +190,7 @@ export class FriendshipModel {
         ]
       });
       
-      logger.info(`Deleted ${deleteResult.deletedCount} friendship records between users ${userId} and ${friendId}`);
+      logger.info(`Deleted ${deleteResult.deletedCount} friendship records between users ${userId.toString()} and ${friendId.toString()}`);
     } catch (error) {
       logger.error('Error deleting friendship:', error);
       throw new Error('Failed to delete friendship');

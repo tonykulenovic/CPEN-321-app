@@ -48,7 +48,7 @@ export class AuthService {
     if (!secret) {
       throw new Error('JWT_SECRET environment variable is not set');
     }
-    return jwt.sign({ id: user._id }, secret, {
+    return jwt.sign({ id: user._id.toString() }, secret, {
       expiresIn: '365d',
     });
   }
@@ -79,10 +79,12 @@ export class AuthService {
         user = await userModel.create(signUpData);
       } catch (err: unknown) {
         // Handle duplicate key error (MongoDB)
-        if (err && typeof err === 'object' && 'code' in err && (err as any).code === 11000) {
+        if (err && typeof err === 'object' && 'code' in err) {
           const mongoError = err as { code: number; keyPattern?: { username?: boolean } };
-          if (mongoError.keyPattern?.username) {
-            throw new Error('Username already taken');
+          if (mongoError.code === 11000) {
+            if (mongoError.keyPattern?.username) {
+              throw new Error('Username already taken');
+            }
           }
         }
         throw err;

@@ -1,3 +1,4 @@
+/* eslint-disable security/detect-non-literal-fs-filename */
 import fs from 'fs';
 import path from 'path';
 
@@ -22,7 +23,7 @@ export class MediaService {
       if (fs.existsSync(filePath)) {
         fs.unlinkSync(filePath);
       }
-      throw new Error(`Failed to save profile picture: ${error}`);
+      throw new Error(`Failed to save profile picture: ${String(error)}`);
     }
   }
 

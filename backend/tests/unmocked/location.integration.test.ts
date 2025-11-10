@@ -1,3 +1,4 @@
+/* eslint-disable security/detect-console-log-non-literal */
 import request from 'supertest';
 import express from 'express';
 import mongoose from 'mongoose';
@@ -25,7 +26,7 @@ function createAuthenticatedApp() {
 }
 
 // Helper function to add authentication to requests
-const withAuth = (user: any) => (requestBuilder: any) => {
+const withAuth = (user: unknown) => (requestBuilder: any) => {
   return requestBuilder
     .set('Authorization', 'Bearer test-token-12345')
     .set('x-dev-user-id', user._id.toString());
@@ -49,7 +50,7 @@ async function createTestUser(
   };
 
   // Create user using direct mongoose model to avoid validation issues
-  const user = await userModel['user'].create({
+  const user = await userModel.user.create({
     name,
     username,
     email,
@@ -62,15 +63,15 @@ async function createTestUser(
 }
 
 describe('Unmocked Integration: Location API', () => {
-  let testUser1: any;
-  let testUser2: any;
-  let testUser3: any;
+  let testUser1: unknown;
+  let testUser2: unknown;
+  let testUser3: unknown;
 
   beforeEach(async () => {
     // Clean up test data
-    await userModel['user'].deleteMany({});
-    await locationModel['location'].deleteMany({});
-    await friendshipModel['friendship'].deleteMany({});
+    await userModel.user.deleteMany({});
+    await locationModel.location.deleteMany({});
+    await friendshipModel.friendship.deleteMany({});
 
     // Create test users
     testUser1 = await createTestUser('Test User 1', 'testuser1', 'testuser1@example.com');
@@ -327,7 +328,7 @@ describe('Unmocked Integration: Location API', () => {
       
       // If testUser2's location is recent enough, it should be included
       if (response.body.data.length > 0) {
-        const friendLocation = response.body.data.find((loc: any) => 
+        const friendLocation = response.body.data.find((loc: unknown) => 
           loc.userId === testUser2._id.toString()
         );
         if (friendLocation) {
@@ -376,7 +377,7 @@ describe('Unmocked Integration: Location API', () => {
       expect(response.body.data).toBeInstanceOf(Array);
       
       // testUser3's location should not appear because they have sharing off
-      const user3Location = response.body.data.find((loc: any) => 
+      const user3Location = response.body.data.find((loc: unknown) => 
         loc.userId === testUser3._id.toString()
       );
       expect(user3Location).toBeUndefined();
@@ -424,7 +425,7 @@ describe('Unmocked Integration: Location API', () => {
       );
 
       // Update the createdAt to be very old
-      await locationModel['location'].updateOne(
+      await locationModel.location.updateOne(
         { userId: testUser2._id },
         { createdAt: oldDate }
       );
@@ -484,7 +485,7 @@ describe('Unmocked Integration: Location API', () => {
       expect(response.status).toBe(200);
       
       if (approxUser) {
-        const approxLocation = response.body.data.find((loc: any) => 
+        const approxLocation = response.body.data.find((loc: unknown) => 
           loc.userId === approxUser._id.toString()
         );
 
@@ -518,7 +519,7 @@ describe('Unmocked Integration: Location API', () => {
 
       expect(response.status).toBe(200);
       
-      const exactLocation = response.body.data.find((loc: any) => 
+      const exactLocation = response.body.data.find((loc: unknown) => 
         loc.userId === testUser2._id.toString()
       );
 

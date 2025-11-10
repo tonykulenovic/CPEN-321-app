@@ -36,7 +36,12 @@ export async function upsertMyLocation(req: Request, res: Response): Promise<voi
     const currentUserId = currentUser._id;
 
     // 3. Use gateway to report location (handles all privacy, storage, and broadcasting)
-    const result = await locationGateway.reportLocation(currentUserId, lat, lng, accuracyM);
+    const result = await locationGateway.reportLocation(
+      currentUserId,
+      Number(lat),
+      Number(lng),
+      Number(accuracyM)
+    );
 
     // 4. Return response
     res.status(201).json({
@@ -58,7 +63,11 @@ export async function upsertMyLocation(req: Request, res: Response): Promise<voi
 export async function getFriendsLocations(req: Request, res: Response): Promise<void> {
   try {
     // 1. Get user ID from auth middleware
-    const currentUser = req.user!;
+    if (!req.user) {
+      res.status(401).json({ message: 'Unauthorized' });
+      return;
+    }
+    const currentUser = req.user;
     const currentUserId = currentUser._id;
 
     // 2. Use gateway to get friends' locations (handles all privacy filtering)

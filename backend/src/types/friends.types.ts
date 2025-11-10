@@ -91,7 +91,7 @@ export interface LocationUpdateEvent {
   ttlSec: number;
   approx: boolean;
   idempotencyKey: string;
-};
+}
 
 // Zod validation schemas
 export const sendFriendRequestSchema = z.object({

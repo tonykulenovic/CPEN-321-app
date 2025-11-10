@@ -144,7 +144,7 @@ export class BadgeModel {
   }
 
   // Badge CRUD operations
-  async create(badgeData: any): Promise<IBadge> {
+  async create(badgeData: unknown): Promise<IBadge> {
     try {
       const validatedData = createBadgeSchema.parse(badgeData);
       return await this.badge.create(validatedData);
@@ -167,7 +167,7 @@ export class BadgeModel {
     }
   }
 
-  async findAll(filters: any = {}): Promise<IBadge[]> {
+  async findAll(filters: Record<string, unknown> = {}): Promise<IBadge[]> {
     try {
       return await this.badge.find(filters).sort({ createdAt: -1 });
     } catch (error) {
@@ -215,9 +215,9 @@ export class BadgeModel {
     try {
       // Get badge to get target for default progress
       const badge = await this.badge.findById(badgeId);
-      const defaultTarget = badge?.requirements?.target ?? 0;
+      const defaultTarget = badge?.requirements.target ?? 0;
 
-      const userBadgeData: any = {
+      const userBadgeData: Record<string, unknown> = {
         userId,
         badgeId,
         earnedAt: new Date(),
@@ -241,8 +241,11 @@ export class BadgeModel {
 
       return await this.userBadge.create(userBadgeData);
     } catch (error: unknown) {
-      if (error && typeof error === 'object' && 'code' in error && (error as any).code === 11000) {
-        throw new Error('User already has this badge');
+      if (error && typeof error === 'object' && 'code' in error) {
+        const mongoError = error as { code: number };
+        if (mongoError.code === 11000) {
+          throw new Error('User already has this badge');
+        }
       }
       logger.error('Error assigning badge:', error);
       throw new Error('Failed to assign badge');
@@ -257,7 +260,11 @@ export class BadgeModel {
         .sort({ earnedAt: -1 });
       
       // Filter out badges where badgeId is null (badge template was deleted)
-      return userBadges.filter(ub => ub.badgeId != null);
+      // After populate, badgeId can be null if the badge was deleted
+      return userBadges.filter(ub => {
+        const badge = ub.badgeId;
+        return badge != null;
+      });
     } catch (error) {
       logger.error('Error getting user badges:', error);
       throw new Error('Failed to get user badges');
@@ -288,11 +295,17 @@ export class BadgeModel {
       ]);
 
       // Filter out user badges where badgeId is null (badge was deleted)
-      const validUserBadges = userBadges.filter(ub => ub.badgeId != null);
+      const validUserBadges = userBadges.filter(ub => {
+        const badge = ub.badgeId;
+        return badge !== null && badge !== undefined;
+      });
 
       // Initialize all categories to 0
       const categoryBreakdown = Object.values(BadgeCategory).reduce((acc, category) => {
-        acc[category] = validUserBadges.filter(ub => (ub.badgeId as any).category === category).length;
+        acc[category] = validUserBadges.filter(ub => {
+          const badge = ub.badgeId as IBadge | mongoose.Types.ObjectId;
+          return typeof badge === 'object' && 'category' in badge && badge.category === category;
+        }).length;
         return acc;
       }, {
         [BadgeCategory.ACTIVITY]: 0,

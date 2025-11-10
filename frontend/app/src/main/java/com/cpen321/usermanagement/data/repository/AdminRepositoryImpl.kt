@@ -21,7 +21,15 @@ class AdminRepositoryImpl @Inject constructor(
                 )
                 Result.failure(Exception(errorMessage))
             }
-        } catch (e: Exception) {
+        } catch (e: java.net.SocketTimeoutException) {
+            Result.failure(e)
+        } catch (e: java.net.UnknownHostException) {
+            Result.failure(e)
+        } catch (e: java.io.IOException) {
+            Result.failure(e)
+        } catch (e: retrofit2.HttpException) {
+            Result.failure(e)
+        } catch (e: RuntimeException) {
             Result.failure(e)
         }
     }
@@ -38,7 +46,15 @@ class AdminRepositoryImpl @Inject constructor(
                 )
                 Result.failure(Exception(errorMessage))
             }
-        } catch (e: Exception) {
+        } catch (e: java.net.SocketTimeoutException) {
+            Result.failure(e)
+        } catch (e: java.net.UnknownHostException) {
+            Result.failure(e)
+        } catch (e: java.io.IOException) {
+            Result.failure(e)
+        } catch (e: retrofit2.HttpException) {
+            Result.failure(e)
+        } catch (e: RuntimeException) {
             Result.failure(e)
         }
     }
@@ -55,7 +71,15 @@ class AdminRepositoryImpl @Inject constructor(
                 )
                 Result.failure(Exception(errorMessage))
             }
-        } catch (e: Exception) {
+        } catch (e: java.net.SocketTimeoutException) {
+            Result.failure(e)
+        } catch (e: java.net.UnknownHostException) {
+            Result.failure(e)
+        } catch (e: java.io.IOException) {
+            Result.failure(e)
+        } catch (e: retrofit2.HttpException) {
+            Result.failure(e)
+        } catch (e: RuntimeException) {
             Result.failure(e)
         }
     }
@@ -72,7 +96,15 @@ class AdminRepositoryImpl @Inject constructor(
                 )
                 Result.failure(Exception(errorMessage))
             }
-        } catch (e: Exception) {
+        } catch (e: java.net.SocketTimeoutException) {
+            Result.failure(e)
+        } catch (e: java.net.UnknownHostException) {
+            Result.failure(e)
+        } catch (e: java.io.IOException) {
+            Result.failure(e)
+        } catch (e: retrofit2.HttpException) {
+            Result.failure(e)
+        } catch (e: RuntimeException) {
             Result.failure(e)
         }
     }

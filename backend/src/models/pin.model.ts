@@ -2,6 +2,7 @@ import mongoose, { Schema } from 'mongoose';
 import { z } from 'zod';
 import {
   IPin,
+  IPinVote,
   PinCategory,
   PinStatus,
   PinVisibility,
@@ -97,9 +98,9 @@ export class PinModel {
         // Query vote directly to avoid circular dependency
         const PinVote = mongoose.model('PinVote');
         const vote = await PinVote.findOne({ userId, pinId: pin._id });
-        const userVote = vote ? (vote as any).voteType : null;
+        const userVote = vote ? (vote as IPinVote).voteType : null;
         return {
-          ...(pin as any).toObject(),
+          ...pin.toObject(),
           userVote
         } as IPin;
       }
@@ -164,7 +165,7 @@ export class PinModel {
     userId?: mongoose.Types.ObjectId;
   }): Promise<{ pins: IPin[]; total: number }> {
     try {
-      const query: Record<string, any> = { status: PinStatus.ACTIVE };
+      const query: Record<string, unknown> = { status: PinStatus.ACTIVE };
       const page = filters.page ?? 1;
       const limit = filters.limit ?? 20;
       const skip = (page - 1) * limit;
@@ -175,12 +176,21 @@ export class PinModel {
 
       // Simple case-insensitive search using regex (frontend does the heavy lifting)
       if (filters.search && filters.search.trim() !== '') {
-        const searchRegex = new RegExp(filters.search.trim(), 'i');
-        query.$or = [
-          { name: { $regex: searchRegex } },
-          { description: { $regex: searchRegex } },
-          { 'location.address': { $regex: searchRegex } }
-        ];
+        // Limit search length to prevent ReDoS attacks
+        const searchTerm = filters.search.trim().slice(0, 100);
+        if (searchTerm.length === 0) {
+          // Skip if search term is empty after trimming and limiting
+        } else {
+          // Escape special regex characters to prevent injection
+          const escapedSearch = searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+          // Use MongoDB $regex with escaped pattern - length limit prevents ReDoS
+          const searchPattern = escapedSearch;
+          query.$or = [
+            { name: { $regex: searchPattern, $options: 'i' } },
+            { description: { $regex: searchPattern, $options: 'i' } },
+            { 'location.address': { $regex: searchPattern, $options: 'i' } }
+          ];
+        }
       }
 
       let pins = await this.pin
@@ -188,7 +198,7 @@ export class PinModel {
         .populate('createdBy', 'name profilePicture')
         .sort({ isPreSeeded: -1, createdAt: -1 }); // Pre-seeded pins first, then by date
 
-      logger.info(`Search pins: Found ${pins.length} pins. UserId: ${filters.userId ?? 'NOT PROVIDED'}`);
+      logger.info(`Search pins: Found ${pins.length} pins. UserId: ${filters.userId ? filters.userId.toString() : 'NOT PROVIDED'}`);
       // Log pin details for debugging
       pins.forEach(pin => {
         logger.info(`  - Pin: "${pin.name}" | Category: ${pin.category} | PreSeeded: ${pin.isPreSeeded}`);
@@ -196,7 +206,7 @@ export class PinModel {
 
       // Apply visibility filtering
       if (filters.userId) {
-        logger.info(`Applying visibility filtering for user: ${filters.userId}`);
+        logger.info(`Applying visibility filtering for user: ${filters.userId.toString()}`);
         const friendshipModel = mongoose.model('Friendship');
         
         const filteredPins = await Promise.all(
@@ -208,13 +218,13 @@ export class PinModel {
             }
             
             // Check if createdBy is populated
-            if (!pin.createdBy?._id) {
+            if (pin.createdBy && !pin.createdBy._id) {
               logger.warn(`Pin "${pin.name}" has no creator, hiding it`);
               return null;
             }
             
             // User can always see their own pins
-            if (pin.createdBy._id.equals(filters.userId!)) {
+            if (pin.createdBy._id.equals(filters.userId)) {
               logger.info(`Pin "${pin.name}" belongs to current user, showing`);
               return pin;
             }
@@ -256,11 +266,14 @@ export class PinModel {
 
       if (filters.latitude && filters.longitude && filters.radius) {
         logger.info(`📍 Applying geolocation filter: center=(${filters.latitude}, ${filters.longitude}), radius=${filters.radius}m`);
-        logger.info(`📍 Pins before distance filter: ${pins.length} (${pins.filter(p => p.category === 'study').length} libraries)`);
+        logger.info(`📍 Pins before distance filter: ${pins.length} (${pins.filter(p => p.category === PinCategory.STUDY).length} libraries)`);
         
         pins = pins.filter(p => {
-          const distance = this.calculateDistance(filters.latitude!, filters.longitude!, p.location.latitude, p.location.longitude);
-          const withinRadius = distance <= filters.radius!;
+          if (!filters.latitude || !filters.longitude || !filters.radius) {
+            return false;
+          }
+          const distance = this.calculateDistance(filters.latitude, filters.longitude, p.location.latitude, p.location.longitude);
+          const withinRadius = distance <= filters.radius;
           
           // Log library filtering for debugging
           if (p.category === PinCategory.STUDY) {
@@ -270,7 +283,7 @@ export class PinModel {
           return withinRadius;
         });
         
-        logger.info(`📍 Pins after distance filter: ${pins.length} (${pins.filter(p => p.category === 'study').length} libraries)`);
+        logger.info(`📍 Pins after distance filter: ${pins.length} (${pins.filter(p => p.category === PinCategory.STUDY).length} libraries)`);
       }
 
       // Apply pagination after all filtering
@@ -284,7 +297,7 @@ export class PinModel {
         const pinsWithVotes = await Promise.all(
           paginatedPins.map(async (pin) => {
             const vote = await PinVote.findOne({ userId: filters.userId, pinId: pin._id });
-            const userVote = vote ? (vote as any).voteType : null;
+            const userVote = vote ? (vote as IPinVote).voteType : null;
             return {
               ...pin.toObject(),
               userVote

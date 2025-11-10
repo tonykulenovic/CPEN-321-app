@@ -76,7 +76,7 @@ export interface GetProfileResponse {
   data?: {
     user: IUser;
   };
-};
+}
 
 export type UpdateProfileRequest = z.infer<typeof updateProfileSchema>;
 

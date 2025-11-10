@@ -10,7 +10,7 @@ import { locationGateway } from '../../src/realtime/gateway';
 // Mock all external dependencies
 jest.mock('../../src/realtime/gateway');
 jest.mock('../../src/middleware/auth.middleware', () => ({
-  authenticateToken: (req: any, res: any, next: any) => {
+  authenticateToken: (req: unknown, res: any, next: any) => {
     req.user = {
       _id: new mongoose.Types.ObjectId('507f1f77bcf86cd799439011'),
       name: 'Test User',

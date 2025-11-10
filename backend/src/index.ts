@@ -1,6 +1,7 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
+/* eslint-disable security/detect-console-log-non-literal */
 import express from 'express';
 import { createServer } from 'http';
 import { connectDB } from './config/database';
@@ -17,7 +18,6 @@ import { seedCafes } from './scripts/seedCafes';
 import { seedRestaurants } from './scripts/seedRestaurants';
 import { firebaseService } from './config/firebase';
 import { recommendationScheduler } from './services/recommendationScheduler.service';
-dotenv.config();
 
 
 const app = express();
@@ -38,7 +38,7 @@ locationGateway.initialize(httpServer);
 firebaseService.initialize();
 
 // Connect to database and initialize system data
-connectDB().then(async () => {
+void connectDB().then(async () => {
   console.log('\n🔄 Initializing system data...\n');
   
   try {

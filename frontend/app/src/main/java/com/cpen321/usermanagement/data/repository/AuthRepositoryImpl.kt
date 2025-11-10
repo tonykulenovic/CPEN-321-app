@@ -218,8 +218,20 @@ class AuthRepositoryImpl @Inject constructor(
                 Log.e(TAG, "Check account failed: $errorMessage")
                 Result.failure(Exception(errorMessage))
             }
-        } catch (e: Exception) {
-            Log.e(TAG, "Error checking account", e)
+        } catch (e: java.net.SocketTimeoutException) {
+            Log.e(TAG, "Network timeout checking account", e)
+            Result.failure(e)
+        } catch (e: java.net.UnknownHostException) {
+            Log.e(TAG, "Network connection failed checking account", e)
+            Result.failure(e)
+        } catch (e: java.io.IOException) {
+            Log.e(TAG, "IO error checking account", e)
+            Result.failure(e)
+        } catch (e: retrofit2.HttpException) {
+            Log.e(TAG, "HTTP error checking account: ${e.code()}", e)
+            Result.failure(e)
+        } catch (e: RuntimeException) {
+            Log.e(TAG, "Runtime error checking account", e)
             Result.failure(e)
         }
     }

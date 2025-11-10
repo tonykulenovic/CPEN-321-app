@@ -49,7 +49,15 @@ class FCMTokenManager @Inject constructor(
                 Log.e(TAG, "   📋 Exception type: ${result.exceptionOrNull()?.javaClass?.simpleName}")
                 result.exceptionOrNull()?.printStackTrace()
             }
-        } catch (e: Exception) {
+        } catch (e: java.net.SocketTimeoutException) {
+            Log.e(TAG, "💥 [FCM] Network timeout during FCM token registration:", e)
+        } catch (e: java.net.UnknownHostException) {
+            Log.e(TAG, "💥 [FCM] Network connection failed during FCM token registration:", e)
+        } catch (e: java.io.IOException) {
+            Log.e(TAG, "💥 [FCM] IO error during FCM token registration:", e)
+        } catch (e: retrofit2.HttpException) {
+            Log.e(TAG, "💥 [FCM] HTTP error during FCM token registration: ${e.code()}", e)
+        } catch (e: RuntimeException) {
             Log.e(TAG, "💥 [FCM] Exception during FCM token registration:", e)
             Log.e(TAG, "   📊 Exception type: ${e.javaClass.simpleName}")
             Log.e(TAG, "   💬 Exception message: ${e.message}")

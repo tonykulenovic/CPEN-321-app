@@ -1,3 +1,4 @@
+/* eslint-disable security/detect-console-log-non-literal */
 /**
  * Location Performance Tests - Rank 1 (Simple Operations)
  * 

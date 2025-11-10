@@ -13,6 +13,7 @@
  * - Basic input validation (oversized inputs, missing fields, valid inputs)
  */
 
+/* eslint-disable security/detect-console-log-non-literal */
 import request from 'supertest';
 import express from 'express';
 import { describe, test, expect, beforeAll } from '@jest/globals';

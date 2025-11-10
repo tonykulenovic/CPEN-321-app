@@ -27,7 +27,19 @@ class PinRepositoryImpl @Inject constructor() : PinRepository {
                 Log.e(TAG, "Create pin failed: $errorMessage")
                 Result.failure(Exception(errorMessage))
             }
-        } catch (e: Exception) {
+        } catch (e: java.net.SocketTimeoutException) {
+            Log.e(TAG, "Network timeout creating pin", e)
+            Result.failure(e)
+        } catch (e: java.net.UnknownHostException) {
+            Log.e(TAG, "Network connection failed creating pin", e)
+            Result.failure(e)
+        } catch (e: java.io.IOException) {
+            Log.e(TAG, "IO error creating pin", e)
+            Result.failure(e)
+        } catch (e: retrofit2.HttpException) {
+            Log.e(TAG, "HTTP error creating pin: ${e.code()}", e)
+            Result.failure(e)
+        } catch (e: RuntimeException) {
             Log.e(TAG, "Error creating pin", e)
             Result.failure(e)
         }
@@ -46,7 +58,19 @@ class PinRepositoryImpl @Inject constructor() : PinRepository {
                 Log.e(TAG, "Get pin failed: $errorMessage")
                 Result.failure(Exception(errorMessage))
             }
-        } catch (e: Exception) {
+        } catch (e: java.net.SocketTimeoutException) {
+            Log.e(TAG, "Network timeout getting pin", e)
+            Result.failure(e)
+        } catch (e: java.net.UnknownHostException) {
+            Log.e(TAG, "Network connection failed getting pin", e)
+            Result.failure(e)
+        } catch (e: java.io.IOException) {
+            Log.e(TAG, "IO error getting pin", e)
+            Result.failure(e)
+        } catch (e: retrofit2.HttpException) {
+            Log.e(TAG, "HTTP error getting pin: ${e.code()}", e)
+            Result.failure(e)
+        } catch (e: RuntimeException) {
             Log.e(TAG, "Error getting pin", e)
             Result.failure(e)
         }
@@ -65,7 +89,19 @@ class PinRepositoryImpl @Inject constructor() : PinRepository {
                 Log.e(TAG, "Update pin failed: $errorMessage")
                 Result.failure(Exception(errorMessage))
             }
-        } catch (e: Exception) {
+        } catch (e: java.net.SocketTimeoutException) {
+            Log.e(TAG, "Network timeout updating pin", e)
+            Result.failure(e)
+        } catch (e: java.net.UnknownHostException) {
+            Log.e(TAG, "Network connection failed updating pin", e)
+            Result.failure(e)
+        } catch (e: java.io.IOException) {
+            Log.e(TAG, "IO error updating pin", e)
+            Result.failure(e)
+        } catch (e: retrofit2.HttpException) {
+            Log.e(TAG, "HTTP error updating pin: ${e.code()}", e)
+            Result.failure(e)
+        } catch (e: RuntimeException) {
             Log.e(TAG, "Error updating pin", e)
             Result.failure(e)
         }
@@ -84,7 +120,19 @@ class PinRepositoryImpl @Inject constructor() : PinRepository {
                 Log.e(TAG, "Delete pin failed: $errorMessage")
                 Result.failure(Exception(errorMessage))
             }
-        } catch (e: Exception) {
+        } catch (e: java.net.SocketTimeoutException) {
+            Log.e(TAG, "Network timeout deleting pin", e)
+            Result.failure(e)
+        } catch (e: java.net.UnknownHostException) {
+            Log.e(TAG, "Network connection failed deleting pin", e)
+            Result.failure(e)
+        } catch (e: java.io.IOException) {
+            Log.e(TAG, "IO error deleting pin", e)
+            Result.failure(e)
+        } catch (e: retrofit2.HttpException) {
+            Log.e(TAG, "HTTP error deleting pin: ${e.code()}", e)
+            Result.failure(e)
+        } catch (e: RuntimeException) {
             Log.e(TAG, "Error deleting pin", e)
             Result.failure(e)
         }
@@ -120,7 +168,19 @@ class PinRepositoryImpl @Inject constructor() : PinRepository {
                 Log.e(TAG, "Search pins failed: $errorMessage")
                 Result.failure(Exception(errorMessage))
             }
-        } catch (e: Exception) {
+        } catch (e: java.net.SocketTimeoutException) {
+            Log.e(TAG, "Network timeout searching pins", e)
+            Result.failure(e)
+        } catch (e: java.net.UnknownHostException) {
+            Log.e(TAG, "Network connection failed searching pins", e)
+            Result.failure(e)
+        } catch (e: java.io.IOException) {
+            Log.e(TAG, "IO error searching pins", e)
+            Result.failure(e)
+        } catch (e: retrofit2.HttpException) {
+            Log.e(TAG, "HTTP error searching pins: ${e.code()}", e)
+            Result.failure(e)
+        } catch (e: RuntimeException) {
             Log.e(TAG, "Error searching pins", e)
             Result.failure(e)
         }
@@ -140,7 +200,19 @@ class PinRepositoryImpl @Inject constructor() : PinRepository {
                 Log.e(TAG, "Rate pin failed: $errorMessage")
                 Result.failure(Exception(errorMessage))
             }
-        } catch (e: Exception) {
+        } catch (e: java.net.SocketTimeoutException) {
+            Log.e(TAG, "Network timeout rating pin", e)
+            Result.failure(e)
+        } catch (e: java.net.UnknownHostException) {
+            Log.e(TAG, "Network connection failed rating pin", e)
+            Result.failure(e)
+        } catch (e: java.io.IOException) {
+            Log.e(TAG, "IO error rating pin", e)
+            Result.failure(e)
+        } catch (e: retrofit2.HttpException) {
+            Log.e(TAG, "HTTP error rating pin: ${e.code()}", e)
+            Result.failure(e)
+        } catch (e: RuntimeException) {
             Log.e(TAG, "Error rating pin", e)
             Result.failure(e)
         }
@@ -159,7 +231,19 @@ class PinRepositoryImpl @Inject constructor() : PinRepository {
                 Log.e(TAG, "Get user vote failed: $errorMessage")
                 Result.failure(Exception(errorMessage))
             }
-        } catch (e: Exception) {
+        } catch (e: java.net.SocketTimeoutException) {
+            Log.e(TAG, "Network timeout getting user vote", e)
+            Result.failure(e)
+        } catch (e: java.net.UnknownHostException) {
+            Log.e(TAG, "Network connection failed getting user vote", e)
+            Result.failure(e)
+        } catch (e: java.io.IOException) {
+            Log.e(TAG, "IO error getting user vote", e)
+            Result.failure(e)
+        } catch (e: retrofit2.HttpException) {
+            Log.e(TAG, "HTTP error getting user vote: ${e.code()}", e)
+            Result.failure(e)
+        } catch (e: RuntimeException) {
             Log.e(TAG, "Error getting user vote", e)
             Result.failure(e)
         }
@@ -179,7 +263,19 @@ class PinRepositoryImpl @Inject constructor() : PinRepository {
                 Log.e(TAG, "Report pin failed: $errorMessage")
                 Result.failure(Exception(errorMessage))
             }
-        } catch (e: Exception) {
+        } catch (e: java.net.SocketTimeoutException) {
+            Log.e(TAG, "Network timeout reporting pin", e)
+            Result.failure(e)
+        } catch (e: java.net.UnknownHostException) {
+            Log.e(TAG, "Network connection failed reporting pin", e)
+            Result.failure(e)
+        } catch (e: java.io.IOException) {
+            Log.e(TAG, "IO error reporting pin", e)
+            Result.failure(e)
+        } catch (e: retrofit2.HttpException) {
+            Log.e(TAG, "HTTP error reporting pin: ${e.code()}", e)
+            Result.failure(e)
+        } catch (e: RuntimeException) {
             Log.e(TAG, "Error reporting pin", e)
             Result.failure(e)
         }
@@ -198,7 +294,19 @@ class PinRepositoryImpl @Inject constructor() : PinRepository {
                 Log.e(TAG, "Get reported pins failed: $errorMessage")
                 Result.failure(Exception(errorMessage))
             }
-        } catch (e: Exception) {
+        } catch (e: java.net.SocketTimeoutException) {
+            Log.e(TAG, "Network timeout getting reported pins", e)
+            Result.failure(e)
+        } catch (e: java.net.UnknownHostException) {
+            Log.e(TAG, "Network connection failed getting reported pins", e)
+            Result.failure(e)
+        } catch (e: java.io.IOException) {
+            Log.e(TAG, "IO error getting reported pins", e)
+            Result.failure(e)
+        } catch (e: retrofit2.HttpException) {
+            Log.e(TAG, "HTTP error getting reported pins: ${e.code()}", e)
+            Result.failure(e)
+        } catch (e: RuntimeException) {
             Log.e(TAG, "Error getting reported pins", e)
             Result.failure(e)
         }
@@ -217,7 +325,19 @@ class PinRepositoryImpl @Inject constructor() : PinRepository {
                 Log.e(TAG, "Clear reports failed: $errorMessage")
                 Result.failure(Exception(errorMessage))
             }
-        } catch (e: Exception) {
+        } catch (e: java.net.SocketTimeoutException) {
+            Log.e(TAG, "Network timeout clearing reports", e)
+            Result.failure(e)
+        } catch (e: java.net.UnknownHostException) {
+            Log.e(TAG, "Network connection failed clearing reports", e)
+            Result.failure(e)
+        } catch (e: java.io.IOException) {
+            Log.e(TAG, "IO error clearing reports", e)
+            Result.failure(e)
+        } catch (e: retrofit2.HttpException) {
+            Log.e(TAG, "HTTP error clearing reports: ${e.code()}", e)
+            Result.failure(e)
+        } catch (e: RuntimeException) {
             Log.e(TAG, "Error clearing reports", e)
             Result.failure(e)
         }

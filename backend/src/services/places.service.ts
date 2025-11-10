@@ -1,4 +1,5 @@
 import axios from 'axios';
+/* eslint-disable security/detect-non-literal-regexp */
 import logger from '../utils/logger.util';
 
 interface PlaceLocation {
@@ -44,11 +45,11 @@ export interface RecommendationPlace {
 }
 
 export class PlacesApiService {
-  private static instance: PlacesApiService;
+  private static instance: PlacesApiService | undefined;
   private readonly apiKey: string;
 
   private constructor() {
-    this.apiKey = (process.env.GOOGLE_MAPS_API_KEY ?? process.env.MAPS_API_KEY) || '';
+    this.apiKey = (process.env.GOOGLE_MAPS_API_KEY ?? process.env.MAPS_API_KEY) ?? '';
     if (!this.apiKey) {
       logger.warn('⚠️ Google Maps API key not configured. Places API features will be limited.');
     }
@@ -150,19 +151,19 @@ export class PlacesApiService {
     const distance = this.calculateDistance(
       userLat,
       userLng,
-      place.location?.latitude || 0,
-      place.location?.longitude || 0
+      place.location?.latitude ?? 0,
+      place.location?.longitude ?? 0
     );
 
     const types = place.types ?? [];
     const name = place.displayName?.text ?? 'Unknown Place';
-    const description = (place.editorialSummary?.text ?? place.formattedAddress) || '';
+    const description = (place.editorialSummary?.text ?? place.formattedAddress) ?? '';
 
     return {
       id: `places_${name.replace(/\s+/g, '_').toLowerCase()}`,
       name,
       address: place.formattedAddress ?? '',
-      location: place.location!,
+      location: place.location || { latitude: 0, longitude: 0 },
       rating: place.rating ?? 0,
       priceLevel: this.mapPriceLevel(place.priceLevel),
       isOpen: place.currentOpeningHours?.openNow ?? true,

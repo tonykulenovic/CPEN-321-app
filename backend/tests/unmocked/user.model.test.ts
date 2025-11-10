@@ -70,7 +70,7 @@ describe('Unmocked: User Model', () => {
         username: ''  // Invalid - required field
       };
 
-      await expect(userModel.create(invalidUserInfo as any))
+      await expect(userModel.create(invalidUserInfo as unknown))
         .rejects.toThrow('Invalid update data');
     });
   });
@@ -92,7 +92,7 @@ describe('Unmocked: User Model', () => {
       
       expect(foundUser).toBeDefined();
       expect(foundUser?._id.toString()).toBe(testUserId.toString());
-      expect(foundUser!.email).toBe('findbyid@example.com');
+      expect(foundUser?.email).toBe('findbyid@example.com');
       expect(foundUser?.name).toBe('Find By ID User');
     });
 
@@ -147,7 +147,7 @@ describe('Unmocked: User Model', () => {
       const foundUser = await userModel.findByUsername('uniqueusername123');
       
       expect(foundUser).toBeDefined();
-      expect(foundUser!.username).toBe('uniqueusername123');
+      expect(foundUser?.username).toBe('uniqueusername123');
       expect(foundUser?.name).toBe('Username Test');
     });
 
@@ -182,7 +182,7 @@ describe('Unmocked: User Model', () => {
       expect(updatedUser).toBeDefined();
       expect(updatedUser?.name).toBe('Updated Name');
       expect(updatedUser?.bio).toBe('Updated bio description');
-      expect(updatedUser!.campus).toBe('UBC');
+      expect(updatedUser?.campus).toBe('UBC');
       expect(updatedUser?.email).toBe('updatetest@example.com'); // Unchanged
     });
 
@@ -286,7 +286,7 @@ describe('Unmocked: User Model', () => {
       
       expect(updatedUser).toBeDefined();
       expect(updatedUser?.privacy.profileVisibleTo).toBe('everyone');
-      expect(updatedUser!.privacy.showBadgesTo).toBe('friends'); // Should remain unchanged
+      expect(updatedUser?.privacy.showBadgesTo).toBe('friends'); // Should remain unchanged
     });
 
     it('should update multiple privacy settings', async () => {
@@ -299,7 +299,7 @@ describe('Unmocked: User Model', () => {
       const updatedUser = await userModel.updatePrivacy(testUserId, privacyUpdates);
       
       expect(updatedUser).toBeDefined();
-      expect(updatedUser!.privacy.profileVisibleTo).toBe('private');
+      expect(updatedUser?.privacy.profileVisibleTo).toBe('private');
       expect(updatedUser?.privacy.showBadgesTo).toBe('everyone');
       expect(updatedUser?.privacy.allowFriendRequestsFrom).toBe('friendsOfFriends');
     });
@@ -368,7 +368,7 @@ describe('Unmocked: User Model', () => {
       await userModel.incrementFriendsCount(testUserId, -2);
       
       const updatedUser = await userModel.findById(testUserId);
-      expect(updatedUser!.friendsCount).toBe(3);
+      expect(updatedUser?.friendsCount).toBe(3);
     });
   });
 
@@ -522,7 +522,7 @@ describe('Unmocked: User Model', () => {
       expect(streak).toBe(1);
       
       const updatedUser = await userModel.findById(testUserId);
-      expect(updatedUser!.loginTracking.currentStreak).toBe(1);
+      expect(updatedUser?.loginTracking.currentStreak).toBe(1);
       expect(updatedUser?.loginTracking.longestStreak).toBe(1);
       expect(updatedUser?.loginTracking.lastLoginDate).toBeDefined();
     });

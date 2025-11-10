@@ -1,3 +1,6 @@
+/* eslint-disable security/detect-non-literal-fs-filename */
+/* eslint-disable security/detect-non-literal-regexp */
+/* eslint-disable security/detect-console-log-non-literal */
 import mongoose from 'mongoose';
 import axios from 'axios';
 import dotenv from 'dotenv';
@@ -32,7 +35,7 @@ interface SimulatedUser {
 
 class LocationSimulator {
   private simulatedUsers: SimulatedUser[] = [];
-  private intervalId: NodeJS.Timeout | null = null;
+  private intervalId: ReturnType<typeof setInterval> | null = null;
   private isRunning = false;
 
   /**
@@ -50,7 +53,7 @@ class LocationSimulator {
         }
 
         const objectId = new mongoose.Types.ObjectId(userId);
-        console.log(`🔍 Looking for user with ObjectId: ${objectId}`);
+        console.log(`🔍 Looking for user with ObjectId: ${objectId.toString()}`);
         
         const user = await userModel.findById(objectId);
         console.log(`🔍 Query result:`, user ? `Found user: ${user.name}` : 'No user found');
@@ -72,6 +75,7 @@ class LocationSimulator {
           username: user.username,
           currentLocation: this.generateRandomLocationInUBC(),
           targetLocation: this.generateRandomLocationInUBC(),
+          // eslint-disable-next-line security/detect-insecure-randomness
           speed: 0.0001 + Math.random() * 0.0002, // Random walking speed
           path: [],
         };
@@ -80,7 +84,7 @@ class LocationSimulator {
         simulatedUser.path.push({ ...simulatedUser.currentLocation });
 
         this.simulatedUsers.push(simulatedUser);
-        console.log(`👤 Added user to simulation: ${user.name} (@${user.username}) - ID: ${user._id}`);
+        console.log(`👤 Added user to simulation: ${user.name} (@${user.username}) - ID: ${user._id.toString()}`);
       }
 
       if (this.simulatedUsers.length === 0) {
@@ -96,7 +100,9 @@ class LocationSimulator {
 
   private generateRandomLocationInUBC(): { lat: number; lng: number } {
     return {
+      // eslint-disable-next-line security/detect-insecure-randomness
       lat: UBC_BOUNDS.south + Math.random() * (UBC_BOUNDS.north - UBC_BOUNDS.south),
+      // eslint-disable-next-line security/detect-insecure-randomness
       lng: UBC_BOUNDS.west + Math.random() * (UBC_BOUNDS.east - UBC_BOUNDS.west),
     };
   }
@@ -153,7 +159,7 @@ class LocationSimulator {
       if (err.code === 'ECONNREFUSED') {
         console.error(`❌ Cannot connect to server. Make sure backend is running on ${BASE_URL}`);
       } else {
-        console.error(`❌ Failed to update location for ${user.username}:`, err.message || 'Unknown error');
+        console.error(`❌ Failed to update location for ${user.username}:`, err.message ?? 'Unknown error');
       }
     }
   }
@@ -173,22 +179,24 @@ class LocationSimulator {
     let updateCount = 0;
     const maxUpdates = SIMULATION_DURATION / UPDATE_INTERVAL;
 
-    this.intervalId = setInterval(async () => {
-      updateCount++;
-      console.log(`\n🔄 Update ${updateCount}/${maxUpdates}`);
+    this.intervalId = setInterval(() => {
+      void (async () => {
+        updateCount++;
+        console.log(`\n🔄 Update ${updateCount}/${maxUpdates}`);
 
-      // Move and update each user
-      const updatePromises = this.simulatedUsers.map(async (user) => {
-        this.moveUserTowardsTarget(user);
-        await this.updateUserLocation(user);
-      });
+        // Move and update each user
+        const updatePromises = this.simulatedUsers.map(async (user) => {
+          this.moveUserTowardsTarget(user);
+          await this.updateUserLocation(user);
+        });
 
-      await Promise.all(updatePromises);
+        await Promise.all(updatePromises);
 
-      // Stop after duration
-      if (updateCount >= maxUpdates) {
-        await this.stopSimulation();
-      }
+        // Stop after duration
+        if (updateCount >= maxUpdates) {
+          await this.stopSimulation();
+        }
+      })();
     }, UPDATE_INTERVAL);
 
     // Auto-stop after simulation duration
@@ -318,10 +326,12 @@ async function main() {
     await simulator.startSimulation();
 
     // Cleanup on exit
-    process.on('SIGINT', async () => {
-      console.log('\n🛑 Received interrupt signal');
-      await simulator.stopSimulation();
-      process.exit(0);
+    process.on('SIGINT', () => {
+      void (async () => {
+        console.log('\n🛑 Received interrupt signal');
+        await simulator.stopSimulation();
+        process.exit(0);
+      })();
     });
 
   } catch (error) {
@@ -332,7 +342,7 @@ async function main() {
 
 // Run if called directly
 if (require.main === module) {
-  main();
+  void main();
 }
 
 export { LocationSimulator };

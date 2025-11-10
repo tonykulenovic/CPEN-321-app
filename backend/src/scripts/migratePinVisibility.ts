@@ -44,8 +44,9 @@ async function migratePinVisibility() {
     ]);
     
     logger.info('📊 Current visibility distribution:');
-    visibilityCounts.forEach((item: any) => {
-      logger.info(`  ${item._id || 'undefined'}: ${item.count} pins`);
+    visibilityCounts.forEach((item: unknown) => {
+      const itemObj = item as { _id?: string; count: number };
+      logger.info(`  ${itemObj._id ?? 'undefined'}: ${itemObj.count} pins`);
     });
     
     process.exit(0);

@@ -37,8 +37,14 @@ class ReportedByUserDeserializer : JsonDeserializer<ReportedByUser?> {
                 }
                 else -> null
             }
-        } catch (e: Exception) {
-            // If anything goes wrong, return null
+        } catch (e: com.google.gson.JsonSyntaxException) {
+            // If JSON parsing fails, return null
+            null
+        } catch (e: IllegalStateException) {
+            // If JSON structure is invalid, return null
+            null
+        } catch (e: RuntimeException) {
+            // If anything else goes wrong, return null
             null
         }
     }

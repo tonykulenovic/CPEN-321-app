@@ -19,7 +19,7 @@ export class BadgeController {
   ) {
     try {
       const { category, isActive } = req.query;
-      const filters: any = {};
+      const filters: Record<string, unknown> = {};
 
       if (category) {
         filters.category = category;
@@ -120,7 +120,7 @@ export class BadgeController {
 
       res.status(200).json({
         message: 'Badge progress fetched successfully',
-        data: { progress: progress },
+        data: { progress },
       });
     } catch (error) {
       logger.error('Failed to fetch badge progress:', error);

@@ -15,7 +15,7 @@ jest.mock('../../src/models/user.model');
 jest.mock('../../src/services/notification.service');
 jest.mock('../../src/services/badge.service');
 jest.mock('../../src/middleware/auth.middleware', () => ({
-  authenticateToken: (req: any, res: any, next: any) => {
+  authenticateToken: (req: unknown, res: any, next: any) => {
     req.user = {
       _id: new mongoose.Types.ObjectId('507f1f77bcf86cd799439011'),
       name: 'Test User',
@@ -111,8 +111,8 @@ describe('Mocked: POST /friends/requests', () => {
       status: 'pending'
     };
     
-    mockUserModel.findById.mockResolvedValueOnce(mockTargetUser as any);
-    mockFriendshipModel.findByUserAndFriend.mockResolvedValueOnce(existingFriendship as any);
+    mockUserModel.findById.mockResolvedValueOnce(mockTargetUser as unknown);
+    mockFriendshipModel.findByUserAndFriend.mockResolvedValueOnce(existingFriendship as unknown);
 
     const response = await request(app)
       .post('/friends/requests')
@@ -274,7 +274,7 @@ describe('Mocked: POST /friends/requests/:id/accept', () => {
     };
     
     mockFriendshipModel.findById.mockResolvedValueOnce(mockFriendRequest as unknown);
-    mockFriendshipModel.updateStatus.mockResolvedValueOnce(mockFriendRequest as any);
+    mockFriendshipModel.updateStatus.mockResolvedValueOnce(mockFriendRequest as unknown);
     mockFriendshipModel.create.mockResolvedValueOnce({} as unknown);
     mockUserModel.findById.mockResolvedValueOnce(mockUser as unknown);
     mockBadgeService.processBadgeEvent.mockResolvedValueOnce([]);
@@ -316,7 +316,7 @@ describe('Mocked: POST /friends/requests/:id/accept', () => {
       status: 'pending'
     };
     
-    mockFriendshipModel.findById.mockResolvedValueOnce(mockFriendRequest as any);
+    mockFriendshipModel.findById.mockResolvedValueOnce(mockFriendRequest as unknown);
 
     const response = await request(app)
       .post('/friends/requests/507f1f77bcf86cd799439013/accept');
@@ -614,7 +614,7 @@ describe('Mocked: DELETE /friends/:friendId', () => {
     };
 
     // Mock both directions of friendship lookup (Promise.all in controller)
-    mockFriendshipModel.findByUserAndFriend.mockResolvedValueOnce(mockFriendship as any);
+    mockFriendshipModel.findByUserAndFriend.mockResolvedValueOnce(mockFriendship as unknown);
     mockFriendshipModel.findByUserAndFriend.mockResolvedValueOnce(mockReverseFriendship as unknown);
     mockFriendshipModel.deleteFriendship.mockResolvedValueOnce(undefined);
     mockUserModel.incrementFriendsCount.mockResolvedValueOnce(undefined);
@@ -678,7 +678,7 @@ describe('Mocked: DELETE /friends/:friendId', () => {
       closeFriend: false,
       createdAt: new Date(),
       updatedAt: new Date()
-    } as any;
+    } as unknown;
 
     mockFriendshipModel.findByUserAndFriend.mockResolvedValue(pendingFriendship);
 

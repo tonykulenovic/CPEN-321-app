@@ -98,6 +98,7 @@ export async function seedCafes(): Promise<void> {
     );
 
     if (!response.data || (!response.data.places && !response.data.results)) {
+      // This check is necessary to validate API response
       logger.error(`❌ Google Places API error: Invalid response`);
       if (response.data.error_message) {
         logger.error(`   ${response.data.error_message}`);
@@ -106,7 +107,7 @@ export async function seedCafes(): Promise<void> {
     }
 
     // Handle both new API format (places) and legacy format (results)
-    const cafes = response.data.places || response.data.results;
+    const cafes = response.data.places ?? response.data.results;
     
     if (!cafes || cafes.length === 0) {
       logger.info('No cafes found. Seeding complete.');
@@ -142,19 +143,19 @@ export async function seedCafes(): Promise<void> {
         const lng = cafe.location?.longitude ?? cafe.geometry?.location.lng;
         
         if (!lat || !lng) {
-          logger.warn(`⚠️  Skipping cafe without location: ${cafe.displayName?.text || cafe.name}`);
+          logger.warn(`⚠️  Skipping cafe without location: ${cafe.displayName?.text ?? cafe.name}`);
           continue;
         }
 
         // Extract name and address from either API format
-        const name = cafe.displayName?.text || cafe.name || 'Unnamed Cafe';
-        const address = (cafe.formattedAddress ?? cafe.vicinity) || 'Cafe near UBC campus';
+        const name = (cafe.displayName?.text ?? cafe.name) ?? 'Unnamed Cafe';
+        const address = (cafe.formattedAddress ?? cafe.vicinity) ?? 'Cafe near UBC campus';
         
         // Extract opening hours from either API format
         const isOpen = cafe.currentOpeningHours?.openNow ?? cafe.opening_hours?.open_now;
 
         const cafeData = {
-          name: name,
+          name,
           description: address,
           category: PinCategory.SHOPS_SERVICES,
           location: {
@@ -182,7 +183,8 @@ export async function seedCafes(): Promise<void> {
         };
 
         // Upsert cafe pin using name and location as unique identifier
-        const result = await (pinModel as any).pin.updateOne(
+        const Pin = mongoose.model('Pin');
+        const result = await Pin.updateOne(
           {
             isPreSeeded: true,
             'metadata.subtype': 'cafe',
@@ -226,11 +228,12 @@ export async function seedCafes(): Promise<void> {
 
     // Get current cafe names for cleanup (use same extraction logic as above)
     const currentCafeNames = cafes
-      .map((c: PlaceResult) => c.displayName?.text || c.name || 'Unnamed Cafe')
+      .map((c: PlaceResult) => (c.displayName?.text ?? c.name) ?? 'Unnamed Cafe')
       .filter((name: string) => name !== 'Unnamed Cafe');
     
     // Delete pre-seeded cafes that are no longer in Google Places results
-    const deleteResult = await (pinModel as any).pin.deleteMany({
+    const Pin = mongoose.model('Pin');
+    const deleteResult = await Pin.deleteMany({
       isPreSeeded: true,
       category: PinCategory.SHOPS_SERVICES,
       'metadata.subtype': 'cafe',

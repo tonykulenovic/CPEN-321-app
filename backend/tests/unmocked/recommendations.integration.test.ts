@@ -1,3 +1,4 @@
+/* eslint-disable security/detect-insecure-randomness */
 import request from 'supertest';
 import express from 'express';
 import mongoose from 'mongoose';
@@ -15,7 +16,7 @@ function createAuthenticatedApp() {
   app.use(express.json());
 
   // Add authentication middleware that populates req.user from database
-  app.use(async (req: any, res: any, next: any) => {
+  app.use(async (req: unknown, res: any, next: any) => {
     const userId = req.headers['x-dev-user-id'];
     const authHeader = req.headers.authorization;
 
@@ -29,7 +30,7 @@ function createAuthenticatedApp() {
 
     try {
       // Find user in database
-      const user = await (userModel as any).user.findById(new mongoose.Types.ObjectId(userId));
+      const user = await (userModel as unknown).user.findById(new mongoose.Types.ObjectId(userId));
       if (!user) {
         return res.status(401).json({
           error: 'User not found',
@@ -54,14 +55,14 @@ function createAuthenticatedApp() {
 }
 
 // Helper function to add authentication to requests
-const withAuth = (user: unknown) => (requestBuilder: any) => {
+const withAuth = (user: unknown) => (requestBuilder: unknown) => {
   return requestBuilder
     .set('Authorization', 'Bearer test-token-12345')
     .set('x-dev-user-id', user._id.toString());
 };
 
 // Test data
-let testUser1: any;
+let testUser1: unknown;
 let testUser2: unknown;
 
 // Helper function to create test users
@@ -105,8 +106,8 @@ async function createTestPin(
 describe('Unmocked Integration: GET /recommendations/:mealType', () => {
   beforeEach(async () => {
     // Clear collections before each test
-    await (userModel as any).user.deleteMany({});
-    await (pinModel as any).pin.deleteMany({});
+    await (userModel as unknown).user.deleteMany({});
+    await (pinModel as unknown).pin.deleteMany({});
 
     // Create test users
     testUser1 = await createTestUser('Test User 1', 'testuser1', 'test1@example.com');
@@ -197,8 +198,8 @@ describe('Unmocked Integration: GET /recommendations/:mealType', () => {
 
 describe('Unmocked Integration: POST /recommendations/notify/:mealType', () => {
   beforeEach(async () => {
-    await userModel['user'].deleteMany({});
-    await pinModel['pin'].deleteMany({});
+    await userModel.user.deleteMany({});
+    await pinModel.pin.deleteMany({});
 
     testUser1 = await createTestUser('Test User 1', 'testuser1', 'test1@example.com');
   });
