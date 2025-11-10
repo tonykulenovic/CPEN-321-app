@@ -34,15 +34,15 @@ const authenticateToken = (req: unknown, res: any, next: any) => {
 
 // Set up routes with authentication
 const userController = new UserController();
-app.get('/users/profile', authenticateToken, userController.getProfile);
-app.post('/users/profile', authenticateToken, userController.updateProfile);
-app.delete('/users/profile', authenticateToken, userController.deleteProfile);
-app.get('/users/search', authenticateToken, userController.searchUsers);
-app.get('/users/me', authenticateToken, userController.getMe);
-app.patch('/users/me/privacy', authenticateToken, userController.updatePrivacy);
-app.put('/users/me/fcm-token', authenticateToken, userController.updateFcmToken);
-app.delete('/users/me/fcm-token', authenticateToken, userController.removeFcmToken);
-app.get('/users/:userId/profile', authenticateToken, userController.getUserProfile);
+app.get('/users/profile', authenticateToken, (req, res) => userController.getProfile(req, res));
+app.post('/users/profile', authenticateToken, (req, res, next) => void userController.updateProfile(req, res, next));
+app.delete('/users/profile', authenticateToken, (req, res, next) => void userController.deleteProfile(req, res, next));
+app.get('/users/search', authenticateToken, (req, res) => void userController.searchUsers(req, res));
+app.get('/users/me', authenticateToken, (req, res) => userController.getMe(req, res));
+app.patch('/users/me/privacy', authenticateToken, (req, res) => void userController.updatePrivacy(req, res));
+app.put('/users/me/fcm-token', authenticateToken, (req, res) => void userController.updateFcmToken(req, res));
+app.delete('/users/me/fcm-token', authenticateToken, (req, res) => void userController.removeFcmToken(req, res));
+app.get('/users/:userId/profile', authenticateToken, (req, res, next) => void userController.getUserProfile(req, res, next));
 
 const mockUserModel = userModel as jest.Mocked<typeof userModel>;
 const mockFriendshipModel = friendshipModel as jest.Mocked<typeof friendshipModel>;

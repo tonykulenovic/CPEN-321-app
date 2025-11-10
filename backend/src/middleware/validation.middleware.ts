@@ -32,6 +32,7 @@ export const validateQuery = <T>(schema: z.ZodSchema<T>): RequestHandler => {
   return (req: Request, res: Response, next: NextFunction) => {
     try {
       const validated = schema.parse(req.query);
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       req.query = validated as unknown as Request['query'];
       next();
     } catch (error) {

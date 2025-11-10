@@ -166,7 +166,7 @@ export class RecommendationSchedulerService {
             const canReceive = await userModel.canReceiveRecommendation(user._id, mealTime.name);
             
             if (!canReceive) {
-              logger.info(`⏭️ [SCHEDULER] User ${user._id} already received ${mealTime.name} recommendation today - skipping`);
+              logger.info(`⏭️ [SCHEDULER] User ${user._id.toString()} already received ${mealTime.name} recommendation today - skipping`);
               return; // Skip this user
             }
 
@@ -179,14 +179,14 @@ export class RecommendationSchedulerService {
               // Mark that the recommendation was sent
               await userModel.markRecommendationSent(user._id, mealTime.name);
               successCount++;
-              logger.info(`✅ [SCHEDULER] Sent ${mealTime.name} recommendation to user ${user._id}`);
+              logger.info(`✅ [SCHEDULER] Sent ${mealTime.name} recommendation to user ${user._id.toString()}`);
             } else {
               failureCount++;
-              logger.info(`❌ [SCHEDULER] Failed to send ${mealTime.name} recommendation to user ${user._id}`);
+              logger.info(`❌ [SCHEDULER] Failed to send ${mealTime.name} recommendation to user ${user._id.toString()}`);
             }
           } catch (error) {
             failureCount++;
-            logger.error(`💥 [SCHEDULER] Error sending ${mealTime.name} recommendation to user ${user._id}:`, error);
+            logger.error(`💥 [SCHEDULER] Error sending ${mealTime.name} recommendation to user ${user._id.toString()}:`, error);
           }
         });
 
@@ -219,7 +219,7 @@ export class RecommendationSchedulerService {
       const eligibleUsers = allUsers.filter((user: any) => {
         const hasFcmToken = user.fcmToken && user.fcmToken.length > 0;
         if (!hasFcmToken) {
-          logger.debug(`🚫 [SCHEDULER] User ${user._id} has no FCM token - skipping`);
+          logger.debug(`🚫 [SCHEDULER] User ${user._id.toString()} has no FCM token - skipping`);
         }
         return hasFcmToken;
       });

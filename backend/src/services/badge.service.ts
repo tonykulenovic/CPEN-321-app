@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 
 import {
   BadgeCategory,
+  BadgeRarity,
   BadgeRequirementType,
   BadgeEarningEvent,
   BadgeTemplate,
@@ -9,6 +10,7 @@ import {
   IBadge,
   IUserBadge,
 } from '../types/badge.types';
+import { PinCategory } from '../types/pins.types';
 import { badgeModel } from '../models/badge.model';
 import logger from '../utils/logger.util';
 
@@ -21,7 +23,7 @@ export class BadgeService {
       description: 'Log in for 5 consecutive days',
       icon: 'early_bird',
       category: BadgeCategory.ACTIVITY,
-      rarity: 'common' as any,
+      rarity: BadgeRarity.COMMON,
       requirements: {
         type: BadgeRequirementType.LOGIN_STREAK,
         target: 5,
@@ -33,7 +35,7 @@ export class BadgeService {
       description: 'Log in for 30 consecutive days',
       icon: 'dedicated_student',
       category: BadgeCategory.ACTIVITY,
-      rarity: 'rare' as unknown,
+      rarity: BadgeRarity.RARE,
       requirements: {
         type: BadgeRequirementType.LOGIN_STREAK,
         target: 30,
@@ -45,7 +47,7 @@ export class BadgeService {
       description: 'Create your first pin',
       icon: 'pin_creator',
       category: BadgeCategory.EXPLORATION,
-      rarity: 'common' as any,
+      rarity: BadgeRarity.COMMON,
       requirements: {
         type: BadgeRequirementType.PINS_CREATED,
         target: 1,
@@ -56,7 +58,7 @@ export class BadgeService {
       description: 'Create 10 pins',
       icon: 'campus_explorer',
       category: BadgeCategory.EXPLORATION,
-      rarity: 'uncommon' as unknown,
+      rarity: BadgeRarity.UNCOMMON,
       requirements: {
         type: BadgeRequirementType.PINS_CREATED,
         target: 10,
@@ -67,7 +69,7 @@ export class BadgeService {
       description: 'Create 25 pins',
       icon: 'pin_master',
       category: BadgeCategory.EXPLORATION,
-      rarity: 'epic' as unknown,
+      rarity: BadgeRarity.EPIC,
       requirements: {
         type: BadgeRequirementType.PINS_CREATED,
         target: 25,
@@ -78,7 +80,7 @@ export class BadgeService {
       description: 'Add your first friend',
       icon: 'first_friend',
       category: BadgeCategory.SOCIAL,
-      rarity: 'common' as any,
+      rarity: BadgeRarity.COMMON,
       requirements: {
         type: BadgeRequirementType.FRIENDS_ADDED,
         target: 1,
@@ -89,7 +91,7 @@ export class BadgeService {
       description: 'Add 5 friends',
       icon: 'social_butterfly',
       category: BadgeCategory.SOCIAL,
-      rarity: 'uncommon' as any,
+      rarity: BadgeRarity.UNCOMMON,
       requirements: {
         type: BadgeRequirementType.FRIENDS_ADDED,
         target: 5,
@@ -100,7 +102,7 @@ export class BadgeService {
       description: 'Add 20 friends',
       icon: 'community_leader',
       category: BadgeCategory.SOCIAL,
-      rarity: 'rare' as any,
+      rarity: BadgeRarity.RARE,
       requirements: {
         type: BadgeRequirementType.FRIENDS_ADDED,
         target: 20,
@@ -111,7 +113,7 @@ export class BadgeService {
       description: 'Add 50 friends',
       icon: 'social_engineer',
       category: BadgeCategory.SOCIAL,
-      rarity: 'epic' as any,
+      rarity: BadgeRarity.EPIC,
       requirements: {
         type: BadgeRequirementType.FRIENDS_ADDED,
         target: 50,
@@ -122,7 +124,7 @@ export class BadgeService {
       description: 'Add 100 friends',
       icon: 'king_of_campus',
       category: BadgeCategory.SOCIAL,
-      rarity: 'legendary' as unknown,
+      rarity: BadgeRarity.LEGENDARY,
       requirements: {
         type: BadgeRequirementType.FRIENDS_ADDED,
         target: 100,
@@ -133,7 +135,7 @@ export class BadgeService {
       description: 'Visit your first pin',
       icon: 'first_visit',
       category: BadgeCategory.EXPLORATION,
-      rarity: 'common' as any,
+      rarity: BadgeRarity.COMMON,
       requirements: {
         type: BadgeRequirementType.PINS_VISITED,
         target: 1,
@@ -144,7 +146,7 @@ export class BadgeService {
       description: 'Visit 25 pins',
       icon: 'frequent_visitor',
       category: BadgeCategory.EXPLORATION,
-      rarity: 'uncommon' as any,
+      rarity: BadgeRarity.UNCOMMON,
       requirements: {
         type: BadgeRequirementType.PINS_VISITED,
         target: 25,
@@ -155,7 +157,7 @@ export class BadgeService {
       description: 'Report 3 inappropriate pins',
       icon: 'campus_guardian',
       category: BadgeCategory.ACHIEVEMENT,
-      rarity: 'uncommon' as any,
+      rarity: BadgeRarity.UNCOMMON,
       requirements: {
         type: BadgeRequirementType.REPORTS_MADE,
         target: 3,
@@ -166,7 +168,7 @@ export class BadgeService {
       description: 'Visit 3 libraries',
       icon: 'library',
       category: BadgeCategory.EXPLORATION,
-      rarity: 'uncommon' as any,
+      rarity: BadgeRarity.UNCOMMON,
       requirements: {
         type: BadgeRequirementType.LIBRARIES_VISITED,
         target: 3,
@@ -177,7 +179,7 @@ export class BadgeService {
       description: 'Visit 3 coffee shops',
       icon: 'coffee',
       category: BadgeCategory.EXPLORATION,
-      rarity: 'uncommon' as any,
+      rarity: BadgeRarity.UNCOMMON,
       requirements: {
         type: BadgeRequirementType.CAFES_VISITED,
         target: 3,
@@ -351,7 +353,7 @@ export class BadgeService {
     try {
       const User = mongoose.model('User');
       const user = await User.findById(userId).select('loginTracking');
-      const currentStreak = user?.loginTracking?.currentStreak || 0;
+      const currentStreak = user?.loginTracking?.currentStreak ?? 0;
       logger.info(`User ${userId.toString()} login streak: ${currentStreak} days, target: ${target}`);
       return currentStreak >= target;
     } catch (error) {
@@ -367,7 +369,7 @@ export class BadgeService {
     try {
       const User = mongoose.model('User');
       const user = await User.findById(userId).select('stats.pinsCreated');
-      const count = user?.stats?.pinsCreated || 0;
+      const count = user?.stats?.pinsCreated ?? 0;
       logger.info(`User ${userId.toString()} has created ${count} pins (cumulative), target: ${target}`);
       return count >= target;
     } catch (error) {
@@ -383,7 +385,7 @@ export class BadgeService {
     try {
       const User = mongoose.model('User');
       const user = await User.findById(userId).select('stats.pinsVisited');
-      const count = user?.stats?.pinsVisited || 0;
+      const count = user?.stats?.pinsVisited ?? 0;
       logger.info(`User ${userId.toString()} has visited ${count} pins (cumulative), target: ${target}`);
       return count >= target;
     } catch (error) {
@@ -399,7 +401,7 @@ export class BadgeService {
     try {
       const User = mongoose.model('User');
       const user = await User.findById(userId).select('friendsCount');
-      const count = user?.friendsCount || 0;
+      const count = user?.friendsCount ?? 0;
       logger.info(`User ${userId.toString()} has ${count} friends, target: ${target}`);
       return count >= target;
     } catch (error) {
@@ -415,7 +417,7 @@ export class BadgeService {
     try {
       const User = mongoose.model('User');
       const user = await User.findById(userId).select('stats.reportsMade');
-      const count = user?.stats?.reportsMade || 0;
+      const count = user?.stats?.reportsMade ?? 0;
       logger.info(`User ${userId.toString()} has made ${count} reports (cumulative), target: ${target}`);
       return count >= target;
     } catch (error) {
@@ -457,7 +459,7 @@ export class BadgeService {
 
       // Count pre-seeded library pins (category: 'study')
       const libraryCount = user.visitedPins.filter((pin: any) => 
-        pin && pin.isPreSeeded === true && pin.category === 'study'
+        pin && pin.isPreSeeded === true && pin.category === PinCategory.STUDY
       ).length;
 
       logger.info(`User ${userId.toString()} has visited ${libraryCount} pre-seeded libraries, target: ${target}`);
@@ -486,8 +488,8 @@ export class BadgeService {
 
       // Count pre-seeded cafe pins (category: 'shops_services' with subtype: 'cafe')
       const cafePins = user.visitedPins.filter((pin: any) => {
-        const isCafe = pin && pin.isPreSeeded === true && pin.category === 'shops_services' && pin.metadata?.subtype === 'cafe';
-        if (pin && pin.category === 'shops_services') {
+        const isCafe = pin && pin.isPreSeeded === true && pin.category === PinCategory.SHOPS_SERVICES && pin.metadata?.subtype === 'cafe';
+        if (pin && pin.category === PinCategory.SHOPS_SERVICES) {
           logger.info(`☕ Checking pin: ${pin.name}, isPreSeeded: ${pin.isPreSeeded}, category: ${pin.category}, subtype: ${pin.metadata?.subtype}, isCafe: ${isCafe}`);
         }
         return isCafe;
@@ -524,46 +526,46 @@ export class BadgeService {
 
       switch (badge.requirements.type) {
         case BadgeRequirementType.PINS_CREATED:
-          current = user?.stats?.pinsCreated || 0;
+          current = user?.stats?.pinsCreated ?? 0;
           break;
         
         case BadgeRequirementType.PINS_VISITED:
-          current = user?.stats?.pinsVisited || 0;
+          current = user?.stats?.pinsVisited ?? 0;
           break;
         
         case BadgeRequirementType.FRIENDS_ADDED:
           // Use friendsCount for now, can track cumulative later
-          current = user?.friendsCount || 0;
+          current = user?.friendsCount ?? 0;
           break;
         
         case BadgeRequirementType.REPORTS_MADE:
-          current = user?.stats?.reportsMade || 0;
+          current = user?.stats?.reportsMade ?? 0;
           break;
         
         case BadgeRequirementType.LOCATIONS_EXPLORED:
-          current = user?.stats?.locationsExplored || 0;
+          current = user?.stats?.locationsExplored ?? 0;
           break;
         
         case BadgeRequirementType.LIBRARIES_VISITED:
           // Count pre-seeded library pins directly from visitedPins
           current = user?.visitedPins?.filter((pin: any) => 
-            pin && pin.isPreSeeded === true && pin.category === 'study'
-          ).length || 0;
+            pin && pin.isPreSeeded === true && pin.category === PinCategory.STUDY
+          ).length ?? 0;
           break;
         
         case BadgeRequirementType.CAFES_VISITED:
           // Count pre-seeded cafe pins directly from visitedPins
           current = user?.visitedPins?.filter((pin: any) => 
-            pin && pin.isPreSeeded === true && pin.category === 'shops_services' && pin.metadata?.subtype === 'cafe'
-          ).length || 0;
+            pin && pin.isPreSeeded === true && pin.category === PinCategory.SHOPS_SERVICES && pin.metadata?.subtype === 'cafe'
+          ).length ?? 0;
           break;
         
         case BadgeRequirementType.RESTAURANTS_VISITED:
-          current = user?.stats?.restaurantsVisited || 0;
+          current = user?.stats?.restaurantsVisited ?? 0;
           break;
         
         case BadgeRequirementType.LOGIN_STREAK:
-          current = user?.loginTracking?.currentStreak || 0;
+          current = user?.loginTracking?.currentStreak ?? 0;
           break;
         
         default:

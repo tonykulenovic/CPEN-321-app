@@ -28,12 +28,12 @@ const authenticateToken = (req: any, res: any, next: any) => {
 
 // Set up routes with authentication and validation middleware
 const badgeController = new BadgeController();
-app.get('/badges', authenticateToken, badgeController.getAllBadges);
-app.get('/badges/user/earned', authenticateToken, badgeController.getUserBadges);
-app.get('/badges/user/available', authenticateToken, badgeController.getAvailableBadges);
-app.get('/badges/user/progress', authenticateToken, badgeController.getBadgeProgress);
-app.get('/badges/user/stats', authenticateToken, badgeController.getBadgeStats);
-app.post('/badges/user/event', authenticateToken, badgeController.processBadgeEvent);
+app.get('/badges', authenticateToken, (req, res, next) => void badgeController.getAllBadges(req, res, next));
+app.get('/badges/user/earned', authenticateToken, (req, res, next) => void badgeController.getUserBadges(req, res, next));
+app.get('/badges/user/available', authenticateToken, (req, res, next) => void badgeController.getAvailableBadges(req, res, next));
+app.get('/badges/user/progress', authenticateToken, (req, res, next) => void badgeController.getBadgeProgress(req, res, next));
+app.get('/badges/user/stats', authenticateToken, (req, res, next) => void badgeController.getBadgeStats(req, res, next));
+app.post('/badges/user/event', authenticateToken, (req, res, next) => void badgeController.processBadgeEvent(req, res, next));
 
 const mockBadgeModel = badgeModel as jest.Mocked<typeof badgeModel>;
 const mockBadgeService = BadgeService as jest.Mocked<typeof BadgeService>;

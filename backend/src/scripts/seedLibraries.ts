@@ -110,6 +110,7 @@ export async function seedLibraries() {
     const User = mongoose.model('User');
     
     // Check if any libraries exist (just for logging)
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     const existingLibraries = await (pinModel as any).pin.countDocuments({ isPreSeeded: true });
 
     if (existingLibraries > 0) {
@@ -135,6 +136,7 @@ export async function seedLibraries() {
 
     // Clean up pre-seeded libraries that are no longer in the UBC_LIBRARIES array
     const currentLibraryNames = UBC_LIBRARIES.map(lib => lib.name);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     const deleteResult = await (pinModel as any).pin.deleteMany({
       isPreSeeded: true,
       category: PinCategory.STUDY, // Only delete STUDY category (libraries)
@@ -151,6 +153,7 @@ export async function seedLibraries() {
 
     for (const libraryData of UBC_LIBRARIES) {
       try {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         const result = await (pinModel as any).pin.updateOne(
           { 
             name: libraryData.name,

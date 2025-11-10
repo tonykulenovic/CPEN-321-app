@@ -241,8 +241,11 @@ export class BadgeModel {
 
       return await this.userBadge.create(userBadgeData);
     } catch (error: unknown) {
-      if (error && typeof error === 'object' && 'code' in error && (error as any).code === 11000) {
-        throw new Error('User already has this badge');
+      if (error && typeof error === 'object' && 'code' in error) {
+        const mongoError = error as { code: number };
+        if (mongoError.code === 11000) {
+          throw new Error('User already has this badge');
+        }
       }
       logger.error('Error assigning badge:', error);
       throw new Error('Failed to assign badge');
@@ -292,7 +295,10 @@ export class BadgeModel {
 
       // Initialize all categories to 0
       const categoryBreakdown = Object.values(BadgeCategory).reduce((acc, category) => {
-        acc[category] = validUserBadges.filter(ub => (ub.badgeId as any).category === category).length;
+        acc[category] = validUserBadges.filter(ub => {
+          const badge = ub.badgeId as IBadge | mongoose.Types.ObjectId;
+          return typeof badge === 'object' && 'category' in badge && badge.category === category;
+        }).length;
         return acc;
       }, {
         [BadgeCategory.ACTIVITY]: 0,

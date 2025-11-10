@@ -74,7 +74,7 @@ class FirebaseService {
             logger.info(`   📱 Token: ${token.substring(0, 30)}...${token.substring(token.length - 10)}`);
             logger.info(`   📰 Title: "${title}"`);
             logger.info(`   💬 Body: "${body}"`);
-            logger.info(`   📦 Data: ${JSON.stringify(data || {})}`);
+            logger.info(`   📦 Data: ${JSON.stringify(data ?? {})}`);
             logger.info(`   🤖 Android Channel: friend_activity_channel`);
             
             const startTime = Date.now();
@@ -87,9 +87,9 @@ class FirebaseService {
         } catch (error: unknown) {
             const firebaseError = error as { code?: string; message?: string; details?: any };
             logger.error(`❌ [FCM] Error sending notification:`, error);
-            logger.error(`   🔢 Error code: ${firebaseError.code || 'N/A'}`);
-            logger.error(`   💬 Error message: ${firebaseError.message || 'N/A'}`);
-            logger.error(`   📊 Error details: ${JSON.stringify(firebaseError.details || {})}`);
+            logger.error(`   🔢 Error code: ${firebaseError.code ?? 'N/A'}`);
+            logger.error(`   💬 Error message: ${firebaseError.message ?? 'N/A'}`);
+            logger.error(`   📊 Error details: ${JSON.stringify(firebaseError.details ?? {})}`);
             
             // Log specific Firebase error codes with solutions
             if (firebaseError.code === 'messaging/invalid-registration-token' || 
@@ -126,7 +126,7 @@ class FirebaseService {
                     title,
                     body,
                 },
-                data: data || {},
+                data: data ?? {},
                 android: {
                     notification: {
                         channelId: 'friend_activity_channel',

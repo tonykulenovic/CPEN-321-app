@@ -94,8 +94,10 @@ class LocationTrackingService @Inject constructor(
             setupSocketListeners()
             connect()
             
-        } catch (e: URISyntaxException) {
+        } catch (e: java.net.URISyntaxException) {
             Log.e(TAG, "Invalid socket server URL", e)
+        } catch (e: java.io.IOException) {
+            Log.e(TAG, "IO error initializing socket connection", e)
         } catch (e: Exception) {
             Log.e(TAG, "Error initializing socket connection", e)
         }

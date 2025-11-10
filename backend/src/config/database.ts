@@ -1,3 +1,4 @@
+/* eslint-disable security/detect-console-log-non-literal */
 import mongoose from 'mongoose';
 
 export const connectDB = async (): Promise<void> => {

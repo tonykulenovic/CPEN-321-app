@@ -1,3 +1,4 @@
+/* eslint-disable security/detect-console-log-non-literal */
 /**
  * Pins Performance Tests - Complete NFR Validation
  * 

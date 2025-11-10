@@ -1,3 +1,4 @@
+/* eslint-disable security/detect-console-log-non-literal */
 /**
  * User Performance Tests - Ranks 1-3
  * 

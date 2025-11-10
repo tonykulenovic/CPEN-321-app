@@ -85,6 +85,21 @@ class LocationTrackingViewModel @Inject constructor(
                         )
                     }
                     
+            } catch (e: java.net.SocketTimeoutException) {
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    error = "Network timeout: Failed to initialize location tracking"
+                )
+            } catch (e: java.net.UnknownHostException) {
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    error = "Network connection failed: Failed to initialize location tracking"
+                )
+            } catch (e: java.io.IOException) {
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    error = "IO error: Failed to initialize location tracking"
+                )
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,

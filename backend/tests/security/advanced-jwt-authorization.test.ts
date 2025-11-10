@@ -1,3 +1,4 @@
+/* eslint-disable security/detect-console-log-non-literal */
 /**
  * Security NFR Tests - Phase 2 Rank 1 (Medium Complexity - Easiest)
  * 

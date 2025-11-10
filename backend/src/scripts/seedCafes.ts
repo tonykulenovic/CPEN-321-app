@@ -106,7 +106,7 @@ export async function seedCafes(): Promise<void> {
     }
 
     // Handle both new API format (places) and legacy format (results)
-    const cafes = response.data.places || response.data.results;
+    const cafes = response.data.places ?? response.data.results;
     
     if (!cafes || cafes.length === 0) {
       logger.info('No cafes found. Seeding complete.');
@@ -142,13 +142,13 @@ export async function seedCafes(): Promise<void> {
         const lng = cafe.location?.longitude ?? cafe.geometry?.location.lng;
         
         if (!lat || !lng) {
-          logger.warn(`⚠️  Skipping cafe without location: ${cafe.displayName?.text || cafe.name}`);
+          logger.warn(`⚠️  Skipping cafe without location: ${cafe.displayName?.text ?? cafe.name}`);
           continue;
         }
 
         // Extract name and address from either API format
-        const name = cafe.displayName?.text || cafe.name || 'Unnamed Cafe';
-        const address = (cafe.formattedAddress ?? cafe.vicinity) || 'Cafe near UBC campus';
+        const name = (cafe.displayName?.text ?? cafe.name) ?? 'Unnamed Cafe';
+        const address = (cafe.formattedAddress ?? cafe.vicinity) ?? 'Cafe near UBC campus';
         
         // Extract opening hours from either API format
         const isOpen = cafe.currentOpeningHours?.openNow ?? cafe.opening_hours?.open_now;
@@ -182,6 +182,7 @@ export async function seedCafes(): Promise<void> {
         };
 
         // Upsert cafe pin using name and location as unique identifier
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         const result = await (pinModel as any).pin.updateOne(
           {
             isPreSeeded: true,
@@ -226,10 +227,11 @@ export async function seedCafes(): Promise<void> {
 
     // Get current cafe names for cleanup (use same extraction logic as above)
     const currentCafeNames = cafes
-      .map((c: PlaceResult) => c.displayName?.text || c.name || 'Unnamed Cafe')
+      .map((c: PlaceResult) => (c.displayName?.text ?? c.name) ?? 'Unnamed Cafe')
       .filter((name: string) => name !== 'Unnamed Cafe');
     
     // Delete pre-seeded cafes that are no longer in Google Places results
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     const deleteResult = await (pinModel as any).pin.deleteMany({
       isPreSeeded: true,
       category: PinCategory.SHOPS_SERVICES,

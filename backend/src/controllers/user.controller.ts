@@ -123,7 +123,7 @@ export class UserController {
 
       // Get online status
       const onlineStatusMap = await userModel.getOnlineStatus([targetUserId], 10);
-      const isOnline = onlineStatusMap.get(targetUserId.toString()) || false;
+      const isOnline = onlineStatusMap.get(targetUserId.toString()) ?? false;
 
       // Get user badges
       const userBadges = await badgeModel.getUserBadges(targetUserId);
@@ -161,7 +161,7 @@ export class UserController {
       logger.error('Error in getUserProfile:', error);
       if (error instanceof Error) {
         return res.status(500).json({
-          message: error.message || 'Failed to fetch friend profile',
+          message: error.message ?? 'Failed to fetch friend profile',
         });
       }
       next(error);
@@ -196,7 +196,7 @@ export class UserController {
 
       if (error instanceof Error) {
         return res.status(500).json({
-          message: error.message || 'Failed to update user info',
+          message: error.message ?? 'Failed to update user info',
         });
       }
 
@@ -223,7 +223,7 @@ export class UserController {
 
       if (error instanceof Error) {
         return res.status(500).json({
-          message: error.message || 'Failed to delete user',
+          message: error.message ?? 'Failed to delete user',
         });
       }
 
@@ -303,7 +303,7 @@ export class UserController {
       const mappedUsers = filteredUsers.map(user => ({
         _id: user._id.toString(),
         username: user.username,
-        displayName: user.name || user.username,
+        displayName: user.name ?? user.username,
         photoUrl: user.profilePicture,
       }));
 
@@ -557,7 +557,7 @@ export class UserController {
       }
       
       const userId = req.user._id;
-      const userName = req.user.name || 'unknown';
+      const userName = req.user.name ?? 'unknown';
       logger.info(`👤 [USER-CONTROLLER] FCM token update for user: ${userName} (${userId.toString()})`);
       
       const { fcmToken } = req.body;

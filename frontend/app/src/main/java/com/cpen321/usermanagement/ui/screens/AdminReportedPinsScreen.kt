@@ -458,6 +458,10 @@ private fun formatTimestamp(timestamp: String): String {
         } else {
             timestamp
         }
+    } catch (e: java.text.ParseException) {
+        timestamp
+    } catch (e: IllegalArgumentException) {
+        timestamp
     } catch (e: Exception) {
         timestamp
     }

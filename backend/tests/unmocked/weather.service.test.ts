@@ -1,3 +1,4 @@
+/* eslint-disable security/detect-insecure-randomness */
 import { describe, test, beforeEach, afterEach, expect, jest } from '@jest/globals';
 import { weatherService } from '../../src/services/weather.service';
 
