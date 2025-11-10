@@ -200,7 +200,7 @@ fun MainScreen(
                 } else {
                     android.util.Log.e("MainScreen", "❌ No auth token available, cannot initialize location tracking")
                 }
-            } catch (e: Exception) {
+            } catch (e: RuntimeException) {
                 // Log error but don't fail the screen
                 android.util.Log.e("MainScreen", "❌ Failed to initialize location tracking", e)
             }
@@ -251,7 +251,7 @@ fun MainScreen(
                 locationTrackingService.stopRealGPSTracking()
                 locationTrackingService.stopLocationSharing()
                 android.util.Log.d("MainScreen", "✅ Location tracking stopped on map screen exit")
-            } catch (e: Exception) {
+            } catch (e: RuntimeException) {
                 android.util.Log.e("MainScreen", "❌ Error stopping location tracking", e)
             }
         }
@@ -925,7 +925,7 @@ private fun MapContent(
                     canvas.drawText("📍", center + 25f, center - 20f, pinIconPaint)
 
                     BitmapDescriptorFactory.fromBitmap(bitmap)
-                } catch (e: Exception) {
+                } catch (e: RuntimeException) {
                     // Fallback to default marker if bitmap creation fails
                     BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)
                 }
@@ -942,7 +942,7 @@ private fun MapContent(
                     // Calculate time since last update
                     val lastUpdateTime = try {
                         java.time.Instant.parse(friendLocation.ts)
-                    } catch (e: Exception) {
+                    } catch (e: RuntimeException) {
                         java.time.Instant.now()
                     }
                     val now = java.time.Instant.now()

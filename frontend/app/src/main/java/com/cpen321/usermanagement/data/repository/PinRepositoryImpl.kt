@@ -39,7 +39,7 @@ class PinRepositoryImpl @Inject constructor() : PinRepository {
         } catch (e: retrofit2.HttpException) {
             Log.e(TAG, "HTTP error creating pin: ${e.code()}", e)
             Result.failure(e)
-        } catch (e: Exception) {
+        } catch (e: RuntimeException) {
             Log.e(TAG, "Error creating pin", e)
             Result.failure(e)
         }
@@ -70,7 +70,7 @@ class PinRepositoryImpl @Inject constructor() : PinRepository {
         } catch (e: retrofit2.HttpException) {
             Log.e(TAG, "HTTP error getting pin: ${e.code()}", e)
             Result.failure(e)
-        } catch (e: Exception) {
+        } catch (e: RuntimeException) {
             Log.e(TAG, "Error getting pin", e)
             Result.failure(e)
         }
@@ -101,7 +101,7 @@ class PinRepositoryImpl @Inject constructor() : PinRepository {
         } catch (e: retrofit2.HttpException) {
             Log.e(TAG, "HTTP error updating pin: ${e.code()}", e)
             Result.failure(e)
-        } catch (e: Exception) {
+        } catch (e: RuntimeException) {
             Log.e(TAG, "Error updating pin", e)
             Result.failure(e)
         }
@@ -132,7 +132,7 @@ class PinRepositoryImpl @Inject constructor() : PinRepository {
         } catch (e: retrofit2.HttpException) {
             Log.e(TAG, "HTTP error deleting pin: ${e.code()}", e)
             Result.failure(e)
-        } catch (e: Exception) {
+        } catch (e: RuntimeException) {
             Log.e(TAG, "Error deleting pin", e)
             Result.failure(e)
         }
@@ -180,7 +180,7 @@ class PinRepositoryImpl @Inject constructor() : PinRepository {
         } catch (e: retrofit2.HttpException) {
             Log.e(TAG, "HTTP error searching pins: ${e.code()}", e)
             Result.failure(e)
-        } catch (e: Exception) {
+        } catch (e: RuntimeException) {
             Log.e(TAG, "Error searching pins", e)
             Result.failure(e)
         }
@@ -212,7 +212,7 @@ class PinRepositoryImpl @Inject constructor() : PinRepository {
         } catch (e: retrofit2.HttpException) {
             Log.e(TAG, "HTTP error rating pin: ${e.code()}", e)
             Result.failure(e)
-        } catch (e: Exception) {
+        } catch (e: RuntimeException) {
             Log.e(TAG, "Error rating pin", e)
             Result.failure(e)
         }
@@ -243,7 +243,7 @@ class PinRepositoryImpl @Inject constructor() : PinRepository {
         } catch (e: retrofit2.HttpException) {
             Log.e(TAG, "HTTP error getting user vote: ${e.code()}", e)
             Result.failure(e)
-        } catch (e: Exception) {
+        } catch (e: RuntimeException) {
             Log.e(TAG, "Error getting user vote", e)
             Result.failure(e)
         }
@@ -275,7 +275,7 @@ class PinRepositoryImpl @Inject constructor() : PinRepository {
         } catch (e: retrofit2.HttpException) {
             Log.e(TAG, "HTTP error reporting pin: ${e.code()}", e)
             Result.failure(e)
-        } catch (e: Exception) {
+        } catch (e: RuntimeException) {
             Log.e(TAG, "Error reporting pin", e)
             Result.failure(e)
         }
@@ -306,7 +306,7 @@ class PinRepositoryImpl @Inject constructor() : PinRepository {
         } catch (e: retrofit2.HttpException) {
             Log.e(TAG, "HTTP error getting reported pins: ${e.code()}", e)
             Result.failure(e)
-        } catch (e: Exception) {
+        } catch (e: RuntimeException) {
             Log.e(TAG, "Error getting reported pins", e)
             Result.failure(e)
         }
@@ -337,7 +337,7 @@ class PinRepositoryImpl @Inject constructor() : PinRepository {
         } catch (e: retrofit2.HttpException) {
             Log.e(TAG, "HTTP error clearing reports: ${e.code()}", e)
             Result.failure(e)
-        } catch (e: Exception) {
+        } catch (e: RuntimeException) {
             Log.e(TAG, "Error clearing reports", e)
             Result.failure(e)
         }

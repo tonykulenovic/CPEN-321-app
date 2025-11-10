@@ -39,7 +39,7 @@ class FriendsRepositoryImpl @Inject constructor() : FriendsRepository {
         } catch (e: retrofit2.HttpException) {
             Log.e(TAG, "HTTP error getting friends: ${e.code()}", e)
             Result.failure(e)
-        } catch (e: Exception) {
+        } catch (e: RuntimeException) {
             Log.e(TAG, "Error getting friends", e)
             Result.failure(e)
         }
@@ -71,7 +71,7 @@ class FriendsRepositoryImpl @Inject constructor() : FriendsRepository {
         } catch (e: retrofit2.HttpException) {
             Log.e(TAG, "HTTP error sending friend request: ${e.code()}", e)
             Result.failure(e)
-        } catch (e: Exception) {
+        } catch (e: RuntimeException) {
             Log.e(TAG, "Error sending friend request", e)
             Result.failure(e)
         }
@@ -102,7 +102,7 @@ class FriendsRepositoryImpl @Inject constructor() : FriendsRepository {
         } catch (e: retrofit2.HttpException) {
             Log.e(TAG, "HTTP error getting friend requests: ${e.code()}", e)
             Result.failure(e)
-        } catch (e: Exception) {
+        } catch (e: RuntimeException) {
             Log.e(TAG, "Error getting friend requests", e)
             Result.failure(e)
         }
@@ -133,7 +133,7 @@ class FriendsRepositoryImpl @Inject constructor() : FriendsRepository {
         } catch (e: retrofit2.HttpException) {
             Log.e(TAG, "HTTP error accepting friend request: ${e.code()}", e)
             Result.failure(e)
-        } catch (e: Exception) {
+        } catch (e: RuntimeException) {
             Log.e(TAG, "Error accepting friend request", e)
             Result.failure(e)
         }
@@ -164,7 +164,7 @@ class FriendsRepositoryImpl @Inject constructor() : FriendsRepository {
         } catch (e: retrofit2.HttpException) {
             Log.e(TAG, "HTTP error declining friend request: ${e.code()}", e)
             Result.failure(e)
-        } catch (e: Exception) {
+        } catch (e: RuntimeException) {
             Log.e(TAG, "Error declining friend request", e)
             Result.failure(e)
         }
@@ -195,7 +195,7 @@ class FriendsRepositoryImpl @Inject constructor() : FriendsRepository {
         } catch (e: retrofit2.HttpException) {
             Log.e(TAG, "HTTP error removing friend: ${e.code()}", e)
             Result.failure(e)
-        } catch (e: Exception) {
+        } catch (e: RuntimeException) {
             Log.e(TAG, "Error removing friend", e)
             Result.failure(e)
         }
@@ -226,7 +226,7 @@ class FriendsRepositoryImpl @Inject constructor() : FriendsRepository {
         } catch (e: retrofit2.HttpException) {
             Log.e(TAG, "HTTP error searching users: ${e.code()}", e)
             Result.failure(e)
-        } catch (e: Exception) {
+        } catch (e: RuntimeException) {
             Log.e(TAG, "Error searching users", e)
             Result.failure(e)
         }
@@ -257,7 +257,7 @@ class FriendsRepositoryImpl @Inject constructor() : FriendsRepository {
         } catch (e: retrofit2.HttpException) {
             Log.e(TAG, "HTTP error getting friends locations: ${e.code()}", e)
             Result.failure(e)
-        } catch (e: Exception) {
+        } catch (e: RuntimeException) {
             Log.e(TAG, "Error getting friends locations", e)
             Result.failure(e)
         }

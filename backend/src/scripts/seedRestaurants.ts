@@ -225,7 +225,10 @@ export async function seedRestaurants(): Promise<void> {
     let excludedCount = 0;
 
     // Create a set of cafe names (lowercase) for quick lookup
-    const cafeNames = new Set(existingCafes.map((cafe: any) => cafe.name.toLowerCase()));
+    const cafeNames = new Set(existingCafes.map((cafe: unknown) => {
+      const cafeObj = cafe as { name: string };
+      return cafeObj.name.toLowerCase();
+    }));
 
     for (const restaurant of restaurants) {
       const lat = restaurant.location?.latitude ?? restaurant.geometry?.location.lat;

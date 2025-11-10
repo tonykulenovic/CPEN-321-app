@@ -80,7 +80,7 @@ export class PinVoteModel {
       // Access the Pin model directly to avoid circular dependency
       const pinCollection = mongoose.model('Pin');
       
-      const updateOperations: Record<string, any> = {
+      const updateOperations: Record<string, unknown> = {
         $inc: { 'rating.upvotes': upvoteChange, 'rating.downvotes': downvoteChange }
       };
 
@@ -135,7 +135,7 @@ export class PinVoteModel {
       throw new Error('Failed to vote on pin');
     } finally {
       if (session) {
-        session.endSession();
+        void session.endSession();
       }
     }
   }

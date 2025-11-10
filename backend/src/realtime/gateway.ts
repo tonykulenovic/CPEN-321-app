@@ -15,7 +15,7 @@ import logger from '../utils/logger.util';
 // Location tracking subscription map
 const locationTrackers = new Map<string, Set<string>>(); // friendId -> Set<viewerIds>
 const socketToUser = new Map<string, mongoose.Types.ObjectId>(); // socketId -> userId
-const userHeartbeats = new Map<string, NodeJS.Timeout>(); // userId -> heartbeat interval
+const userHeartbeats = new Map<string, ReturnType<typeof setInterval>>(); // userId -> heartbeat interval
 
 /**
  * Location Gateway - Single source of truth for all location operations
@@ -331,7 +331,7 @@ export class LocationGateway {
 
           // Store user ID in socket data
           socket.data.userId = new mongoose.Types.ObjectId(devUserId);
-          socketToUser.set(socket.id, new mongoose.Types.ObjectId(devUserId));
+          socketToUser.set(String(socket.id), new mongoose.Types.ObjectId(devUserId));
           
           next();
           return;
@@ -348,7 +348,7 @@ export class LocationGateway {
         
         // Store user ID in socket data
         socket.data.userId = userId;
-        socketToUser.set(socket.id, userId);
+        socketToUser.set(String(socket.id), userId);
         
         next();
       } catch (error) {
@@ -460,7 +460,7 @@ export class LocationGateway {
           }
         }
         
-        socketToUser.delete(socket.id);
+        socketToUser.delete(String(socket.id));
       });
     });
   }

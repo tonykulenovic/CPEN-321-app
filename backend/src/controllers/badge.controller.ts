@@ -19,7 +19,7 @@ export class BadgeController {
   ) {
     try {
       const { category, isActive } = req.query;
-      const filters: Record<string, any> = {};
+      const filters: Record<string, unknown> = {};
 
       if (category) {
         filters.category = category;

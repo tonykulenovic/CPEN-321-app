@@ -37,7 +37,7 @@ class BadgeRepositoryImpl @Inject constructor(
         } catch (e: retrofit2.HttpException) {
             Log.e(TAG, "HTTP error fetching badges: ${e.code()}", e)
             Result.failure(e)
-        } catch (e: Exception) {
+        } catch (e: RuntimeException) {
             Log.e(TAG, "Error fetching badges", e)
             Result.failure(e)
         }
@@ -67,7 +67,7 @@ class BadgeRepositoryImpl @Inject constructor(
         } catch (e: retrofit2.HttpException) {
             Log.e(TAG, "HTTP error fetching earned badges: ${e.code()}", e)
             Result.failure(e)
-        } catch (e: Exception) {
+        } catch (e: RuntimeException) {
             Log.e(TAG, "Error fetching earned badges", e)
             Result.failure(e)
         }
@@ -97,7 +97,7 @@ class BadgeRepositoryImpl @Inject constructor(
         } catch (e: retrofit2.HttpException) {
             Log.e(TAG, "HTTP error fetching available badges: ${e.code()}", e)
             Result.failure(e)
-        } catch (e: Exception) {
+        } catch (e: RuntimeException) {
             Log.e(TAG, "Error fetching available badges", e)
             Result.failure(e)
         }
@@ -131,7 +131,7 @@ class BadgeRepositoryImpl @Inject constructor(
         } catch (e: retrofit2.HttpException) {
             Log.e(TAG, "HTTP error fetching badge progress: ${e.code()}", e)
             Result.failure(e)
-        } catch (e: Exception) {
+        } catch (e: RuntimeException) {
             Log.e(TAG, "Error fetching badge progress", e)
             Result.failure(e)
         }
@@ -165,7 +165,7 @@ class BadgeRepositoryImpl @Inject constructor(
         } catch (e: retrofit2.HttpException) {
             Log.e(TAG, "HTTP error fetching badge stats: ${e.code()}", e)
             Result.failure(e)
-        } catch (e: Exception) {
+        } catch (e: RuntimeException) {
             Log.e(TAG, "Error fetching badge stats", e)
             Result.failure(e)
         }
@@ -200,7 +200,7 @@ class BadgeRepositoryImpl @Inject constructor(
         } catch (e: retrofit2.HttpException) {
             Log.e(TAG, "HTTP error processing badge event: ${e.code()}", e)
             Result.failure(e)
-        } catch (e: Exception) {
+        } catch (e: RuntimeException) {
             Log.e(TAG, "Error processing badge event", e)
             Result.failure(e)
         }

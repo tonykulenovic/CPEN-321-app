@@ -462,7 +462,7 @@ private fun formatTimestamp(timestamp: String): String {
         timestamp
     } catch (e: IllegalArgumentException) {
         timestamp
-    } catch (e: Exception) {
+    } catch (e: RuntimeException) {
         timestamp
     }
 }

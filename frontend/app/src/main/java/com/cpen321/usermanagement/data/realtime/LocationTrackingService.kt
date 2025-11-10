@@ -98,7 +98,7 @@ class LocationTrackingService @Inject constructor(
             Log.e(TAG, "Invalid socket server URL", e)
         } catch (e: java.io.IOException) {
             Log.e(TAG, "IO error initializing socket connection", e)
-        } catch (e: Exception) {
+        } catch (e: RuntimeException) {
             Log.e(TAG, "Error initializing socket connection", e)
         }
     }
@@ -166,7 +166,7 @@ class LocationTrackingService @Inject constructor(
                     
                     Log.d(TAG, "Real-time location update received for friend $friendId at (${userLocation.lat}, ${userLocation.lng})")
                     
-                } catch (e: Exception) {
+                } catch (e: RuntimeException) {
                     Log.e(TAG, "Error parsing location:update", e)
                 }
             }
@@ -179,7 +179,7 @@ class LocationTrackingService @Inject constructor(
                     val expiresAt = data.optString("expiresAt", "N/A")
                     Log.d(TAG, "✅ location:ping:ack received for user: $currentUserId")
                     Log.d(TAG, "✅ Location shared: $shared, expires: $expiresAt")
-                } catch (e: Exception) {
+                } catch (e: RuntimeException) {
                     Log.e(TAG, "❌ Error parsing location:ping:ack", e)
                 }
             }
@@ -189,7 +189,7 @@ class LocationTrackingService @Inject constructor(
                     val data = args[0] as JSONObject
                     val error = data.getString("error")
                     Log.e(TAG, "❌ location:ping:error for user: $currentUserId - $error")
-                } catch (e: Exception) {
+                } catch (e: RuntimeException) {
                     Log.e(TAG, "❌ Error parsing location:ping:error", e)
                 }
             }
@@ -201,7 +201,7 @@ class LocationTrackingService @Inject constructor(
                     val friendId = data.getString("friendId")
                     val status = data.getString("status")
                     Log.d(TAG, "Friend tracking acknowledged: $friendId, status: $status")
-                } catch (e: Exception) {
+                } catch (e: RuntimeException) {
                     Log.e(TAG, "Error parsing location:track:ack", e)
                 }
             }
@@ -212,7 +212,7 @@ class LocationTrackingService @Inject constructor(
                     val friendId = data.getString("friendId")
                     val error = data.getString("error")
                     Log.w(TAG, "Friend tracking error for $friendId: $error")
-                } catch (e: Exception) {
+                } catch (e: RuntimeException) {
                     Log.e(TAG, "Error parsing location:track:error", e)
                 }
             }
@@ -329,7 +329,7 @@ class LocationTrackingService @Inject constructor(
                     .onFailure { error ->
                         Log.e(TAG, "❌ HTTP location update FAILED: ${error.message}")
                     }
-            } catch (e: Exception) {
+            } catch (e: RuntimeException) {
                 Log.e(TAG, "Error reporting location", e)
             }
         }
@@ -379,7 +379,7 @@ class LocationTrackingService @Inject constructor(
             Log.d(TAG, "✅ GPS location tracking started successfully")
         } catch (e: SecurityException) {
             Log.e(TAG, "❌ Location permission not granted", e)
-        } catch (e: Exception) {
+        } catch (e: RuntimeException) {
             Log.e(TAG, "❌ Error starting GPS tracking", e)
         }
     }
@@ -429,7 +429,7 @@ class LocationTrackingService @Inject constructor(
                     Log.d(TAG, "🔄 Periodic update #$updateCount for user: $currentUserId")
                     reportLocation(currentLat, currentLng, 5.0)
                     delay(intervalMs)
-                } catch (e: Exception) {
+                } catch (e: RuntimeException) {
                     Log.e(TAG, "❌ Error in periodic location updates", e)
                     delay(intervalMs)
                 }
@@ -490,7 +490,7 @@ class LocationTrackingService @Inject constructor(
             currentUserId = null
             
             Log.d(TAG, "🧹 Location tracking service cleanup COMPLETE")
-        } catch (e: Exception) {
+        } catch (e: RuntimeException) {
             Log.w(TAG, "❌ Error during cleanup", e)
         }
     }

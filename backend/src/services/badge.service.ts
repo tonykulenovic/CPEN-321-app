@@ -458,9 +458,10 @@ export class BadgeService {
       }
 
       // Count pre-seeded library pins (category: 'study')
-      const libraryCount = user.visitedPins.filter((pin: any) => 
-        pin && pin.isPreSeeded === true && pin.category === PinCategory.STUDY
-      ).length;
+      const libraryCount = user.visitedPins.filter((pin: unknown) => {
+        const pinObj = pin as { isPreSeeded?: boolean; category?: string };
+        return pinObj && pinObj.isPreSeeded === true && pinObj.category === PinCategory.STUDY;
+      }).length;
 
       logger.info(`User ${userId.toString()} has visited ${libraryCount} pre-seeded libraries, target: ${target}`);
       return libraryCount >= target;
@@ -487,10 +488,11 @@ export class BadgeService {
       logger.info(`☕ Checking cafes for user ${userId.toString()}, total visited pins: ${user.visitedPins.length}`);
 
       // Count pre-seeded cafe pins (category: 'shops_services' with subtype: 'cafe')
-      const cafePins = user.visitedPins.filter((pin: any) => {
-        const isCafe = pin && pin.isPreSeeded === true && pin.category === PinCategory.SHOPS_SERVICES && pin.metadata?.subtype === 'cafe';
-        if (pin && pin.category === PinCategory.SHOPS_SERVICES) {
-          logger.info(`☕ Checking pin: ${pin.name}, isPreSeeded: ${pin.isPreSeeded}, category: ${pin.category}, subtype: ${pin.metadata?.subtype}, isCafe: ${isCafe}`);
+      const cafePins = user.visitedPins.filter((pin: unknown) => {
+        const pinObj = pin as { isPreSeeded?: boolean; category?: string; metadata?: { subtype?: string }; name?: string };
+        const isCafe = pinObj && pinObj.isPreSeeded === true && pinObj.category === PinCategory.SHOPS_SERVICES && pinObj.metadata?.subtype === 'cafe';
+        if (pinObj && pinObj.category === PinCategory.SHOPS_SERVICES) {
+          logger.info(`☕ Checking pin: ${pinObj.name ?? 'unknown'}, isPreSeeded: ${pinObj.isPreSeeded}, category: ${pinObj.category}, subtype: ${pinObj.metadata?.subtype}, isCafe: ${isCafe}`);
         }
         return isCafe;
       });
@@ -499,7 +501,10 @@ export class BadgeService {
       logger.info(`☕ User ${userId.toString()} has visited ${cafeCount} pre-seeded cafes (target: ${target})`);
       
       if (cafeCount > 0) {
-        logger.info(`☕ Cafe visits: ${cafePins.map((p: any) => p.name).join(', ')}`);
+        logger.info(`☕ Cafe visits: ${cafePins.map((p: unknown) => {
+          const pObj = p as { name?: string };
+          return pObj.name ?? 'unknown';
+        }).join(', ')}`);
       }
 
       return cafeCount >= target;
@@ -548,16 +553,18 @@ export class BadgeService {
         
         case BadgeRequirementType.LIBRARIES_VISITED:
           // Count pre-seeded library pins directly from visitedPins
-          current = user?.visitedPins?.filter((pin: any) => 
-            pin && pin.isPreSeeded === true && pin.category === PinCategory.STUDY
-          ).length ?? 0;
+          current = (user?.visitedPins?.filter((pin: unknown) => {
+            const pinObj = pin as { isPreSeeded?: boolean; category?: string };
+            return pinObj && pinObj.isPreSeeded === true && pinObj.category === PinCategory.STUDY;
+          }) ?? []).length ?? 0;
           break;
         
         case BadgeRequirementType.CAFES_VISITED:
           // Count pre-seeded cafe pins directly from visitedPins
-          current = user?.visitedPins?.filter((pin: any) => 
-            pin && pin.isPreSeeded === true && pin.category === PinCategory.SHOPS_SERVICES && pin.metadata?.subtype === 'cafe'
-          ).length ?? 0;
+          current = (user?.visitedPins?.filter((pin: unknown) => {
+            const pinObj = pin as { isPreSeeded?: boolean; category?: string; metadata?: { subtype?: string } };
+            return pinObj && pinObj.isPreSeeded === true && pinObj.category === PinCategory.SHOPS_SERVICES && pinObj.metadata?.subtype === 'cafe';
+          }) ?? []).length ?? 0;
           break;
         
         case BadgeRequirementType.RESTAURANTS_VISITED:

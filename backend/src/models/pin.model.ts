@@ -176,15 +176,21 @@ export class PinModel {
 
       // Simple case-insensitive search using regex (frontend does the heavy lifting)
       if (filters.search && filters.search.trim() !== '') {
-        // Escape special regex characters to prevent injection
-        const escapedSearch = filters.search.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        // eslint-disable-next-line security/detect-non-literal-regexp
-        const searchRegex = new RegExp(escapedSearch, 'i');
-        query.$or = [
-          { name: { $regex: searchRegex } },
-          { description: { $regex: searchRegex } },
-          { 'location.address': { $regex: searchRegex } }
-        ];
+        // Limit search length to prevent ReDoS attacks
+        const searchTerm = filters.search.trim().slice(0, 100);
+        if (searchTerm.length === 0) {
+          // Skip if search term is empty after trimming and limiting
+        } else {
+          // Escape special regex characters to prevent injection
+          const escapedSearch = searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+          // Use MongoDB $regex with escaped pattern - length limit prevents ReDoS
+          const searchPattern = escapedSearch;
+          query.$or = [
+            { name: { $regex: searchPattern, $options: 'i' } },
+            { description: { $regex: searchPattern, $options: 'i' } },
+            { 'location.address': { $regex: searchPattern, $options: 'i' } }
+          ];
+        }
       }
 
       let pins = await this.pin

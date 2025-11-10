@@ -100,7 +100,7 @@ class LocationTrackingViewModel @Inject constructor(
                     isLoading = false,
                     error = "IO error: Failed to initialize location tracking"
                 )
-            } catch (e: Exception) {
+            } catch (e: RuntimeException) {
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
                     error = "Failed to initialize location tracking: ${e.message}"
