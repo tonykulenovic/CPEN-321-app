@@ -3,7 +3,7 @@ import * as path from 'path';
 import logger from '../utils/logger.util';
 
 class FirebaseService {
-    private static instance: FirebaseService;
+    private static instance: FirebaseService | undefined;
     private app: admin.app.App | null = null;
 
     private constructor() {}
@@ -147,7 +147,7 @@ class FirebaseService {
                 });
             }
 
-            return response.successCount;
+            return Number(response.successCount);
         } catch (error) {
             logger.error('Error sending multicast notification:', error);
             return 0;

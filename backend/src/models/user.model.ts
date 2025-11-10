@@ -235,7 +235,7 @@ export class UserModel {
 
       const updatedUser = await this.user.findByIdAndUpdate(
         userId,
-        validatedData,
+        validatedData as mongoose.UpdateQuery<IUser>,
         {
           new: true,
         }
@@ -455,15 +455,15 @@ export class UserModel {
 
         if (daysDiff === 0) {
           // Same day, don't update streak
-          return user.loginTracking.currentStreak ?? 0;
+          return user.loginTracking.currentStreak || 0;
         } else if (daysDiff === 1) {
           // Consecutive day, increment streak
-          newStreak = (user.loginTracking.currentStreak ?? 0) + 1;
+          newStreak = (user.loginTracking.currentStreak || 0) + 1;
         }
         // daysDiff > 1: streak broken, newStreak = 1 (already set)
       }
 
-      const longestStreak = Math.max(newStreak, user.loginTracking.longestStreak ?? 0);
+      const longestStreak = Math.max(newStreak, user.loginTracking.longestStreak || 0);
 
       await this.user.findByIdAndUpdate(userId, {
         $set: {

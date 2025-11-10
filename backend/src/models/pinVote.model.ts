@@ -124,8 +124,8 @@ export class PinVoteModel {
       return {
         success: true,
         action,
-        upvotes: pin.rating.upvotes ?? 0,
-        downvotes: pin.rating.downvotes ?? 0
+        upvotes: pin.rating.upvotes || 0,
+        downvotes: pin.rating.downvotes || 0
       };
     } catch (error) {
       if (session) {

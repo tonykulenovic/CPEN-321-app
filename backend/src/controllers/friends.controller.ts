@@ -73,6 +73,7 @@ export async function sendFriendRequest(req: Request, res: Response): Promise<vo
         res.status(409).json({ message: 'Friend request already sent' });
         return;
       } else if (existingFriendship.status === 'declined' || existingFriendship.status === 'blocked') {
+        // Status check is necessary for business logic
         // Clean up old declined/blocked records to allow fresh start
         logger.info(`Cleaning up old ${existingFriendship.status} friendship record between ${fromUserId.toString()} and ${targetUser._id.toString()}`);
         await friendshipModel.deleteFriendship(fromUserId, targetUser._id);
@@ -290,7 +291,7 @@ export async function acceptFriendRequest(req: Request, res: Response): Promise<
     // 1. Validate friend request ID parameter format (sanitize and validate)
     let requestId = req.params.id;
     
-    logger.info(`🔍 Raw requestId: "${requestId}" (type: ${typeof requestId}, length: ${requestId?.length})`);
+    logger.info(`🔍 Raw requestId: "${requestId}" (type: ${typeof requestId}, length: ${requestId.length})`);
     
     // Sanitize the parameter - remove any potential CRLF characters
     if (typeof requestId === 'string') {
@@ -342,7 +343,7 @@ export async function acceptFriendRequest(req: Request, res: Response): Promise<
     const friendId = getObjectId(friendshipRequest.friendId);
     
     if (friendId.toString() !== currentUserId.toString()) {
-      logger.error(`❌ Authorization failed: friendId=${friendId} !== currentUserId=${currentUserId}`);
+      logger.error(`❌ Authorization failed: friendId=${friendId.toString()} !== currentUserId=${currentUserId.toString()}`);
       res.status(403).json({
         message: 'You are not authorized to accept this friend request',
       });
@@ -611,7 +612,7 @@ export async function listFriends(req: Request, res: Response): Promise<void> {
       
       return {
         userId: friend._id.toString(),
-        displayName: friend.name ?? friend.username,
+        displayName: friend.name || friend.username,
         photoUrl: friend.profilePicture,
         bio: friend.bio,
         shareLocation: friendship.shareLocation,
@@ -790,7 +791,7 @@ export async function removeFriend(req: Request, res: Response): Promise<void> {
 
     // Verify that the reciprocal friendship exists
     if (!friendToUsershipship || friendToUsershipship.status !== 'accepted') {
-      logger.warn(`Reciprocal friendship missing for users ${currentUserId} and ${friendId}`);
+      logger.warn(`Reciprocal friendship missing for users ${currentUserId.toString()} and ${friendId.toString()}`);
     }
 
     // 4. Delete both friendship records

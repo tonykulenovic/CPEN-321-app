@@ -48,7 +48,7 @@ export class AuthService {
     if (!secret) {
       throw new Error('JWT_SECRET environment variable is not set');
     }
-    return jwt.sign({ id: user._id }, secret, {
+    return jwt.sign({ id: user._id.toString() }, secret, {
       expiresIn: '365d',
     });
   }

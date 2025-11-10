@@ -38,7 +38,7 @@ locationGateway.initialize(httpServer);
 firebaseService.initialize();
 
 // Connect to database and initialize system data
-connectDB().then(async () => {
+void connectDB().then(async () => {
   console.log('\n🔄 Initializing system data...\n');
   
   try {

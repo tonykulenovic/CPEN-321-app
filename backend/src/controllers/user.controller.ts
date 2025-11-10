@@ -46,25 +46,26 @@ export class UserController {
     targetUserId: mongoose.Types.ObjectId,
     profileVisibleTo: 'friends' | 'everyone' | 'private'
   ): Promise<boolean> {
-    logger.info(`🔐 Privacy check: viewer=${viewerId} target=${targetUserId} setting=${profileVisibleTo}`);
+    logger.info(`🔐 Privacy check: viewer=${viewerId.toString()} target=${targetUserId.toString()} setting=${profileVisibleTo}`);
     
     switch (profileVisibleTo) {
       case 'everyone':
         // Anyone can find this user in search results
         logger.info(`✅ Everyone can see this profile`);
         return true;
-      case 'friends':
+      case 'friends': {
         // Only friends can find this user in search results
         const areFriends = await friendshipModel.areFriends(viewerId, targetUserId);
         logger.info(`👥 Friends only - are they friends? ${areFriends}`);
         return areFriends;
+      }
       case 'private':
         // User doesn't appear in search results at all
         // (but friends can still access profile through other means like friend lists)
         logger.info(`🔒 Private profile - blocked from search`);
         return false;
       default:
-        logger.info(`❓ Unknown privacy setting: ${profileVisibleTo} - defaulting to private`);
+        logger.info(`❓ Unknown privacy setting: ${String(profileVisibleTo)} - defaulting to private`);
         return false; // Default to private for unknown values
     }
   }
@@ -128,7 +129,7 @@ export class UserController {
       // Get user badges
       const userBadges = await badgeModel.getUserBadges(targetUserId);
       
-      logger.info(`Fetched ${userBadges.length} badges for user ${targetUserId}`);
+      logger.info(`Fetched ${userBadges.length} badges for user ${targetUserId.toString()}`);
 
       // Format response
       const profileData = {
@@ -161,7 +162,7 @@ export class UserController {
       logger.error('Error in getUserProfile:', error);
       if (error instanceof Error) {
         return res.status(500).json({
-          message: error.message ?? 'Failed to fetch friend profile',
+          message: error.message || 'Failed to fetch friend profile',
         });
       }
       next(error);
@@ -196,7 +197,7 @@ export class UserController {
 
       if (error instanceof Error) {
         return res.status(500).json({
-          message: error.message ?? 'Failed to update user info',
+          message: error.message || 'Failed to update user info',
         });
       }
 
@@ -223,7 +224,7 @@ export class UserController {
 
       if (error instanceof Error) {
         return res.status(500).json({
-          message: error.message ?? 'Failed to delete user',
+          message: error.message || 'Failed to delete user',
         });
       }
 
@@ -299,7 +300,7 @@ export class UserController {
       const mappedUsers = filteredUsers.map(user => ({
         _id: user._id.toString(),
         username: user.username,
-        displayName: user.name ?? user.username,
+        displayName: user.name || user.username,
         photoUrl: user.profilePicture,
       }));
 
@@ -549,11 +550,11 @@ export class UserController {
       }
       
       const userId = req.user._id;
-      const userName = req.user.name ?? 'unknown';
+      const userName = req.user.name || 'unknown';
       logger.info(`👤 [USER-CONTROLLER] FCM token update for user: ${userName} (${userId.toString()})`);
       
       const { fcmToken } = req.body;
-      logger.debug(`📦 [USER-CONTROLLER] Request body keys: ${Object.keys(req.body as Record<string, unknown>)}`);
+      logger.debug(`📦 [USER-CONTROLLER] Request body keys: ${Object.keys(req.body as Record<string, unknown>).join(', ')}`);
 
       // Validation
       if (!fcmToken || typeof fcmToken !== 'string') {

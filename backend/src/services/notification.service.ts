@@ -4,7 +4,7 @@ import logger from '../utils/logger.util';
 import mongoose from 'mongoose';
 
 export class NotificationService {
-    private static instance: NotificationService;
+    private static instance: NotificationService | undefined;
 
     private constructor() {}
 
