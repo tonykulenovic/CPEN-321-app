@@ -34,6 +34,7 @@ export async function sendFriendRequest(req: Request, res: Response): Promise<vo
     }
 
     const { toUserId } = validation.data;
+    const toUserIdStr = String(toUserId);
     const fromUser = req.user; // Authenticated user from middleware
     if (!fromUser) {
       res.status(401).json({ message: 'Unauthorized' });
@@ -42,7 +43,7 @@ export async function sendFriendRequest(req: Request, res: Response): Promise<vo
     const fromUserId = fromUser._id;
 
     // Check if user is trying to send request to themselves
-    if (fromUserId.toString() === toUserId) {
+    if (fromUserId.toString() === toUserIdStr) {
       res.status(400).json({
         message: 'Cannot send friend request to yourself',
       });
@@ -50,7 +51,7 @@ export async function sendFriendRequest(req: Request, res: Response): Promise<vo
     }
 
     // 2. Check if target user exists
-    const targetUser = await userModel.findById(new mongoose.Types.ObjectId(toUserId));
+    const targetUser = await userModel.findById(new mongoose.Types.ObjectId(toUserIdStr));
     if (!targetUser) {
       res.status(404).json({
         message: 'User not found',
@@ -149,7 +150,7 @@ export async function sendFriendRequest(req: Request, res: Response): Promise<vo
 
     // 6. Send notification to target user
     await notificationService.sendFriendRequestNotification(
-      toUserId,
+      toUserIdStr,
       fromUserId.toString(),
       fromUser.name
     );
@@ -193,7 +194,7 @@ export async function listFriendRequests(req: Request, res: Response): Promise<v
 
     const { inbox, limit } = validation.data;
     const isInbox = inbox === 'true';
-    const requestLimit = limit ? parseInt(limit, 10) : 20; // Default limit of 20
+    const requestLimit = limit ? parseInt(String(limit), 10) : 20; // Default limit of 20
 
     // 2. Get user ID from auth middleware
     const currentUser = req.user;
@@ -486,9 +487,17 @@ export async function declineFriendRequest(req: Request, res: Response): Promise
       return;
     }
 
+    // Helper to extract ObjectId from populated or unpopulated field
+    const getObjectId = (field: mongoose.Types.ObjectId | IUser): mongoose.Types.ObjectId => {
+      if (field instanceof mongoose.Types.ObjectId) {
+        return field;
+      }
+      return (field as IUser)._id;
+    };
+
     // 4. Verify user is the recipient (friendId) and request is still pending
-    // Extract the actual ObjectId from the populated friendId field
-    const friendId = friendshipRequest.friendId._id || friendshipRequest.friendId;
+    // Extract the actual ObjectId from the populated or unpopulated friendId field
+    const friendId = getObjectId(friendshipRequest.friendId);
     
     if (friendId.toString() !== currentUserId.toString()) {
       res.status(403).json({
@@ -541,7 +550,7 @@ export async function listFriends(req: Request, res: Response): Promise<void> {
     }
 
     const { limit } = validation.data;
-    const friendLimit = limit ? parseInt(limit, 10) : 50; // Default limit of 50 for friends list
+    const friendLimit = limit ? parseInt(String(limit), 10) : 50; // Default limit of 50 for friends list
 
     // 2. Get user ID from auth middleware
     const currentUser = req.user;
@@ -656,7 +665,7 @@ export async function updateFriend(req: Request, res: Response): Promise<void> {
     const settings = validation.data;
 
     // Check if at least one setting is provided
-    if (Object.keys(settings).length === 0) {
+    if (Object.keys(settings as Record<string, unknown>).length === 0) {
       res.status(400).json({
         message: 'At least one setting must be provided',
       });
@@ -703,7 +712,7 @@ export async function updateFriend(req: Request, res: Response): Promise<void> {
     const updatedFriendship = await friendshipModel.updateSettings(
       currentUserId,
       new mongoose.Types.ObjectId(friendId),
-      settings
+      settings as Partial<Pick<import('../types/friends.types').IFriendship, 'shareLocation' | 'closeFriend'>>
     );
 
     if (!updatedFriendship) {

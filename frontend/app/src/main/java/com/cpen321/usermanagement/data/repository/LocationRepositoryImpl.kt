@@ -53,7 +53,7 @@ class LocationRepositoryImpl @Inject constructor(
         } catch (e: retrofit2.HttpException) {
             Log.e(TAG, "HTTP error updating location: ${e.code()}", e)
             Result.failure(e)
-        } catch (e: Exception) {
+        } catch (e: RuntimeException) {
             Log.e(TAG, "Error updating location", e)
             Result.failure(e)
         }

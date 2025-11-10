@@ -36,8 +36,9 @@ export class DebugController {
       }
 
       // Find the user
-      logger.info(`🔍 [DEBUG] Looking up user by ID: ${userId}`);
-      const user = await userModel.findById(new mongoose.Types.ObjectId(userId));
+      const userIdStr = String(userId);
+      logger.info(`🔍 [DEBUG] Looking up user by ID: ${userIdStr}`);
+      const user = await userModel.findById(new mongoose.Types.ObjectId(userIdStr));
       
       if (!user) {
         logger.warn(`❌ [DEBUG] User not found for ID: ${userId}`);
@@ -71,8 +72,8 @@ export class DebugController {
       
       const sent = await firebaseService.sendNotification(
         user.fcmToken,
-        title,
-        message,
+        String(title),
+        String(message),
         {
           type: 'debug_test',
           timestamp: new Date().toISOString(),
@@ -135,8 +136,8 @@ export class DebugController {
       }
 
       const [toUser, fromUser] = await Promise.all([
-        userModel.findById(new mongoose.Types.ObjectId(toUserId)),
-        userModel.findById(new mongoose.Types.ObjectId(fromUserId))
+        userModel.findById(new mongoose.Types.ObjectId(String(toUserId))),
+        userModel.findById(new mongoose.Types.ObjectId(String(fromUserId)))
       ]);
 
       if (!toUser || !fromUser) {
@@ -149,8 +150,8 @@ export class DebugController {
 
       // Send test friend request notification
       await notificationService.sendFriendRequestNotification(
-        toUserId,
-        fromUserId,
+        String(toUserId),
+        String(fromUserId),
         fromUser.name
       );
 

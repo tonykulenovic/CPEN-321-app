@@ -23,7 +23,7 @@ export class MediaController {
       if (!user) {
         return res.status(401).json({ message: 'Unauthorized' });
       }
-      const sanitizedFilePath = sanitizeInput(req.file.path);
+      const sanitizedFilePath = sanitizeInput(String(req.file?.path ?? ''));
       const image = await MediaService.saveImage(
         sanitizedFilePath,
         user._id.toString()

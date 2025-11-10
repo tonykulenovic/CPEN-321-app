@@ -84,7 +84,7 @@ class ProfileRepositoryImpl @Inject constructor(
         } catch (e: retrofit2.HttpException) {
             Log.e(TAG, "HTTP error getting friend profile: ${e.code()}", e)
             Result.failure(e)
-        } catch (e: Exception) {
+        } catch (e: RuntimeException) {
             Log.e(TAG, "Error getting friend profile", e)
             Result.failure(e)
         }
@@ -117,7 +117,7 @@ class ProfileRepositoryImpl @Inject constructor(
         } catch (e: retrofit2.HttpException) {
             Log.e(TAG, "HTTP error updating profile: ${e.code()}", e)
             Result.failure(e)
-        } catch (e: Exception) {
+        } catch (e: RuntimeException) {
             Log.e(TAG, "Error updating profile", e)
             Result.failure(e)
         }
@@ -152,7 +152,7 @@ class ProfileRepositoryImpl @Inject constructor(
         } catch (e: retrofit2.HttpException) {
             Log.e(TAG, "HTTP error uploading profile picture: ${e.code()}", e)
             Result.failure(e)
-        } catch (e: Exception) {
+        } catch (e: RuntimeException) {
             Log.e(TAG, "Exception while uploading profile picture", e)
             Result.failure(e)
         }
@@ -233,7 +233,7 @@ class ProfileRepositoryImpl @Inject constructor(
         } catch (e: retrofit2.HttpException) {
             Log.e(TAG, "🌐 [PROFILE-REPO] HTTP error updating FCM token: ${e.code()}", e)
             Result.failure(e)
-        } catch (e: Exception) {
+        } catch (e: RuntimeException) {
             Log.e(TAG, "💥 [PROFILE-REPO] Unexpected error updating FCM token", e)
             e.printStackTrace()
             Result.failure(e)
@@ -265,7 +265,7 @@ class ProfileRepositoryImpl @Inject constructor(
         } catch (e: retrofit2.HttpException) {
             Log.e(TAG, "HTTP error removing FCM token: ${e.code()}", e)
             Result.failure(e)
-        } catch (e: Exception) {
+        } catch (e: RuntimeException) {
             Log.e(TAG, "Error removing FCM token", e)
             Result.failure(e)
         }
@@ -296,7 +296,7 @@ class ProfileRepositoryImpl @Inject constructor(
         } catch (e: retrofit2.HttpException) {
             Log.e(TAG, "HTTP error updating privacy settings: ${e.code()}", e)
             Result.failure(e)
-        } catch (e: Exception) {
+        } catch (e: RuntimeException) {
             Log.e(TAG, "Error updating privacy settings", e)
             Result.failure(e)
         }

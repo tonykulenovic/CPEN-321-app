@@ -57,7 +57,7 @@ class FCMTokenManager @Inject constructor(
             Log.e(TAG, "💥 [FCM] IO error during FCM token registration:", e)
         } catch (e: retrofit2.HttpException) {
             Log.e(TAG, "💥 [FCM] HTTP error during FCM token registration: ${e.code()}", e)
-        } catch (e: Exception) {
+        } catch (e: RuntimeException) {
             Log.e(TAG, "💥 [FCM] Exception during FCM token registration:", e)
             Log.e(TAG, "   📊 Exception type: ${e.javaClass.simpleName}")
             Log.e(TAG, "   💬 Exception message: ${e.message}")

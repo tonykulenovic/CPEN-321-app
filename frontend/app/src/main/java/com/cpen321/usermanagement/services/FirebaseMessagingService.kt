@@ -67,7 +67,7 @@ class PushNotificationService : FirebaseMessagingService() {
                     Log.e(TAG, "   💬 Error: ${result.exceptionOrNull()?.message}")
                     result.exceptionOrNull()?.printStackTrace()
                 }
-            } catch (e: Exception) {
+            } catch (e: RuntimeException) {
                 Log.e(TAG, "� [FCM-SERVICE] Exception in onNewToken:", e)
                 e.printStackTrace()
             }
@@ -116,7 +116,7 @@ class PushNotificationService : FirebaseMessagingService() {
             }
             
             Log.i(TAG, "🏁 [FCM-SERVICE] Message processing complete")
-        } catch (e: Exception) {
+        } catch (e: RuntimeException) {
             Log.e(TAG, "💥 [FCM-SERVICE] Error processing message:", e)
             e.printStackTrace()
         }
@@ -178,7 +178,7 @@ class PushNotificationService : FirebaseMessagingService() {
                 }
             }
             Log.d(TAG, "🏁 [FCM-DATA] Data message handling complete")
-        } catch (e: Exception) {
+        } catch (e: RuntimeException) {
             Log.e(TAG, "💥 [FCM-DATA] Error handling data message:", e)
             e.printStackTrace()
         }
@@ -263,12 +263,12 @@ class PushNotificationService : FirebaseMessagingService() {
                 if (!wasPosted) {
                     Log.w(TAG, "⚠️ [FCM-NOTIFY] WARNING: Notification not found in active notifications!")
                 }
-            } catch (e: Exception) {
+            } catch (e: RuntimeException) {
                 Log.e(TAG, "💥 [FCM-NOTIFY] Exception when posting notification:", e)
                 e.printStackTrace()
             }
             
-        } catch (e: Exception) {
+        } catch (e: RuntimeException) {
             Log.e(TAG, "💥 [FCM-NOTIFY] Error showing notification:", e)
             e.printStackTrace()
         }

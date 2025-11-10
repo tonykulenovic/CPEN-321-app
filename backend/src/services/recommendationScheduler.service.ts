@@ -1,4 +1,5 @@
 import * as cron from 'node-cron';
+import * as mongoose from 'mongoose';
 import { userModel } from '../models/user.model';
 import { recommendationService } from './recommendation.service';
 import logger from '../utils/logger.util';
@@ -13,7 +14,7 @@ interface MealTimeConfig {
 
 export class RecommendationSchedulerService {
   private static instance: RecommendationSchedulerService;
-  private scheduledJobs = new Map<string, any>();
+  private scheduledJobs = new Map<string, unknown>();
   private isRunning = false;
 
   // Meal time configurations
@@ -90,8 +91,9 @@ export class RecommendationSchedulerService {
     logger.info('🛑 [SCHEDULER] Stopping recommendation scheduler...');
 
     this.scheduledJobs.forEach((job, mealType) => {
-      job.stop();
-      job.destroy();
+      const cronJob = job as cron.ScheduledTask;
+      cronJob.stop();
+      cronJob.destroy();
       logger.info(`❌ [SCHEDULER] Stopped ${mealType} recommendations`);
     });
 
@@ -160,33 +162,35 @@ export class RecommendationSchedulerService {
         const batch = batches[i];
         logger.info(`📦 [SCHEDULER] Processing batch ${i + 1}/${batches.length} (${batch.length} users)`);
 
-        const batchPromises = batch.map(async (user: any) => {
+        const batchPromises = batch.map(async (user: unknown) => {
           try {
+            const userObj = user as { _id: mongoose.Types.ObjectId };
             // Check if user can receive recommendation for this meal type today
-            const canReceive = await userModel.canReceiveRecommendation(user._id, mealTime.name);
+            const canReceive = await userModel.canReceiveRecommendation(userObj._id, mealTime.name);
             
             if (!canReceive) {
-              logger.info(`⏭️ [SCHEDULER] User ${user._id.toString()} already received ${mealTime.name} recommendation today - skipping`);
+              logger.info(`⏭️ [SCHEDULER] User ${userObj._id.toString()} already received ${mealTime.name} recommendation today - skipping`);
               return; // Skip this user
             }
 
             const sent = await recommendationService.sendRecommendationNotification(
-              user._id,
+              userObj._id,
               mealTime.name
             );
             
             if (sent) {
               // Mark that the recommendation was sent
-              await userModel.markRecommendationSent(user._id, mealTime.name);
+              await userModel.markRecommendationSent(userObj._id, mealTime.name);
               successCount++;
-              logger.info(`✅ [SCHEDULER] Sent ${mealTime.name} recommendation to user ${user._id.toString()}`);
+              logger.info(`✅ [SCHEDULER] Sent ${mealTime.name} recommendation to user ${userObj._id.toString()}`);
             } else {
               failureCount++;
-              logger.info(`❌ [SCHEDULER] Failed to send ${mealTime.name} recommendation to user ${user._id.toString()}`);
+              logger.info(`❌ [SCHEDULER] Failed to send ${mealTime.name} recommendation to user ${userObj._id.toString()}`);
             }
           } catch (error) {
             failureCount++;
-            logger.error(`💥 [SCHEDULER] Error sending ${mealTime.name} recommendation to user ${user._id.toString()}:`, error);
+            const userObj = user as { _id: mongoose.Types.ObjectId };
+            logger.error(`💥 [SCHEDULER] Error sending ${mealTime.name} recommendation to user ${userObj._id.toString()}:`, error);
           }
         });
 
@@ -216,10 +220,11 @@ export class RecommendationSchedulerService {
       logger.info(`👤 [SCHEDULER] Found ${allUsers.length} total users in database`);
 
       // Filter users with FCM tokens (can receive notifications)
-      const eligibleUsers = allUsers.filter((user: any) => {
-        const hasFcmToken = user.fcmToken && user.fcmToken.length > 0;
+      const eligibleUsers = allUsers.filter((user: unknown) => {
+        const userObj = user as { fcmToken?: string; _id: mongoose.Types.ObjectId };
+        const hasFcmToken = userObj.fcmToken && userObj.fcmToken.length > 0;
         if (!hasFcmToken) {
-          logger.debug(`🚫 [SCHEDULER] User ${user._id.toString()} has no FCM token - skipping`);
+          logger.debug(`🚫 [SCHEDULER] User ${userObj._id.toString()} has no FCM token - skipping`);
         }
         return hasFcmToken;
       });

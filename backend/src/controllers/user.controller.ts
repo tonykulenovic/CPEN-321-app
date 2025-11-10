@@ -179,7 +179,7 @@ export class UserController {
         return res.status(401).json({ message: 'Unauthorized' });
       }
 
-      const updatedUser = await userModel.update(user._id, req.body);
+      const updatedUser = await userModel.update(user._id, req.body as Partial<import('../types/user.types').IUser>);
 
       if (!updatedUser) {
         return res.status(404).json({
@@ -253,7 +253,7 @@ export class UserController {
       }
 
       const { q, limit } = validation.data;
-      const searchLimit = limit ? parseInt(limit, 10) : 20;
+      const searchLimit = limit ? parseInt(String(limit), 10) : 20;
 
       // Get current user to exclude from results
       const currentUser = req.user;
@@ -264,7 +264,7 @@ export class UserController {
       const currentUserId = currentUser._id;
 
       // 2. Search users by username, name, or email
-      const users = await userModel.searchUsers(q, searchLimit + 50); // Get extra to account for filtering
+      const users = await userModel.searchUsers(String(q), searchLimit + 50); // Get extra to account for filtering
       
       // DEBUG: Log search results
       logger.info(`🔍 Search query: "${q}" returned ${users.length} users`);
@@ -285,13 +285,9 @@ export class UserController {
         // Apply privacy filtering based on user's profileVisibleTo setting
         // Note: For friend discovery, we allow searching regardless of privacy settings
         // Privacy controls profile visibility, not friend request ability
-        const canViewProfile = true; // Always allow for friend discovery
-        
+        // Always allow for friend discovery (privacy controls profile visibility, not friend request ability)
         logger.info(`🔒 Privacy check for ${user.username}: ${user.privacy.profileVisibleTo} -> ALLOWED (friend discovery)`);
-        
-        if (canViewProfile) {
-          filteredUsers.push(user);
-        }
+        filteredUsers.push(user);
 
         // Stop once we have enough results
         if (filteredUsers.length >= searchLimit) {
@@ -366,7 +362,7 @@ export class UserController {
       const privacyUpdates = validation.data;
 
       // Check if at least one privacy setting is provided
-      if (Object.keys(privacyUpdates).length === 0) {
+      if (Object.keys(privacyUpdates as Record<string, unknown>).length === 0) {
         res.status(400).json({
           message: 'At least one privacy setting must be provided',
         });
@@ -557,7 +553,7 @@ export class UserController {
       logger.info(`👤 [USER-CONTROLLER] FCM token update for user: ${userName} (${userId.toString()})`);
       
       const { fcmToken } = req.body;
-      logger.debug(`📦 [USER-CONTROLLER] Request body keys: ${Object.keys(req.body)}`);
+      logger.debug(`📦 [USER-CONTROLLER] Request body keys: ${Object.keys(req.body as Record<string, unknown>)}`);
 
       // Validation
       if (!fcmToken || typeof fcmToken !== 'string') {

@@ -167,7 +167,7 @@ export class BadgeModel {
     }
   }
 
-  async findAll(filters: Record<string, any> = {}): Promise<IBadge[]> {
+  async findAll(filters: Record<string, unknown> = {}): Promise<IBadge[]> {
     try {
       return await this.badge.find(filters).sort({ createdAt: -1 });
     } catch (error) {
@@ -217,7 +217,7 @@ export class BadgeModel {
       const badge = await this.badge.findById(badgeId);
       const defaultTarget = badge?.requirements.target ?? 0;
 
-      const userBadgeData: Record<string, any> = {
+      const userBadgeData: Record<string, unknown> = {
         userId,
         badgeId,
         earnedAt: new Date(),
@@ -260,7 +260,11 @@ export class BadgeModel {
         .sort({ earnedAt: -1 });
       
       // Filter out badges where badgeId is null (badge template was deleted)
-      return userBadges.filter(ub => ub.badgeId != null);
+      // After populate, badgeId can be null if the badge was deleted
+      return userBadges.filter(ub => {
+        const badge = ub.badgeId;
+        return badge !== null && badge !== undefined;
+      });
     } catch (error) {
       logger.error('Error getting user badges:', error);
       throw new Error('Failed to get user badges');
@@ -291,7 +295,10 @@ export class BadgeModel {
       ]);
 
       // Filter out user badges where badgeId is null (badge was deleted)
-      const validUserBadges = userBadges.filter(ub => ub.badgeId != null);
+      const validUserBadges = userBadges.filter(ub => {
+        const badge = ub.badgeId;
+        return badge !== null && badge !== undefined;
+      });
 
       // Initialize all categories to 0
       const categoryBreakdown = Object.values(BadgeCategory).reduce((acc, category) => {

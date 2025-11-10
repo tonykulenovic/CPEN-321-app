@@ -230,8 +230,8 @@ class AuthRepositoryImpl @Inject constructor(
         } catch (e: retrofit2.HttpException) {
             Log.e(TAG, "HTTP error checking account: ${e.code()}", e)
             Result.failure(e)
-        } catch (e: Exception) {
-            Log.e(TAG, "Error checking account", e)
+        } catch (e: RuntimeException) {
+            Log.e(TAG, "Runtime error checking account", e)
             Result.failure(e)
         }
     }

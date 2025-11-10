@@ -43,7 +43,7 @@ class ReportedByUserDeserializer : JsonDeserializer<ReportedByUser?> {
         } catch (e: IllegalStateException) {
             // If JSON structure is invalid, return null
             null
-        } catch (e: Exception) {
+        } catch (e: RuntimeException) {
             // If anything else goes wrong, return null
             null
         }
