@@ -215,7 +215,7 @@ export class BadgeModel {
     try {
       // Get badge to get target for default progress
       const badge = await this.badge.findById(badgeId);
-      const defaultTarget = badge?.requirements.target ?? 0;
+      const defaultTarget = badge?.requirements?.target ?? 0;
 
       const userBadgeData: Record<string, unknown> = {
         userId,
