@@ -106,9 +106,33 @@ export async function sendFriendRequest(req: Request, res: Response): Promise<vo
     }
 
     if (allowFriendRequestsFrom === 'friendsOfFriends') {
-      // TODO: Implement mutual friends check when we have that logic
-      // For now, we'll allow all requests
-      logger.info('Friends of friends check not implemented yet, allowing request');
+      // Check if users have mutual friends
+      const fromUserFriends = await friendshipModel.findUserFriendships(fromUserId, 'accepted');
+      const targetUserFriends = await friendshipModel.findUserFriendships(targetUser._id, 'accepted');
+      
+      // Helper to extract user ID from populated or unpopulated field
+      const getUserId = (field: mongoose.Types.ObjectId | IUser): string => {
+        if (field instanceof mongoose.Types.ObjectId) {
+          return field.toString();
+        }
+        return (field as IUser)._id.toString();
+      };
+      
+      const fromUserFriendIds = new Set(
+        fromUserFriends.map(f => getUserId(f.friendId))
+      );
+      
+      const hasMutualFriend = targetUserFriends.some(f => {
+        const friendId = getUserId(f.friendId);
+        return fromUserFriendIds.has(friendId);
+      });
+      
+      if (!hasMutualFriend) {
+        res.status(403).json({
+          message: 'This user only accepts friend requests from friends of friends',
+        });
+        return;
+      }
     }
 
     // 5. Create friendship record
@@ -189,16 +213,33 @@ export async function listFriendRequests(req: Request, res: Response): Promise<v
       friendRequests = await friendshipModel.findOutgoingRequests(currentUserId, requestLimit);
     }
 
+    // Helper to extract user data from populated or unpopulated field
+    const getUserData = (field: mongoose.Types.ObjectId | IUser): { _id: string; name?: string; username: string; profilePicture?: string } => {
+      if (field instanceof mongoose.Types.ObjectId) {
+        // If not populated, we can't get name/profilePicture, so return minimal data
+        return {
+          _id: field.toString(),
+          username: '',
+        };
+      }
+      const user = field as IUser;
+      return {
+        _id: user._id.toString(),
+        name: user.name,
+        username: user.username,
+        profilePicture: user.profilePicture,
+      };
+    };
+
     // 4. Format response data
     const formattedRequests = friendRequests.map((request) => {
       if (isInbox) {
         // For incoming requests, show the sender (userId)
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-        const sender = request.userId as unknown as IUser; // populated by the model
+        const sender = getUserData(request.userId);
         return {
           _id: request._id.toString(),
           from: {
-            userId: sender._id.toString(),
+            userId: sender._id,
             displayName: sender.name ?? sender.username,
             photoUrl: sender.profilePicture,
           },
@@ -206,12 +247,11 @@ export async function listFriendRequests(req: Request, res: Response): Promise<v
         };
       } else {
         // For outgoing requests, show the recipient (friendId)
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-        const recipient = request.friendId as unknown as IUser; // populated by the model
+        const recipient = getUserData(request.friendId);
         return {
           _id: request._id.toString(),
           from: {
-            userId: recipient._id.toString(),
+            userId: recipient._id,
             displayName: recipient.name ?? recipient.username,
             photoUrl: recipient.profilePicture,
           },
@@ -286,11 +326,19 @@ export async function acceptFriendRequest(req: Request, res: Response): Promise<
       return;
     }
 
+    // Helper to extract ObjectId from populated or unpopulated field
+    const getObjectId = (field: mongoose.Types.ObjectId | IUser): mongoose.Types.ObjectId => {
+      if (field instanceof mongoose.Types.ObjectId) {
+        return field;
+      }
+      return (field as IUser)._id;
+    };
+
     // 4. Verify user is the recipient (friendId) and request is still pending
-    logger.info(`🔍 Accept request debug: requestId=${requestId}, currentUserId=${currentUserId.toString()}, friendRequest.friendId=${friendshipRequest.friendId.toString()}, friendRequest.userId=${friendshipRequest.userId.toString()}, status=${friendshipRequest.status}`);
+    logger.info(`🔍 Accept request debug: requestId=${requestId}, currentUserId=${currentUserId.toString()}, friendRequest.friendId=${getObjectId(friendshipRequest.friendId).toString()}, friendRequest.userId=${getObjectId(friendshipRequest.userId).toString()}, status=${friendshipRequest.status}`);
     
-    // Extract the actual ObjectId from the populated friendId field
-    const friendId = friendshipRequest.friendId._id ?? friendshipRequest.friendId;
+    // Extract the actual ObjectId from the populated or unpopulated friendId field
+    const friendId = getObjectId(friendshipRequest.friendId);
     
     if (friendId.toString() !== currentUserId.toString()) {
       logger.error(`❌ Authorization failed: friendId=${friendId} !== currentUserId=${currentUserId}`);
@@ -311,8 +359,8 @@ export async function acceptFriendRequest(req: Request, res: Response): Promise<
     await friendshipModel.updateStatus(friendshipRequest._id, 'accepted');
 
     // 6. Create reciprocal friendship record
-    // Extract the actual ObjectId from the populated userId field
-    const userId = friendshipRequest.userId._id ?? friendshipRequest.userId;
+    // Extract the actual ObjectId from the populated or unpopulated userId field
+    const userId = getObjectId(friendshipRequest.userId);
     
     const reciprocalFriendshipData = {
       userId: currentUserId,
@@ -510,19 +558,46 @@ export async function listFriends(req: Request, res: Response): Promise<void> {
       friendLimit
     );
 
+    // Helper to extract user ID from populated or unpopulated field
+    const getFriendUserId = (field: mongoose.Types.ObjectId | IUser): mongoose.Types.ObjectId => {
+      if (field instanceof mongoose.Types.ObjectId) {
+        return field;
+      }
+      return (field as IUser)._id;
+    };
+
+    // Helper to extract user data from populated or unpopulated field
+    const getFriendData = (field: mongoose.Types.ObjectId | IUser): IUser | null => {
+      if (field instanceof mongoose.Types.ObjectId) {
+        return null; // Not populated
+      }
+      return field as IUser;
+    };
+
     // 4. Get online status for all friends (based on recent location activity)
-    const friendUserIds = acceptedFriendships.map(friendship => {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      const friend = friendship.friendId as unknown as IUser;
-      return friend._id;
-    });
+    const friendUserIds = acceptedFriendships.map(friendship => 
+      getFriendUserId(friendship.friendId)
+    );
     
     const onlineStatusMap = await userModel.getOnlineStatus(friendUserIds, 10); // 10 minutes threshold
 
     // 5. Format friend summary data with online status
     const formattedFriends = acceptedFriendships.map((friendship) => {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      const friend = friendship.friendId as unknown as IUser; // populated by the model
+      const friend = getFriendData(friendship.friendId);
+      if (!friend) {
+        // If friend data is not populated, we can't return full info
+        // This shouldn't happen if populate is working correctly
+        const friendId = getFriendUserId(friendship.friendId);
+        return {
+          userId: friendId.toString(),
+          displayName: '',
+          photoUrl: undefined,
+          bio: undefined,
+          shareLocation: friendship.shareLocation,
+          isOnline: onlineStatusMap.get(friendId.toString()) ?? false
+        };
+      }
+      
       const isOnline = onlineStatusMap.get(friend._id.toString()) ?? false;
       
       return {

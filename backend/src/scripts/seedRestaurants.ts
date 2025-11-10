@@ -94,8 +94,8 @@ export async function seedRestaurants(): Promise<void> {
 
     // First, get all existing cafes to check for overlap
     logger.info('📍 Fetching existing cafes to check for overlap...');
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    const existingCafes = await (pinModel as any).pin.find({
+    const Pin = mongoose.model('Pin');
+    const existingCafes = await Pin.find({
       isPreSeeded: true,
       category: PinCategory.SHOPS_SERVICES,
       'metadata.subtype': 'cafe' // Only get cafes, not other restaurants
@@ -299,8 +299,7 @@ export async function seedRestaurants(): Promise<void> {
         };
 
         // Upsert restaurant pin using name and location as unique identifier
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        const result = await (pinModel as any).pin.updateOne(
+        const result = await Pin.updateOne(
           {
             isPreSeeded: true,
             'metadata.subtype': 'restaurant',
@@ -348,8 +347,7 @@ export async function seedRestaurants(): Promise<void> {
       .filter((name: string) => name !== 'Unnamed Restaurant');
     
     // Delete pre-seeded restaurants that are no longer in Google Places results
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    const deleteResult = await (pinModel as any).pin.deleteMany({
+    const deleteResult = await Pin.deleteMany({
       isPreSeeded: true,
       category: PinCategory.SHOPS_SERVICES,
       'metadata.subtype': 'restaurant',
