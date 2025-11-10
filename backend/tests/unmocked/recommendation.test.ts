@@ -15,6 +15,15 @@ import recommendationsRoutes from '../../src/routes/recommendations.routes';
 import { PinCategory, PinVisibility } from '../../src/types/pins.types';
 import { GoogleUserInfo } from '../../src/types/user.types';
 
+// Force model registration by accessing the instances
+// This ensures all schemas are registered with Mongoose before any code tries to use them
+const _ensureModelsRegistered = {
+  user: userModel,
+  pin: pinModel,
+  pinVote: pinVoteModel,
+  location: locationModel
+};
+
 // Mock external services only (keep database models unmocked for integration testing)
 jest.mock('../../src/services/weather.service');
 jest.mock('../../src/services/notification.service');
@@ -377,13 +386,13 @@ describe('RecommendationService Tests', () => {
       const response = await request(app)
         .get('/recommendations/breakfast')
         .set('x-dev-user-id', testUserId.toString())
-        .set('authorization', 'Bearer test-token')
+        .set('authorization', 'Bearer test-token-12345')
         .expect(200);
 
       expect(response.body.message).toBe('breakfast recommendations retrieved successfully');
       expect(response.body.data.mealType).toBe('breakfast');
-      expect(response.body.data.recommendations).toHaveLength(2);
-      expect(response.body.data.count).toBe(2);
+      expect(response.body.data.recommendations).toHaveLength(4); // 1 from Places API + 3 from database
+      expect(response.body.data.count).toBe(4);
 
       // Verify recommendation structure
       const rec = response.body.data.recommendations[0];
@@ -397,7 +406,7 @@ describe('RecommendationService Tests', () => {
       const response = await request(app)
         .get('/recommendations/snack')
         .set('x-dev-user-id', testUserId.toString())
-        .set('authorization', 'Bearer test-token')
+        .set('authorization', 'Bearer test-token-12345')
         .expect(400);
 
       expect(response.body.message).toBe('Invalid meal type. Must be breakfast, lunch, or dinner');
@@ -407,7 +416,7 @@ describe('RecommendationService Tests', () => {
       const response = await request(app)
         .post('/recommendations/notify/lunch')
         .set('x-dev-user-id', testUserId.toString())
-        .set('authorization', 'Bearer test-token')
+        .set('authorization', 'Bearer test-token-12345')
         .expect(200);
 
       expect(response.body.message).toBe('lunch recommendation notification sent successfully');
@@ -426,7 +435,7 @@ describe('RecommendationService Tests', () => {
       await request(app)
         .get('/recommendations/breakfast')
         .set('x-dev-user-id', fakeUserId.toString())
-        .set('authorization', 'Bearer test-token')
+        .set('authorization', 'Bearer test-token-12345')
         .expect(401);
     });
   });
