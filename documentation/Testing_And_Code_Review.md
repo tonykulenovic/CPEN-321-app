@@ -2,7 +2,9 @@
 
 ## 1. Change History
 
-_This section will be populated for the final milestone with change dates, modifications, and rationale._
+| **Change Date**   | **Modified Sections** | **Rationale** |
+| ----------------- | --------------------- | ------------- |
+| _Nothing to show_ |
 
 ---
 
@@ -322,116 +324,551 @@ PASS  tests/performance/pins.test.ts
 
 ## 4. Front-end Test Specification
 
-### 4.1. Test Suite Location
+### 4.1. Location in Git of Front-end Test Suite:
 
-**Front-end Test Suite Location:** `frontend/app/src/androidTest/java/com/cpen321/usermanagement/ui/`
+`frontend/app/src/androidTest/java/com/cpen321/usermanagement/ui/`
 
-**Test Files:**
+### 4.2. Tests
 
-- `ManagePinsE2ETest.kt` - End-to-end tests for pin management
-- `ManageFriendsE2ETest.kt` - End-to-end tests for friend management
-- `ManageAccountE2ETest.kt` - End-to-end tests for account management
-- `AdminManagePinsE2ETest.kt` - End-to-end tests for admin pin management
-- `SimpleAuthTest.kt` - Simple authentication diagnostic test
+- **Use Case: Add Pin (ManagePinsE2ETest)**
 
-### 4.2. Test Cases
+  - **Expected Behaviors:**
 
-#### 4.2.1. ManagePinsE2ETest.kt
+    | **Scenario Steps** | **Test Case Steps** |
+    | ------------------ | ------------------- |
+    | 1. User navigates to Home screen. | Open the app and wait for authentication.<br>Navigate to Home tab using bottom navigation. |
+    | 2. User clicks on the "Add Pin" button. | Check that the floating action button with content description "Add Pin" is present on screen.<br>Click the "Add Pin" button. |
+    | 3. The "Create Pin" screen opens with empty input fields. | Check that text fields for "Pin Name", "Description", "Category", and "Visibility" are present.<br>Check that the "Create Pin" button is present. |
+    | 4. User enters pin details (name, description, category). | Input "Test Pin 001" in the pin name field.<br>Input "This is a test pin created by E2E tests" in the description field.<br>Select "Study" from the category dropdown. |
+    | 5. User selects location on the map. | Verify that the map is displayed.<br>Click on a location on the map to set pin coordinates. |
+    | 6. User sets visibility to Public. | Select "Public" from the visibility dropdown. |
+    | 7. User clicks "Create Pin" button. | Check that the "Create Pin" button is enabled.<br>Click the "Create Pin" button. |
+    | 8. The app creates the pin and navigates back to Home screen. | Wait for navigation to complete (3s).<br>Check that the Home screen is displayed.<br>Verify that the new pin appears on the map. |
 
-**Use Cases Verified:**
+  - **Test Logs:**
+    ```
+    Test Suite: ManagePinsE2ETest
+    Total Tests: 11/11 passed
+    Total Duration: 5m 33s
+    Device: Google sdk_gphone64_x86_64
+    
+    ✓ testAddPin_successScenario - PASSED (18s)
+    ✓ testAddPin_incompleteDetails_emptyName - PASSED (13s)
+    ✓ testAddPin_incompleteDetails_shortDescription - PASSED (15s)
+    ✓ testAddPin_incompleteDetails_noLocation - PASSED (17s)
+    
+    Test Status: SUCCESS
+    ```
 
-- Use Case 4: Add Pin
-- Use Case 5: View Pin Details
-- Use Case 6: Vote on Pin
-- Use Case 7: Report Pin
-- Use Case 9: Remove Pin
+- **Use Case: Vote on Pin (ManagePinsE2ETest)**
 
-**Expected Behaviors:**
+  - **Expected Behaviors:**
 
-- User can create a new pin with valid data
-- User can view pin details including name, description, location, and category
-- User can upvote or downvote a pin
-- User can report a pin with a reason
-- User can delete their own pins
-- User cannot delete pins created by others (unless admin)
+    | **Scenario Steps** | **Test Case Steps** |
+    | ------------------ | ------------------- |
+    | 1. User views a pin on the map. | Navigate to Home tab.<br>Click on a pin marker on the map. |
+    | 2. Pin details bottom sheet appears. | Check that the pin name is displayed in the bottom sheet.<br>Check that upvote and downvote buttons are present. |
+    | 3. User clicks the upvote button. | Click the button with content description "Upvote". |
+    | 4. The pin's rating increases. | Wait for the vote to be processed (2s).<br>Check that the rating value has increased.<br>Check that the upvote button shows active state. |
+    | 5. User clicks the upvote button again to remove vote. | Click the upvote button again. |
+    | 6. The pin's rating returns to original value. | Wait for the vote to be processed (2s).<br>Check that the rating value has returned to the original value. |
 
-**Execution Logs:**
-_Execution logs from automated test runs (including passed/failed status) should be added here._
+  - **Test Logs:**
+    ```
+    Test Suite: ManagePinsE2ETest
+    Total Tests: 11/11 passed
+    Total Duration: 5m 33s
+    Device: Google sdk_gphone64_x86_64
+    
+    ✓ testVoteOnPin_success - PASSED (42s)
+    
+    Test Status: SUCCESS
+    ```
 
-#### 4.2.2. ManageFriendsE2ETest.kt
+- **Use Case: Report Pin (ManagePinsE2ETest)**
 
-**Use Cases Verified:**
+  - **Expected Behaviors:**
 
-- Use Case 10: Add Friend
-- Use Case 11: View Friend Profile
-- Use Case 12: Remove Friend
+    | **Scenario Steps** | **Test Case Steps** |
+    | ------------------ | ------------------- |
+    | 1. User finds a pin created by another user. | Navigate to Home tab.<br>Search for pin with name "E2E Test Pin - Other User". |
+    | 2. User clicks on the pin to view details. | Click on the pin marker.<br>Verify that the pin details bottom sheet appears. |
+    | 3. User clicks the "Report" button. | Click the button with text "Report Pin". |
+    | 4. A report dialog appears with reason input. | Check that a dialog is displayed with title "Report Pin".<br>Check that a text field for report reason is present. |
+    | 5. User enters a report reason. | Input "E2E Test - Inappropriate content" in the reason field. |
+    | 6. User confirms the report. | Click the "Submit" button in the dialog. |
+    | 7. The app submits the report and closes the dialog. | Wait for report submission (2s).<br>Check that the dialog is closed.<br>Check that a success message is displayed. |
 
-**Expected Behaviors:**
+  - **Test Logs:**
+    ```
+    Test Suite: ManagePinsE2ETest
+    Total Tests: 11/11 passed
+    Total Duration: 5m 33s
+    Device: Google sdk_gphone64_x86_64
+    
+    ✓ testReportPin_success - PASSED (27s)
+    ✓ testReportPin_cannotReportOwnPin - PASSED (28s)
+    
+    Test Status: SUCCESS
+    ```
 
-- User can search for other users
-- User can send friend requests
-- User can accept or decline incoming friend requests
-- User can view friend profiles with badges and stats
-- User can remove friends from their friend list
-- User can view their friends list
+- **Use Case: Delete Pin (ManagePinsE2ETest)**
 
-**Execution Logs:**
-_Execution logs from automated test runs (including passed/failed status) should be added here._
+  - **Expected Behaviors:**
 
-#### 4.2.3. ManageAccountE2ETest.kt
+    | **Scenario Steps** | **Test Case Steps** |
+    | ------------------ | ------------------- |
+    | 1. User navigates to their profile and selects "My Pins". | Navigate to Profile tab.<br>Click on "My Pins" section. |
+    | 2. User sees a list of their created pins. | Check that the pins list is displayed.<br>Check that at least one pin card is present. |
+    | 3. User clicks the delete icon on a pin. | Click the button with content description "Delete Pin" on the target pin card. |
+    | 4. A confirmation dialog appears. | Check that a dialog is displayed with text "Are you sure you want to delete this pin?". |
+    | 5. User confirms the deletion. | Click the "Delete" button in the dialog. |
+    | 6. The pin is removed from the list. | Wait for deletion to complete (2s).<br>Check that the pin is no longer present in the list. |
 
-**Use Cases Verified:**
+  - **Test Logs:**
+    ```
+    Test Suite: ManagePinsE2ETest
+    Total Tests: 11/11 passed
+    Total Duration: 5m 33s
+    Device: Google sdk_gphone64_x86_64
+    
+    ✓ testRemovePin_userRemovesOwnPin - PASSED (29s)
+    ✓ testRemovePin_noPermission - PASSED (22s)
+    ✓ testRemovePin_cancelDeletion - PASSED (1m 24s)
+    
+    Test Status: SUCCESS
+    ```
 
-- Use Case 1: Sign Up
-- Use Case 2: Sign In
-- Use Case 3: Manage Profile
-- Use Case 13: Manage Privacy Settings
-- Use Case 14: Delete Account
+- **Use Case: Add Friend (ManageFriendsE2ETest)**
 
-**Expected Behaviors:**
+  - **Expected Behaviors:**
 
-- User can sign up with Google authentication
-- User can sign in with existing account
-- User can view their profile
-- User can edit profile information (name, username, bio)
-- User can update privacy settings
-- User can delete their account (destructive test)
+    | **Scenario Steps** | **Test Case Steps** |
+    | ------------------ | ------------------- |
+    | 1. User navigates to Friends tab. | Navigate to Friends tab using bottom navigation. |
+    | 2. User clicks the "Add Friend" button. | Click the floating action button with content description "Add Friend". |
+    | 3. A search dialog appears. | Check that a dialog with text field is displayed.<br>Check that the placeholder text "Search for friends" is present. |
+    | 4. User enters the friend's username. | Input "e2e_test_friend" in the search field. |
+    | 5. User clicks the search button. | Click the "Search" button. |
+    | 6. Search results appear with matching users. | Wait for search results (2s).<br>Check that a user card with username "e2e_test_friend" is displayed. |
+    | 7. User clicks "Add Friend" on the target user. | Click the "Add Friend" button on the user card. |
+    | 8. A friend request is sent. | Wait for request to be sent (2s).<br>Check that a success message "Friend request sent" is displayed.<br>Check that the button changes to "Request Sent". |
 
-**Execution Logs:**
-_Execution logs from automated test runs (including passed/failed status) should be added here._
+  - **Test Logs:**
+    ```
+    Test Suite: ManageFriendsE2ETest
+    Total Tests: 9/9 passed
+    Total Duration: 4m 15s
+    Device: Google sdk_gphone64_x86_64
+    
+    ✓ test1_AddFriend_noUserFound - PASSED (1m 4s)
+    ✓ test7_AddFriend_successScenario - PASSED (28s)
+    
+    Test Status: SUCCESS
+    ```
 
-#### 4.2.4. AdminManagePinsE2ETest.kt
+- **Use Case: Accept Friend Request (ManageFriendsE2ETest)**
 
-**Use Cases Verified:**
+  - **Expected Behaviors:**
 
-- Use Case 8: View Reported Pins (Admin)
+    | **Scenario Steps** | **Test Case Steps** |
+    | ------------------ | ------------------- |
+    | 1. User opens the Friends tab. | Navigate to Friends tab. |
+    | 2. User clicks on the friend requests indicator. | Click the button with content description "View Friend Requests". |
+    | 3. A bottom sheet appears showing pending requests. | Check that a bottom sheet is displayed.<br>Check that at least one friend request card is present. |
+    | 4. User clicks "Accept" on a pending request. | Click the button with test tag starting with "accept_request_button". |
+    | 5. A confirmation dialog appears. | Check that a dialog is displayed with text "Accept friend request?". |
+    | 6. User confirms acceptance. | Click the "Accept" button in the dialog. |
+    | 7. The request is accepted and removed from pending list. | Wait for acceptance to complete (3s).<br>Check that the request is no longer in the pending list.<br>Check that the user now appears in the friends list. |
 
-**Expected Behaviors:**
+  - **Test Logs:**
+    ```
+    Test Suite: ManageFriendsE2ETest
+    Total Tests: 9/9 passed
+    Total Duration: 4m 15s
+    Device: Google sdk_gphone64_x86_64
+    
+    ✓ test2_AcceptFriendRequest_success - PASSED (33s)
+    
+    Test Status: SUCCESS
+    ```
 
-- Admin can view all reported pins
-- Admin can clear reports from pins
-- Admin can delete reported pins
-- Regular users cannot access admin endpoints
+- **Use Case: View Friend Profile (ManageFriendsE2ETest)**
 
-**Execution Logs:**
-_Execution logs from automated test runs (including passed/failed status) should be added here._
+  - **Expected Behaviors:**
 
-#### 4.2.5. SimpleAuthTest.kt
+    | **Scenario Steps** | **Test Case Steps** |
+    | ------------------ | ------------------- |
+    | 1. User opens the Friends tab. | Navigate to Friends tab. |
+    | 2. User sees their friends list. | Wait for friends list to load (2s).<br>Check that friend cards are displayed with "Online" or "Offline" status. |
+    | 3. User clicks on a friend card. | Click on the text "Online" or "Offline" on the first friend card. |
+    | 4. The friend's profile screen opens. | Wait for profile to load (2s).<br>Check that profile elements are displayed (username, bio, badges). |
+    | 5. User can view friend's profile information. | Check that text "Edit Profile" or "Manage Profile" is present (indicating profile is loaded).<br>Check that the back button is present. |
+    | 6. User navigates back to Friends list. | Press the back button.<br>Check that the Friends screen is displayed again. |
 
-**Use Cases Verified:**
+  - **Test Logs:**
+    ```
+    Test Suite: ManageFriendsE2ETest
+    Total Tests: 9/9 passed
+    Total Duration: 4m 15s
+    Device: Google sdk_gphone64_x86_64
+    
+    ✓ test3_ViewFriendProfile_success - PASSED (28s)
+    
+    Test Status: SUCCESS
+    ```
 
-- Authentication flow verification
+- **Use Case: Remove Friend (ManageFriendsE2ETest)**
 
-**Expected Behaviors:**
+  - **Expected Behaviors:**
 
-- App can start successfully
-- Authentication status can be checked
-- User can authenticate if not already authenticated
+    | **Scenario Steps** | **Test Case Steps** |
+    | ------------------ | ------------------- |
+    | 1. User opens the Friends tab. | Navigate to Friends tab. |
+    | 2. User sees their friends list. | Check that the friends list is displayed with friend cards. |
+    | 3. User long-presses on a friend card. | Long-press on a friend card. |
+    | 4. A context menu appears with "Remove Friend" option. | Check that a menu is displayed with "Remove Friend" option. |
+    | 5. User clicks "Remove Friend". | Click the "Remove Friend" menu item. |
+    | 6. A confirmation dialog appears. | Check that a dialog is displayed with text "Remove friend?". |
+    | 7. User confirms removal. | Click the "Remove" button in the dialog. |
+    | 8. The friend is removed from the list. | Wait for removal to complete (2s).<br>Check that the friend is no longer in the friends list. |
 
-**Execution Logs:**
-_Execution logs from automated test runs (including passed/failed status) should be added here._
+  - **Test Logs:**
+    ```
+    Test Suite: ManageFriendsE2ETest
+    Total Tests: 9/9 passed
+    Total Duration: 4m 15s
+    Device: Google sdk_gphone64_x86_64
+    
+    ✓ test4_SearchFriends_filterByName - PASSED (18s)
+    ✓ test5_RemoveFriend_success - PASSED (22s)
+    ✓ test6_ViewFriendsList_emptyState - PASSED (15s)
+    
+    Test Status: SUCCESS
+    ```
 
-**Note:** Some front-end tests may still fail at this point but must pass by the final release.
+- **Use Case: Decline Friend Request (DeclineFriendRequestE2ETest)**
+
+  - **Expected Behaviors:**
+
+    | **Scenario Steps** | **Test Case Steps** |
+    | ------------------ | ------------------- |
+    | 1. User (recipient) opens the Friends tab. | Authenticate with User Account 2 (recipient).<br>Navigate to Friends tab using bottom navigation. |
+    | 2. User clicks on the friend requests button. | Click the button with content description "View Friend Requests". |
+    | 3. A bottom sheet appears showing pending requests. | Wait for bottom sheet to appear (3s).<br>Check that at least one friend request card is present. |
+    | 4. User clicks "Decline" on a pending request. | Find the button with test tag starting with "decline_request_button".<br>Click the "Decline" button on the first request. |
+    | 5. The request is declined and removed from the list. | Wait for decline action to complete (3s).<br>Check that the number of decline buttons has decreased OR the list shows "No pending requests". |
+    | 5a. Authorization error if wrong account. | If logged in as sender instead of recipient:<br>Check that error message "not authorized to decline" is displayed. |
+
+  - **Test Logs:**
+    ```
+    Test Suite: DeclineFriendRequestE2ETest
+    Total Tests: 1/1 passed
+    Total Duration: 49s
+    Device: Google sdk_gphone64_x86_64
+    
+    ✓ testDeclineFriendRequest_success - PASSED (49s)
+    
+    Test Status: SUCCESS
+    ```
+
+- **Use Case: Sign Up (ManageAccountE2ETest)**
+
+  - **Expected Behaviors:**
+
+    | **Scenario Steps** | **Test Case Steps** |
+    | ------------------ | ------------------- |
+    | 1. User opens the app for the first time. | Launch the app.<br>Check that the authentication screen is displayed. |
+    | 2. User clicks "Sign Up with Google". | Click the button with text "Sign Up with Google". |
+    | 3. Google authentication flow begins. | **Manual step**: User completes Google authentication in system browser/WebView. |
+    | 4. After authentication, profile creation screen appears. | Wait for profile screen to load (5s).<br>Check that text fields for "Username" and "Bio" are present. |
+    | 5. User enters username and bio. | Input "e2e_<timestamp>" in the username field.<br>Input "E2E Test User Bio - Automated testing account" in the bio field. |
+    | 6. User clicks "Save" button. | Click the "Save" button. |
+    | 7. Profile is created and user is navigated to Home screen. | Wait for profile creation (3s).<br>Check that the Home screen is displayed.<br>Check that the user's profile is accessible from Profile tab. |
+
+  - **Test Logs:**
+    ```
+    Test Suite: ManageAccountE2ETest
+    Total Tests: 10/10 passed
+    Total Duration: 4m 11s
+    Device: Google sdk_gphone64_x86_64
+    
+    ✓ test01_SignUp_verifyProfileCreated - PASSED (48s)
+    
+    Test Status: SUCCESS
+    ```
+
+- **Use Case: Sign In (ManageAccountE2ETest)**
+
+  - **Expected Behaviors:**
+
+    | **Scenario Steps** | **Test Case Steps** |
+    | ------------------ | ------------------- |
+    | 1. User opens the app (after previously signing up). | Launch the app after Test 02 (Logout). |
+    | 2. User sees the authentication screen. | Check that the authentication screen is displayed. |
+    | 3. User clicks "Sign In with Google". | Click the button with text "Sign In with Google". |
+    | 4. Google authentication flow begins. | **Manual step**: User completes Google authentication with the SAME account used in Sign Up. |
+    | 5. User is authenticated and navigated to Home screen. | Wait for authentication (5s).<br>Check that the Home screen is displayed.<br>Verify that the user's profile data is loaded. |
+
+  - **Test Logs:**
+    ```
+    Test Suite: ManageAccountE2ETest
+    Total Tests: 10/10 passed
+    Total Duration: 4m 11s
+    Device: Google sdk_gphone64_x86_64
+    
+    ✓ test02_Logout_success - PASSED (27s)
+    ✓ test03_SignIn_verifySuccess - PASSED (30s)
+    
+    Test Status: SUCCESS
+    ```
+
+- **Use Case: Manage Profile (ManageAccountE2ETest)**
+
+  - **Expected Behaviors:**
+
+    | **Scenario Steps** | **Test Case Steps** |
+    | ------------------ | ------------------- |
+    | 1. User navigates to Profile tab. | Navigate to Profile tab using bottom navigation. |
+    | 2. User sees their profile information. | Check that the profile screen is displayed with username and bio. |
+    | 3. User clicks "Edit Profile" button. | Click the button with text "Edit Profile". |
+    | 4. Profile edit screen appears with current values. | Check that text fields are pre-filled with current username and bio. |
+    | 5. User modifies the name field. | Clear the name field.<br>Input "E2E Updated Name" in the name field. |
+    | 6. User clicks "Save" button. | Click the "Save" button. |
+    | 7. Profile is updated and changes are reflected. | Wait for update to complete (2s).<br>Navigate back to Profile tab.<br>Check that the updated name is displayed. |
+    | 8. User clicks "Edit Profile" again and then "Cancel". | Click "Edit Profile".<br>Modify a field.<br>Click "Cancel" button. |
+    | 9. Changes are discarded and profile remains unchanged. | Check that the profile screen shows the previous saved values. |
+
+  - **Test Logs:**
+    ```
+    Test Suite: ManageAccountE2ETest
+    Total Tests: 10/10 passed
+    Total Duration: 4m 11s
+    Device: Google sdk_gphone64_x86_64
+    
+    ✓ test04_ViewProfile_success - PASSED (14s)
+    ✓ test05_EditProfile_success - PASSED (21s)
+    ✓ test06_CancelProfileEdit_success - PASSED (18s)
+    
+    Test Status: SUCCESS
+    ```
+
+- **Use Case: Manage Privacy Settings (ManageAccountE2ETest)**
+
+  - **Expected Behaviors:**
+
+    | **Scenario Steps** | **Test Case Steps** |
+    | ------------------ | ------------------- |
+    | 1. User navigates to Profile tab. | Navigate to Profile tab. |
+    | 2. User clicks on "Privacy Settings". | Click the button or menu item with text "Privacy Settings". |
+    | 3. Privacy settings screen appears. | Check that toggles for "Location Visibility", "Profile Visibility", and "Badge Visibility" are present. |
+    | 4. User toggles location visibility off. | Click the "Location Visibility" toggle switch. |
+    | 5. User toggles profile visibility to friends only. | Click the "Profile Visibility" dropdown.<br>Select "Friends Only". |
+    | 6. User clicks "Save" button. | Click the "Save" button. |
+    | 7. Privacy settings are updated. | Wait for update to complete (2s).<br>Check that a success message is displayed.<br>Navigate back to Privacy Settings.<br>Verify that the toggles reflect the saved state. |
+    | 8. User modifies settings and clicks "Cancel". | Change a toggle.<br>Click "Cancel" button. |
+    | 9. Changes are discarded. | Navigate back to Privacy Settings.<br>Check that settings remain at the previously saved state. |
+
+  - **Test Logs:**
+    ```
+    Test Suite: ManageAccountE2ETest
+    Total Tests: 10/10 passed
+    Total Duration: 4m 11s
+    Device: Google sdk_gphone64_x86_64
+    
+    ✓ test07_ManagePrivacySettings_success - PASSED (25s)
+    ✓ test08_CancelPrivacyChanges_success - PASSED (22s)
+    
+    Test Status: SUCCESS
+    ```
+
+- **Use Case: Delete Account (ManageAccountE2ETest)**
+
+  - **Expected Behaviors:**
+
+    | **Scenario Steps** | **Test Case Steps** |
+    | ------------------ | ------------------- |
+    | 1. User navigates to Profile tab. | Navigate to Profile tab. |
+    | 2. User clicks on "Delete Account" button. | Scroll down to find "Delete Account" button.<br>Click the "Delete Account" button. |
+    | 3. A confirmation dialog appears with warning. | Check that a dialog is displayed with text "Are you sure you want to delete your account?".<br>Check that warning text about permanent deletion is present. |
+    | 4a. User clicks "Cancel". | Click the "Cancel" button in the dialog. |
+    | 4a1. Dialog closes and account is not deleted. | Check that the dialog is closed.<br>Check that the user is still on the Profile screen.<br>Verify that the account still exists. |
+    | 4. User clicks "Delete Account" again. | Click the "Delete Account" button again. |
+    | 5. User clicks "Delete" in the confirmation dialog. | Check that the confirmation dialog appears.<br>Click the "Delete" button. |
+    | 6. Account is permanently deleted. | Wait for deletion to complete (3s).<br>Check that the user is logged out and returned to authentication screen.<br>Verify in backend that account no longer exists. |
+
+  - **Test Logs:**
+    ```
+    Test Suite: ManageAccountE2ETest
+    Total Tests: 10/10 passed
+    Total Duration: 4m 11s
+    Device: Google sdk_gphone64_x86_64
+    
+    ✓ test09_DeleteAccount_cancelDeletion - PASSED (17s)
+    ✓ test10_DeleteAccount_permanent - PASSED (23s)
+    
+    Test Status: SUCCESS
+    
+    Note: This test suite covers the complete account lifecycle from 
+    sign-up through profile management to permanent deletion.
+    ```
+
+- **Use Case: View Reported Pins (Admin) (AdminManagePinsE2ETest)**
+
+  - **Expected Behaviors:**
+
+    | **Scenario Steps** | **Test Case Steps** |
+    | ------------------ | ------------------- |
+    | 1. Admin user opens the app and authenticates. | Authenticate with admin account: universe.cpen321@gmail.com. |
+    | 2. Admin navigates to Admin Dashboard. | Check that "Admin Dashboard" button is visible in navigation.<br>Click "Admin Dashboard". |
+    | 3. Admin clicks "Review Reported Pins". | Wait for dashboard to load (5s).<br>Click the button with test tag "admin_reported_pins_button". |
+    | 4. Reported pins screen appears with list of reports. | Wait for reported pins to load (3s).<br>Check that the screen title is "Reported Pins".<br>Check that at least one reported pin card is present. |
+    | 5. Admin can see pin details and report reasons. | Check that each pin card displays: pin name, reporter username, and report reason. |
+
+  - **Test Logs:**
+    ```
+    Test Suite: AdminManagePinsE2ETest
+    Total Tests: 6/6 passed, 3 skipped
+    Total Duration: 1m 46s
+    Device: Google sdk_gphone64_x86_64
+    
+    ✓ testAccessAdminDashboard - PASSED (36s)
+    ✓ testViewReportedPinsList - PASSED (12s)
+    ✓ testExpandPinReportDetails - PASSED (13s)
+    ⊘ testViewReportedPinsList_emptyState - SKIPPED (9ms)
+    ⊘ testModerationAction_failure - SKIPPED (11ms)
+    ⊘ testDeletePin_alreadyDeleted - SKIPPED (12ms)
+    
+    Test Status: SUCCESS
+    ```
+
+- **Use Case: Clear Reports from Pin (Admin) (AdminManagePinsE2ETest)**
+
+  - **Expected Behaviors:**
+
+    | **Scenario Steps** | **Test Case Steps** |
+    | ------------------ | ------------------- |
+    | 1. Admin is viewing the Reported Pins list. | Navigate to Admin Dashboard → Review Reported Pins. |
+    | 2. Admin clicks "Clear Reports" on a pin. | Click the button with content description "Clear Reports" on the first reported pin card. |
+    | 3. A confirmation dialog appears. | Check that a dialog is displayed with text "Clear all reports from this pin?". |
+    | 4. Admin confirms the action. | Click the "Clear" button in the dialog. |
+    | 5. Reports are cleared and pin remains active. | Wait for action to complete (3s).<br>Check that the pin is removed from the reported pins list.<br>Verify that the pin still exists in the database (not deleted). |
+
+  - **Test Logs:**
+    ```
+    Test Suite: AdminManagePinsE2ETest
+    Total Tests: 6/6 passed, 3 skipped
+    Total Duration: 1m 46s
+    Device: Google sdk_gphone64_x86_64
+    
+    ✓ testClearReports_success - PASSED (14s)
+    
+    Test Status: SUCCESS
+    ```
+
+- **Use Case: Delete Reported Pin (Admin) (AdminManagePinsE2ETest)**
+
+  - **Expected Behaviors:**
+
+    | **Scenario Steps** | **Test Case Steps** |
+    | ------------------ | ------------------- |
+    | 1. Admin is viewing the Reported Pins list. | Navigate to Admin Dashboard → Review Reported Pins. |
+    | 2. Admin clicks "Delete Pin" on a reported pin. | Click the button with content description "Delete Pin" on a reported pin card. |
+    | 3. A confirmation dialog appears. | Check that a dialog is displayed with text "Permanently delete this pin?". |
+    | 4. Admin confirms the deletion. | Click the "Delete" button in the dialog. |
+    | 5. The pin is permanently deleted. | Wait for deletion to complete (3s).<br>Check that the pin is removed from the reported pins list.<br>Verify in backend that the pin no longer exists. |
+
+  - **Test Logs:**
+    ```
+    Test Suite: AdminManagePinsE2ETest
+    Total Tests: 6/6 passed, 3 skipped
+    Total Duration: 1m 46s
+    Device: Google sdk_gphone64_x86_64
+    
+    ✓ testDeletePin_success - PASSED (15s)
+    ✓ testDeletePin_cancelDeletion - PASSED (13s)
+    
+    Test Status: SUCCESS
+    ```
+
+- **Use Case: Suspend User Account (Admin) (AdminManageUsersE2ETest)**
+
+  - **Expected Behaviors:**
+
+    | **Scenario Steps** | **Test Case Steps** |
+    | ------------------ | ------------------- |
+    | 1. Admin navigates to Admin Dashboard. | Authenticate with admin account.<br>Navigate to Admin Dashboard. |
+    | 2. Admin clicks "User Management". | Wait for dashboard to load (8s).<br>Click the button with test tag "admin_manage_users_button". |
+    | 3. User management screen appears with list of users. | Wait for users to load (3s).<br>Check that user cards are displayed (excluding system@universe.app). |
+    | 4. Admin clicks "Suspend" on a user account. | Click the button with content description "Suspend User" on the first user card. |
+    | 5. A confirmation dialog appears. | Check that a dialog is displayed with test tag "admin_user_action_dialog".<br>Check that the dialog contains text "suspend". |
+    | 6. Admin confirms the suspension. | Click the button with test tag "admin_user_action_confirm". |
+    | 7. The user account is suspended. | Wait for suspension to complete (4s).<br>Check that a "SUSPENDED" badge appears on the user card. |
+
+  - **Test Logs:**
+    ```
+    Test Suite: AdminManageUsersE2ETest
+    Total Tests: 4/4 passed
+    Total Duration: 1m 47s
+    Device: Google sdk_gphone64_x86_64
+    
+    ✓ test1_SuspendUser_success - PASSED (49s)
+    
+    Test Status: SUCCESS
+    ```
+
+- **Use Case: Unsuspend User Account (Admin) (AdminManageUsersE2ETest)**
+
+  - **Expected Behaviors:**
+
+    | **Scenario Steps** | **Test Case Steps** |
+    | ------------------ | ------------------- |
+    | 1. Admin is viewing the User Management screen. | Navigate to Admin Dashboard → User Management. |
+    | 2. Admin sees a suspended user with "SUSPENDED" badge. | Check that at least one user card displays a "SUSPENDED" badge. |
+    | 3. Admin clicks "Unsuspend" on the suspended user. | Click the button with content description "Unsuspend User" on the suspended user card. |
+    | 4. A confirmation dialog appears. | Check that a dialog is displayed with text "unsuspend". |
+    | 5. Admin confirms the unsuspension. | Click the confirm button in the dialog. |
+    | 6. The user account is unsuspended. | Wait for unsuspension to complete (5s).<br>Check that the "SUSPENDED" badge is removed from the user card. |
+
+  - **Test Logs:**
+    ```
+    Test Suite: AdminManageUsersE2ETest
+    Total Tests: 4/4 passed
+    Total Duration: 1m 47s
+    Device: Google sdk_gphone64_x86_64
+    
+    ✓ test2_UnsuspendUser_success - PASSED (20s)
+    
+    Test Status: SUCCESS
+    ```
+
+- **Use Case: Delete User Account (Admin) (AdminManageUsersE2ETest)**
+
+  - **Expected Behaviors:**
+
+    | **Scenario Steps** | **Test Case Steps** |
+    | ------------------ | ------------------- |
+    | 1. Admin is viewing the User Management screen. | Navigate to Admin Dashboard → User Management. |
+    | 2. Admin clicks "Delete" on a user account. | Click the button with content description "Delete User" on a user card. |
+    | 3. A confirmation dialog appears with warning. | Check that a dialog is displayed with text "delete" and warning about permanent deletion. |
+    | 4a. Admin clicks "Cancel". | Click the cancel button in the dialog. |
+    | 4a1. Dialog closes and user is not deleted. | Check that the dialog is closed.<br>Check that the user card is still present in the list. |
+    | 4. Admin clicks "Delete" on the same user again. | Click the "Delete User" button again on the same user. |
+    | 5. Admin confirms the deletion. | Click the confirm button in the dialog. |
+    | 6. The user account is permanently deleted. | Wait for deletion to complete (5s).<br>Check that the user card is removed from the list.<br>Verify in backend that the user no longer exists. |
+
+  - **Test Logs:**
+    ```
+    Test Suite: AdminManageUsersE2ETest
+    Total Tests: 4/4 passed
+    Total Duration: 1m 47s
+    Device: Google sdk_gphone64_x86_64
+    
+    ✓ test3_CancelDelete_success - PASSED (17s)
+    ✓ test4_DeleteUser_permanent - PASSED (20s)
+    
+    Test Status: SUCCESS
+    ```
 
 ---
 
