@@ -62,11 +62,17 @@ export class RecommendationService {
         return [];
       }
 
-      // 2. Get current weather
-      const weather = await weatherService.getCurrentWeather(
-        userLocation.lat,
-        userLocation.lng
-      );
+      // 2. Get current weather (with fallback for failures)
+      let weather: unknown = null;
+      try {
+        weather = await weatherService.getCurrentWeather(
+          userLocation.lat,
+          userLocation.lng
+        );
+      } catch (error) {
+        logger.warn('Weather service failed, using default weather scoring:', error);
+        weather = null; // Will result in default scores in scoreWeather()
+      }
 
       // 3. Get user preferences from existing data
       const userPreferences = await this.getUserPreferences(userId);
@@ -116,6 +122,11 @@ export class RecommendationService {
       }
 
       const topRecommendation = recommendations[0];
+      if (!topRecommendation) {
+        logger.warn(`No valid recommendation found for user ${userId.toString()} (${mealType})`);
+        return false;
+      }
+
       const name = (topRecommendation.pin?.name ?? topRecommendation.place?.name) ?? 'Unknown Place';
       const distanceText = topRecommendation.distance < 1000 
         ? `${Math.round(topRecommendation.distance)}m away`
@@ -125,10 +136,20 @@ export class RecommendationService {
       const mealEmoji = mealType === 'breakfast' ? '🍳' : mealType === 'lunch' ? '🍽️' : '🌙';
       
       const title = `${mealEmoji} ${mealType.charAt(0).toUpperCase() + mealType.slice(1)} Recommendation`;
-      const body = `Try ${name} - ${distanceText}. ${topRecommendation.reason}`;
+      const body = `Try ${name} - ${distanceText}. ${topRecommendation.reason || 'Great choice for a meal!'}`;
 
-      // Determine ID for notification (pin ID or place ID)
-      const locationId = (topRecommendation.pin?._id.toString() ?? topRecommendation.place?.id) ?? 'unknown';
+      // Determine ID for notification (pin ID or place ID) with better error handling
+      let locationId = 'unknown';
+      try {
+        if (topRecommendation.pin?._id) {
+          locationId = topRecommendation.pin._id.toString();
+        } else if (topRecommendation.place?.id) {
+          locationId = topRecommendation.place.id.toString();
+        }
+      } catch (error) {
+        logger.warn('Error extracting location ID for notification:', error);
+        locationId = 'unknown';
+      }
 
       const sent = await notificationService.sendLocationRecommendationNotification(
         userId.toString(),
@@ -232,7 +253,7 @@ export class RecommendationService {
         category: 'shops_services' as PinCategory,
         latitude: lat,
         longitude: lng,
-        radius: maxDistance / 1000, // Convert to km
+        radius: maxDistance, // Already in meters, no conversion needed
         limit: 100, // Get more candidates for better scoring
       });
 

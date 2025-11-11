@@ -1428,21 +1428,16 @@ describe('Unmocked Integration: BadgeModel Error Handling', () => {
     expect(found).toBeNull();
   });
 
-  // Test error handling in assignBadge (non-duplicate error - line 247-248)
+  // Test error handling in assignBadge (non-duplicate error - line 250-251)
   test('assignBadge handles non-duplicate database error', async () => {
     const user = await createTestUser('Test User', 'testuser', 'test@example.com');
-    const badge = await badgeModel.create({
-      name: 'Assign Error Test',
-      description: 'Test',
-      icon: 'test',
-      category: BadgeCategory.ACTIVITY,
-      rarity: BadgeRarity.COMMON,
-      requirements: { type: BadgeRequirementType.LOGIN_STREAK, target: 5 },
-    });
-
-    // Normal assignment should work
-    const userBadge = await badgeModel.assignBadge(user._id, badge._id);
-    expect(userBadge).toBeDefined();
+    
+    // Use an invalid ObjectId format to trigger a database error
+    const invalidBadgeId = new mongoose.Types.ObjectId();
+    
+    // This should throw "Failed to assign badge" due to the non-existent badge ID
+    await expect(badgeModel.assignBadge(user._id, invalidBadgeId))
+      .rejects.toThrow('Failed to assign badge');
   });
 
   // Test error handling in getUserBadges (line 262-263)
@@ -1522,11 +1517,12 @@ describe('Unmocked Integration: BadgeService Error Handling and Coverage', () =>
       },
     });
 
-    // Manually update the badge to have unknown type (bypassing validation)
+    // Use direct MongoDB collection operation to bypass Mongoose validation
     const Badge = mongoose.model('Badge');
-    await Badge.findByIdAndUpdate(badge._id, {
-      'requirements.type': 'UNKNOWN_TYPE'
-    });
+    await Badge.collection.findOneAndUpdate(
+      { _id: badge._id },
+      { $set: { 'requirements.type': 'UNKNOWN_TYPE' } }
+    );
 
     const event: BadgeEarningEvent = {
       eventType: BadgeRequirementType.PINS_CREATED,
@@ -1537,9 +1533,12 @@ describe('Unmocked Integration: BadgeService Error Handling and Coverage', () =>
 
     // Should not earn badge due to unknown type
     const earnedBadges = await BadgeService.processBadgeEvent(event);
+    
+    // Verify the badge has the unknown type (using collection.findOne to bypass validation)
+    const updatedBadgeRaw = await Badge.collection.findOne({ _id: badge._id });
+    expect(updatedBadgeRaw?.requirements.type).toBe('UNKNOWN_TYPE');
+    
     // The badge with unknown type should not be earned
-    const updatedBadge = await Badge.findById(badge._id);
-    expect(updatedBadge?.requirements.type).toBe('UNKNOWN_TYPE');
     expect(earnedBadges.filter(b => b.badgeId.toString() === badge._id.toString()).length).toBe(0);
   });
 
