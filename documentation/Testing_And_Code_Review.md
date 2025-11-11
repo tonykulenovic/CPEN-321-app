@@ -187,11 +187,15 @@ jobs:
 
 _Screenshots of Jest coverage reports for all files in the back-end (individual and combined), when running back-end tests without mocking, should be added here._
 
+![alt text](images/Unmocked_Coverage.png)
+![alt text](image.png)
+![alt text](image-5.png)
+
 **To generate coverage reports without mocking:**
 
 ```bash
 cd backend
-npm run test:coverage -- tests/unmocked
+npm run test:unmocked --coverage
 ```
 
 **Expected Coverage:** High coverage for each back-end file. Coverage may be less than 100% due to missing error cases that are difficult to trigger in integration tests.
@@ -200,11 +204,14 @@ npm run test:coverage -- tests/unmocked
 
 _Screenshots of Jest coverage reports for all files in the back-end (individual and combined), when running back-end tests with mocking, should be added here._
 
+![alt text](image-1.png)
+![alt text](image-4.png)
+
 **To generate coverage reports with mocking:**
 
 ```bash
 cd backend
-npm run test:coverage -- tests/mocked
+npm run test:mocked --coverage
 ```
 
 **Expected Coverage:** Coverage can be lower in this scenario, as the primary focus is on error handling and edge cases that are difficult to test in integration tests.
@@ -213,11 +220,14 @@ npm run test:coverage -- tests/mocked
 
 _Screenshots of Jest coverage reports for all files in the back-end (individual and combined), when running both back-end tests with and without mocking, should be added here._
 
+![alt text](image-2.png)
+![alt text](image-3.png)
+
 **To generate combined coverage reports:**
 
 ```bash
 cd backend
-npm run test:coverage
+npm test --coverage
 ```
 
 **Expected Coverage:** High coverage. If coverage is lower than 100%, well-formed reasons for not achieving 100% coverage must be provided below.
