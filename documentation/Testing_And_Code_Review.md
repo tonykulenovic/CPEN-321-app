@@ -2,7 +2,9 @@
 
 ## 1. Change History
 
-_This section will be populated for the final milestone with change dates, modifications, and rationale._
+| **Change Date**   | **Modified Sections** | **Rationale** |
+| ----------------- | --------------------- | ------------- |
+| _Nothing to show_ |
 
 ---
 
