@@ -187,7 +187,7 @@ Due to the amount of use cases in our app, we elected to create a seperate use c
 
 ![Use Case Diagrams](images/Badge_System.png)
 
-![Use Case Diagrams](images/Recommend_Locations.png)
+![Use Case Diagrams](images/Smart_Notifications_and_Recommendations.png)
 
 ---
 
