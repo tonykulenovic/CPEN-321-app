@@ -263,8 +263,12 @@ class PinRepositoryImpl @Inject constructor() : PinRepository {
                 Log.e(TAG, "Report pin failed: $errorMessage")
                 Result.failure(Exception(errorMessage))
             }
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            // Don't log cancellation as an error - it's expected when user navigates away
+            Log.d(TAG, "Report pin cancelled (user navigated away)")
+            throw e // Re-throw to properly propagate cancellation
         } catch (e: java.net.SocketTimeoutException) {
-            Log.e(TAG, "Network timeout reporting pin", e)
+            Log.e(TAG, "Network timeout reporting pin (backend may be slow or unresponsive)", e)
             Result.failure(e)
         } catch (e: java.net.UnknownHostException) {
             Log.e(TAG, "Network connection failed reporting pin", e)

@@ -698,8 +698,8 @@ class AdminManagePinsE2ETest {
                     onNodeWithText("Hide Reports", ignoreCase = true).performClick()
                     Thread.sleep(500)
                     
-                    // Verify collapsed
-                    onNodeWithText("View Reports", ignoreCase = true).assertExists()
+                    // Verify collapsed - use onAllNodesWithText since multiple pins may have "View Reports"
+                    onAllNodesWithText("View Reports", ignoreCase = true).onFirst().assertExists()
                     Log.d(TAG, "✓ Report details collapsed successfully")
                 } catch (e: Exception) {
                     Log.w(TAG, "Could not collapse report details, but expansion worked", e)
