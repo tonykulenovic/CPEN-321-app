@@ -5,6 +5,7 @@ import android.content.Context
 import android.location.Location
 import android.os.Looper
 import android.util.Log
+import com.cpen321.usermanagement.data.remote.dto.Pin
 import com.cpen321.usermanagement.data.repository.LocationRepository
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationCallback
@@ -12,6 +13,7 @@ import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
+import com.google.gson.Gson
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.socket.client.IO
 import io.socket.client.Socket
@@ -19,8 +21,11 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import org.json.JSONObject
@@ -37,6 +42,13 @@ data class UserLocation(
     val timestamp: Long = System.currentTimeMillis(),
     val accuracyM: Double = 0.0
 )
+
+// Pin event types for real-time updates
+sealed class PinEvent {
+    data class PinCreated(val pin: Pin) : PinEvent()
+    data class PinUpdated(val pin: Pin) : PinEvent()
+    data class PinDeleted(val pinId: String) : PinEvent()
+}
 
 @Singleton
 class LocationTrackingService @Inject constructor(
@@ -68,6 +80,13 @@ class LocationTrackingService @Inject constructor(
     
     private val _isSharing = MutableStateFlow(false)
     val isSharing: StateFlow<Boolean> = _isSharing.asStateFlow()
+    
+    // Pin events - real-time updates for pins
+    private val _pinEvents = MutableSharedFlow<PinEvent>(replay = 0)
+    val pinEvents: SharedFlow<PinEvent> = _pinEvents.asSharedFlow()
+    
+    // Gson for JSON parsing
+    private val gson = Gson()
     
     /**
      * Initialize Socket.io connection with authentication
@@ -214,6 +233,51 @@ class LocationTrackingService @Inject constructor(
                     Log.w(TAG, "Friend tracking error for $friendId: $error")
                 } catch (e: RuntimeException) {
                     Log.e(TAG, "Error parsing location:track:error", e)
+                }
+            }
+            
+            // Pin real-time events
+            socket.on("pin:created") { args ->
+                try {
+                    val data = args[0] as JSONObject
+                    val pinJson = data.getJSONObject("pin")
+                    val pin = gson.fromJson(pinJson.toString(), Pin::class.java)
+                    Log.d(TAG, "📍 New pin created: ${pin.name}")
+                    
+                    serviceScope.launch {
+                        _pinEvents.emit(PinEvent.PinCreated(pin))
+                    }
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error parsing pin:created", e)
+                }
+            }
+            
+            socket.on("pin:updated") { args ->
+                try {
+                    val data = args[0] as JSONObject
+                    val pinJson = data.getJSONObject("pin")
+                    val pin = gson.fromJson(pinJson.toString(), Pin::class.java)
+                    Log.d(TAG, "📍 Pin updated: ${pin.name}")
+                    
+                    serviceScope.launch {
+                        _pinEvents.emit(PinEvent.PinUpdated(pin))
+                    }
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error parsing pin:updated", e)
+                }
+            }
+            
+            socket.on("pin:deleted") { args ->
+                try {
+                    val data = args[0] as JSONObject
+                    val pinId = data.getString("pinId")
+                    Log.d(TAG, "📍 Pin deleted: $pinId")
+                    
+                    serviceScope.launch {
+                        _pinEvents.emit(PinEvent.PinDeleted(pinId))
+                    }
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error parsing pin:deleted", e)
                 }
             }
         }

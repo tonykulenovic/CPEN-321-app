@@ -675,6 +675,48 @@ export class LocationGateway {
       throw error;
     }
   }
+
+  /**
+   * Broadcast pin created event to all connected users
+   */
+  async broadcastPinCreated(pin: unknown): Promise<void> {
+    if (!this.io) return;
+    
+    const nsp = this.io.of('/realtime');
+    nsp.emit('pin:created', {
+      pin: pin
+    });
+    
+    logger.info(`📍 Broadcasting pin created: ${(pin as { _id: { toString: () => string } })._id.toString()}`);
+  }
+
+  /**
+   * Broadcast pin updated event to all connected users
+   */
+  async broadcastPinUpdated(pin: unknown): Promise<void> {
+    if (!this.io) return;
+    
+    const nsp = this.io.of('/realtime');
+    nsp.emit('pin:updated', {
+      pin: pin
+    });
+    
+    logger.info(`📍 Broadcasting pin updated: ${(pin as { _id: { toString: () => string } })._id.toString()}`);
+  }
+
+  /**
+   * Broadcast pin deleted event to all connected users
+   */
+  async broadcastPinDeleted(pinId: string): Promise<void> {
+    if (!this.io) return;
+    
+    const nsp = this.io.of('/realtime');
+    nsp.emit('pin:deleted', {
+      pinId: pinId
+    });
+    
+    logger.info(`📍 Broadcasting pin deleted: ${pinId}`);
+  }
 }
 
 // Create singleton instance

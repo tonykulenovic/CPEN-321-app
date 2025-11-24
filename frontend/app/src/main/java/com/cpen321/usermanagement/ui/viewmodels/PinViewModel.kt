@@ -2,6 +2,8 @@ package com.cpen321.usermanagement.ui.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.cpen321.usermanagement.data.realtime.LocationTrackingService
+import com.cpen321.usermanagement.data.realtime.PinEvent
 import com.cpen321.usermanagement.data.remote.dto.*
 import com.cpen321.usermanagement.data.repository.PinRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -27,7 +29,8 @@ data class PinUiState(
 
 @HiltViewModel
 class PinViewModel @Inject constructor(
-    private val pinRepository: PinRepository
+    private val pinRepository: PinRepository,
+    private val locationTrackingService: LocationTrackingService
 ) : ViewModel() {
     
     private val _uiState = MutableStateFlow(PinUiState())
@@ -39,6 +42,58 @@ class PinViewModel @Inject constructor(
     
     init {
         loadPins()
+        observePinEvents()
+    }
+    
+    /**
+     * Observe real-time pin events from Socket.IO
+     */
+    private fun observePinEvents() {
+        viewModelScope.launch {
+            locationTrackingService.pinEvents.collect { event ->
+                when (event) {
+                    is PinEvent.PinCreated -> {
+                        // Add new pin to the list
+                        val currentPins = _uiState.value.pins.toMutableList()
+                        currentPins.add(event.pin)
+                        _uiState.value = _uiState.value.copy(
+                            pins = currentPins,
+                            totalPins = currentPins.size,
+                            lastLoadedTimestamp = System.currentTimeMillis()
+                        )
+                    }
+                    is PinEvent.PinUpdated -> {
+                        // Update existing pin in the list
+                        val updatedPins = _uiState.value.pins.map { pin ->
+                            if (pin.id == event.pin.id) event.pin else pin
+                        }
+                        _uiState.value = _uiState.value.copy(
+                            pins = updatedPins,
+                            lastLoadedTimestamp = System.currentTimeMillis()
+                        )
+                        
+                        // Also update currentPin if it's being viewed
+                        if (_uiState.value.currentPin?.id == event.pin.id) {
+                            _uiState.value = _uiState.value.copy(currentPin = event.pin)
+                        }
+                    }
+                    is PinEvent.PinDeleted -> {
+                        // Remove deleted pin from the list
+                        val filteredPins = _uiState.value.pins.filter { it.id != event.pinId }
+                        _uiState.value = _uiState.value.copy(
+                            pins = filteredPins,
+                            totalPins = filteredPins.size,
+                            lastLoadedTimestamp = System.currentTimeMillis()
+                        )
+                        
+                        // Clear currentPin if it was deleted
+                        if (_uiState.value.currentPin?.id == event.pinId) {
+                            _uiState.value = _uiState.value.copy(currentPin = null)
+                        }
+                    }
+                }
+            }
+        }
     }
     
     fun loadPins(
