@@ -772,7 +772,9 @@ private fun MapContent(
     }
     
     // Toggle between styled map and satellite - optimized with disabled features
-    val mapProperties = remember(isSatelliteView, hasLocationPermission) {
+    val mapProperties = remember(isSatelliteView, hasLocationPermission, currentZoom) {
+        val enableBuildings = !isSatelliteView && currentZoom >= 15f
+
         if (isSatelliteView) {
             MapProperties(
                 mapType = MapType.SATELLITE,
@@ -784,7 +786,7 @@ private fun MapContent(
         } else {
             MapProperties(
                 mapType = MapType.NORMAL,
-                isBuildingEnabled = false, // Disable 3D buildings for faster rendering
+                isBuildingEnabled = enableBuildings, // Enable buildings when zoomed in
                 isIndoorEnabled = false, // Disable indoor maps
                 isTrafficEnabled = false, // Disable traffic
                 isMyLocationEnabled = hasLocationPermission,
