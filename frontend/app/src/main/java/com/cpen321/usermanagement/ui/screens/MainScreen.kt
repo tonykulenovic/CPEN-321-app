@@ -634,8 +634,8 @@ private fun MapContent(
                 // Trigger bottom sheet to open
                 onPinClick(selectedPin.id)
                 
-                // Small delay to ensure map is fully initialized
-                kotlinx.coroutines.delay(200)
+                // Reduced delay for faster response
+                kotlinx.coroutines.delay(100)
                 val pinLocation = LatLng(selectedPin.location.latitude, selectedPin.location.longitude)
                 cameraPositionState.animate(
                     CameraUpdateFactory.newLatLngZoom(pinLocation, 17f),
@@ -648,19 +648,9 @@ private fun MapContent(
         }
     }
     
-    // Toggle between styled map and satellite
-    val mapProperties = if (isSatelliteView) {
-        MapProperties(
-            mapType = MapType.SATELLITE,
-            isBuildingEnabled = true,
-            isMyLocationEnabled = hasLocationPermission
-        )
-    } else {
-        MapProperties(
-            mapType = MapType.NORMAL,
-            isBuildingEnabled = true,
-            isMyLocationEnabled = hasLocationPermission,
-            mapStyleOptions = MapStyleOptions(
+    // Memoize map style to avoid recreating on every recomposition
+    val customMapStyle = remember {
+        MapStyleOptions(
                 """
                 [
                   {
@@ -766,14 +756,41 @@ private fun MapContent(
                   }
                 ]
                 """.trimIndent()
-            )
         )
     }
     
-    val uiSettings = MapUiSettings(
-        zoomControlsEnabled = true,
-        myLocationButtonEnabled = hasLocationPermission
-    )
+    // Toggle between styled map and satellite - optimized with disabled features
+    val mapProperties = remember(isSatelliteView, hasLocationPermission) {
+        if (isSatelliteView) {
+            MapProperties(
+                mapType = MapType.SATELLITE,
+                isBuildingEnabled = false, // Disable 3D buildings for faster rendering
+                isIndoorEnabled = false, // Disable indoor maps
+                isTrafficEnabled = false, // Disable traffic
+                isMyLocationEnabled = hasLocationPermission
+            )
+        } else {
+            MapProperties(
+                mapType = MapType.NORMAL,
+                isBuildingEnabled = false, // Disable 3D buildings for faster rendering
+                isIndoorEnabled = false, // Disable indoor maps
+                isTrafficEnabled = false, // Disable traffic
+                isMyLocationEnabled = hasLocationPermission,
+                mapStyleOptions = customMapStyle
+            )
+        }
+    }
+    
+    val uiSettings = remember(hasLocationPermission) {
+        MapUiSettings(
+            zoomControlsEnabled = true,
+            myLocationButtonEnabled = hasLocationPermission,
+            compassEnabled = false, // Disable compass for cleaner UI
+            mapToolbarEnabled = false, // Disable map toolbar for faster rendering
+            rotationGesturesEnabled = false, // Disable rotation for simpler interactions
+            tiltGesturesEnabled = false // Disable tilt for simpler interactions
+        )
+    }
     
     Box(
         modifier = modifier

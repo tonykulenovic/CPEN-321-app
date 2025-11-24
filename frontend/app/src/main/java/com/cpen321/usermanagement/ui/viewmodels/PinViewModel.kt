@@ -105,20 +105,23 @@ class PinViewModel @Inject constructor(
         page: Int = 1,
         forceRefresh: Boolean = false
     ) {
-        // Skip if pins are cached and still fresh (unless force refresh)
         val currentTime = System.currentTimeMillis()
         val timeSinceLastLoad = currentTime - _uiState.value.lastLoadedTimestamp
+        val hasCachedPins = _uiState.value.pins.isNotEmpty()
         
-        if (!forceRefresh && _uiState.value.pins.isNotEmpty() && timeSinceLastLoad < CACHE_DURATION_MS) {
-            // Pins are still fresh, skip loading
+        // OPTIMIZED: If we have cached pins, show them immediately and refresh in background
+        if (!forceRefresh && hasCachedPins && timeSinceLastLoad < CACHE_DURATION_MS) {
+            // Pins are still fresh, skip loading entirely
             return
         }
+        
+        // If we have stale cached pins (> 5 min), show them while fetching fresh data
+        // This provides instant UI while background refresh happens
+        
         viewModelScope.launch {
-            // Only show loading state if we don't have any cached pins to display
-            // This prevents the flash when switching to map with cached data
-            val hasCachedPins = _uiState.value.pins.isNotEmpty()
+            // Never show loading state if we have cached pins - show stale pins while refreshing
             _uiState.value = _uiState.value.copy(
-                isLoading = !hasCachedPins, // Only show loading if no cached pins
+                isLoading = !hasCachedPins, // Only show loading spinner if no pins at all
                 isSearching = search != null,
                 error = null
             )

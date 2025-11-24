@@ -193,97 +193,84 @@ export class PinModel {
         }
       }
 
+      // OPTIMIZATION: Limit query to prevent fetching all pins
       let pins = await this.pin
         .find(query)
         .populate('createdBy', 'name profilePicture')
-        .sort({ isPreSeeded: -1, createdAt: -1 }); // Pre-seeded pins first, then by date
+        .sort({ isPreSeeded: -1, createdAt: -1 }) // Pre-seeded pins first, then by date
+        .limit(500) // Reasonable limit to prevent fetching thousands of pins
+        .lean(); // Use lean() for faster queries - returns plain JS objects
 
-      logger.info(`Search pins: Found ${pins.length} pins. UserId: ${filters.userId ? filters.userId.toString() : 'NOT PROVIDED'}`);
-      // Log pin details for debugging
-      pins.forEach(pin => {
-        logger.info(`  - Pin: "${pin.name}" | Category: ${pin.category} | PreSeeded: ${pin.isPreSeeded}`);
-      });
+      // OPTIMIZATION: Reduced logging for performance
+      logger.debug(`Search pins: Found ${pins.length} pins`);
 
       // Apply visibility filtering
       if (filters.userId) {
-        logger.info(`Applying visibility filtering for user: ${filters.userId.toString()}`);
         const friendshipModel = mongoose.model('Friendship');
         
-        const filteredPins = await Promise.all(
-          pins.map(async (pin) => {
-            // Pre-seeded pins are always visible
-            if (pin.isPreSeeded) {
-              logger.info(`Pin "${pin.name}" is pre-seeded, showing to all users`);
-              return pin;
-            }
-            
-            // Check if createdBy is populated
-            if (pin.createdBy && !pin.createdBy._id) {
-              logger.warn(`Pin "${pin.name}" has no creator, hiding it`);
-              return null;
-            }
-            
-            // User can always see their own pins
-            if (pin.createdBy._id.equals(filters.userId)) {
-              logger.info(`Pin "${pin.name}" belongs to current user, showing`);
-              return pin;
-            }
-            
-            // Default to PUBLIC if visibility is not set (for backward compatibility)
-            const visibility = pin.visibility || PinVisibility.PUBLIC;
-            logger.info(`Pin "${pin.name}" visibility: ${visibility}, creator: ${pin.createdBy._id.toString()}`);
-            
-            // Check visibility
-            if (visibility === PinVisibility.PRIVATE) {
-              logger.info(`Pin "${pin.name}" is PRIVATE, hiding from other users`);
-              return null; // Hide private pins from others
-            }
-            
-            if (visibility === PinVisibility.FRIENDS_ONLY) {
-              // Check if they are friends (Friendship schema uses userId/friendId, not user1/user2)
-              const areFriends = await friendshipModel.exists({
-                $or: [
-                  { userId: filters.userId, friendId: pin.createdBy._id, status: 'accepted' },
-                  { userId: pin.createdBy._id, friendId: filters.userId, status: 'accepted' },
-                ],
-              });
-              
-              if (!areFriends) {
-                logger.info(`Pin "${pin.name}" is FRIENDS_ONLY and users are not friends, hiding`);
-                return null; // Hide friends-only pins from non-friends
-              }
-              logger.info(`Pin "${pin.name}" is FRIENDS_ONLY and users are friends, showing`);
-            }
-            
-            // Public pins are visible to everyone
-            return pin;
-          })
+        // OPTIMIZATION: Fetch all friendships once instead of querying for each pin
+        const friendships = await friendshipModel.find({
+          $or: [
+            { userId: filters.userId, status: 'accepted' },
+            { friendId: filters.userId, status: 'accepted' },
+          ],
+        }).lean();
+        
+        // Create a Set of friend IDs for O(1) lookup
+        const friendIds = new Set(
+          friendships.map(f => 
+            (f.userId && f.userId.toString() === filters.userId!.toString()) 
+              ? f.friendId.toString() 
+              : f.userId.toString()
+          )
         );
         
-        pins = filteredPins.filter((p) => p !== null);
-        logger.info(`Visibility filtering complete. Original: ${filteredPins.length}, Visible: ${pins.length}`);
+        // Filter pins based on visibility (no async needed now)
+        pins = pins.filter((pin) => {
+          // Pre-seeded pins are always visible
+          if (pin.isPreSeeded) {
+            return true;
+          }
+          
+          // Check if createdBy is populated
+          if (pin.createdBy && !pin.createdBy._id) {
+            return false;
+          }
+          
+          // User can always see their own pins
+          if (pin.createdBy._id.equals(filters.userId)) {
+            return true;
+          }
+          
+          // Default to PUBLIC if visibility is not set
+          const visibility = pin.visibility || PinVisibility.PUBLIC;
+          
+          // Hide private pins from others
+          if (visibility === PinVisibility.PRIVATE) {
+            return false;
+          }
+          
+          // For friends-only pins, check if they're friends (O(1) lookup)
+          if (visibility === PinVisibility.FRIENDS_ONLY) {
+            return friendIds.has(pin.createdBy._id.toString());
+          }
+          
+          // Public pins are visible to everyone
+          return true;
+        });
+        
+        logger.debug(`Visibility filtering: ${pins.length} pins visible`);
       }
 
       if (filters.latitude && filters.longitude && filters.radius) {
-        logger.info(`📍 Applying geolocation filter: center=(${filters.latitude}, ${filters.longitude}), radius=${filters.radius}m`);
-        logger.info(`📍 Pins before distance filter: ${pins.length} (${pins.filter(p => p.category === PinCategory.STUDY).length} libraries)`);
-        
+        // Apply geolocation filter
         pins = pins.filter(p => {
           if (!filters.latitude || !filters.longitude || !filters.radius) {
             return false;
           }
           const distance = this.calculateDistance(filters.latitude, filters.longitude, p.location.latitude, p.location.longitude);
-          const withinRadius = distance <= filters.radius;
-          
-          // Log library filtering for debugging
-          if (p.category === PinCategory.STUDY) {
-            logger.info(`📚 Library "${p.name}": distance=${distance.toFixed(2)}m, within=${withinRadius}`);
-          }
-          
-          return withinRadius;
+          return distance <= filters.radius;
         });
-        
-        logger.info(`📍 Pins after distance filter: ${pins.length} (${pins.filter(p => p.category === PinCategory.STUDY).length} libraries)`);
       }
 
       // Apply pagination after all filtering
@@ -292,18 +279,25 @@ export class PinModel {
 
       // Add user's vote to each pin if userId is provided
       if (filters.userId) {
-        // Query votes directly to avoid circular dependency
+        // OPTIMIZATION: Fetch all votes at once instead of querying for each pin
         const PinVote = mongoose.model('PinVote');
-        const pinsWithVotes = await Promise.all(
-          paginatedPins.map(async (pin) => {
-            const vote = await PinVote.findOne({ userId: filters.userId, pinId: pin._id });
-            const userVote = vote ? (vote as IPinVote).voteType : null;
-            return {
-              ...pin.toObject(),
-              userVote
-            };
-          })
+        const pinIds = paginatedPins.map(p => p._id);
+        const votes = await PinVote.find({ 
+          userId: filters.userId, 
+          pinId: { $in: pinIds } 
+        }).lean();
+        
+        // Create a Map for O(1) vote lookup
+        const voteMap = new Map(
+          votes.map((vote: any) => [vote.pinId.toString(), vote.voteType])
         );
+        
+        // Add userVote to each pin
+        const pinsWithVotes = paginatedPins.map(pin => ({
+          ...pin,
+          userVote: voteMap.get(pin._id.toString()) || null
+        }));
+        
         return { pins: pinsWithVotes as IPin[], total };
       }
 
