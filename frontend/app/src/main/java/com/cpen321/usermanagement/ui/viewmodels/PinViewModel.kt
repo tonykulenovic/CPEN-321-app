@@ -114,8 +114,11 @@ class PinViewModel @Inject constructor(
             return
         }
         viewModelScope.launch {
+            // Only show loading state if we don't have any cached pins to display
+            // This prevents the flash when switching to map with cached data
+            val hasCachedPins = _uiState.value.pins.isNotEmpty()
             _uiState.value = _uiState.value.copy(
-                isLoading = true,
+                isLoading = !hasCachedPins, // Only show loading if no cached pins
                 isSearching = search != null,
                 error = null
             )

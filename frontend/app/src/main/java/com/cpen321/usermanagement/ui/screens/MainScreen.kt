@@ -1,5 +1,8 @@
 package com.cpen321.usermanagement.ui.screens
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -315,6 +318,13 @@ private fun MainContent(
     // Satellite view toggle state (moved outside map)
     var isSatelliteView by remember { mutableStateOf(false) }
     
+    // Hoist camera position state to persist across tab switches
+    // UBC Vancouver coordinates
+    val ubcLocation = LatLng(49.2606, -123.2460)
+    val cameraPositionState = rememberCameraPositionState {
+        position = CameraPosition.fromLatLngZoom(ubcLocation, 15f)
+    }
+    
     // Show pin success messages in snackbar
     LaunchedEffect(pinUiState.successMessage) {
         pinUiState.successMessage?.let { message ->
@@ -367,6 +377,7 @@ private fun MainContent(
                 friendsUiState = friendsUiState,
                 hasLocationPermission = hasLocationPermission,
                 isSatelliteView = isSatelliteView,
+                cameraPositionState = cameraPositionState,
                 initialSelectedPinId = initialSelectedPinId,
                 onClearSelectedPin = onClearSelectedPin,
                 onCreatePinClick = onCreatePinClick,
@@ -556,6 +567,7 @@ private fun MapContent(
     friendsUiState: com.cpen321.usermanagement.ui.viewmodels.FriendsUiState,
     hasLocationPermission: Boolean,
     isSatelliteView: Boolean,
+    cameraPositionState: com.google.maps.android.compose.CameraPositionState,
     onCreatePinClick: () -> Unit,
     onPinClick: (String) -> Unit,
     onFriendClick: (com.cpen321.usermanagement.data.remote.dto.FriendSummary, Map<String, String>) -> Unit,
@@ -579,18 +591,20 @@ private fun MapContent(
         }
     }
     
+    // Track map loading state to hide tile loading animation
+    // Starts false each time MapContent is created (when navigating back to map)
+    var isMapLoaded by remember { mutableStateOf(false) }
+    
     // Create scaled custom icons (48dp size for map markers) - use remember to cache across recompositions
     var libraryIcon by remember { mutableStateOf<BitmapDescriptor?>(null) }
     var cafeIcon by remember { mutableStateOf<BitmapDescriptor?>(null) }
     var restaurantIcon by remember { mutableStateOf<BitmapDescriptor?>(null) }
 
-    // Load pins - if coming from search with a selected pin, ensure pins are loaded
-    LaunchedEffect(Unit, initialSelectedPinId) {
-        if (initialSelectedPinId != null) {
+    // Load pins - non-blocking, doesn't delay map rendering
+    LaunchedEffect(initialSelectedPinId) {
+        if (initialSelectedPinId != null && pinUiState.pins.isEmpty()) {
             // Force load if coming from search to ensure pin data is available
-            if (pinUiState.pins.isEmpty()) {
-                pinViewModel.loadPins(forceRefresh = true)
-            }
+            pinViewModel.loadPins(forceRefresh = true)
         } else if (pinUiState.pins.isEmpty() && !pinUiState.isLoading) {
             // Normal loading - use cache if available
             pinViewModel.loadPins()
@@ -608,13 +622,6 @@ private fun MapContent(
         libraryIcon = libraryJob.await()
         cafeIcon = cafeJob.await()
         restaurantIcon = restaurantJob.await()
-    }
-    
-    // UBC Vancouver coordinates
-    val ubcLocation = LatLng(49.2606, -123.2460)
-    
-    val cameraPositionState = rememberCameraPositionState {
-        position = CameraPosition.fromLatLngZoom(ubcLocation, 15f)
     }
     
     // Center camera on selected pin from search
@@ -768,14 +775,19 @@ private fun MapContent(
         myLocationButtonEnabled = hasLocationPermission
     )
     
-    Box(modifier = modifier.fillMaxSize()) {
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .background(Color(0xFF2a3d5c)) // Match map's dark blue background color
+    ) {
         GoogleMap(
             modifier = Modifier.fillMaxSize(),
             cameraPositionState = cameraPositionState,
             properties = mapProperties,
             uiSettings = uiSettings,
             onMapLoaded = {
-                // Map is fully loaded and ready
+                // Map is fully loaded and ready - remove loading overlay
+                isMapLoaded = true
                 android.util.Log.d("MapContent", "Map loaded with ${filteredPins.size} pins")
             }
         ) {
@@ -1081,6 +1093,19 @@ private fun MapContent(
                 imageVector = Icons.Default.AddLocation,
                 contentDescription = "Create Pin",
                 modifier = Modifier.size(24.dp)
+            )
+        }
+        
+        // Loading overlay - hide tile loading animation until map is ready
+        // Provides seamless experience by showing solid color instead of loading tiles
+        AnimatedVisibility(
+            visible = !isMapLoaded,
+            exit = fadeOut(animationSpec = tween(durationMillis = 200))
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color(0xFF2a3d5c))
             )
         }
     }
