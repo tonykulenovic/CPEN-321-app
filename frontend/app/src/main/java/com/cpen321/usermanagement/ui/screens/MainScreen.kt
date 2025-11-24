@@ -52,6 +52,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -117,6 +118,7 @@ import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import androidx.core.content.ContextCompat
 import androidx.compose.ui.platform.LocalContext
+import kotlin.math.*
 
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
@@ -591,6 +593,16 @@ private fun MapContent(
         }
     }
     
+    // Track current zoom level for clustering
+    val currentZoom by remember {
+        derivedStateOf { cameraPositionState.position.zoom }
+    }
+    
+    // Cluster pins based on zoom level - groups nearby pins together
+    val clusters = remember(filteredPins, currentZoom) {
+        clusterPins(filteredPins, currentZoom)
+    }
+    
     // Track map loading state to hide tile loading animation
     // Starts false each time MapContent is created (when navigating back to map)
     var isMapLoaded by remember { mutableStateOf(false) }
@@ -805,76 +817,95 @@ private fun MapContent(
             onMapLoaded = {
                 // Map is fully loaded and ready - remove loading overlay
                 isMapLoaded = true
-                android.util.Log.d("MapContent", "Map loaded with ${filteredPins.size} pins")
+                android.util.Log.d("MapContent", "Map loaded with ${filteredPins.size} pins, ${clusters.size} clusters at zoom ${String.format("%.1f", currentZoom)}")
             }
         ) {
-            // Display filtered pin markers (instant local filtering)
-            // Only render markers when we have data (prevents rendering delay)
-            if (filteredPins.isNotEmpty()) {
-                filteredPins.forEach { pin ->
-                Marker(
-                    state = MarkerState(
-                        position = LatLng(
-                            pin.location.latitude,
-                            pin.location.longitude
-                        )
-                    ),
-                    title = pin.name,
-                    snippet = pin.description,
-                    icon = if (pin.isPreSeeded) {
-                        // Use custom icons for pre-seeded pins based on category
-                        when (pin.category) {
-                            PinCategory.STUDY -> {
-                                // Libraries use library icon (fallback to blue while loading)
-                                libraryIcon ?: BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE)
+            // Display clustered pin markers - automatically groups nearby pins
+            if (clusters.isNotEmpty()) {
+                clusters.forEach { cluster ->
+                    if (cluster.isCluster) {
+                        // Render cluster marker with count badge
+                        val count = cluster.pins.size
+                        Marker(
+                            state = MarkerState(position = cluster.center),
+                            title = "$count pins",
+                            snippet = "Tap to zoom in and see individual pins",
+                            icon = context.createClusterIcon(count),
+                            onClick = {
+                                // Zoom in to show individual pins in cluster
+                                coroutineScope.launch {
+                                    cameraPositionState.animate(
+                                        CameraUpdateFactory.newLatLngZoom(
+                                            cluster.center,
+                                            (cameraPositionState.position.zoom + 2f).coerceAtMost(18f)
+                                        ),
+                                        durationMs = 500
+                                    )
+                                }
+                                true
                             }
-                            PinCategory.SHOPS_SERVICES -> {
-                                // Check subtype to distinguish cafes from restaurants
-                                when (pin.metadata?.subtype) {
-                                    "cafe" -> {
-                                        // Cafes use coffee icon (fallback to orange while loading)
-                                        cafeIcon ?: BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE)
+                        )
+                    } else {
+                        // Render individual pin marker
+                        val pin = cluster.pins.first()
+                        Marker(
+                            state = MarkerState(
+                                position = LatLng(
+                                    pin.location.latitude,
+                                    pin.location.longitude
+                                )
+                            ),
+                            title = pin.name,
+                            snippet = pin.description,
+                            icon = if (pin.isPreSeeded) {
+                                // Use custom icons for pre-seeded pins based on category
+                                when (pin.category) {
+                                    PinCategory.STUDY -> {
+                                        libraryIcon ?: BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_BLUE)
                                     }
-                                    "restaurant" -> {
-                                        // Restaurants use restaurant icon (fallback to red while loading)
-                                        restaurantIcon ?: BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)
+                                    PinCategory.SHOPS_SERVICES -> {
+                                        when (pin.metadata?.subtype) {
+                                            "cafe" -> {
+                                                cafeIcon ?: BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE)
+                                            }
+                                            "restaurant" -> {
+                                                restaurantIcon ?: BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)
+                                            }
+                                            else -> {
+                                                cafeIcon ?: BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE)
+                                            }
+                                        }
                                     }
                                     else -> {
-                                        // Default for SHOPS_SERVICES without subtype
-                                        cafeIcon ?: BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE)
+                                        BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_VIOLET)
                                     }
                                 }
-                            }
-                            else -> {
-                                // Fallback for any other pre-seeded category
-                                BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_VIOLET)
-                            }
-                        }
-                    } else {
-                        // Regular colored markers for user-created pins
-                        BitmapDescriptorFactory.defaultMarker(
-                            when (pin.category) {
-                                PinCategory.STUDY -> BitmapDescriptorFactory.HUE_BLUE
-                                PinCategory.EVENTS -> BitmapDescriptorFactory.HUE_RED
-                                PinCategory.CHILL -> BitmapDescriptorFactory.HUE_GREEN
-                                PinCategory.SHOPS_SERVICES -> BitmapDescriptorFactory.HUE_ORANGE
+                            } else {
+                                // Regular colored markers for user-created pins
+                                BitmapDescriptorFactory.defaultMarker(
+                                    when (pin.category) {
+                                        PinCategory.STUDY -> BitmapDescriptorFactory.HUE_BLUE
+                                        PinCategory.EVENTS -> BitmapDescriptorFactory.HUE_RED
+                                        PinCategory.CHILL -> BitmapDescriptorFactory.HUE_GREEN
+                                        PinCategory.SHOPS_SERVICES -> BitmapDescriptorFactory.HUE_ORANGE
+                                    }
+                                )
+                            },
+                            onClick = {
+                                // Animate camera to pin location
+                                val pinLocation = LatLng(pin.location.latitude, pin.location.longitude)
+                                coroutineScope.launch {
+                                    cameraPositionState.animate(
+                                        CameraUpdateFactory.newLatLngZoom(pinLocation, 17f),
+                                        durationMs = 1000
+                                    )
+                                }
+                                // Open pin details
+                                onPinClick(pin.id)
+                                true
                             }
                         )
-                    },
-                    onClick = {
-                        // Animate camera to pin location
-                        val pinLocation = LatLng(pin.location.latitude, pin.location.longitude)
-                        coroutineScope.launch {
-                            cameraPositionState.animate(
-                                CameraUpdateFactory.newLatLngZoom(pinLocation, 17f),
-                                durationMs = 1000
-                            )
-                        }
-                        // Open pin details
-                        onPinClick(pin.id)
-                        true // Consume the click event
                     }
-                )
                 }
             }
 
@@ -1504,5 +1535,154 @@ private fun Context.createScaledBitmapFromVector(resourceId: Int, sizeDp: Int): 
     val canvas = Canvas(bitmap)
     drawable.setBounds(0, 0, canvas.width, canvas.height)
     drawable.draw(canvas)
+    return BitmapDescriptorFactory.fromBitmap(bitmap)
+}
+
+// Clustering helper functions
+private data class PinCluster(
+    val center: LatLng,
+    val pins: List<Pin>,
+    val isCluster: Boolean // true if multiple pins, false if single pin
+)
+
+/**
+ * Cluster pins based on zoom level - groups nearby pins together
+ * At low zoom (< 14), pins are clustered more aggressively
+ * At high zoom (>= 16), individual pins are shown
+ */
+private fun clusterPins(pins: List<Pin>, zoom: Float): List<PinCluster> {
+    if (pins.isEmpty()) return emptyList()
+    
+    // Calculate clustering threshold based on zoom level
+    // Lower zoom = larger threshold (more clustering)
+    // Higher zoom = smaller threshold (less clustering)
+    val clusterDistanceMeters = when {
+        zoom < 12 -> 500.0 // Very wide view - large clusters
+        zoom < 14 -> 200.0 // Medium view - medium clusters
+        zoom < 16 -> 100.0 // Close view - small clusters
+        else -> 0.0 // Very close - no clustering
+    }
+    
+    // If zoom is high enough, don't cluster at all
+    if (clusterDistanceMeters == 0.0) {
+        return pins.map { pin ->
+            PinCluster(
+                center = LatLng(pin.location.latitude, pin.location.longitude),
+                pins = listOf(pin),
+                isCluster = false
+            )
+        }
+    }
+    
+    val clustered = mutableListOf<PinCluster>()
+    val processed = BooleanArray(pins.size)
+    
+    for (i in pins.indices) {
+        if (processed[i]) continue
+        
+        val pin = pins[i]
+        val cluster = mutableListOf(pin)
+        processed[i] = true
+        
+        // Find nearby pins to cluster together
+        for (j in (i + 1) until pins.size) {
+            if (processed[j]) continue
+            
+            val otherPin = pins[j]
+            val distance = calculateDistance(
+                pin.location.latitude,
+                pin.location.longitude,
+                otherPin.location.latitude,
+                otherPin.location.longitude
+            )
+            
+            if (distance <= clusterDistanceMeters) {
+                cluster.add(otherPin)
+                processed[j] = true
+            }
+        }
+        
+        // Calculate cluster center (average of all pin locations)
+        val avgLat = cluster.map { it.location.latitude }.average()
+        val avgLng = cluster.map { it.location.longitude }.average()
+        
+        clustered.add(
+            PinCluster(
+                center = LatLng(avgLat, avgLng),
+                pins = cluster,
+                isCluster = cluster.size > 1
+            )
+        )
+    }
+    
+    return clustered
+}
+
+/**
+ * Calculate distance between two lat/lng points using Haversine formula
+ * Returns distance in meters
+ */
+private fun calculateDistance(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
+    val R = 6371000.0 // Earth radius in meters
+    val dLat = Math.toRadians(lat2 - lat1)
+    val dLon = Math.toRadians(lon2 - lon1)
+    
+    val a = sin(dLat / 2) * sin(dLat / 2) +
+            cos(Math.toRadians(lat1)) * cos(Math.toRadians(lat2)) *
+            sin(dLon / 2) * sin(dLon / 2)
+    
+    val c = 2 * atan2(sqrt(a), sqrt(1 - a))
+    return R * c
+}
+
+/**
+ * Create a cluster marker icon with count badge
+ */
+private fun Context.createClusterIcon(count: Int): BitmapDescriptor {
+    val size = 100
+    val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+    val canvas = Canvas(bitmap)
+    
+    // Draw outer circle (cluster background)
+    val clusterPaint = android.graphics.Paint().apply {
+        isAntiAlias = true
+        color = android.graphics.Color.parseColor("#4A90E2")
+        style = android.graphics.Paint.Style.FILL
+    }
+    
+    val shadowPaint = android.graphics.Paint().apply {
+        isAntiAlias = true
+        color = android.graphics.Color.parseColor("#33000000")
+        style = android.graphics.Paint.Style.FILL
+    }
+    
+    // Draw shadow
+    canvas.drawCircle(size / 2f, size / 2f + 2f, size / 2f - 10f, shadowPaint)
+    
+    // Draw cluster circle
+    canvas.drawCircle(size / 2f, size / 2f, size / 2f - 10f, clusterPaint)
+    
+    // Draw white border
+    val borderPaint = android.graphics.Paint().apply {
+        isAntiAlias = true
+        color = android.graphics.Color.WHITE
+        style = android.graphics.Paint.Style.STROKE
+        strokeWidth = 4f
+    }
+    canvas.drawCircle(size / 2f, size / 2f, size / 2f - 10f, borderPaint)
+    
+    // Draw count text
+    val textPaint = android.graphics.Paint().apply {
+        isAntiAlias = true
+        color = android.graphics.Color.WHITE
+        textSize = if (count > 99) 24f else 28f
+        textAlign = android.graphics.Paint.Align.CENTER
+        typeface = android.graphics.Typeface.DEFAULT_BOLD
+    }
+    
+    val textY = size / 2f - (textPaint.descent() + textPaint.ascent()) / 2
+    val countText = if (count > 999) "999+" else count.toString()
+    canvas.drawText(countText, size / 2f, textY, textPaint)
+    
     return BitmapDescriptorFactory.fromBitmap(bitmap)
 }
