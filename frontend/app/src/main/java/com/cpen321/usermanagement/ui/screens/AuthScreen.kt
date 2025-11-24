@@ -91,7 +91,7 @@ fun AuthScreen(
     val systemUiController = rememberSystemUiController()
     SideEffect {
         systemUiController.setSystemBarsColor(
-            color = Color(0xFF0F1419),
+            color = Color.Black,
             darkIcons = false
         )
     }
@@ -194,7 +194,7 @@ private fun AuthContent(
 ) {
     Scaffold(
         modifier = modifier,
-        containerColor = Color(0xFF0F1419), // Dark background to match app theme
+        containerColor = Color.Black, // Pure black background
         snackbarHost = {
             AuthSnackbarHost(
                 hostState = snackBarHostState,
