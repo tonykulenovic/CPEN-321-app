@@ -1,6 +1,11 @@
 package com.cpen321.usermanagement.ui.screens
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Image
@@ -86,6 +91,7 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MapStyleOptions
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.BitmapDescriptor
+import com.google.maps.android.compose.Circle
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapProperties
 import com.google.maps.android.compose.MapType
@@ -381,6 +387,7 @@ private fun MainContent(
                 isSatelliteView = isSatelliteView,
                 cameraPositionState = cameraPositionState,
                 initialSelectedPinId = initialSelectedPinId,
+                selectedPinId = selectedPinId,
                 onClearSelectedPin = onClearSelectedPin,
                 onCreatePinClick = onCreatePinClick,
                 onPinClick = onPinClick,
@@ -574,6 +581,7 @@ private fun MapContent(
     onPinClick: (String) -> Unit,
     onFriendClick: (com.cpen321.usermanagement.data.remote.dto.FriendSummary, Map<String, String>) -> Unit,
     initialSelectedPinId: String? = null,
+    selectedPinId: String? = null,
     onClearSelectedPin: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -603,6 +611,32 @@ private fun MapContent(
         clusterPins(filteredPins, currentZoom)
     }
     
+    // Track highlighted pin for glow effect
+    var highlightedPinId by remember { mutableStateOf(initialSelectedPinId) }
+
+    LaunchedEffect(initialSelectedPinId) {
+        // When navigating from search, highlight that pin
+        highlightedPinId = initialSelectedPinId
+    }
+    
+    LaunchedEffect(selectedPinId) {
+        // Clear highlight when pin details sheet is closed
+        if (selectedPinId == null) {
+            highlightedPinId = null
+        }
+    }
+
+    val highlightPulse = rememberInfiniteTransition(label = "pinGlowPulse")
+    val highlightRadius by highlightPulse.animateFloat(
+        initialValue = 25f,
+        targetValue = 40f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 1500, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "pinGlowRadius"
+    )
+
     // Track map loading state to hide tile loading animation
     // Starts false each time MapContent is created (when navigating back to map)
     var isMapLoaded by remember { mutableStateOf(false) }
@@ -902,6 +936,7 @@ private fun MapContent(
                                         durationMs = 1000
                                     )
                                 }
+                                highlightedPinId = pin.id
                                 // Open pin details
                                 onPinClick(pin.id)
                                 true
@@ -909,6 +944,26 @@ private fun MapContent(
                         )
                     }
                 }
+            }
+
+            // Glow highlight around the selected pin
+            val highlightedPin = highlightedPinId?.let { id -> filteredPins.find { it.id == id } }
+            highlightedPin?.let { pin ->
+                val center = LatLng(pin.location.latitude, pin.location.longitude)
+                Circle(
+                    center = center,
+                    radius = highlightRadius.toDouble(),
+                    fillColor = Color(0x1A4A90E2), // More subtle outer glow
+                    strokeColor = Color(0x554A90E2), // Softer stroke
+                    strokeWidth = 1.5f
+                )
+                Circle(
+                    center = center,
+                    radius = (highlightRadius / 2).toDouble(),
+                    fillColor = Color(0x144A90E2), // Very subtle inner glow
+                    strokeColor = Color.Transparent,
+                    strokeWidth = 0f
+                )
             }
 
             // Display friend markers if locations are available
