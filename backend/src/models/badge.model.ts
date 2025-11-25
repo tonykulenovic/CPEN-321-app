@@ -297,7 +297,7 @@ export class BadgeModel {
       // Filter out user badges where badgeId is null (badge was deleted)
       const validUserBadges = userBadges.filter(ub => {
         const badge = ub.badgeId;
-        return badge !== null && badge !== undefined;
+        return badge != null;
       });
 
       // Initialize all categories to 0

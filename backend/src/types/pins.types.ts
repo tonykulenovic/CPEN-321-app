@@ -184,6 +184,6 @@ export interface PinsListResponse {
     page: number;
     limit: number;
   };
-};
+}
 
 

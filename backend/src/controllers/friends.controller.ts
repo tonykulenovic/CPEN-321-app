@@ -73,7 +73,7 @@ export async function sendFriendRequest(req: Request, res: Response): Promise<vo
         res.status(409).json({ message: 'Friend request already sent' });
         return;
       } else if (existingFriendship.status === 'declined' || existingFriendship.status === 'blocked') {
-        // Status check is necessary for business logic
+        // Status check is necessary for business logic - both declined and blocked need cleanup
         // Clean up old declined/blocked records to allow fresh start
         logger.info(`Cleaning up old ${existingFriendship.status} friendship record between ${fromUserId.toString()} and ${targetUser._id.toString()}`);
         await friendshipModel.deleteFriendship(fromUserId, targetUser._id);
@@ -117,7 +117,7 @@ export async function sendFriendRequest(req: Request, res: Response): Promise<vo
         if (field instanceof mongoose.Types.ObjectId) {
           return field.toString();
         }
-        return (field as IUser)._id.toString();
+        return (field)._id.toString();
       };
       
       const fromUserFriendIds = new Set(
@@ -581,7 +581,7 @@ export async function listFriends(req: Request, res: Response): Promise<void> {
       if (field instanceof mongoose.Types.ObjectId) {
         return null; // Not populated
       }
-      return field as IUser;
+      return field;
     };
 
     // 4. Get online status for all friends (based on recent location activity)

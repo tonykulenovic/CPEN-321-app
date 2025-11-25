@@ -111,7 +111,7 @@ class FirebaseService {
         tokens: string[],
         title: string,
         body: string,
-        data?: { [key: string]: string }
+        data?: Record<string, string>
     ): Promise<number> {
         const messaging = this.getMessaging();
         if (!messaging || tokens.length === 0) {

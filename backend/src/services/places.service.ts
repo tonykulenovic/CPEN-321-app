@@ -163,7 +163,7 @@ export class PlacesApiService {
       id: `places_${name.replace(/\s+/g, '_').toLowerCase()}`,
       name,
       address: place.formattedAddress ?? '',
-      location: place.location || { latitude: 0, longitude: 0 },
+      location: place.location ?? { latitude: 0, longitude: 0 },
       rating: place.rating ?? 0,
       priceLevel: this.mapPriceLevel(place.priceLevel),
       isOpen: place.currentOpeningHours?.openNow ?? true,
