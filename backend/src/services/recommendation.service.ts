@@ -255,7 +255,7 @@ export class RecommendationService {
         }
 
         const todayHours = businessHours[currentDay];
-        if (todayHours === undefined || todayHours === null) return false; // Closed today
+        if (todayHours == null) return false; // Closed today
 
         return currentTime >= todayHours.open && currentTime <= todayHours.close;
       });
@@ -326,7 +326,7 @@ export class RecommendationService {
     // Heuristic-based meal relevance using pin name / description / category
     const name = (pin.name || '').toLowerCase();
     const description = (pin.description || '').toLowerCase();
-    const category = (pin.category || '').toLowerCase();
+    const category = (pin.category ?? '').toLowerCase();
     const searchText = `${name} ${description} ${category}`;
 
     // Use simple string matching instead of regex - safer and avoids ReDoS
@@ -593,7 +593,7 @@ export class RecommendationService {
     // Weather scoring (0-15 points) - favor indoor places in bad weather
     let weatherScore = 10; // Default neutral score
     const weatherObj = weather as { main?: { temp?: number }; rain?: boolean; snow?: boolean } | undefined;
-    if ((weatherObj?.main?.temp ?? 0) < 5 || weatherObj?.rain || weatherObj?.snow) {
+    if ((weatherObj?.main?.temp ?? 0) < 5 || (weatherObj?.rain ?? false) || (weatherObj?.snow ?? false)) {
       weatherScore = 15; // Indoor dining preferred in bad weather
     } else if ((weatherObj?.main?.temp ?? 0) > 25) {
       weatherScore = 12; // Slight preference for air conditioning

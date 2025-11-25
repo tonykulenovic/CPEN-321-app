@@ -215,7 +215,7 @@ export class BadgeModel {
     try {
       // Get badge to get target for default progress
       const badge = await this.badge.findById(badgeId);
-      const defaultTarget = badge?.requirements.target ?? 0;
+      const defaultTarget = badge?.requirements?.target ?? 0;
 
       const userBadgeData: Record<string, unknown> = {
         userId,
@@ -297,7 +297,7 @@ export class BadgeModel {
       // Filter out user badges where badgeId is null (badge was deleted)
       const validUserBadges = userBadges.filter(ub => {
         const badge = ub.badgeId;
-        return badge !== null && badge !== undefined;
+        return badge != null;
       });
 
       // Initialize all categories to 0

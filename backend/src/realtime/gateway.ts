@@ -55,7 +55,7 @@ export class LocationGateway {
         throw new Error('User not found');
       }
 
-      const locationPrivacy = user.privacy.location || { sharing: 'off', precisionMeters: 30 };
+      const locationPrivacy = user.privacy.location ?? { sharing: 'off', precisionMeters: 30 };
       logger.info(`🔒 User ${userId.toString()} privacy settings: sharing=${locationPrivacy.sharing}`);
 
       // 2. ALWAYS check for nearby pins first (even if sharing is off)
@@ -137,7 +137,7 @@ export class LocationGateway {
 
       // 2. Get fresh locations for those friends (within last 5 minutes)
       const friendIds = friendsWithLocationSharing.map(f => 
-        (f.friendId as { _id?: mongoose.Types.ObjectId })._id || f.friendId
+        (f.friendId as { _id?: mongoose.Types.ObjectId })._id ?? f.friendId
       );
       const freshLocations = await locationModel.findFriendsLocations(friendIds);
 
@@ -153,7 +153,7 @@ export class LocationGateway {
         }
 
         // Handle both old and new privacy format
-        const locationSharing = friend.privacy.location?.sharing || 'off';
+        const locationSharing = friend.privacy.location?.sharing ?? 'off';
         
         // Skip if location sharing is explicitly disabled
         // Handle legacy "on" value as "live"
@@ -200,7 +200,7 @@ export class LocationGateway {
 
       // 2. Check friend's privacy settings
       const friend = await userModel.findById(friendId);
-      const locationSharing = friend?.privacy.location.sharing || 'off';
+      const locationSharing = friend?.privacy.location.sharing ?? 'off';
       if (!friend || locationSharing === 'off') {
         throw new Error('Friend has location sharing disabled');
       }
@@ -343,7 +343,11 @@ export class LocationGateway {
           next(new Error('JWT_SECRET not configured'));
           return;
         }
-        const decoded = jwt.verify(token, secret) as { id: string };
+        const decoded = jwt.verify(token, secret) as { id: string } | undefined;
+        if (!decoded || !decoded.id) {
+          next(new Error('Invalid token'));
+          return;
+        }
         const userId = new mongoose.Types.ObjectId(decoded.id);
         
         // Store user ID in socket data

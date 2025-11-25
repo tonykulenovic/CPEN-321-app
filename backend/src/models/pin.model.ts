@@ -218,7 +218,7 @@ export class PinModel {
             }
             
             // Check if createdBy is populated
-            if (pin.createdBy && !pin.createdBy._id) {
+            if (!pin.createdBy?._id) {
               logger.warn(`Pin "${pin.name}" has no creator, hiding it`);
               return null;
             }
@@ -230,7 +230,7 @@ export class PinModel {
             }
             
             // Default to PUBLIC if visibility is not set (for backward compatibility)
-            const visibility = pin.visibility || PinVisibility.PUBLIC;
+            const visibility = pin.visibility ?? PinVisibility.PUBLIC;
             logger.info(`Pin "${pin.name}" visibility: ${visibility}, creator: ${pin.createdBy._id.toString()}`);
             
             // Check visibility

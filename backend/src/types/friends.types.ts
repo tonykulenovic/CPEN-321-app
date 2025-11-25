@@ -145,7 +145,7 @@ export interface SendFriendRequestResponse {
     requestId: string;
     status: string;
   };
-};
+}
 
 export interface FriendRequestsResponse {
   message: string;
@@ -167,7 +167,7 @@ export interface UpdateLocationResponse {
   data?: LocationAck;
 };
 
-export type FriendsLocationsResponse = {
+export interface FriendsLocationsResponse {
   message: string;
   data?: FriendLocation[];
 };

@@ -49,10 +49,10 @@ async function migratePinVisibility() {
       logger.info(`  ${itemObj._id ?? 'undefined'}: ${itemObj.count} pins`);
     });
     
-    process.exit(0);
+    // Migration completed successfully
   } catch (error) {
     logger.error('❌ Migration failed:', error);
-    process.exit(1);
+    throw error;
   }
 }
 

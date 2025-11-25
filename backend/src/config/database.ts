@@ -10,6 +10,7 @@ export const connectDB = async (): Promise<void> => {
 
     await mongoose.connect(uri);
 
+    // eslint-disable-next-line security/detect-console-log-non-literal
     console.log(`✅ MongoDB connected successfully`);
 
     mongoose.connection.on('error', error => {

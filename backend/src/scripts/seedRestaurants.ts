@@ -138,7 +138,7 @@ export async function seedRestaurants(): Promise<void> {
           }
         );
 
-        if (response.data && (response.data.places || response.data.results)) {
+        if (response.data && (response.data.places ?? response.data.results)) {
           const regionRestaurants = response.data.places ?? response.data.results;
           if (regionRestaurants && regionRestaurants.length > 0) {
             allRestaurants.push(...regionRestaurants);
