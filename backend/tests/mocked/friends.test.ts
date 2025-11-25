@@ -350,8 +350,8 @@ describe('Mocked: POST /friends/requests/:id/decline', () => {
   // Mocked behavior: friendshipModel.findById returns valid pending friend request
   // Input: valid request ID to decline from authorized user (recipient)
   // Expected status code: 200
-  // Expected behavior: friend request status is updated to 'declined' (not deleted)
-  // Expected output: success message with declined status
+  // Expected behavior: friend request is deleted (not just marked declined)
+  // Expected output: success message with deleted status
   test('Decline valid friend request', async () => {
     const mockFriendRequest = {
       _id: new mongoose.Types.ObjectId('507f1f77bcf86cd799439013'),
@@ -361,19 +361,16 @@ describe('Mocked: POST /friends/requests/:id/decline', () => {
     };
     
     mockFriendshipModel.findById.mockResolvedValueOnce(mockFriendRequest as any);
-    mockFriendshipModel.updateStatus.mockResolvedValueOnce(mockFriendRequest as any);
+    mockFriendshipModel.deleteById.mockResolvedValueOnce(undefined); // deleteById returns void
 
     const response = await request(app)
       .post('/friends/requests/507f1f77bcf86cd799439013/decline');
 
     expect(response.status).toBe(200);
     expect(response.body.message).toBe('Friend request declined successfully');
-    expect(response.body.data.status).toBe('declined');
+    expect(response.body.data.status).toBe('deleted'); // Request is deleted, not just marked declined
     expect(mockFriendshipModel.findById).toHaveBeenCalledWith(mockFriendRequest._id);
-    expect(mockFriendshipModel.updateStatus).toHaveBeenCalledWith(
-      mockFriendRequest._id, 
-      'declined'
-    );
+    expect(mockFriendshipModel.deleteById).toHaveBeenCalledWith(mockFriendRequest._id);
   });
 
   // Mocked behavior: friendshipModel throws error during decline processing

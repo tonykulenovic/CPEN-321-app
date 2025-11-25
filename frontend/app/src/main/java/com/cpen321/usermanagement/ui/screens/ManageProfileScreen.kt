@@ -141,12 +141,19 @@ fun ManageProfileScreen(
     val uiState by profileViewModel.uiState.collectAsState()
     val snackBarHostState = remember { SnackbarHostState() }
 
-    // Set status bar appearance
+    // Set status bar to match top bar (purple) and navigation bar smaller
     val systemUiController = rememberSystemUiController()
     SideEffect {
-        systemUiController.setSystemBarsColor(
+        // Top bar (status bar) - purple to match TopAppBar
+        systemUiController.setStatusBarColor(
             color = Color(0xFF1A1A2E),
             darkIcons = false
+        )
+        // Bottom bar (navigation bar) - match screen background and make smaller
+        systemUiController.setNavigationBarColor(
+            color = Color(0xFF0F1419),
+            darkIcons = false,
+            navigationBarContrastEnforced = false
         )
     }
 
@@ -286,7 +293,7 @@ private fun ProfileTopBar(
             }
         },
         colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = Color(0xFF1A1A2E),
+            containerColor = Color(0xFF1A1A2E), // Purple to match cards
             titleContentColor = Color.White
         )
     )
@@ -342,39 +349,49 @@ private fun ProfileForm(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .padding(spacing.large)
-            .verticalScroll(scrollState),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(spacing.large)
+            .padding(horizontal = spacing.large)
+            .padding(top = spacing.medium, bottom = spacing.small),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        ProfilePictureCard(
-            profilePicture = data.user.profilePicture,
-            isLoadingPhoto = data.isLoadingPhoto,
-            onEditClick = data.onEditPictureClick,
-            onLoadingChange = data.onLoadingPhotoChange
-        )
-
-        ProfileFields(
-            data = ProfileFieldsData(
-                name = data.formState.name,
-                username = data.formState.username,
-                email = data.user.email,
-                bio = data.formState.bio,
-                onNameChange = data.onNameChange,
-                onUsernameChange = data.onUsernameChange,
-                onBioChange = data.onBioChange
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .verticalScroll(scrollState),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(spacing.medium)
+        ) {
+            ProfilePictureCard(
+                profilePicture = data.user.profilePicture,
+                isLoadingPhoto = data.isLoadingPhoto,
+                onEditClick = data.onEditPictureClick,
+                onLoadingChange = data.onLoadingPhotoChange
             )
-        )
 
-        PrivacySettingsButton(
-            onClick = data.onPrivacySettingsClick
-        )
+            ProfileFields(
+                data = ProfileFieldsData(
+                    name = data.formState.name,
+                    username = data.formState.username,
+                    email = data.user.email,
+                    bio = data.formState.bio,
+                    onNameChange = data.onNameChange,
+                    onUsernameChange = data.onUsernameChange,
+                    onBioChange = data.onBioChange
+                )
+            )
 
+            PrivacySettingsButton(
+                onClick = data.onPrivacySettingsClick
+            )
+        }
+        
+        // Save button fixed at bottom, outside scroll
+        Spacer(modifier = Modifier.height(spacing.small))
         SaveButton(
             isSaving = data.isSavingProfile,
             isEnabled = data.formState.hasChanges(),
             onClick = data.onSaveClick
         )
+        Spacer(modifier = Modifier.height(spacing.small))
     }
 }
 

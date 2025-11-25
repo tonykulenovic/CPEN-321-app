@@ -15,6 +15,7 @@ import {
 import logger from '../utils/logger.util';
 import { BadgeService } from '../services/badge.service';
 import { BadgeRequirementType } from '../types/badge.types';
+import { locationGateway } from '../realtime/gateway';
 
 export class PinsController {
   async createPin(
@@ -60,6 +61,9 @@ export class PinsController {
         logger.error('Error processing badge event for pin creation:', badgeError);
       }
       
+      // Broadcast pin created event to all connected users via Socket.IO
+      await locationGateway.broadcastPinCreated(pin);
+      
       res.status(201).json({ message: 'Pin created successfully', data: { pin } });
     } catch (error) {
       logger.error('Failed to create pin:', error as Error);
@@ -103,6 +107,10 @@ export class PinsController {
       }
       const pin = await pinModel.update(pinId, userId, req.body);
       if (!pin) return res.status(404).json({ message: 'Pin not found or unauthorized' });
+      
+      // Broadcast pin updated event to all connected users via Socket.IO
+      await locationGateway.broadcastPinUpdated(pin);
+      
       res.status(200).json({ message: 'Pin updated successfully', data: { pin } });
     } catch (error) {
       logger.error('Failed to update pin:', error as Error);
@@ -121,8 +129,13 @@ export class PinsController {
         return res.status(401).json({ message: 'Unauthorized' });
       }
       const isAdmin = req.user?.isAdmin ?? false;
+      const pinIdStr = pinId.toString();
       const deleted = await pinModel.delete(pinId, userId, isAdmin);
       if (!deleted) return res.status(404).json({ message: 'Pin not found or unauthorized' });
+      
+      // Broadcast pin deleted event to all connected users via Socket.IO
+      await locationGateway.broadcastPinDeleted(pinIdStr);
+      
       res.status(200).json({ message: 'Pin deleted successfully' });
     } catch (error) {
       logger.error('Failed to delete pin:', error as Error);

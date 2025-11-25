@@ -24,6 +24,7 @@ import com.cpen321.usermanagement.data.remote.dto.*
 import com.cpen321.usermanagement.ui.viewmodels.PinUiState
 import com.cpen321.usermanagement.ui.viewmodels.PinViewModel
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
+import androidx.compose.runtime.SideEffect
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -35,12 +36,19 @@ fun CreatePinScreen(
 ) {
     val uiState by pinViewModel.uiState.collectAsState()
     
-    // System UI colors
+    // System UI colors - status bar matches top bar, navigation bar matches screen background
     val systemUiController = rememberSystemUiController()
     SideEffect {
-        systemUiController.setSystemBarsColor(
+        // Top bar (status bar) - purple to match TopAppBar
+        systemUiController.setStatusBarColor(
             color = Color(0xFF1A1A2E),
             darkIcons = false
+        )
+        // Bottom bar (navigation bar) - match screen background
+        systemUiController.setNavigationBarColor(
+            color = Color(0xFF16213E),
+            darkIcons = false,
+            navigationBarContrastEnforced = false
         )
     }
     

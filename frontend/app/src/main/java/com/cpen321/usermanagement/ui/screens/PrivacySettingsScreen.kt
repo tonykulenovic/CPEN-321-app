@@ -28,6 +28,7 @@ import com.cpen321.usermanagement.ui.components.MessageSnackbarState
 import com.cpen321.usermanagement.ui.viewmodels.ProfileViewModel
 import com.cpen321.usermanagement.ui.theme.LocalSpacing
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
+import androidx.compose.runtime.SideEffect
 
 data class PrivacySettingsState(
     val profileVisibleTo: String = "friends",
@@ -54,12 +55,19 @@ fun PrivacySettingsScreen(
     val uiState by profileViewModel.uiState.collectAsState()
     val snackBarHostState = remember { SnackbarHostState() }
     
-    // Set status bar appearance
+    // Set status bar to match top bar (purple) and navigation bar to match screen background
     val systemUiController = rememberSystemUiController()
     SideEffect {
-        systemUiController.setSystemBarsColor(
+        // Top bar (status bar) - purple to match TopAppBar
+        systemUiController.setStatusBarColor(
             color = Color(0xFF1A1A2E),
             darkIcons = false
+        )
+        // Bottom bar (navigation bar) - match screen background
+        systemUiController.setNavigationBarColor(
+            color = Color(0xFF0F1419),
+            darkIcons = false,
+            navigationBarContrastEnforced = false
         )
     }
 
