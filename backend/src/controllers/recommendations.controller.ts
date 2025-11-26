@@ -50,7 +50,8 @@ export async function getRecommendations(req: Request, res: Response): Promise<v
         })),
         count: recommendations.length,
         // Include weather context for user reference
-        weather: recommendations.length > 0 ? {
+        weather: recommendations.length > 0
+          ? {
           // Weather info is included in the recommendation generation process
           hasWeatherContext: true,
           note: "Weather conditions considered in recommendations"

@@ -288,7 +288,7 @@ async function main() {
     console.log('  npm run simulate:users 507f1f77bcf86cd799439011 507f1f77bcf86cd799439012');
     console.log('');
     console.log('First, find user IDs by querying your database or checking user profiles.');
-    process.exit(1);
+    throw new Error('No user IDs provided');
   }
 
   const userIds = args;
@@ -336,7 +336,7 @@ async function main() {
 
   } catch (error) {
     console.error('❌ Simulation failed:', error);
-    process.exit(1);
+    throw error;
   }
 }
 

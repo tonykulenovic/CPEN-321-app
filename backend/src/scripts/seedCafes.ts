@@ -97,8 +97,8 @@ export async function seedCafes(): Promise<void> {
       }
     );
 
+    // This check is necessary to validate API response
     if (!response.data || (!response.data.places && !response.data.results)) {
-      // This check is necessary to validate API response
       logger.error(`❌ Google Places API error: Invalid response`);
       if (response.data.error_message) {
         logger.error(`   ${response.data.error_message}`);

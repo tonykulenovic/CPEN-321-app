@@ -186,7 +186,7 @@ export class BadgeController {
     next: NextFunction
   ) {
     try {
-      const userId = req.body.userId || req.user?._id?.toString();
+      const userId = req.body.userId || (req.user ? req.user._id.toString() : undefined);
       if (!userId) {
         return res.status(400).json({
           message: 'User ID is required',
