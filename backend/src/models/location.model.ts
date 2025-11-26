@@ -80,12 +80,12 @@ export class LocationModel {
 
   async findByUserId(userId: mongoose.Types.ObjectId): Promise<ILocation | null> {
     try {
-      const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+      const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000); // 2 hours
       
       return await this.location.findOne({ 
         userId, 
         expiresAt: { $gt: new Date() },
-        createdAt: { $gt: fiveMinutesAgo }, // Only locations within last 5 minutes
+        createdAt: { $gt: twoHoursAgo }, // Last 2 hours (was 5 minutes)
         shared: true 
       }).sort({ createdAt: -1 }); // Get the latest location
     } catch (error) {
