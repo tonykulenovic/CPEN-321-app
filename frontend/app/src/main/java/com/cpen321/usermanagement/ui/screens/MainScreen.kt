@@ -612,12 +612,7 @@ private fun MapContent(
     }
     
     // Track highlighted pin for glow effect
-    var highlightedPinId by remember { mutableStateOf(initialSelectedPinId) }
-
-    LaunchedEffect(initialSelectedPinId) {
-        // When navigating from search, highlight that pin
-        highlightedPinId = initialSelectedPinId
-    }
+    var highlightedPinId by remember { mutableStateOf<String?>(null) }
     
     LaunchedEffect(selectedPinId) {
         // Clear highlight when pin details sheet is closed
@@ -677,11 +672,13 @@ private fun MapContent(
             val selectedPin = pinUiState.pins.find { it.id == initialSelectedPinId }
             
             if (selectedPin != null) {
-                // Trigger bottom sheet to open
+                // Open bottom sheet immediately
                 onPinClick(selectedPin.id)
                 
-                // Reduced delay for faster response
+                // Small delay for better UX
                 kotlinx.coroutines.delay(100)
+                
+                // Animate camera to pin location
                 val pinLocation = LatLng(selectedPin.location.latitude, selectedPin.location.longitude)
                 cameraPositionState.animate(
                     CameraUpdateFactory.newLatLngZoom(pinLocation, 17f),

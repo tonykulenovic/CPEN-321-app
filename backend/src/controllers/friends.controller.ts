@@ -252,7 +252,7 @@ export async function listFriendRequests(req: Request, res: Response): Promise<v
         const recipient = getUserData(request.friendId);
         return {
           _id: request._id.toString(),
-          from: {
+          to: {
             userId: recipient._id,
             displayName: recipient.name ?? recipient.username,
             photoUrl: recipient.profilePicture,

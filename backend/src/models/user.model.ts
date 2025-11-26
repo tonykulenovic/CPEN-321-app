@@ -386,6 +386,15 @@ export class UserModel {
     fcmToken: string
   ): Promise<IUser | null> {
     try {
+      // First, remove this token from any other users who have it
+      // This prevents multiple accounts on the same device from having the same token
+      await this.user.updateMany(
+        { fcmToken, _id: { $ne: userId } },
+        { $unset: { fcmToken: '' } }
+      );
+      logger.info(`🔄 Removed FCM token from other users (if any) before assigning to user ${userId.toString()}`);
+
+      // Now update the token for the current user
       const updatedUser = await this.user.findByIdAndUpdate(
         userId,
         { fcmToken },

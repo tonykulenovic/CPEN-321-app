@@ -167,11 +167,13 @@ fun FriendsScreen(
     
     val friendRequests = remember(uiState.friendRequests) {
         uiState.friendRequests.map { requestSummary ->
+            // Use 'from' for incoming requests, 'to' for outgoing requests
+            val user = requestSummary.from ?: requestSummary.to
             FriendRequest(
                 id = requestSummary._id,
-                name = requestSummary.from.displayName,
+                name = user?.displayName ?: "Unknown",
                 email = "", // Not provided by backend
-                profilePictureUrl = requestSummary.from.photoUrl,
+                profilePictureUrl = user?.photoUrl,
                 requestedAt = requestSummary.createdAt
             )
         }

@@ -191,6 +191,15 @@ class AuthViewModel @Inject constructor(
 
     fun handleAccountDeletion() {
         viewModelScope.launch {
+            // Remove FCM token before deleting account
+            try {
+                profileRepository.removeFcmToken()
+                Log.d(TAG, "✅ FCM token removed from backend before account deletion")
+            } catch (e: Exception) {
+                Log.w(TAG, "⚠️ Failed to remove FCM token before account deletion: ${e.message}")
+                // Continue with deletion even if FCM token removal fails
+            }
+            
             val deleteResult = profileRepository.deleteAccount()
             
             if (deleteResult.isSuccess) {
@@ -215,6 +224,15 @@ class AuthViewModel @Inject constructor(
 
     fun handleLogout() {
         viewModelScope.launch {
+            // Remove FCM token from backend before logging out
+            try {
+                profileRepository.removeFcmToken()
+                Log.d(TAG, "✅ FCM token removed from backend during logout")
+            } catch (e: Exception) {
+                Log.w(TAG, "⚠️ Failed to remove FCM token during logout: ${e.message}")
+                // Continue with logout even if FCM token removal fails
+            }
+            
             authRepository.clearToken()
             _uiState.value = _uiState.value.copy(
                 isAuthenticated = false,

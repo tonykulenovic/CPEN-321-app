@@ -17,7 +17,8 @@ data class FriendSummary(
 
 data class FriendRequestSummary(
     val _id: String,
-    val from: FriendRequestUser,
+    val from: FriendRequestUser? = null,  // For incoming requests
+    val to: FriendRequestUser? = null,    // For outgoing requests
     val createdAt: String
 )
 

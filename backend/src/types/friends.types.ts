@@ -51,7 +51,12 @@ export interface FriendSummary {
 
 export interface FriendRequestSummary {
   _id: string;
-  from: {
+  from?: {
+    userId: string;
+    displayName: string;
+    photoUrl?: string;
+  };
+  to?: {
     userId: string;
     displayName: string;
     photoUrl?: string;
