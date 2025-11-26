@@ -67,20 +67,11 @@ export class LocationGateway {
         // Don't fail if pin checking fails
       }
 
-      // 3. Check if location sharing is off (for friend sharing only)
-      // Handle legacy "on" value as equivalent to "live"
-      if (locationPrivacy.sharing === 'off') {
-        logger.info(`🔴 User ${userId.toString()} has location sharing OFF, skipping friend location broadcast`);
-        return {
-          shared: false,
-          expiresAt: new Date().toISOString(),
-        };
-      }
-
-      // 3. Apply location approximation if needed
+      // 3. Apply location approximation if needed (for friend sharing)
       let finalLat = lat;
       let finalLng = lng;
       let finalAccuracyM = accuracyM;
+      const willShareWithFriends = locationPrivacy.sharing !== 'off';
 
       if (locationPrivacy.sharing === 'approximate') {
         // Apply approximation based on precisionMeters setting
@@ -95,29 +86,34 @@ export class LocationGateway {
         finalLng += (Math.random() - 0.5) * offset;
       }
 
-      // 4. Store location in database with TTL
+      // 4. ALWAYS store location in database (needed for recommendations, pin visits, etc.)
+      // Use original lat/lng for storage when not sharing, approximated for sharing
       const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days
       const location = await locationModel.create(
         userId,
-        finalLat,
-        finalLng,
-        finalAccuracyM,
-        true,
+        willShareWithFriends ? finalLat : lat, // Use original location when not sharing
+        willShareWithFriends ? finalLng : lng,
+        willShareWithFriends ? finalAccuracyM : accuracyM,
+        willShareWithFriends, // Set shared flag based on privacy
         expiresAt
       );
 
-      // 5. Broadcast to subscribed friends
-      logger.info(`📡 Broadcasting location update for user ${userId.toString()} to subscribed friends`);
-      await this.broadcastLocationUpdate(userId, {
-        lat: finalLat,
-        lng: finalLng,
-        accuracyM: finalAccuracyM,
-        ts: location.createdAt.toISOString(),
-      });
+      // 5. Only broadcast to friends if location sharing is enabled
+      if (willShareWithFriends) {
+        logger.info(`📡 Broadcasting location update for user ${userId.toString()} to subscribed friends`);
+        await this.broadcastLocationUpdate(userId, {
+          lat: finalLat,
+          lng: finalLng,
+          accuracyM: finalAccuracyM,
+          ts: location.createdAt.toISOString(),
+        });
+        logger.info(`✅ Location saved and shared with friends for user ${userId.toString()}`);
+      } else {
+        logger.info(`✅ Location saved (not shared with friends due to privacy settings) for user ${userId.toString()}`);
+      }
 
-      logger.info(`✅ Location successfully reported and shared for user ${userId.toString()}`);
       return {
-        shared: true,
+        shared: willShareWithFriends,
         expiresAt: expiresAt.toISOString(),
       };
     } catch (error) {

@@ -85,8 +85,9 @@ export class LocationModel {
       return await this.location.findOne({ 
         userId, 
         expiresAt: { $gt: new Date() },
-        createdAt: { $gt: twoHoursAgo }, // Last 2 hours (was 5 minutes)
-        shared: true 
+        createdAt: { $gt: twoHoursAgo } // Last 2 hours (was 5 minutes)
+        // Note: 'shared' flag removed - recommendations work regardless of privacy settings
+        // Privacy settings only affect friend location sharing, not recommendations
       }).sort({ createdAt: -1 }); // Get the latest location
     } catch (error) {
       logger.error('Error finding location by user ID:', error);
