@@ -176,40 +176,6 @@ export class BadgeModel {
     }
   }
 
-  async findByCategory(category: BadgeCategory): Promise<IBadge[]> {
-    try {
-      return await this.badge.find({ category, isActive: true }).sort({ rarity: 1, name: 1 });
-    } catch (error) {
-      logger.error('Error finding badges by category:', error);
-      throw new Error('Failed to find badges by category');
-    }
-  }
-
-  async update(badgeId: mongoose.Types.ObjectId, updateData: unknown): Promise<IBadge | null> {
-    try {
-      const validatedData = updateBadgeSchema.parse(updateData);
-      return await this.badge.findByIdAndUpdate(badgeId, validatedData, { new: true });
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        logger.error('Badge update validation error:', error.issues);
-        throw new Error('Invalid badge update data');
-      }
-      logger.error('Error updating badge:', error);
-      throw new Error('Failed to update badge');
-    }
-  }
-
-  async delete(badgeId: mongoose.Types.ObjectId): Promise<void> {
-    try {
-      await this.badge.findByIdAndDelete(badgeId);
-      // Also remove all user badge associations
-      await this.userBadge.deleteMany({ badgeId });
-    } catch (error) {
-      logger.error('Error deleting badge:', error);
-      throw new Error('Failed to delete badge');
-    }
-  }
-
   // UserBadge operations
   async assignBadge(userId: mongoose.Types.ObjectId, badgeId: mongoose.Types.ObjectId, progress?: BadgeProgress): Promise<IUserBadge> {
     try {
