@@ -50,9 +50,14 @@ class PinViewModel @Inject constructor(
      */
     private fun observePinEvents() {
         viewModelScope.launch {
+            android.util.Log.d("PinViewModel", "🎯 Starting to observe pin events from socket...")
             locationTrackingService.pinEvents.collect { event ->
+                android.util.Log.d("PinViewModel", "🎯 Received pin event: ${event.javaClass.simpleName}")
                 when (event) {
                     is PinEvent.PinCreated -> {
+                        android.util.Log.d("PinViewModel", "➕ Adding new pin to list: ${event.pin.name} (ID: ${event.pin.id})")
+                        android.util.Log.d("PinViewModel", "➕ Current pins count: ${_uiState.value.pins.size}")
+                        
                         // Add new pin to the list
                         val currentPins = _uiState.value.pins.toMutableList()
                         currentPins.add(event.pin)
@@ -61,8 +66,12 @@ class PinViewModel @Inject constructor(
                             totalPins = currentPins.size,
                             lastLoadedTimestamp = System.currentTimeMillis()
                         )
+                        
+                        android.util.Log.d("PinViewModel", "✅ Pin added! New pins count: ${_uiState.value.pins.size}")
                     }
                     is PinEvent.PinUpdated -> {
+                        android.util.Log.d("PinViewModel", "✏️ Updating pin: ${event.pin.name} (ID: ${event.pin.id})")
+                        
                         // Update existing pin in the list
                         val updatedPins = _uiState.value.pins.map { pin ->
                             if (pin.id == event.pin.id) event.pin else pin
@@ -76,8 +85,12 @@ class PinViewModel @Inject constructor(
                         if (_uiState.value.currentPin?.id == event.pin.id) {
                             _uiState.value = _uiState.value.copy(currentPin = event.pin)
                         }
+                        
+                        android.util.Log.d("PinViewModel", "✅ Pin updated successfully")
                     }
                     is PinEvent.PinDeleted -> {
+                        android.util.Log.d("PinViewModel", "🗑️ Removing deleted pin: ${event.pinId}")
+                        
                         // Remove deleted pin from the list
                         val filteredPins = _uiState.value.pins.filter { it.id != event.pinId }
                         _uiState.value = _uiState.value.copy(
@@ -90,6 +103,8 @@ class PinViewModel @Inject constructor(
                         if (_uiState.value.currentPin?.id == event.pinId) {
                             _uiState.value = _uiState.value.copy(currentPin = null)
                         }
+                        
+                        android.util.Log.d("PinViewModel", "✅ Pin removed! New pins count: ${_uiState.value.pins.size}")
                     }
                 }
             }

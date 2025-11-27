@@ -138,14 +138,15 @@ class LocationTrackingService @Inject constructor(
                 }
             }
             
-            socket.on(Socket.EVENT_DISCONNECT) {
-                Log.d(TAG, "Socket disconnected")
+            socket.on(Socket.EVENT_DISCONNECT) { args ->
+                val reason = args.firstOrNull()
+                Log.w(TAG, "❌ Socket DISCONNECTED: $reason")
                 _connectionStatus.value = false
             }
             
             socket.on(Socket.EVENT_CONNECT_ERROR) { args ->
                 val error = args.firstOrNull()
-                Log.w(TAG, "Socket connection error: $error")
+                Log.e(TAG, "❌ Socket CONNECTION ERROR: $error")
                 _connectionStatus.value = false
                 
                 // Don't flood logs with reconnection attempts
@@ -238,36 +239,50 @@ class LocationTrackingService @Inject constructor(
             
             // Pin real-time events
             socket.on("pin:created") { args ->
+                Log.d(TAG, "🔔 RAW pin:created event received! Args count: ${args.size}")
                 try {
                     val data = args[0] as JSONObject
+                    Log.d(TAG, "🔔 Received data keys: ${data.keys().asSequence().toList()}")
                     val pinJson = data.getJSONObject("pin")
+                    Log.d(TAG, "🔔 Pin JSON preview: ${pinJson.toString().take(200)}")
                     val pin = gson.fromJson(pinJson.toString(), Pin::class.java)
-                    Log.d(TAG, "📍 New pin created: ${pin.name}")
+                    Log.d(TAG, "📍 New pin created: ${pin.name} (ID: ${pin.id})")
                     
                     serviceScope.launch {
+                        Log.d(TAG, "🔔 Emitting PinEvent.PinCreated to flow")
                         _pinEvents.emit(PinEvent.PinCreated(pin))
+                        Log.d(TAG, "🔔 PinEvent.PinCreated emitted successfully!")
                     }
                 } catch (e: Exception) {
-                    Log.e(TAG, "Error parsing pin:created", e)
+                    Log.e(TAG, "❌ Error parsing pin:created", e)
+                    Log.e(TAG, "❌ Exception details: ${e.message}")
+                    try {
+                        Log.e(TAG, "❌ Raw args: ${args.joinToString()}")
+                    } catch (ex: Exception) {
+                        Log.e(TAG, "❌ Could not log raw args")
+                    }
                 }
             }
             
             socket.on("pin:updated") { args ->
+                Log.d(TAG, "🔔 RAW pin:updated event received!")
                 try {
                     val data = args[0] as JSONObject
                     val pinJson = data.getJSONObject("pin")
                     val pin = gson.fromJson(pinJson.toString(), Pin::class.java)
-                    Log.d(TAG, "📍 Pin updated: ${pin.name}")
+                    Log.d(TAG, "📍 Pin updated: ${pin.name} (ID: ${pin.id})")
                     
                     serviceScope.launch {
                         _pinEvents.emit(PinEvent.PinUpdated(pin))
+                        Log.d(TAG, "🔔 PinEvent.PinUpdated emitted successfully!")
                     }
                 } catch (e: Exception) {
-                    Log.e(TAG, "Error parsing pin:updated", e)
+                    Log.e(TAG, "❌ Error parsing pin:updated", e)
                 }
             }
             
             socket.on("pin:deleted") { args ->
+                Log.d(TAG, "🔔 RAW pin:deleted event received!")
                 try {
                     val data = args[0] as JSONObject
                     val pinId = data.getString("pinId")
@@ -275,9 +290,10 @@ class LocationTrackingService @Inject constructor(
                     
                     serviceScope.launch {
                         _pinEvents.emit(PinEvent.PinDeleted(pinId))
+                        Log.d(TAG, "🔔 PinEvent.PinDeleted emitted successfully!")
                     }
                 } catch (e: Exception) {
-                    Log.e(TAG, "Error parsing pin:deleted", e)
+                    Log.e(TAG, "❌ Error parsing pin:deleted", e)
                 }
             }
         }

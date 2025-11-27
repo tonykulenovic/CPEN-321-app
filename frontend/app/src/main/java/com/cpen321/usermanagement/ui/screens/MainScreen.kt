@@ -217,6 +217,46 @@ fun MainScreen(
             }
         }
     }
+    
+    // Monitor socket connection status and retry if needed
+    LaunchedEffect(profileUiState.user) {
+        profileUiState.user?.let { user ->
+            var retryCount = 0
+            val maxRetries = 3
+            
+            // Wait a bit for initial connection attempt
+            kotlinx.coroutines.delay(2000)
+            
+            while (retryCount < maxRetries) {
+                val isConnected = locationTrackingService.connectionStatus.value
+                android.util.Log.d("MainScreen", "🔍 Socket connection check (attempt ${retryCount + 1}/$maxRetries): connected=$isConnected")
+                
+                if (!isConnected) {
+                    retryCount++
+                    android.util.Log.w("MainScreen", "⚠️ Socket not connected, retrying in 2 seconds...")
+                    kotlinx.coroutines.delay(2000)
+                    
+                    // Retry connection
+                    try {
+                        val authToken = tokenManager.getTokenSync()
+                        if (authToken != null) {
+                            android.util.Log.d("MainScreen", "🔄 Retrying socket initialization...")
+                            locationTrackingService.connect()
+                        }
+                    } catch (e: Exception) {
+                        android.util.Log.e("MainScreen", "❌ Retry failed: ${e.message}")
+                    }
+                } else {
+                    android.util.Log.d("MainScreen", "✅ Socket connected successfully on attempt ${retryCount + 1}")
+                    break // Exit loop when connected
+                }
+            }
+            
+            if (retryCount >= maxRetries) {
+                android.util.Log.e("MainScreen", "❌ Socket failed to connect after $maxRetries attempts")
+            }
+        }
+    }
 
     // Request location permission
     val locationPermissionState = rememberPermissionState(
