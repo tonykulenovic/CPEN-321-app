@@ -4,7 +4,46 @@
 
 | **Change Date**                              | **Modified Sections**                         | **Rationale**                                                                                                                                                                                                                                                                        |
 | -------------------------------------------- | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| 2025-11-10 ([9a30c85](../../commit/2b9a2a0)) | Requirements Specification, Use Cases         | Adjusted the use cases for accuracy. Specifically removed unimplemented use cases and moved 'Receive Notifications' use case to renamed feature 6                                                          |
+| 2025-11-23 ([16f79ff](../../commit/16f79ff)) | UI/UX, Map Presentation                        | Added a glow effect on selected pins so users can more easily recognize the active pitch/location on the map. |
+| 2025-11-23 ([7eeb820](../../commit/7eeb820)) | UI/UX, Map Presentation                        | Re-introduced 3D buildings to maintain spatial context when navigating the map. |
+| 2025-11-23 ([42eb198](../../commit/42eb198)) | Map Performance, Pin Rendering                 | Fixed the clustering logic so large pin concentrations remain legible and responsive under zoomed-out views. |
+| 2025-11-23 ([3a8acf7](../../commit/3a8acf7)) | UI/UX                                         | Applied several minor interface tweaks to keep colors and spacing consistent after recent map updates. |
+| 2025-11-23 ([4edc16f](../../commit/4edc16f)) | Animations, Map Rendering                      | Smoothed the map rendering animation, reducing visual jitter during tile refreshes. |
+| 2025-11-23 ([81c78b3](../../commit/81c78b3)) | Animations, Map Rendering                      | Added a follow-up animation polish pass to ensure fluid transitions between map states. |
+| 2025-11-23 ([0110d44](../../commit/0110d44)) | Real-time Sync                                 | Fixed the real-time pin update flow so edits propagate immediately to connected clients. |
+| 2025-11-11 ([9060d9a](../../commit/9060d9a)) | Repository Sync                                | Merged the remote `main` branch to keep local work aligned with upstream changes before continuing new work. |
+| 2025-11-10 ([915eecd](../../commit/915eecd)) | CI/Automation                                  | Addressed failing GitHub Actions steps so the pipeline could complete successfully. |
+| 2025-11-10 ([2b9434b](../../commit/2b9434b)) | Documentation                                  | Updated the justifications section that tracks unresolved Codacy findings. |
+| 2025-11-10 ([ce831a1](../../commit/ce831a1)) | Repository Sync                                | Pulled the latest changes from `main` to maintain parity with upstream work. |
+| 2025-11-10 ([1dd5482](../../commit/1dd5482)) | Documentation, Testing                         | Added coverage screenshots to documentation so visual QA remains current. |
+| 2025-11-10 ([b2e9bfe](../../commit/b2e9bfe)) | Testing                                        | Updated the E2E finish flow artifacts to reflect the state after stabilizing the UI. |
+| 2025-11-10 ([feb27ef](../../commit/feb27ef)) | Documentation                                  | Refreshed the Requirements and Design documentation to capture the current product state before reporting. |
+| 2025-11-10 ([b10b3ed](../../commit/b10b3ed)) | Documentation Assets                           | Added uploaded assets (images/diagrams) that illustrate recent flows. |
+| 2025-11-10 ([6a1a6eb](../../commit/6a1a6eb)) | Documentation Assets                           | Removed the outdated `Recommend_Locations.png` asset to prevent stale references. |
+| 2025-11-10 ([c97e943](../../commit/c97e943)) | Documentation Assets                           | Dropped the obsolete `Manage_Friends.png` now replaced by newer documentation visuals. |
+| 2025-11-10 ([fefa9ec](../../commit/fefa9ec)) | Documentation Assets                           | Removed the `Manage_Account.png` asset that was superseded by updated UI mockups. |
+| 2025-11-10 ([30953f4](../../commit/30953f4)) | Testing                                        | Revised the post-E2E finish definitions after additional UI tweaks. |
+| 2025-11-10 ([e8dfd22](../../commit/e8dfd22)) | Testing                                        | Continued refining end-to-end test coverage to pass reliably across environments. |
+| 2025-11-10 ([0d47a3a](../../commit/0d47a3a)) | Testing Documentation                         | Documented the updated testing process for clarity after recent automation refinements. |
+| 2025-11-10 ([94de934](../../commit/94de934)) | Testing                                        | Confirmed the focused test suites were working after previous fix attempts. |
+| 2025-11-10 ([0f30110](../../commit/0f30110)) | Testing                                        | Applied partial fixes to several failing tests to progress toward stability. |
+| 2025-11-10 ([eedfe4c](../../commit/eedfe4c)) | Repository Sync                                | Pulled in upstream `main` changes while keeping the Codacy branch synchronized. |
+| 2025-11-10 ([c4efbb5](../../commit/c4efbb5)) | Testing                                        | Verified the realtime gateway via dedicated unit tests after integration adjustments. |
+| 2025-11-10 ([2433502](../../commit/2433502)) | Documentation                                  | Updated the change history section of this document to record work done up to that point. |
+| 2025-11-10 ([1293f6d](../../commit/1293f6d)) | Repository Sync                                | Merged the remote `main` branch once more to minimize divergence. |
+| 2025-11-10 ([682722b](../../commit/682722b)) | Code Quality                                  | Merged PR #23 that bundled several Codacy fixes into the branch. |
+| 2025-11-10 ([fcf833a](../../commit/fcf833a)) | Code Quality                                  | Added another set of Codacy cleanups targeting new warnings. |
+| 2025-11-10 ([9cd649b](../../commit/9cd649b)) | Code Quality                                  | Merged PR #22 to fold in additional Codacy adjustments. |
+| 2025-11-10 ([803b63b](../../commit/803b63b)) | Code Quality                                  | Applied the next wave of Codacy fixes within the codacy-fixes branch. |
+| 2025-11-10 ([83ea953](../../commit/83ea953)) | Code Quality                                  | Merged PR #21 to add yet more Codacy remediation work. |
+| 2025-11-10 ([5cfef53](../../commit/5cfef53)) | Code Quality                                  | Synced `codacy-fixes` with upstream branches to keep linting aligned. |
+| 2025-11-10 ([d05c99f](../../commit/d05c99f)) | Code Quality                                  | Applied further Codacy fixes after reviewing persistent findings. |
+| 2025-11-10 ([c666bfb](../../commit/c666bfb)) | Code Quality                                  | Merged PR #20 to fold in additional Codacy cleanups. |
+| 2025-11-10 ([554bdc1](../../commit/554bdc1)) | Code Quality                                  | Merged the main branch into `codacy-fixes` so the branch reflected the latest baseline. |
+| 2025-11-10 ([fe5ff8b](../../commit/fe5ff8b)) | Code Quality, Tooling                         | Added even more Codacy fixes and committed the `.codacy.yml` config guiding the analysis. |
+| 2025-11-10 ([d733234](../../commit/d733234)) | Code Quality                                  | Merged PR #19 that continued the Codacy cleanup cycle. |
+| 2025-11-10 ([3a202a8](../../commit/3a202a8)) | Code Quality                                  | Added another wave of Codacy fixes for the Codacy branch. |
+| 2025-11-03 ([2b9a2a0](../../commit/2b9a2a0)) | Requirements Specification, Use Cases         | Updated Use Case 10: Admin Review Reported Content - refined admin dashboard workflow with specific moderation actions (Clear Reports vs Delete Pin) and detailed report viewing                                                                                                     |
 | 2025-11-03 ([2b9a2a0](../../commit/2b9a2a0)) | Requirements Specification, Use Cases         | Updated Use Case 10: Admin Review Reported Content - refined admin dashboard workflow with specific moderation actions (Clear Reports vs Delete Pin) and detailed report viewing                                                                                                     |
 | 2025-11-03 ([ab4e5df](../../commit/ab4e5df)) | Requirements Specification, Use Cases         | Added Use Case 11: Remove Pin to Formal Use Case Specifications - documented pin deletion functionality for both users and admins with permission checks and confirmation flow                                                                                                       |
 | 2025-11-03 ([dee9450](../../commit/dee9450)) | Pin Management, Use Cases                     | Updated Remove Pin use case - users can now remove their own pins in addition to admin removal capabilities                                                                                                                                                                          |
@@ -17,7 +56,7 @@
 | 2025-10-25 ([166e590](../../commit/166e590)) | Integration                                   | Merge branch 'main' into tony - synchronized development branches                                                                                                                                                                                                                    |
 | 2025-10-25 ([1bc1282](../../commit/1bc1282)) | Integration, UI/UX                            | Merge pull request #4 from tonykulenovic/TomasFernandes169/AppUI - integrated UI improvements                                                                                                                                                                                        |
 | 2025-10-25 ([1f56437](../../commit/1f56437)) | Authentication, Error Handling                | Fix: Frontend auth error codes updated - improved error handling and user feedback in authentication flow                                                                                                                                                                            |
-| 2025-10-25 ([226f41e](../../commit/226f41e)) | Pin Management, Map Features                  | Added restaurant pre-seeded pins - integrated Google Places API for restaurant discovery with enhanced metadata                                                                                                                                                                      |
+| 2025-10-25 ([226f41e](../../commit/226f41e)) | Pin Management, Map Features                  | Added restaurant pre-seeded pins - integrated Google Maps API for restaurant discovery with enhanced metadata                                                                                                                                                                      |
 | 2025-10-25 ([24f6154](../../commit/24f6154)) | Authentication, Bug Fixes                     | Fixed sign up issues - resolved user registration problems and improved signup flow                                                                                                                                                                                                  |
 | 2025-10-25 ([25a98f1](../../commit/25a98f1)) | Pin Management, Social Features               | Add voting, reporting, category filtering, and enhanced metadata display features - comprehensive pin interaction system                                                                                                                                                             |
 | 2025-10-25 ([25ff28d](../../commit/25ff28d)) | Pin Management, Privacy                       | Update: Added pin visibility options - implemented public/friends/private pin sharing controls                                                                                                                                                                                       |
@@ -27,7 +66,7 @@
 | 2025-10-25 ([3ba1006](../../commit/3ba1006)) | Bug Fixes, API                                | Fix npe for 200 response - resolved null pointer exception in API response handling                                                                                                                                                                                                  |
 | 2025-10-25 ([3c87fc7](../../commit/3c87fc7)) | User Management, Frontend                     | Added username to Profile and Manage Profile - enhanced user identification system                                                                                                                                                                                                   |
 | 2025-10-25 ([3ca0a0a](../../commit/3ca0a0a)) | Integration, Conflict Resolution              | Merge conflicts resolved: Tony and Main - resolved development branch conflicts                                                                                                                                                                                                      |
-| 2025-10-25 ([6733d04](../../commit/6733d04)) | Requirements Specification, Features          | Added intelligent meal recommendation system with multi-factor scoring (proximity, meal relevance, weather, user preferences), Google Places API integration, automated scheduling (breakfast 8-10am, lunch 12-2pm, dinner 6-10pm), and daily tracking to prevent spam notifications |
+| 2025-10-25 ([6733d04](../../commit/6733d04)) | Requirements Specification, Features          | Added intelligent meal recommendation system with multi-factor scoring (proximity, meal relevance, weather, user preferences), Google Maps API integration, automated scheduling (breakfast 8-10am, lunch 12-2pm, dinner 6-10pm), and daily tracking to prevent spam notifications |
 | 2025-10-25 ([44cab84](../../commit/44cab84)) | Documentation Structure, Project Organization | Move Requirements_and_Design.md into documentation directory - organized project documentation structure                                                                                                                                                                             |
 | 2025-10-25 ([4c1b4d7](../../commit/4c1b4d7)) | UI/UX Design, Map Features                    | Fix: Maps now show different shade of colour - improved visual distinction and map readability                                                                                                                                                                                       |
 | 2025-10-25 ([5a28089](../../commit/5a28089)) | Gamification, Badge System                    | Added functionality for login-streak-related badges and updated frontend badge design - login streak achievement tracking                                                                                                                                                            |
@@ -67,7 +106,7 @@
 | 2025-10-25 ([daa6c08](../../commit/daa6c08)) | Push Notifications, Development               | Push Notifications testing stage - initial Firebase integration setup and testing framework                                                                                                                                                                                          |
 | 2025-10-25 ([ea8d419](../../commit/ea8d419)) | Integration                                   | Merge branch 'main' into tony - synchronized main branch changes with Tony's development work                                                                                                                                                                                        |
 | 2025-10-25 ([f174305](../../commit/f174305)) | Bug Fixes, Frontend                           | Fix: Manage Profile no longer crashes - resolved frontend profile management stability and crash issues                                                                                                                                                                              |
-| 2025-10-25 ([f1a71e1](../../commit/f1a71e1)) | Pin Management, Map Features                  | Added coffee pre-seeded pins - integrated Google Places API for cafe discovery with proper icons and metadata                                                                                                                                                                        |
+| 2025-10-25 ([f1a71e1](../../commit/f1a71e1)) | Pin Management, Map Features                  | Added coffee pre-seeded pins - integrated Google Maps API for cafe discovery with proper icons and metadata                                                                                                                                                                        |
 | 2025-10-25 ([f3af94c](../../commit/f3af94c)) | Social Features, Search                       | Fix: search friends - improved friend discovery functionality and search algorithm                                                                                                                                                                                                   |
 | 2025-10-25 ([f3cf5f8](../../commit/f3cf5f8)) | Integration                                   | Merged Tony Code - additional synchronization of Tony's development work                                                                                                                                                                                                             |
 | 2025-10-25 ([f706e5d](../../commit/f706e5d)) | Pin Management, Frontend                      | Integrated Manage Pins into frontend - complete pin CRUD operations integrated into UI                                                                                                                                                                                               |
@@ -100,7 +139,7 @@
 | 2025-10-24 ([bb8350c](../../commit/bb8350c)) | Requirements Specification                    | Added Extra template requirements - enhanced documentation structure                                                                                                                                                                                                                 |
 | 2025-10-24 ([44cab84](../../commit/44cab84)) | Documentation Structure                       | Move Requirements_and_Design.md into documentation directory - organized project documentation                                                                                                                                                                                       |
 | 2025-10-23 ([05af670](../../commit/05af670)) | Gamification, Badge System                    | Functionality for pin-creation-related badges - implemented achievement tracking for user-generated content                                                                                                                                                                          |
-| 2025-10-23 ([f1a71e1](../../commit/f1a71e1)) | Pin Management, Technical Stack               | Added coffee pre-seeded pins - integrated Google Places API for cafe discovery with proper icons and metadata                                                                                                                                                                        |
+| 2025-10-23 ([f1a71e1](../../commit/f1a71e1)) | Pin Management, Technical Stack               | Added coffee pre-seeded pins - integrated Google Maps API for cafe discovery with proper icons and metadata                                                                                                                                                                        |
 | 2025-10-23 ([d3b89f3](../../commit/d3b89f3)) | Admin Functionality                           | Created Admin Screen with pin management, user banning/deletion capabilities (still need to implement view pin reports)                                                                                                                                                              |
 | 2025-10-23 ([25ff28d](../../commit/25ff28d)) | Pin Management                                | Update: Added pin visibility options - implemented public/friends/private pin sharing controls                                                                                                                                                                                       |
 | 2025-10-23 ([990c27f](../../commit/990c27f)) | Backend Services                              | User location simulator - created testing utilities for location tracking                                                                                                                                                                                                            |
@@ -175,19 +214,7 @@ Target audience: university students who want an easy way to discover study spot
 
 ### **3.2. Use Case Diagram**
 
-Due to the amount of use cases in our app, we elected to create a seperate use case diagram for each feature.
-
-![Use Case Diagrams](images/View_Map.png)
-
-![Use Case Diagrams](images/Manage_Pins.png)
-
-![Use Case Diagrams](images/Manage_Account.png)
-
-![Use Case Diagrams](images/Manage_Friends.png)
-
-![Use Case Diagrams](images/Badge_System.png)
-
-![Use Case Diagrams](images/Smart_Notifications_and_Recommendations.png)
+![Use Case Diagrams](images/UniVerse_App.png)
 
 ---
 
@@ -195,109 +222,114 @@ Due to the amount of use cases in our app, we elected to create a seperate use c
 
 1. **Student User**: A student using the app to find study spots, food, events, and to connect with friends.  
 2. **Admin**: Admins to review reports of unsafe content/pins and remove them.  
+3. **Google OAuth 2.0**: External identity provider that enables secure, token-based Google account sign-in for users.  
+4. **Firebase Cloud Messaging**: Push notification service that delivers alerts about friends, recommendations, and system messages to devices.  
+5. **OpenWeather API**: Weather data provider used for contextual recommendations (e.g., adapting pin suggestions based on current conditions).  
+6. **Google Maps API**: Mapping platform powering the app’s map display, routing, and place pins.
 
 ---
 
 ### **3.4. Use Case Description**
 
 ### Feature 1: View Map
-1. **View Pins**: User opens the map to see campus libraries and food spots and pins added by others.
-2. **Filter Pins by Category**: User can filter pins by category (Study, Events, Chill, Shops/Services).
-3. **View Friend Locations**: User can see real-time locations of friends (with privacy controls).
+1. **View Pins**: Student User opens the map to see campus libraries and food spots and pins added by others.
+2. **Filter Pins by Category**: Student User can filter pins by category (Study, Events, Chill, Shops/Services).
+3. **View Friend Locations**: Student User can see real-time locations of friends (with privacy controls).
 
 ### Feature 2: Manage Pins
-4. **Add Pin**: User adds a new study space/event pin with enhanced metadata.
-5. **View Pin Details**: User clicks a pin to see name, description, capacity, crowd level, and opening hours.
-6. **Vote on Pin**: User can upvote or downvote pins to show approval/disapproval.
-7. **Report Pin**: User reports a community-created pin as unsafe or inappropriate.
+4. **Add Pin**: Student User adds a new study space/event pin with enhanced metadata.
+5. **View Pin Details**: Student User clicks a pin to see name, description, capacity, crowd level, and opening hours.
+6. **Vote on Pin**: Student User can upvote or downvote pins to show approval/disapproval.
+7. **Report Pin**: Student User reports a community-created pin as unsafe or inappropriate.
 8. **View Reported Pins**: Admin can view and manage reported pins.
-9. **Remove Pin**: User and admin can remove pins from the map.
+9. **Remove Pin**: Student User and admin can remove pins from the map.
 
 ### Feature 3: Manage Account
-10. **Sign Up**: User can sign up for the app with their Google account.
-11. **Log In**: User can log in to the app with their Google account after they have signed up.
-12. **Log Out**: User can log out of the app.
-13. **Delete Account**: User can delete their account.
-14. **Create Profile**: User can create a profile for the app.
-15. **Manage Profile**: User can manage their profile for the app.
-16. **Manage Privacy Settings**: User can control profile visibility, location sharing, and friend request preferences.
-17. **Manage User Accounts**: Admin can suspend, unsuspend, or delete user accounts.
+10. **Sign Up**: Student User can sign up for the app with their Google account.
+11. **Log In**: Student User can log in to the app with their Google account after they have signed up.
+12. **Log Out**: Student User can log out of the app.
+13. **Delete Account**: Student User can delete their account.
+14. **Manage Profile**: Student User can manage their profile for the app.
+15. **Manage Privacy Settings**: Student User can control profile visibility, location sharing, and friend request preferences.
+16. **Manage User Accounts**: Admin can suspend, unsuspend, or delete user accounts.
 
 ### Feature 4: Manage Friends
-18. **Add Friend**: User searches for a classmate by username/email and sends a request.
-19. **View Friend Profile**: User views a friend's badges and activity (respecting privacy settings).
-20. **Remove Friend**: User can remove a friend from their friend network.
-21. **Manage Friend Requests**: User can accept, decline, or block friend requests.
+17. **Add Friend**: Student User searches for a classmate by username/email and sends a request.
+18. **View Friend Profile**: Student User views a friend's badges and activity (respecting privacy settings).
+19. **Remove Friend**: Student User can remove a friend from their friend network.
+20. **Manage Friend Requests**: Student User can accept, decline, or block friend requests.
 
 ### Feature 5: Badge System
-22. **Earn Badge**: User receives a profile badge for activity (e.g., daily logins, time at library).
-23. **View Badges**: User views unlocked profile badges and progress toward new ones.
-24. **Track Badge Progress**: User can see progress toward earning new badges.
+21. **Earn Badge**: Student User receives a profile badge for activity (e.g., daily logins, time at library).
+22. **View Badges**: Student User views unlocked profile badges and progress toward new ones.
+23. **Track Badge Progress**: Student User can see progress toward earning new badges.
 
 ### Feature 6: Smart Notifications & Recommendations
-25. **Receive Notifications**: User receives push notifications for friend requests, system messages, and personalized recommendations.
-26. **Get Food Recommendations**: App sends contextual food suggestions (e.g., lunch, coffee break, or dinner times).
-27. **Get Personalized Recommendations**: App notifies users of relevant pins based on preferences, time, and location.
+24. **Receive Notifications**: Student User receives push notifications for friend requests, system messages, and personalized recommendations.
+25. **Get Food Recommendations**: App sends contextual food suggestions (e.g., lunch, coffee break, or dinner times).
+26. **Get Personalized Recommendations**: App notifies Student Users of relevant pins based on preferences, time, and location.
+
+**Recommendation failure handling**: When the recommendation feed cannot be retrieved, the recommendations panel displays a friendly “Recommendations temporarily unavailable” message plus a Retry action so Student Users know to try again when the service stabilizes.
 
 
 ### **3.5. Formal Use Case Specifications (10 Most Major Use Cases)**
 
 #### Use Case 1: Add Pin
 
-**Description**: A user adds a new pin for a study space, event, or chill spot.  
+**Description**: A Student User adds a new pin for a study space, event, or chill spot.  
 **Primary actor(s)**: Student User  
 
 **Main success scenario**:
 
-1. User selects the “Add Pin” option.  
-2. User enters pin details (name, category, description).  
-3. User submits pin.  
-4. Pin is saved in the backend and displayed on the map for all users.  
+1. Student User selects the “Add Pin” option.  
+2. Student User enters pin details (name, category, description).  
+3. Student User submits pin.  
+4. Pin icon appears on the map immediately and a confirmation toast lets the Student User know the location is live for everyone to see.  
 
 **Failure scenario(s)**:
 
-- 1a. User has no internet connection.  
-    - 1a1. The system shows a connectivity error and prompts the user to retry.  
-- 3a. User submits incomplete details.  
-    - 3a1. System prompts for required missing fields. 
+- 1a. Student User has no internet connection, so the app displays a connectivity error banner and keeps the Add Pin form open for retry.  
+    - 1a1. The system reiterates the error next to the submit button and invites the Student User to retry.  
+- 3a. Student User submits incomplete details.  
+    - 3a1. The form highlights the missing inputs and shows an inline error message so the Student User can complete the fields.
 
 ---
 
 #### Use Case 2: View Pin Details
 
-**Description**: A user taps a pin on the map to see its information.  
+**Description**: A Student User taps a pin on the map to see its information.  
 **Primary actor(s)**: Student User  
 
 **Main success scenario**:
 
-1. User taps the pin on the map.  
-2. System fetches pin details from the backend.  
-3. Pin details (category, activity level, ratings) are displayed.  
+1. Student User taps the pin on the map.  
+2. System loads and displays the pin details for the Student User.  
+3. Pin details (category, activity level, ratings) remain visible while the Student User reviews them.  
 
 **Failure scenario(s)**:
 
 - 1a. The pin has been deleted, and race conditions/synchronization issues occur.  
     - 1a1. The system shows “pin no longer available.”  
-- 2a The user has no active/slow internet connection
-    - 2a1. The system shows a connectivity error and asks the user to retry
+- 2a The Student User has no active/slow internet connection
+    - 2a1. The system shows a connectivity error and asks the Student User to retry
 
 ---
 
 #### Use Case 3: Earn Badge
 
-**Description**: A user earns a badge after fulfilling a requirement.  
+**Description**: A Student User earns a badge after fulfilling a requirement.  
 **Primary actor(s)**: Student User  
 
 **Main success scenario**:
 
-1. User meets badge condition (e.g., logs in daily for 5 days).  
-2. System verifies condition and assigns badge.  
-3. User sees badge appear in profile.  
+1. Student User meets badge condition (e.g., logs in daily for 5 days).  
+2. The app confirms the condition, shows an unlock animation, and adds the badge to the Student User’s collection.  
+3. Student User sees the new badge appear in their profile along with updated progress for the next one.  
 
 **Failure scenario(s)**:
 
-- 1a. Backend fails to update badge state due to connection issues.  
-    - 1a1. The system shows a temporary error and retries later.  
+- 1a. The badge service cannot confirm the condition because of connection issues.  
+    - 1a1. The Student User sees a “Badge temporarily unavailable” message with a Retry option.
 
 ---
 
@@ -308,10 +340,10 @@ Due to the amount of use cases in our app, we elected to create a seperate use c
 
 **Main success scenario**:
 
-1. User searches for another student by username/email.  
+1. Student User searches for another student by username/email.  
 2. System matches and shows a potential friend.  
-3. User sends request.  
-4. Friend accepts, and both are added to each other’s friend lists.  
+3. Student User sends request.  
+4. Friend accepts, both are added to each other’s friend lists, and the Student User sees a confirmation banner indicating the connection succeeded.  
 
 **Failure scenario(s)**:
 
@@ -324,19 +356,19 @@ Due to the amount of use cases in our app, we elected to create a seperate use c
 
 #### Use Case 5: Vote on Pin
 
-**Description**: User votes on a pin to show approval or disapproval.  
+**Description**: Student User votes on a pin to show approval or disapproval.  
 **Primary actor(s)**: Student User
 
 **Main success scenario**:
 
-1. User taps on a pin to view details.
-2. User taps the upvote or downvote button.
-3. System records the vote and updates the pin's rating.
-4. Pin displays updated vote count to all users.
+1. Student User taps on a pin to view details.
+2. Student User taps the upvote or downvote button.
+3. System updates the displayed rating so the Student User immediately sees how the vote affected the pin.
+4. Pin displays updated vote count to all Student Users.
 
 **Failure scenario(s)**:
 
-- 1a. User has already voted on this pin.
+- 1a. Student User has already voted on this pin.
   - 1a1. System prevents duplicate voting and shows current vote status.
 - 2a. Network connection fails during vote submission.
   - 2a1. System shows error message and allows retry.
@@ -345,21 +377,21 @@ Due to the amount of use cases in our app, we elected to create a seperate use c
 
 #### Use Case 6: Report Pin
 
-**Description**: User reports a pin as inappropriate or unsafe content.  
+**Description**: Student User reports a pin as inappropriate or unsafe content.  
 **Primary actor(s)**: Student User
 
 **Main success scenario**:
 
-1. User taps on a pin to view details.
-2. User taps the "Report" button.
-3. User selects a reason for reporting and provides additional details.
-4. System records the report and notifies admins.
-5. User receives confirmation that the report was submitted.
+1. Student User taps on a pin to view details.
+2. Student User taps the "Report" button.
+3. Student User selects a reason for reporting and provides additional details.
+4. System confirms the report with a success message and notifies admins.
+5. Student User receives confirmation that the report was submitted and remains on the pin details screen.
 
 **Failure scenario(s)**:
 
-- 1a. User tries to report their own pin.
-  - 1a1. System prevents self-reporting and hides the report button.
+- 1a. Student User tries to report their own pin.
+  - 1a1. System prevents self-reporting, hides the report button, and shows an inline explanation.
 - 2a. Report submission fails due to network issues.
   - 2a1. System shows error message and allows retry.
 
@@ -367,15 +399,15 @@ Due to the amount of use cases in our app, we elected to create a seperate use c
 
 #### Use Case 7: Filter Pins by Category
 
-**Description**: User filters map pins by category to find specific types of locations.  
+**Description**: Student User filters map pins by category to find specific types of locations.  
 **Primary actor(s)**: Student User
 
 **Main success scenario**:
 
-1. User opens the map view.
-2. User taps on category filter buttons (Study, Events, Chill, Shops).
+1. Student User opens the map view.
+2. Student User taps on category filter buttons (Study, Events, Chill, Shops).
 3. Map updates to show only pins of the selected category.
-4. User can select multiple categories or clear filters.
+4. Student User can select multiple categories or clear filters.
 
 **Failure scenario(s)**:
 
@@ -386,22 +418,22 @@ Due to the amount of use cases in our app, we elected to create a seperate use c
 
 ---
 
-#### Use Case 8: Receive Push Notification
+#### Use Case 8: Receive Notifications
 
-**Description**: User receives real-time notifications for app events.  
-**Primary actor(s)**: Student User
+**Description**: Student User receives real-time notifications for app events.  
+**Primary actor(s)**: Student User, Firebase Cloud Messaging
 
 **Main success scenario**:
 
 1. System event occurs (friend request, pin update, etc.).
-2. Backend sends push notification via Firebase.
-3. User's device receives and displays the notification.
-4. User taps notification to open relevant app section.
+2. A push notification is delivered via Firebase and appears on the Student User's device.
+3. Student User's device displays the notification, letting the Student User know about the event.
+4. Student User taps notification to open relevant app section.
 
 **Failure scenario(s)**:
 
-- 1a. User has disabled notifications.
-  - 1a1. System respects user preferences and does not send notifications.
+- 1a. Student User has disabled notifications.
+  - 1a1. System respects Student User preferences and does not send notifications.
 - 2a. FCM token is invalid or expired.
   - 2a1. System attempts to refresh token and retry notification.
 
@@ -409,15 +441,15 @@ Due to the amount of use cases in our app, we elected to create a seperate use c
 
 #### Use Case 9: Manage Privacy Settings
 
-**Description**: User controls their privacy and visibility settings.  
+**Description**: Student User controls their privacy and visibility settings.  
 **Primary actor(s)**: Student User  
 
 **Main success scenario**:
 
-1. User navigates to privacy settings.
-2. User adjusts profile visibility, location sharing, and friend request preferences.
-3. System saves the new privacy settings.
-4. Settings take effect immediately for all users.
+1. Student User navigates to privacy settings.
+2. Student User adjusts profile visibility, location sharing, and friend request preferences.
+3. The settings page confirms "Changes saved" so the Student User sees the update succeeded.
+4. Settings take effect immediately for all Student Users.
 
 **Failure scenario(s)**:
 
@@ -428,7 +460,7 @@ Due to the amount of use cases in our app, we elected to create a seperate use c
 
 ---
 
-#### Use Case 10: Admin Review Reported Content
+#### Use Case 10: View Reported Pins
 
 **Description**: Admin reviews and moderates reported pins through the admin dashboard.  
 **Primary actor(s)**: Admin
@@ -441,7 +473,7 @@ Due to the amount of use cases in our app, we elected to create a seperate use c
 4. Admin takes action on the pin:
    - **Clear Reports**: Dismisses all reports and resets pin status to active (if reports were false).
    - **Delete Pin**: Permanently removes the pin from the system.
-5. System updates the pin status and refreshes the reported pins list.
+5. The reported pins list refreshes and the pin entry shows the updated status so the Admin can confirm the action succeeded.
 
 **Failure scenario(s)**:
 
@@ -454,8 +486,8 @@ Due to the amount of use cases in our app, we elected to create a seperate use c
 
 #### Use Case 11: Remove Pin
 
-**Description**: A user or admin deletes a pin from the map. Regular users may only delete pins they created. Admins may delete any user-created pin. Deletion is permanent and requires confirmation.  
-**Primary actor(s)**: Regular User (Pin Owner), Admin User  
+**Description**: A Student User or admin deletes a pin from the map. Regular Student Users may only delete pins they created. Admins may delete any user-created pin. Deletion is permanent and requires confirmation.  
+**Primary actor(s)**: Regular Student User (Pin Owner), Admin
 
 **Main success scenario**:
 
@@ -464,14 +496,14 @@ Due to the amount of use cases in our app, we elected to create a seperate use c
 3. Actor selects the delete option.  
 4. System shows a confirmation dialog.  
 5. Actor confirms deletion.  
-6. System deletes the pin from storage.  
-7. UI updates and the pin is removed from the map or admin list.  
-8. System displays a success message.  
+6. System removes the pin, eliminating it from the map data.
+7. UI updates and the pin disappears from the map or admin list so the Student User or Admin sees the change immediately.
+8. System displays a success message confirming the deletion.
 
 **Failure scenario(s)**:
 
 - 1a. Actor does not have permission to delete the pin.  
-    - 1a1. Delete button is not shown.  
+    - 1a1. Delete button is not shown and a tooltip explains the permission restriction.  
 - 4a. Actor cancels deletion.  
     - 4a1. Dialog closes and no changes occur.  
 - 5a. Network or backend error occurs during deletion.  
@@ -490,22 +522,22 @@ Due to the amount of use cases in our app, we elected to create a seperate use c
 ### 3.7 Non-Functional Requirements
 
 1. **Performance**  
-   The app shall display map pins within **2 seconds** of opening the map and update pins during panning with minimal delay. Real-time features (voting, notifications) shall respond within **1 second**. Database queries are optimized with proper indexing on frequently accessed fields (category, location, user_id, status). This ensures a smooth and responsive experience for students navigating campus in real time.
+   Map pins shall appear within **2 seconds** because Student Users expect instant spatial context when arriving on campus; slow loading will hurt adoption, so indexed queries on category, location, user_id, and status keep updates fast. Pin updates during panning also refresh quickly, and real-time actions (voting, notifications) surface results within **1 second** to mirror the responsiveness of commercial campus mapping tools.
 
 2. **Scalability**  
-   The backend shall support at least **500 concurrent student users** with responses delivered in **≤2 seconds**. The system uses pagination (20 pins per page) and TTL indexes for efficient data management. The system shall handle peak traffic (e.g., during class transitions or at lunchtime) without compromising usability.
+   The backend shall support at least **500 concurrent student users**—roughly the size of a busy campus commons during peak periods—and still deliver responses in **≤2 seconds** so the platform remains useful when multiple cohorts browse pins simultaneously. Pagination (20 pins per page) and TTL indexes keep payloads and storage predictable, enabling horizontal scaling as usage grows.
 
 3. **Security**  
-   All sensitive student data (friend connections, badges, location history, privacy settings) shall be **encrypted in transit and at rest**. The system implements JWT authentication, input validation with Zod schemas, and comprehensive privacy controls for location sharing and profile visibility. All user input is sanitized and validated before processing.
+   All sensitive student data (friend connections, badges, location history, privacy settings) shall be **encrypted in transit and at rest** because campus Wi-Fi is shared and prone to eavesdropping. JWT authentication, Zod schema validation, and explicit privacy controls for location sharing prevent unauthorized access, while sanitized inputs keep injection threats at bay.
 
 4. **Reliability**  
-   The system shall maintain **99% uptime** with graceful degradation when external services are unavailable. Critical features (authentication, pin viewing) shall remain functional even during partial system failures. Comprehensive error handling and logging are implemented throughout the application.
+   The system shall maintain **99% uptime** so students can rely on the map and social features throughout the day; graceful degradation surfaces user-friendly errors when external services fail while keeping authentication and pin viewing functional. Centralized logging and retries capture anomalies for quick remediation.
 
 5. **Usability**  
-   The app shall provide an intuitive user experience with Material Design 3 principles, real-time updates via Socket.io, and responsive design for mobile-first experience. New users shall be able to complete basic tasks (view pins, vote, report) within **30 seconds** of app installation.
+   The app follows Material Design 3, live updates via Socket.io, and responsive mobile-first layouts so Student Users can complete core tasks (view pins, vote, report) within **30 seconds** of installing the app, minimizing friction during busy campus schedules.
 
 6. **Privacy**  
-   The system provides granular privacy controls allowing users to control profile visibility, location sharing precision, and friend request preferences. Location data includes TTL (Time To Live) for automatic cleanup, and all privacy settings are enforced throughout the application.
+   The system provides granular privacy controls for profile visibility, location sharing precision, and friend request preferences so Student Users can share only what they intend. Location data carries TTL (Time To Live) for automatic cleanup, and enforcement across the app prevents accidental oversharing.
 
 ---
 
@@ -513,7 +545,7 @@ Due to the amount of use cases in our app, we elected to create a seperate use c
 
 ### **4.1. Main Components**
 
-1. **Authentication Service**
+1. **Authentication**
 
    - **Purpose**: Handles Google OAuth login for all users with credential management.
    - **Rationale**: Using Google OAuth avoids building a custom authentication system and leverages an external trusted identity provider.
@@ -531,7 +563,7 @@ Due to the amount of use cases in our app, we elected to create a seperate use c
         - `Claims verifyToken(String token)` - Verifies and decodes JWT token claims
         - `boolean isTokenExpired(String token)` - Checks if token has expired
 
-2. **Pin Manager**
+2. **Pins**
 
    - **Purpose**: Manages CRUD operations for pins (create, update, delete, view) with voting and reporting.
    - **Rationale**: Pins are the central content of the app, and isolating them in a component makes it easier to manage validation, reports, and updates.  
@@ -557,7 +589,7 @@ Due to the amount of use cases in our app, we elected to create a seperate use c
         - `PinMetadata getPinMetadata(String pinId)` - Gets capacity, crowd level, opening hours
         - `boolean updatePinMetadata(String pinId, PinMetadata metadata)` - Updates pin metadata
 
-3. **User Management Service**
+3. **User**
 
    - **Purpose**: Manages user profiles, privacy settings, and account operations.
    - **Rationale**: Centralized user management ensures consistent privacy controls and profile management across the app.
@@ -581,7 +613,7 @@ Due to the amount of use cases in our app, we elected to create a seperate use c
         - `boolean unsuspendUser(String userId)` - Unsuspends user account (admin only)
         - `boolean isUserSuspended(String userId)` - Checks if user account is suspended
 
-4. **Notification Service**
+4. **Notifications**
 
    - **Purpose**: Manages push notifications for real-time updates and user engagement.
    - **Rationale**: Real-time notifications improve user engagement and keep users informed of important events.
@@ -603,7 +635,7 @@ Due to the amount of use cases in our app, we elected to create a seperate use c
         - `boolean updateNotificationSettings(String userId, NotificationSettings settings)` - Updates notification preferences
         - `boolean isNotificationEnabled(String userId, NotificationType type)` - Checks if specific notification type is enabled
 
-5. **Badge Manager**
+5. **Badges**
 
    - **Purpose**: Assigns badges based on user activity (logins, time spent at locations, reports).  
    - **Rationale**: A separate manager for badges allows us to implement custom logic and computations beyond simple CRUD, supporting gamification.  
@@ -626,7 +658,7 @@ Due to the amount of use cases in our app, we elected to create a seperate use c
         - `Badge updateBadge(String badgeId, UpdateBadgeRequest request)` - Updates badge template (admin only)
         - `boolean deleteBadge(String badgeId)` - Deletes badge template (admin only)
 
-6. **Admin Service**
+6. **Admin**
 
    - **Purpose**: Provides administrative functionality for content moderation and user management.
    - **Rationale**: Admin tools are essential for maintaining app quality and handling user reports.
@@ -651,7 +683,7 @@ Due to the amount of use cases in our app, we elected to create a seperate use c
         - `List<Report> getReportsByType(ReportType type)` - Gets reports by type
         - `boolean resolveReport(String reportId, String adminId, String resolution)` - Resolves report
 
-7. **Friends Management Service**
+7. **Friends**
 
    - **Purpose**: Manages friend connections, requests, and social features.
    - **Rationale**: Social features enhance user engagement and create a community aspect to the app.
@@ -675,12 +707,12 @@ Due to the amount of use cases in our app, we elected to create a seperate use c
         - `LocationData getFriendLocation(String userId, String friendId)` - Gets friend's shared location
         - `boolean stopLocationSharing(String userId, String friendId)` - Stops sharing location with friend
 
-8. **Recommendation Engine**
-   - **Purpose**: Fetches nearby food spots using Google Places API and applies time-of-day rules.  
+8. **Recommendations**
+   - **Purpose**: Fetches nearby food spots using Google Maps API and applies time-of-day rules.  
    - **Rationale**: Encapsulating recommendation logic separately allows us to combine external API data with custom filters (e.g., lunch vs. dinner).  
    - **Interfaces**: 
-     1. **Google Places Integration**
-        - `List<Place> searchNearbyPlaces(double latitude, double longitude, String type, int radius)` - Searches nearby places using Google Places API
+    1. **Google Maps Integration**
+       - `List<Place> searchNearbyPlaces(double latitude, double longitude, String type, int radius)` - Searches nearby places using Google Maps API
         - `Place getPlaceDetails(String placeId)` - Gets detailed information about specific place
         - `List<Place> getPlacesByType(String type, double latitude, double longitude)` - Gets places by specific type
      2. **Time-based Filtering**
@@ -700,7 +732,7 @@ Due to the amount of use cases in our app, we elected to create a seperate use c
 
 ### **4.2. Databases**
 
-1. **MongoDB**
+1. **MongoDB Database**
    - **Purpose**: Stores user data (profiles, friends), pins, badges, and reports.  
    - **Rationale**: MongoDB provides flexible document-based storage, which fits dynamic user-generated content like pins and metadata.  
 
@@ -710,27 +742,22 @@ Due to the amount of use cases in our app, we elected to create a seperate use c
 
 1. **Google Maps API**  
 
-   - **Purpose**: Displays the interactive map and places pins on it.  
-   - **Implementation**: Integrated in Android app with custom markers and clustering
+   - **Purpose**: Displays the interactive map with custom markers and clustering plus provides nearby place data (open/closed status, names, coordinates) for recommendations and seeded cafe pins.  
+   - **Implementation**: Android integration uses Google Maps for rendering, while the Places endpoints supply cafe and restaurant metadata for recommendations.
 
-2. **Google Places API**  
-
-   - **Purpose**: Provides data on nearby food spots (open/closed, name, location).  
-   - **Implementation**: Used for seeding cafe data and location recommendations
-
-3. **Google OAuth**  
+2. **Google OAuth**  
 
    - **Purpose**: Handles user authentication using an external identity provider.  
-   - **Implementation**: Google Credential Manager integration with JWT token generation
+   - **Implementation**: Google OAuth SDK integration with JWT token generation for secure sign-in flows.
 
-4. **Firebase Cloud Messaging (FCM)**
+3. **Firebase Cloud Messaging (FCM)**
 
    - **Purpose**: Sends push notifications to mobile devices for real-time updates.
    - **Implementation**: Backend Firebase Admin SDK with FCM token management
 
-5. **Google Credential Manager**
-   - **Purpose**: Manages user credentials and authentication tokens securely.
-   - **Implementation**: Android Credential Manager API for secure authentication flow
+4. **OpenWeather API**
+   - **Purpose**: Provides current weather and forecast data to tailor recommendations (e.g., suggesting indoor spots when it’s raining).
+   - **Implementation**: Backend service calls OpenWeather endpoints and caches results for short durations to enrich the recommendation engine.
 
 ---
 
@@ -774,7 +801,7 @@ Due to the amount of use cases in our app, we elected to create a seperate use c
 
 ### **4.5. Dependencies Diagram**
 
-![Dependencies Diagram](images/dependency_diagram.png)
+![Dependencies Diagram](images/High_Level_Design_Diagram.jpg)
 
 ---
 
