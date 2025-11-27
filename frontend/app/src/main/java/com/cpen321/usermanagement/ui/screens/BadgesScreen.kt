@@ -248,7 +248,7 @@ private fun BadgesTopBar(
     onInfoClick: () -> Unit
 ) {
     TopAppBar(
-        modifier = Modifier.height(98.dp),
+        modifier = Modifier,
         title = {
             Row(
                 modifier = Modifier.fillMaxWidth(),

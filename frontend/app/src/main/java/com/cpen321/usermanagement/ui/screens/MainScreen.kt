@@ -523,7 +523,7 @@ private fun MainTopBar(
     modifier: Modifier = Modifier
 ) {
     TopAppBar(
-        modifier = modifier.height(98.dp),
+        modifier = modifier,
         title = {
             Row(
                 modifier = Modifier

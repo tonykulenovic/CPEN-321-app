@@ -156,7 +156,7 @@ private fun PrivacyTopBar(
     modifier: Modifier = Modifier
 ) {
     TopAppBar(
-        modifier = modifier.height(98.dp),
+        modifier = modifier,
         title = {
             Text(
                 text = "Privacy Settings",
