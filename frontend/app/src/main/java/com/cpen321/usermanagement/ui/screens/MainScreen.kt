@@ -675,7 +675,7 @@ private fun MapContent(
                 // Animate camera to pin location
                 val pinLocation = LatLng(selectedPin.location.latitude, selectedPin.location.longitude)
                 cameraPositionState.animate(
-                    CameraUpdateFactory.newLatLngZoom(pinLocation, 17f),
+                    CameraUpdateFactory.newLatLngZoom(pinLocation, 19f),
                     durationMs = 1000
                 )
                 
@@ -874,7 +874,7 @@ private fun MapContent(
                                 val pinLocation = LatLng(pin.location.latitude, pin.location.longitude)
                                 coroutineScope.launch {
                                     cameraPositionState.animate(
-                                        CameraUpdateFactory.newLatLngZoom(pinLocation, 17f),
+                                        CameraUpdateFactory.newLatLngZoom(pinLocation, 19f),
                                         durationMs = 1000
                                     )
                                 }
