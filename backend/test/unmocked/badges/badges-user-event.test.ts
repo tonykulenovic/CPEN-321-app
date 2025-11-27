@@ -204,6 +204,33 @@ describe('Unmocked: POST /api/badges/user/event', () => {
     expect(res.body.message).toBe('Authentication required');
   });
 
+  // Input: request where req.user is undefined and no userId in body
+  // Expected status code: 400
+  // Expected behavior: controller checks for userId and rejects
+  // Expected output: User ID is required message
+  test('Reject request when userId is missing', async () => {
+    // Create app without user population
+    const appNoUser = express();
+    appNoUser.use(express.json());
+    appNoUser.use((req: any, _res: any, next: any) => {
+      req.user = undefined; // Explicitly set to undefined
+      next();
+    });
+    appNoUser.use('/api/badges', badgeRoutes);
+
+    const eventData = {
+      eventType: BadgeRequirementType.PINS_CREATED,
+      value: 1,
+    };
+
+    const res = await request(appNoUser)
+      .post('/api/badges/user/event')
+      .send(eventData)
+      .expect(400);
+
+    expect(res.body.message).toBe('User ID is required');
+  });
+
   // Input: authenticated request with missing event type
   // Expected status code: 200
   // Expected behavior: processes request but finds no matching badges
@@ -344,5 +371,60 @@ describe('Unmocked: POST /api/badges/user/event', () => {
 
     expect(res.body.message).toBe('Badge event processed successfully');
     expect(res.body.data.userBadges).toBeDefined();
+  });
+
+  // Input: database error during event processing
+  // Expected status code: 400
+  // Expected behavior: handles database error gracefully
+  // Expected output: error message in response
+  test('Handle database error when processing badge event', async () => {
+    // Save original method
+    const originalProcessBadgeEvent = BadgeService.processBadgeEvent;
+    
+    // Mock processBadgeEvent to throw an error
+    BadgeService.processBadgeEvent = async () => {
+      throw new Error('Database connection error');
+    };
+
+    const eventData = {
+      eventType: BadgeRequirementType.PINS_CREATED,
+      value: 1,
+    };
+
+    const res = await withAuth(testUser1)(
+      request(app).post('/api/badges/user/event').send(eventData)
+    ).expect(400);
+
+    expect(res.body.message).toBe('Database connection error');
+
+    // Restore original method
+    BadgeService.processBadgeEvent = originalProcessBadgeEvent;
+  });
+
+  // Input: non-Error exception during event processing
+  // Expected status code: 500 (handled by Express error middleware)
+  // Expected behavior: calls next(error) for non-Error exceptions
+  // Expected output: Express handles the error
+  test('Handle non-Error exception when processing badge event', async () => {
+    // Save original method
+    const originalProcessBadgeEvent = BadgeService.processBadgeEvent;
+    
+    // Mock processBadgeEvent to throw a non-Error object
+    BadgeService.processBadgeEvent = async () => {
+      throw 'String error'; // Non-Error exception
+    };
+
+    const eventData = {
+      eventType: BadgeRequirementType.PINS_CREATED,
+      value: 1,
+    };
+
+    // This will be handled by Express error middleware (next(error))
+    await withAuth(testUser1)(
+      request(app).post('/api/badges/user/event').send(eventData)
+    ).expect(500);
+
+    // Restore original method
+    BadgeService.processBadgeEvent = originalProcessBadgeEvent;
   });
 });

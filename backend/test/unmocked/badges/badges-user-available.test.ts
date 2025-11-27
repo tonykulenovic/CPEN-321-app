@@ -261,6 +261,27 @@ describe('Unmocked: GET /api/badges/user/available', () => {
     expect(res.body.message).toBe('Authentication required');
   });
 
+  // Input: request where req.user is undefined (middleware populates user but returns undefined)
+  // Expected status code: 401
+  // Expected behavior: controller checks for req.user and rejects
+  // Expected output: Unauthorized message
+  test('Reject request when req.user is undefined', async () => {
+    // Create app without user population
+    const appNoUser = express();
+    appNoUser.use(express.json());
+    appNoUser.use((req: any, _res: any, next: any) => {
+      req.user = undefined; // Explicitly set to undefined
+      next();
+    });
+    appNoUser.use('/api/badges', badgeRoutes);
+
+    const res = await request(appNoUser)
+      .get('/api/badges/user/available')
+      .expect(401);
+
+    expect(res.body.message).toBe('Unauthorized');
+  });
+
   // Input: request with invalid user ID
   // Expected status code: 401
   // Expected behavior: rejects request with non-existent user
@@ -342,5 +363,50 @@ describe('Unmocked: GET /api/badges/user/available', () => {
 
     const badgeNames = res.body.data.badges.map((b: any) => b.name);
     expect(badgeNames).not.toContain('Inactive Badge');
+  });
+
+  // Input: database error during available badges fetch
+  // Expected status code: 500
+  // Expected behavior: handles database error gracefully
+  // Expected output: error message in response
+  test('Handle database error when fetching available badges', async () => {
+    // Save original method
+    const originalGetAvailableBadges = badgeModel.getAvailableBadges;
+    
+    // Mock getAvailableBadges to throw an error
+    badgeModel.getAvailableBadges = async () => {
+      throw new Error('Database connection error');
+    };
+
+    const res = await withAuth(testUser1)(
+      request(app).get('/api/badges/user/available')
+    ).expect(500);
+
+    expect(res.body.message).toBe('Database connection error');
+
+    // Restore original method
+    badgeModel.getAvailableBadges = originalGetAvailableBadges;
+  });
+
+  // Input: non-Error exception during available badges fetch
+  // Expected status code: 500 (handled by Express error middleware)
+  // Expected behavior: calls next(error) for non-Error exceptions
+  // Expected output: Express handles the error
+  test('Handle non-Error exception when fetching available badges', async () => {
+    // Save original method
+    const originalGetAvailableBadges = badgeModel.getAvailableBadges;
+    
+    // Mock getAvailableBadges to throw a non-Error object
+    badgeModel.getAvailableBadges = async () => {
+      throw 'String error'; // Non-Error exception
+    };
+
+    // This will be handled by Express error middleware (next(error))
+    await withAuth(testUser1)(
+      request(app).get('/api/badges/user/available')
+    ).expect(500);
+
+    // Restore original method
+    badgeModel.getAvailableBadges = originalGetAvailableBadges;
   });
 });
