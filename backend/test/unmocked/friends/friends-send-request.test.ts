@@ -323,6 +323,66 @@ describe('POST /api/friends/requests - Send friend request', () => {
     expect(res.body.data).toHaveProperty('status', 'pending');
   });
 
+  // Input: Friend request when target user has reverse declined record
+  // Expected status code: 201
+  // Expected behavior: Cleans up old reverse declined record and creates new request
+  // Expected output: New friend request created successfully
+  test('Allow new request after reverse declined friendship cleanup', async () => {
+    // Create declined friendship from User2 to User1 (reverse)
+    await friendshipModel.create({
+      userId: testUser2._id,
+      friendId: testUser1._id,
+      status: 'declined',
+      requestedBy: testUser2._id,
+      shareLocation: true,
+      closeFriend: false,
+    });
+
+    // User1 sends request to User2
+    const res = await withAuth(testUser1)(
+      request(app)
+        .post('/api/friends/requests')
+        .send({ toUserId: testUser2._id.toString() })
+    ).expect(201);
+
+    expect(res.body).toHaveProperty('message', 'Friend request sent successfully');
+    expect(res.body.data).toHaveProperty('status', 'pending');
+
+    // Verify reverse declined record was cleaned up
+    const reverseFriendship = await friendshipModel.findByUserAndFriend(testUser2._id, testUser1._id);
+    expect(reverseFriendship).toBeNull();
+  });
+
+  // Input: Friend request when target user has reverse blocked record
+  // Expected status code: 201
+  // Expected behavior: Cleans up old reverse blocked record and creates new request
+  // Expected output: New friend request created successfully
+  test('Allow new request after reverse blocked friendship cleanup', async () => {
+    // Create blocked friendship from User2 to User1 (reverse)
+    await friendshipModel.create({
+      userId: testUser2._id,
+      friendId: testUser1._id,
+      status: 'blocked',
+      requestedBy: testUser2._id,
+      shareLocation: true,
+      closeFriend: false,
+    });
+
+    // User1 sends request to User2
+    const res = await withAuth(testUser1)(
+      request(app)
+        .post('/api/friends/requests')
+        .send({ toUserId: testUser2._id.toString() })
+    ).expect(201);
+
+    expect(res.body).toHaveProperty('message', 'Friend request sent successfully');
+    expect(res.body.data).toHaveProperty('status', 'pending');
+
+    // Verify reverse blocked record was cleaned up
+    const reverseFriendship = await friendshipModel.findByUserAndFriend(testUser2._id, testUser1._id);
+    expect(reverseFriendship).toBeNull();
+  });
+
   // Input: Friend request to user with friendsOfFriends privacy (no mutual friends)
   // Expected status code: 403
   // Expected behavior: Checks mutual friends and rejects
