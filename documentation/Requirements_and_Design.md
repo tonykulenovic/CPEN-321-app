@@ -214,19 +214,7 @@ Target audience: university students who want an easy way to discover study spot
 
 ### **3.2. Use Case Diagram**
 
-Due to the amount of use cases in our app, we elected to create a seperate use case diagram for each feature.
-
-![Use Case Diagrams](images/View_Map.png)
-
-![Use Case Diagrams](images/Manage_Pins.png)
-
-![Use Case Diagrams](images/Manage_Account.png)
-
-![Use Case Diagrams](images/Manage_Friends.png)
-
-![Use Case Diagrams](images/Badge_System.png)
-
-![Use Case Diagrams](images/Smart_Notifications_and_Recommendations.png)
+![Use Case Diagrams](images/UniVerse_App.png)
 
 ---
 
@@ -813,7 +801,7 @@ Due to the amount of use cases in our app, we elected to create a seperate use c
 
 ### **4.5. Dependencies Diagram**
 
-![Dependencies Diagram](images/dependency_diagram.png)
+![Dependencies Diagram](images/High_Level_Design_Diagram.jpg)
 
 ---
 
