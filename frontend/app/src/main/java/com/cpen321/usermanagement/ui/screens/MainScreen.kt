@@ -1638,7 +1638,7 @@ private fun calculateDistance(lat1: Double, lon1: Double, lat2: Double, lon2: Do
  * Create a cluster marker icon with count badge
  */
 private fun Context.createClusterIcon(count: Int): BitmapDescriptor {
-    val size = 100
+    val size = 70 // Reduced from 100 to 70 for smaller cluster icons
     val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
     val canvas = Canvas(bitmap)
     
@@ -1656,25 +1656,25 @@ private fun Context.createClusterIcon(count: Int): BitmapDescriptor {
     }
     
     // Draw shadow
-    canvas.drawCircle(size / 2f, size / 2f + 2f, size / 2f - 10f, shadowPaint)
+    canvas.drawCircle(size / 2f, size / 2f + 2f, size / 2f - 7f, shadowPaint)
     
     // Draw cluster circle
-    canvas.drawCircle(size / 2f, size / 2f, size / 2f - 10f, clusterPaint)
+    canvas.drawCircle(size / 2f, size / 2f, size / 2f - 7f, clusterPaint)
     
     // Draw white border
     val borderPaint = android.graphics.Paint().apply {
         isAntiAlias = true
         color = android.graphics.Color.WHITE
         style = android.graphics.Paint.Style.STROKE
-        strokeWidth = 4f
+        strokeWidth = 3f // Reduced from 4f to 3f for smaller size
     }
-    canvas.drawCircle(size / 2f, size / 2f, size / 2f - 10f, borderPaint)
+    canvas.drawCircle(size / 2f, size / 2f, size / 2f - 7f, borderPaint)
     
     // Draw count text
     val textPaint = android.graphics.Paint().apply {
         isAntiAlias = true
         color = android.graphics.Color.WHITE
-        textSize = if (count > 99) 24f else 28f
+        textSize = if (count > 99) 16f else 20f // Reduced text size proportionally
         textAlign = android.graphics.Paint.Align.CENTER
         typeface = android.graphics.Typeface.DEFAULT_BOLD
     }
