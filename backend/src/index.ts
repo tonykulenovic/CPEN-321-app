@@ -1,23 +1,23 @@
 import dotenv from 'dotenv';
+dotenv.config();
+
+/* eslint-disable security/detect-console-log-non-literal */
 import express from 'express';
 import { createServer } from 'http';
-import path from 'path';
-
 import { connectDB } from './config/database';
-import { firebaseService } from './config/firebase';
 import {
   errorHandler,
   notFoundHandler,
 } from './middleware/errorHandler.middleware';
-import { locationGateway } from './realtime/gateway';
 import router from './routes/routes';
-import { seedCafes } from './scripts/seedCafes';
-import { seedLibraries } from './scripts/seedLibraries';
-import { seedRestaurants } from './scripts/seedRestaurants';
+import path from 'path';
+import { locationGateway } from './realtime/gateway';
 import { BadgeService } from './services/badge.service';
+import { seedLibraries } from './scripts/seedLibraries';
+import { seedCafes } from './scripts/seedCafes';
+import { seedRestaurants } from './scripts/seedRestaurants';
+import { firebaseService } from './config/firebase';
 import { recommendationScheduler } from './services/recommendationScheduler.service';
-
-dotenv.config();
 
 
 const app = express();
@@ -65,7 +65,6 @@ void connectDB().then(async () => {
     console.log('🎉 All system data initialized successfully!\n');
     
     // Final verification summary
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const mongoose = require('mongoose');
     const badgeCount = await mongoose.connection.collection('badges').countDocuments();
     const libraryCount = await mongoose.connection.collection('pins').countDocuments({
@@ -83,17 +82,11 @@ void connectDB().then(async () => {
       'metadata.subtype': 'restaurant'
     });
     
-    // eslint-disable-next-line security/detect-console-log-non-literal
     console.log('📊 System Data Summary:');
-    // eslint-disable-next-line security/detect-console-log-non-literal
     console.log(`   • Badges: ${badgeCount}`);
-    // eslint-disable-next-line security/detect-console-log-non-literal
     console.log(`   • Pre-seeded Libraries: ${libraryCount}`);
-    // eslint-disable-next-line security/detect-console-log-non-literal
     console.log(`   • Pre-seeded Cafes: ${cafeCount}`);
-    // eslint-disable-next-line security/detect-console-log-non-literal
     console.log(`   • Pre-seeded Restaurants: ${restaurantCount}`);
-    // eslint-disable-next-line security/detect-console-log-non-literal
     console.log(`   • Total Pre-seeded Pins: ${libraryCount + cafeCount + restaurantCount}\n`);
     
   } catch (err) {
@@ -102,14 +95,11 @@ void connectDB().then(async () => {
 });
 
 httpServer.listen(PORT, () => {
-  // eslint-disable-next-line security/detect-console-log-non-literal
   console.log(`🚀 Server running on port ${PORT}`);
-  // eslint-disable-next-line security/detect-console-log-non-literal
   console.log(`📡 Socket.io enabled for real-time location updates`);
   
   // Start recommendation scheduler
   recommendationScheduler.startScheduler();
-  // eslint-disable-next-line security/detect-console-log-non-literal
   console.log(`⏰ Recommendation scheduler started`);
 });
 
