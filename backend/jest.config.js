@@ -13,6 +13,7 @@ module.exports = {
   },
   setupFilesAfterEnv: ['<rootDir>/tests/setup.ts'],
   testTimeout: 30000,
+  testMatch: ['<rootDir>/test/**/*.test.ts'],
   collectCoverage: true,
   collectCoverageFrom: [
     'src/**/*.{js,ts}',
@@ -26,6 +27,7 @@ module.exports = {
   ],
   coverageDirectory: 'coverage',
   coverageReporters: ['text', 'lcov', 'html'],
+  coveragePathIgnorePatterns: ['/node_modules/', '/tests/'],
   coverageThreshold: {
     global: {
       branches: 15,
