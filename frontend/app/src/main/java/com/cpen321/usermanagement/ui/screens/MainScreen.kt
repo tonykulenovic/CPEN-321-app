@@ -93,6 +93,8 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.BitmapDescriptor
 import com.google.maps.android.compose.Circle
 import com.google.maps.android.compose.GoogleMap
+import com.google.maps.android.compose.MapEffect
+import com.google.maps.android.compose.MapsComposeExperimentalApi
 import com.google.maps.android.compose.MapProperties
 import com.google.maps.android.compose.MapType
 import com.google.maps.android.compose.MapUiSettings
@@ -169,6 +171,15 @@ fun MainScreen(
     // Pre-load profile data once when screen opens (for fast pin ownership checks)
     LaunchedEffect(Unit) {
         profileViewModel.loadProfile()
+        
+        // Log Google Play Services version for debugging map style issues
+        try {
+            val packageManager = context.packageManager
+            val packageInfo = packageManager.getPackageInfo("com.google.android.gms", 0)
+            android.util.Log.d("MainScreen", "📦 Google Play Services version: ${packageInfo.versionName} (${packageInfo.versionCode})")
+        } catch (e: Exception) {
+            android.util.Log.w("MainScreen", "⚠️ Could not retrieve Google Play Services version: ${e.message}")
+        }
     }
     
     // Load friends when profile is loaded
@@ -176,85 +187,28 @@ fun MainScreen(
         profileUiState.user?.let { user ->
             friendsViewModel.loadFriends()
             friendsViewModel.loadFriendsLocations()
-
-            // Initialize real-time location tracking
-            try {
-                val authToken = tokenManager.getTokenSync()
-                android.util.Log.d("MainScreen", "🚀 INITIALIZING location tracking for user: ${user._id}")
-                android.util.Log.d("MainScreen", "🚀 Auth token available: ${authToken != null}")
-
-                if (authToken != null) {
-                    android.util.Log.d("MainScreen", "🔗 Initializing LocationTrackingService...")
-                    locationTrackingService.initialize(authToken, user._id)
-
-                    // Start tracking all friends
-                    val friendsWithLocation = friendsViewModel.uiState.value.friends.filter { it.shareLocation }
-                    android.util.Log.d("MainScreen", "👥 Found ${friendsWithLocation.size} friends with location sharing enabled")
-
-                    friendsWithLocation.forEach { friend ->
-                        android.util.Log.d("MainScreen", "👥 Starting to track friend: ${friend.userId} (${friend.displayName})")
-                        locationTrackingService.trackFriend(friend.userId)
-                    }
-
-                    // Start sharing own location with real GPS tracking
-                    android.util.Log.d("MainScreen", "📍 ENABLING location sharing for current user...")
-                    locationTrackingService.startLocationSharing()
-
-                    // Start real GPS-based location tracking
-                    android.util.Log.d("MainScreen", "🌍 STARTING real GPS location tracking...")
-                    locationTrackingService.startRealGPSTracking()
-
-                    // Log the current state for debugging
-                    locationTrackingService.logCurrentState()
-
-                    android.util.Log.d("MainScreen", "✅ Location sharing setup COMPLETE for user: ${user._id}")
-                } else {
-                    android.util.Log.e("MainScreen", "❌ No auth token available, cannot initialize location tracking")
-                }
-            } catch (e: RuntimeException) {
-                // Log error but don't fail the screen
-                android.util.Log.e("MainScreen", "❌ Failed to initialize location tracking", e)
-            }
-        }
-    }
-    
-    // Monitor socket connection status and retry if needed
-    LaunchedEffect(profileUiState.user) {
-        profileUiState.user?.let { user ->
-            var retryCount = 0
-            val maxRetries = 3
             
-            // Wait a bit for initial connection attempt
-            kotlinx.coroutines.delay(2000)
+            // Start tracking friends who share location (socket is already connected app-wide)
+            val friendsWithLocation = friendsViewModel.uiState.value.friends.filter { it.shareLocation }
+            android.util.Log.d("MainScreen", "👥 Found ${friendsWithLocation.size} friends with location sharing enabled")
             
-            while (retryCount < maxRetries) {
-                val isConnected = locationTrackingService.connectionStatus.value
-                android.util.Log.d("MainScreen", "🔍 Socket connection check (attempt ${retryCount + 1}/$maxRetries): connected=$isConnected")
-                
-                if (!isConnected) {
-                    retryCount++
-                    android.util.Log.w("MainScreen", "⚠️ Socket not connected, retrying in 2 seconds...")
-                    kotlinx.coroutines.delay(2000)
-                    
-                    // Retry connection
-                    try {
-                        val authToken = tokenManager.getTokenSync()
-                        if (authToken != null) {
-                            android.util.Log.d("MainScreen", "🔄 Retrying socket initialization...")
-                            locationTrackingService.connect()
-                        }
-                    } catch (e: Exception) {
-                        android.util.Log.e("MainScreen", "❌ Retry failed: ${e.message}")
-                    }
-                } else {
-                    android.util.Log.d("MainScreen", "✅ Socket connected successfully on attempt ${retryCount + 1}")
-                    break // Exit loop when connected
-                }
+            friendsWithLocation.forEach { friend ->
+                android.util.Log.d("MainScreen", "👥 Starting to track friend: ${friend.userId} (${friend.displayName})")
+                locationTrackingService.trackFriend(friend.userId)
             }
             
-            if (retryCount >= maxRetries) {
-                android.util.Log.e("MainScreen", "❌ Socket failed to connect after $maxRetries attempts")
-            }
+            // Start sharing own location with real GPS tracking
+            android.util.Log.d("MainScreen", "📍 ENABLING location sharing for current user...")
+            locationTrackingService.startLocationSharing()
+            
+            // Start real GPS-based location tracking
+            android.util.Log.d("MainScreen", "🌍 STARTING real GPS location tracking...")
+            locationTrackingService.startRealGPSTracking()
+            
+            // Log the current state for debugging
+            locationTrackingService.logCurrentState()
+            
+            android.util.Log.d("MainScreen", "✅ Location sharing setup COMPLETE for user: ${user._id}")
         }
     }
 
@@ -297,13 +251,13 @@ fun MainScreen(
             android.util.Log.d("MainScreen", "🗺️  Map screen INACTIVE - Stopping map operations")
             mainViewModel.onMapScreenInactive()
             
-            // Stop location tracking when leaving map screen
+            // Stop GPS tracking when leaving map screen (socket stays connected)
             try {
                 locationTrackingService.stopRealGPSTracking()
                 locationTrackingService.stopLocationSharing()
-                android.util.Log.d("MainScreen", "✅ Location tracking stopped on map screen exit")
+                android.util.Log.d("MainScreen", "✅ GPS tracking stopped on map screen exit (socket remains connected)")
             } catch (e: RuntimeException) {
-                android.util.Log.e("MainScreen", "❌ Error stopping location tracking", e)
+                android.util.Log.e("MainScreen", "❌ Error stopping GPS tracking", e)
             }
         }
     }
@@ -731,120 +685,46 @@ private fun MapContent(
         }
     }
     
+    // State to force map style reapplication
+    var forceMapStyleUpdate by remember { mutableStateOf(0) }
+    // Track if we've already forced style update (to avoid infinite loop)
+    var hasForceAppliedStyle by remember { mutableStateOf(false) }
+    
     // Memoize map style to avoid recreating on every recomposition
-    val customMapStyle = remember {
-        MapStyleOptions(
-                """
-                [
-                  {
-                    "elementType": "geometry",
-                    "stylers": [{"color": "#2a3d5c"}]
-                  },
-                  {
-                    "elementType": "labels.text.fill",
-                    "stylers": [{"color": "#8ec3b9"}]
-                  },
-                  {
-                    "elementType": "labels.text.stroke",
-                    "stylers": [{"color": "#1a3646"}]
-                  },
-                  {
-                    "featureType": "administrative.country",
-                    "elementType": "geometry.stroke",
-                    "stylers": [{"color": "#4b6878"}]
-                  },
-                  {
-                    "featureType": "landscape.man_made.building",
-                    "elementType": "geometry.fill",
-                    "stylers": [{"color": "#556b7e"}]
-                  },
-                  {
-                    "featureType": "landscape.man_made.building",
-                    "elementType": "geometry.stroke",
-                    "stylers": [{"color": "#3a4d5f"}]
-                  },
-                  {
-                    "featureType": "poi",
-                    "elementType": "labels",
-                    "stylers": [{"visibility": "off"}]
-                  },
-                  {
-                    "featureType": "poi.business",
-                    "stylers": [{"visibility": "off"}]
-                  },
-                  {
-                    "featureType": "poi.park",
-                    "elementType": "geometry",
-                    "stylers": [{"color": "#263c3f"}]
-                  },
-                  {
-                    "featureType": "poi.park",
-                    "elementType": "labels",
-                    "stylers": [{"visibility": "off"}]
-                  },
-                  {
-                    "featureType": "road",
-                    "elementType": "geometry",
-                    "stylers": [{"color": "#3d4857"}]
-                  },
-                  {
-                    "featureType": "road",
-                    "elementType": "geometry.stroke",
-                    "stylers": [{"color": "#1a2332"}]
-                  },
-                  {
-                    "featureType": "road",
-                    "elementType": "labels.text.fill",
-                    "stylers": [{"color": "#9ca5b3"}]
-                  },
-                  {
-                    "featureType": "road.highway",
-                    "elementType": "geometry",
-                    "stylers": [{"color": "#746855"}]
-                  },
-                  {
-                    "featureType": "road.highway",
-                    "elementType": "geometry.stroke",
-                    "stylers": [{"color": "#1f2835"}]
-                  },
-                  {
-                    "featureType": "road.highway",
-                    "elementType": "labels.text.fill",
-                    "stylers": [{"color": "#f3d19c"}]
-                  },
-                  {
-                    "featureType": "transit",
-                    "elementType": "geometry",
-                    "stylers": [{"color": "#2f3948"}]
-                  },
-                  {
-                    "featureType": "transit",
-                    "elementType": "labels",
-                    "stylers": [{"visibility": "off"}]
-                  },
-                  {
-                    "featureType": "water",
-                    "elementType": "geometry",
-                    "stylers": [{"color": "#17263c"}]
-                  },
-                  {
-                    "featureType": "water",
-                    "elementType": "labels.text.fill",
-                    "stylers": [{"color": "#515c6d"}]
-                  },
-                  {
-                    "featureType": "water",
-                    "elementType": "labels.text.stroke",
-                    "stylers": [{"color": "#17263c"}]
-                  }
-                ]
-                """.trimIndent()
-        )
+    // Load from raw resource file for better cross-device compatibility
+    val customMapStyle = remember(forceMapStyleUpdate, context) {
+        try {
+            // Log device information for debugging
+            android.util.Log.d("MapStyle", "🗺️ Attempting to load custom map style from resource file (update: $forceMapStyleUpdate)")
+            android.util.Log.d("MapStyle", "📱 Device: ${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL}")
+            android.util.Log.d("MapStyle", "🤖 Android version: ${android.os.Build.VERSION.RELEASE} (SDK ${android.os.Build.VERSION.SDK_INT})")
+            
+            // Load style from raw resource file instead of inline string
+            val inputStream = context.resources.openRawResource(R.raw.map_style)
+            val styleJson = inputStream.bufferedReader().use { it.readText() }
+            inputStream.close()
+            
+            android.util.Log.d("MapStyle", "📝 Style JSON loaded from resource, length: ${styleJson.length} characters")
+            
+            val style = MapStyleOptions(styleJson)
+            android.util.Log.d("MapStyle", "✅ Custom map style loaded successfully from raw resource!")
+            style
+            
+        } catch (e: Exception) {
+            android.util.Log.e("MapStyle", "❌ Failed to load custom map style", e)
+            android.util.Log.e("MapStyle", "❌ Error type: ${e.javaClass.simpleName}")
+            android.util.Log.e("MapStyle", "❌ Error message: ${e.message}")
+            android.util.Log.e("MapStyle", "❌ Stack trace: ${e.stackTraceToString()}")
+            android.util.Log.e("MapStyle", "⚠️ Falling back to default Google Maps style")
+            null // Return null to use default map style
+        }
     }
     
     // Toggle between styled map and satellite - optimized with disabled features
-    val mapProperties = remember(isSatelliteView, hasLocationPermission, currentZoom) {
+    val mapProperties = remember(isSatelliteView, hasLocationPermission, currentZoom, customMapStyle, forceMapStyleUpdate) {
         val enableBuildings = !isSatelliteView && currentZoom >= 15f
+        
+        android.util.Log.d("MapStyle", "🔧 Creating MapProperties (forceUpdate: $forceMapStyleUpdate, satellite: $isSatelliteView, style: ${if (customMapStyle != null) "present" else "null"})")
 
         if (isSatelliteView) {
             MapProperties(
@@ -861,8 +741,10 @@ private fun MapContent(
                 isIndoorEnabled = false, // Disable indoor maps
                 isTrafficEnabled = false, // Disable traffic
                 isMyLocationEnabled = hasLocationPermission,
-                mapStyleOptions = customMapStyle
-            )
+                mapStyleOptions = customMapStyle // Can be null if style failed to load
+            ).also {
+                android.util.Log.d("MapStyle", "📍 MapProperties created with custom style: ${customMapStyle != null}")
+            }
         }
     }
     
@@ -890,9 +772,32 @@ private fun MapContent(
             onMapLoaded = {
                 // Map is fully loaded and ready - remove loading overlay
                 isMapLoaded = true
-                android.util.Log.d("MapContent", "Map loaded with ${filteredPins.size} pins, ${clusters.size} clusters at zoom ${String.format("%.1f", currentZoom)}")
+                android.util.Log.d("MapContent", "🗺️ Map loaded with ${filteredPins.size} pins, ${clusters.size} clusters at zoom ${String.format("%.1f", currentZoom)}")
+                android.util.Log.d("MapContent", "🎨 Custom style status: ${if (customMapStyle != null) "APPLIED ✅" else "NOT APPLIED (using default) ⚠️"}")
+                android.util.Log.d("MapContent", "🛰️ Map type: ${if (isSatelliteView) "SATELLITE" else "NORMAL"}")
+                
+                // Force style reapplication after map loads (fixes physical device issue)
+                // Only do this once to avoid infinite recomposition loop
+                if (!hasForceAppliedStyle && customMapStyle != null && !isSatelliteView) {
+                    android.util.Log.d("MapStyle", "🔄 Forcing style reapplication after map load...")
+                    hasForceAppliedStyle = true
+                    forceMapStyleUpdate++
+                }
             }
         ) {
+            // Use MapEffect to directly apply style via native API and verify success
+            // This is more reliable than MapProperties.mapStyleOptions on physical devices
+            @OptIn(MapsComposeExperimentalApi::class)
+            MapEffect(customMapStyle, isSatelliteView, forceMapStyleUpdate) { googleMap ->
+                if (!isSatelliteView && customMapStyle != null) {
+                    val success = googleMap.setMapStyle(customMapStyle)
+                    android.util.Log.d("MapStyle", "🎯 Direct setMapStyle() result: ${if (success) "SUCCESS ✅" else "FAILED ❌"}")
+                } else if (isSatelliteView) {
+                    googleMap.setMapStyle(null)
+                    android.util.Log.d("MapStyle", "🛰️ Cleared custom style for satellite view")
+                }
+            }
+            
             // Display clustered pin markers - automatically groups nearby pins
             if (clusters.isNotEmpty()) {
                 clusters.forEach { cluster ->

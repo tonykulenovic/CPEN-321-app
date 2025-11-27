@@ -42,7 +42,8 @@ class AuthViewModel @Inject constructor(
     private val authRepository: AuthRepository,
     private val profileRepository: ProfileRepository,
     private val navigationStateManager: NavigationStateManager,
-    private val fcmTokenManager: FCMTokenManager
+    private val fcmTokenManager: FCMTokenManager,
+    private val locationTrackingService: com.cpen321.usermanagement.data.realtime.LocationTrackingService
 ) : ViewModel() {
 
     companion object {
@@ -76,8 +77,11 @@ class AuthViewModel @Inject constructor(
                 )
 
                 // Register FCM token if user is already authenticated
-                if (isAuthenticated) {
+                if (isAuthenticated && user != null) {
                     fcmTokenManager.registerFCMToken()
+                    
+                    // Initialize socket connection app-wide (stays alive across all screens)
+                    initializeSocketConnection(user._id.toString())
                 }
 
                 updateNavigationState(
@@ -154,6 +158,9 @@ class AuthViewModel @Inject constructor(
 
                     // Register FCM token after successful authentication
                     fcmTokenManager.registerFCMToken()
+                    
+                    // Initialize socket connection app-wide (stays alive across all screens)
+                    initializeSocketConnection(authData.user._id.toString())
 
                     // Trigger navigation through NavigationStateManager
                     // Admins skip onboarding and go directly to admin dashboard
@@ -200,6 +207,14 @@ class AuthViewModel @Inject constructor(
                 // Continue with deletion even if FCM token removal fails
             }
             
+            // Cleanup socket connection before account deletion
+            try {
+                locationTrackingService.cleanup()
+                Log.d(TAG, "✅ Socket connection cleaned up before account deletion")
+            } catch (e: Exception) {
+                Log.w(TAG, "⚠️ Failed to cleanup socket connection: ${e.message}")
+            }
+            
             val deleteResult = profileRepository.deleteAccount()
             
             if (deleteResult.isSuccess) {
@@ -233,6 +248,14 @@ class AuthViewModel @Inject constructor(
                 // Continue with logout even if FCM token removal fails
             }
             
+            // Cleanup socket connection before logout
+            try {
+                locationTrackingService.cleanup()
+                Log.d(TAG, "✅ Socket connection cleaned up during logout")
+            } catch (e: Exception) {
+                Log.w(TAG, "⚠️ Failed to cleanup socket connection: ${e.message}")
+            }
+            
             authRepository.clearToken()
             _uiState.value = _uiState.value.copy(
                 isAuthenticated = false,
@@ -255,6 +278,27 @@ class AuthViewModel @Inject constructor(
 
     fun clearSuccessMessage() {
         _uiState.value = _uiState.value.copy(successMessage = null)
+    }
+    
+    /**
+     * Initialize socket connection app-wide (called after successful authentication)
+     * Socket stays connected across all screens until logout
+     */
+    private fun initializeSocketConnection(userId: String) {
+        viewModelScope.launch {
+            try {
+                val token = authRepository.getStoredToken()
+                if (token != null) {
+                    Log.d(TAG, "🌐 Initializing app-wide socket connection for user: $userId")
+                    locationTrackingService.initialize(token, userId)
+                    Log.d(TAG, "✅ Socket connection initialized successfully")
+                } else {
+                    Log.e(TAG, "❌ Cannot initialize socket: no auth token available")
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "❌ Failed to initialize socket connection", e)
+            }
+        }
     }
 
     fun checkAndProceedWithSignUp(

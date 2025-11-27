@@ -67,6 +67,7 @@ class LocationTrackingService @Inject constructor(
     private var locationSharingEnabled = false
     private var locationUpdateJob: Job? = null
     private val serviceScope = CoroutineScope(Dispatchers.IO)
+    private var isInitialized = false
     
     // GPS location tracking
     private val fusedLocationClient: FusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(context)
@@ -92,8 +93,19 @@ class LocationTrackingService @Inject constructor(
      * Initialize Socket.io connection with authentication
      */
     fun initialize(token: String, userId: String) {
-        // Cleanup previous connection if exists
-        cleanup()
+        // Prevent re-initialization if already initialized for this user
+        if (isInitialized && currentUserId == userId && socket?.connected() == true) {
+            Log.d(TAG, "✅ Socket already initialized and connected for user: $userId")
+            return
+        }
+        
+        Log.d(TAG, "🔧 Initializing socket for user: $userId (isInitialized=$isInitialized, connected=${socket?.connected()})")
+        
+        // Only cleanup if we're changing users or socket is disconnected
+        if (currentUserId != userId || socket == null) {
+            Log.d(TAG, "🧹 Cleaning up previous connection")
+            cleanup()
+        }
         
         this.authToken = token
         this.currentUserId = userId
@@ -106,19 +118,25 @@ class LocationTrackingService @Inject constructor(
                 reconnectionAttempts = 5
                 reconnectionDelay = 1000
                 reconnectionDelayMax = 5000
-                forceNew = true
+                forceNew = false // Don't force new connection, reuse if possible
             }
             
             socket = IO.socket("$SOCKET_SERVER_URL/realtime", options)
             setupSocketListeners()
+            
+            Log.d(TAG, "🔌 Calling socket.connect()...")
             connect()
+            isInitialized = true
             
         } catch (e: java.net.URISyntaxException) {
-            Log.e(TAG, "Invalid socket server URL", e)
+            Log.e(TAG, "❌ Invalid socket server URL", e)
+            isInitialized = false
         } catch (e: java.io.IOException) {
-            Log.e(TAG, "IO error initializing socket connection", e)
+            Log.e(TAG, "❌ IO error initializing socket connection", e)
+            isInitialized = false
         } catch (e: RuntimeException) {
-            Log.e(TAG, "Error initializing socket connection", e)
+            Log.e(TAG, "❌ Error initializing socket connection", e)
+            isInitialized = false
         }
     }
     
@@ -303,8 +321,19 @@ class LocationTrackingService @Inject constructor(
      * Connect to Socket.io server
      */
     fun connect() {
+        if (socket == null) {
+            Log.e(TAG, "❌ Cannot connect: socket is null!")
+            return
+        }
+        
+        if (socket?.connected() == true) {
+            Log.d(TAG, "✅ Socket already connected")
+            return
+        }
+        
+        Log.d(TAG, "🔌 Attempting to connect to socket server...")
         socket?.connect()
-        Log.d(TAG, "Attempting to connect to socket server")
+        Log.d(TAG, "🔌 Connect() called - waiting for connection...")
     }
     
     /**
@@ -568,6 +597,7 @@ class LocationTrackingService @Inject constructor(
             _friendLocations.value = emptyMap()
             authToken = null
             currentUserId = null
+            isInitialized = false
             
             Log.d(TAG, "🧹 Location tracking service cleanup COMPLETE")
         } catch (e: RuntimeException) {
