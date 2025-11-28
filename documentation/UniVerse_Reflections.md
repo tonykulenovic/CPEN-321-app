@@ -13,7 +13,6 @@
 | 5  | Filmed Git Actions and Codacy video | Tony | 2 hours |
 | ... | ... | ... | ... |
 
-**Note:** Please fill in the actual tasks completed for this milestone, assign them to team members, and record the duration for each task.
 
 ---
 
@@ -27,7 +26,6 @@
 | Team Member 4 Name | [X] | [X]% |
 | **Group Overall** | **[Total]** | **[Average]%** |
 
-**Note:** Please fill in each team member's name, their time spent, AI reliance percentage, and calculate the group totals/averages.
 
 ---
 
@@ -361,16 +359,4 @@ Yes, used design documents, particularly the UML sequence diagrams. Created sequ
 One unexpected benefit was how AI helped learn Express.js and Mongoose patterns quickly. When the AI suggested implementation patterns, researching why those approaches were recommended accelerated learning. The AI also helped maintain consistency in API design. However, over-reliance on AI could lead to code that worked but wasn't optimal for the specific use case. Learned to always review AI-generated code and adapt it to the project's specific requirements and patterns. Another challenge was that AI sometimes generated code that had subtle bugs or edge cases that only appeared during testing or in production. Learned to thoroughly test all AI-generated code, especially for features involving user input or database operations. Overall, AI was a valuable tool for feature development, but it required careful oversight to ensure code quality, proper error handling, and integration with the existing system.
 
 ---
-
-## Notes for Completion
-
-This document is a template that needs to be filled in by each team member. Key information to gather:
-
-1. **Team member names** - Update all "[Name]" placeholders
-2. **Task distribution** - List actual tasks completed in this milestone with durations
-3. **Time and AI reliance** - Each member should estimate their hours and AI reliance percentage
-4. **Individual reflections** - Each member should complete their own section (3.1 through 3.8)
-5. **Remove this "Notes" section** before final submission
-
-Once completed, export this document to PDF as `UniVerse_Reflections.pdf` for submission.
 
