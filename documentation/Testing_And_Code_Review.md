@@ -997,13 +997,15 @@ There is a total of 250 issues remaining.
 
 ![Issues breakdown table](images/issues_table.png)
 
+![Quality evolution](images/quality_evolution.png)
+
 **Codacy Overview URL:** `https://app.codacy.com/gh/tonykulenovic/CPEN-321-app/dashboard`
 
 ### 5.3. Issues Breakdown by Code Pattern
 
 ![Issues breakdown page](images/issues_page.png)
 
-![Quality evolution](images/quality_evolution.png)
+![Code patterns](images/code_patterns.png)
 
 **Codacy Issues URL:** `https://app.codacy.com/gh/tonykulenovic/CPEN-321-app/issues/current`
 
