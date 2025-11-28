@@ -124,8 +124,15 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
+import android.graphics.Paint
+import android.graphics.PorterDuff
+import android.graphics.PorterDuffXfermode
 import androidx.core.content.ContextCompat
 import androidx.compose.ui.platform.LocalContext
+import coil.ImageLoader
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
+import coil.request.SuccessResult
 import kotlin.math.*
 
 @OptIn(ExperimentalPermissionsApi::class)
@@ -278,12 +285,20 @@ fun MainScreen(
         }
     }
 
-    // Set status bar appearance
+    // Set status bar and navigation bar appearance - darker when popup is shown
     val systemUiController = rememberSystemUiController()
-    SideEffect {
-        systemUiController.setSystemBarsColor(
-            color = Color(0xFF1A1A2E),
-            darkIcons = false // false = light/white icons
+    val isPopupShown = selectedFriend != null || selectedPinId != null
+    
+    LaunchedEffect(isPopupShown) {
+        val barColor = if (isPopupShown) Color(0xFF0A0A14) else Color(0xFF1A1A2E)
+        systemUiController.setStatusBarColor(
+            color = barColor,
+            darkIcons = false
+        )
+        systemUiController.setNavigationBarColor(
+            color = barColor,
+            darkIcons = false,
+            navigationBarContrastEnforced = false
         )
     }
 
@@ -959,126 +974,101 @@ private fun MapContent(
 
             // Display friend markers if locations are available
             if (friendsUiState.friendLocations.isNotEmpty()) {
-                // Create custom friend icon with user avatar style
-            val friendIcon = remember {
-                try {
-                    val size = 60  // Reduced from 120 to match pin sizes
-                    val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
-                    val canvas = android.graphics.Canvas(bitmap)
-                    val center = size / 2f
-                    val scale = 0.5f  // Scale factor for internal elements
-
-                    // Draw outer glow/shadow
-                    val shadowPaint = android.graphics.Paint().apply {
-                        isAntiAlias = true
-                        color = android.graphics.Color.parseColor("#33000000")
+                // Cache for friend profile icons - loaded asynchronously
+                var friendIcons by remember { mutableStateOf<Map<String, BitmapDescriptor>>(emptyMap()) }
+                
+                // Default fallback icon (green circle with person silhouette)
+                val defaultFriendIcon = remember {
+                    createDefaultFriendIcon()
+                }
+                
+                // Load profile pictures for all friends with locations
+                LaunchedEffect(friendsUiState.friendLocations, friendsUiState.friends) {
+                    val imageLoader = ImageLoader(context)
+                    val newIcons = mutableMapOf<String, BitmapDescriptor>()
+                    
+                    friendsUiState.friendLocations.forEach { friendLocation ->
+                        val friend = friendsUiState.friends.find { it.userId == friendLocation.userId }
+                        if (friend != null && friend.photoUrl != null && !friendIcons.containsKey(friend.userId)) {
+                            try {
+                                val request = ImageRequest.Builder(context)
+                                    .data(friend.photoUrl)
+                                    .size(96) // Request small image
+                                    .allowHardware(false)
+                                    .build()
+                                
+                                val result = imageLoader.execute(request)
+                                if (result is SuccessResult) {
+                                    val bitmap = (result.drawable as android.graphics.drawable.BitmapDrawable).bitmap
+                                    val icon = createProfileMarkerIcon(bitmap)
+                                    newIcons[friend.userId] = icon
+                                }
+                            } catch (e: Exception) {
+                                android.util.Log.w("MapContent", "Failed to load profile pic for ${friend.userId}: ${e.message}")
+                            }
+                        }
                     }
-                    canvas.drawCircle(center, center + 1f, center - 1f, shadowPaint)
-
-                    // Draw main circular background (gradient-like effect)
-                    val bgPaint = android.graphics.Paint().apply {
-                        isAntiAlias = true
-                        color = android.graphics.Color.parseColor("#4CAF50")
+                    
+                    if (newIcons.isNotEmpty()) {
+                        friendIcons = friendIcons + newIcons
                     }
-                    canvas.drawCircle(center, center, center - 2f, bgPaint)
+                }
 
-                    // Draw inner highlight
-                    val highlightPaint = android.graphics.Paint().apply {
-                        isAntiAlias = true
-                        color = android.graphics.Color.parseColor("#66FFFFFF")
-                    }
-                    canvas.drawCircle(center, center - 4f, center - 10f, highlightPaint)
+                // Display friend markers using HTTP endpoint location data - ONLY for online friends
+                friendsUiState.friendLocations.forEach { friendLocation ->
+                    val friend = friendsUiState.friends.find { it.userId == friendLocation.userId }
 
-                    // Draw white border
-                    val borderPaint = android.graphics.Paint().apply {
-                        isAntiAlias = true
-                        style = android.graphics.Paint.Style.STROKE
-                        strokeWidth = 3f
-                        color = android.graphics.Color.WHITE
-                    }
-                    canvas.drawCircle(center, center, center - 3.5f, borderPaint)
+                    // Only show marker if friend exists AND is online
+                    if (friend != null && friend.isOnline) {
+                        val position = LatLng(friendLocation.lat, friendLocation.lng)
 
-                    // Draw user icon (more detailed person silhouette)
-                    val iconPaint = android.graphics.Paint().apply {
-                        isAntiAlias = true
-                        style = android.graphics.Paint.Style.FILL
-                        color = android.graphics.Color.WHITE
-                    }
+                        // Calculate time since last update
+                        val lastUpdateTime = try {
+                            java.time.Instant.parse(friendLocation.ts)
+                        } catch (e: RuntimeException) {
+                            java.time.Instant.now()
+                        }
+                        val now = java.time.Instant.now()
+                        val minutesAgo = java.time.Duration.between(lastUpdateTime, now).toMinutes()
 
-                    // Head (circle) - scaled
-                    canvas.drawCircle(center, center - 7.5f, 9f, iconPaint)
+                        val lastSeen = when {
+                            minutesAgo < 1 -> "Online now"
+                            minutesAgo < 5 -> "Active ${minutesAgo}m ago"
+                            minutesAgo < 60 -> "Seen ${minutesAgo}m ago"
+                            else -> "Seen ${minutesAgo / 60}h ago"
+                        }
 
-                    // Body (rounded rectangle path) - scaled
-                    val bodyPath = android.graphics.Path().apply {
-                        addRoundRect(
-                            center - 11f, center + 1.5f, center + 11f, center + 17.5f,
-                            6f, 6f,
-                            android.graphics.Path.Direction.CW
+                        // Create different marker title styles for online status
+                        val statusIndicator = when {
+                            minutesAgo < 1 -> "🟢"
+                            minutesAgo < 5 -> "🟡"
+                            else -> "⚪"
+                        }
+
+                        // Use cached profile icon or fallback
+                        val markerIcon = friendIcons[friend.userId] ?: defaultFriendIcon
+
+                        Marker(
+                            state = MarkerState(position = position),
+                            title = "${friend.displayName} $statusIndicator",
+                            snippet = "Tap for location details",
+                            icon = markerIcon,
+                            onClick = {
+                                // Create metadata map for the bottom sheet
+                                val metadata = mapOf(
+                                    "location" to "Near UBC Campus", // More user-friendly location
+                                    "activity" to if (friend.isOnline) "Online" else "Offline",
+                                    "duration" to if (minutesAgo < 1) "now" else "${minutesAgo}m ago",
+                                    "lastSeen" to lastSeen,
+                                    "isLiveSharing" to friend.shareLocation.toString(),
+                                    "accuracy" to "±${friendLocation.accuracyM.toInt()}m"
+                                )
+                                onFriendClick(friend, metadata)
+                                true
+                            }
                         )
                     }
-                    canvas.drawPath(bodyPath, iconPaint)
-
-                    // Small location pin indicator removed for cleaner look at smaller size
-
-                    BitmapDescriptorFactory.fromBitmap(bitmap)
-                } catch (e: RuntimeException) {
-                    // Fallback to default marker if bitmap creation fails
-                    BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)
                 }
-            }
-
-            // Display friend markers using HTTP endpoint location data - ONLY for online friends
-            friendsUiState.friendLocations.forEach { friendLocation ->
-                val friend = friendsUiState.friends.find { it.userId == friendLocation.userId }
-
-                // Only show marker if friend exists AND is online
-                if (friend != null && friend.isOnline) {
-                    val position = LatLng(friendLocation.lat, friendLocation.lng)
-
-                    // Calculate time since last update
-                    val lastUpdateTime = try {
-                        java.time.Instant.parse(friendLocation.ts)
-                    } catch (e: RuntimeException) {
-                        java.time.Instant.now()
-                    }
-                    val now = java.time.Instant.now()
-                    val minutesAgo = java.time.Duration.between(lastUpdateTime, now).toMinutes()
-
-                    val lastSeen = when {
-                        minutesAgo < 1 -> "Online now"
-                        minutesAgo < 5 -> "Active ${minutesAgo}m ago"
-                        minutesAgo < 60 -> "Seen ${minutesAgo}m ago"
-                        else -> "Seen ${minutesAgo / 60}h ago"
-                    }
-
-                    // Create different marker title styles for online status
-                    val statusIndicator = when {
-                        minutesAgo < 1 -> "🟢"
-                        minutesAgo < 5 -> "🟡"
-                        else -> "⚪"
-                    }
-
-                    Marker(
-                        state = MarkerState(position = position),
-                        title = "${friend.displayName} $statusIndicator",
-                        snippet = "Tap for location details",
-                        icon = friendIcon,
-                        onClick = {
-                            // Create metadata map for the bottom sheet
-                            val metadata = mapOf(
-                                "location" to "Near UBC Campus", // More user-friendly location
-                                "activity" to if (friend.isOnline) "Online" else "Offline",
-                                "duration" to if (minutesAgo < 1) "now" else "${minutesAgo}m ago",
-                                "lastSeen" to lastSeen,
-                                "isLiveSharing" to friend.shareLocation.toString(),
-                                "accuracy" to "±${friendLocation.accuracyM.toInt()}m"
-                            )
-                            onFriendClick(friend, metadata)
-                            true
-                        }
-                    )
-                }
-            }
             }
         }
         
@@ -1228,11 +1218,18 @@ private fun FriendDetailsBottomSheet(
     metadata: Map<String, String>,
     onDismiss: () -> Unit
 ) {
+    // Dark theme colors matching the app
+    val cardBackground = Color(0xFF1A1A2E)
+    val surfaceColor = Color(0xFF16213E)
+    val primaryText = Color.White
+    val secondaryText = Color(0xFF8EC3B9)
+    val accentGreen = Color(0xFF4CAF50)
+    
     // Bottom sheet with friend details
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black.copy(alpha = 0.5f))
+            .background(Color.Black.copy(alpha = 0.6f))
             .clickable(onClick = onDismiss)
     ) {
         Card(
@@ -1241,87 +1238,165 @@ private fun FriendDetailsBottomSheet(
                 .fillMaxWidth()
                 .padding(16.dp)
                 .clickable(enabled = false) { }, // Prevent card clicks from dismissing
-            colors = CardDefaults.cardColors(containerColor = Color.White),
-            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
-            shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp)
+            colors = CardDefaults.cardColors(containerColor = cardBackground),
+            elevation = CardDefaults.cardElevation(defaultElevation = 12.dp),
+            shape = RoundedCornerShape(24.dp)
         ) {
             Column(
                 modifier = Modifier.padding(24.dp)
             ) {
-                // Header with friend name and status
+                // Header with friend name and profile picture
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Column {
+                    Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = friend.displayName,
                             style = MaterialTheme.typography.headlineSmall,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.Bold,
+                            color = primaryText
                         )
                         Text(
                             text = metadata["lastSeen"] ?: "Unknown status",
                             style = MaterialTheme.typography.bodyMedium,
-                            color = Color(0xFF4CAF50)
+                            color = accentGreen
                         )
                     }
 
-                    // Profile picture placeholder
+                    Spacer(modifier = Modifier.width(16.dp))
+
+                    // Profile picture with green border
                     Box(
                         modifier = Modifier
-                            .size(60.dp)
-                            .background(Color(0xFF4CAF50), CircleShape),
+                            .size(64.dp)
+                            .background(accentGreen, CircleShape)
+                            .padding(3.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(
-                            text = friend.displayName.take(2).uppercase(),
-                            color = Color.White,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 20.sp
-                        )
+                        if (friend.photoUrl != null) {
+                            AsyncImage(
+                                model = ImageRequest.Builder(LocalContext.current)
+                                    .data(friend.photoUrl)
+                                    .crossfade(true)
+                                    .build(),
+                                contentDescription = "${friend.displayName}'s profile picture",
+                                modifier = Modifier
+                                    .size(58.dp)
+                                    .clip(CircleShape),
+                                contentScale = ContentScale.Crop
+                            )
+                        } else {
+                            // Fallback to initials
+                            Box(
+                                modifier = Modifier
+                                    .size(58.dp)
+                                    .background(surfaceColor, CircleShape),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = friend.displayName.take(2).uppercase(),
+                                    color = primaryText,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 20.sp
+                                )
+                            }
+                        }
                     }
                 }
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // Location details with dark theme
+                FriendLocationDetailRow(
+                    icon = Icons.Default.LocationOn,
+                    title = "Location",
+                    value = metadata["location"] ?: "Unknown",
+                    iconTint = accentGreen,
+                    titleColor = secondaryText,
+                    valueColor = primaryText
+                )
+
+                FriendLocationDetailRow(
+                    icon = Icons.Default.DirectionsRun,
+                    title = "Activity",
+                    value = metadata["activity"] ?: "Unknown",
+                    iconTint = secondaryText,
+                    titleColor = secondaryText,
+                    valueColor = primaryText
+                )
+
+                FriendLocationDetailRow(
+                    icon = Icons.Default.AccessTime,
+                    title = "Last seen",
+                    value = metadata["duration"] ?: "unknown time",
+                    iconTint = secondaryText,
+                    titleColor = secondaryText,
+                    valueColor = primaryText
+                )
+
+                FriendLocationDetailRow(
+                    icon = Icons.Default.TrackChanges,
+                    title = "Sharing",
+                    value = if (metadata["isLiveSharing"] == "true") "Live location" else "Location visible",
+                    iconTint = if (metadata["isLiveSharing"] == "true") accentGreen else secondaryText,
+                    titleColor = secondaryText,
+                    valueColor = primaryText
+                )
 
                 Spacer(modifier = Modifier.height(20.dp))
 
-                // Location details
-                LocationDetailRow(
-                    icon = Icons.Default.LocationOn,
-                    title = "Location",
-                    value = metadata["location"] ?: "Unknown"
-                )
-
-                LocationDetailRow(
-                    icon = Icons.Default.DirectionsRun,
-                    title = "Activity",
-                    value = metadata["activity"] ?: "Unknown"
-                )
-
-                LocationDetailRow(
-                    icon = Icons.Default.AccessTime,
-                    title = "Last seen",
-                    value = metadata["duration"] ?: "unknown time"
-                )
-
-                LocationDetailRow(
-                    icon = Icons.Default.TrackChanges,
-                    title = "Sharing",
-                    value = if (metadata["isLiveSharing"] == "true") "Live location" else "Location visible"
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Dismiss button
+                // Dismiss button with dark theme
                 FloatingActionButton(
                     onClick = onDismiss,
                     modifier = Modifier.fillMaxWidth(),
-                    containerColor = Color(0xFFE0E0E0),
-                    contentColor = Color.Black
+                    containerColor = surfaceColor,
+                    contentColor = primaryText
                 ) {
-                    Text("Close", fontSize = 16.sp)
+                    Text("Close", fontSize = 16.sp, fontWeight = FontWeight.Medium)
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun FriendLocationDetailRow(
+    icon: ImageVector,
+    title: String,
+    value: String,
+    iconTint: Color,
+    titleColor: Color,
+    valueColor: Color
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = title,
+            modifier = Modifier.size(24.dp),
+            tint = iconTint
+        )
+        Spacer(modifier = Modifier.width(16.dp))
+        Column(
+            modifier = Modifier.weight(1f)
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodySmall,
+                color = titleColor
+            )
+            Text(
+                text = value,
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Medium,
+                color = valueColor
+            )
         }
     }
 }
@@ -1719,6 +1794,106 @@ private fun Context.createClusterIcon(count: Int): BitmapDescriptor {
     val textY = size / 2f - (textPaint.descent() + textPaint.ascent()) / 2
     val countText = if (count > 999) "999+" else count.toString()
     canvas.drawText(countText, size / 2f, textY, textPaint)
+    
+    return BitmapDescriptorFactory.fromBitmap(bitmap)
+}
+
+/**
+ * Creates a circular profile picture marker with a green border
+ */
+private fun createProfileMarkerIcon(profileBitmap: Bitmap): BitmapDescriptor {
+    val size = 48 // Small marker size
+    val borderWidth = 4f
+    
+    val output = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+    val canvas = Canvas(output)
+    val center = size / 2f
+    val radius = center - borderWidth / 2
+    
+    // Draw green border (outer circle)
+    val borderPaint = Paint().apply {
+        isAntiAlias = true
+        color = android.graphics.Color.parseColor("#4CAF50") // Green
+        style = Paint.Style.STROKE
+        strokeWidth = borderWidth
+    }
+    canvas.drawCircle(center, center, radius, borderPaint)
+    
+    // Create circular clipped profile picture
+    val scaledBitmap = Bitmap.createScaledBitmap(profileBitmap, size, size, true)
+    val circleBitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+    val circleCanvas = Canvas(circleBitmap)
+    
+    val paint = Paint().apply {
+        isAntiAlias = true
+    }
+    
+    // Draw circle mask
+    circleCanvas.drawCircle(center, center, radius - borderWidth / 2, paint)
+    
+    // Apply profile image with SRC_IN to clip to circle
+    paint.xfermode = PorterDuffXfermode(PorterDuff.Mode.SRC_IN)
+    circleCanvas.drawBitmap(scaledBitmap, 0f, 0f, paint)
+    
+    // Draw the circular profile on top of the border
+    canvas.drawBitmap(circleBitmap, 0f, 0f, null)
+    
+    // Draw white inner border for contrast
+    val innerBorderPaint = Paint().apply {
+        isAntiAlias = true
+        color = android.graphics.Color.WHITE
+        style = Paint.Style.STROKE
+        strokeWidth = 1.5f
+    }
+    canvas.drawCircle(center, center, radius - borderWidth, innerBorderPaint)
+    
+    return BitmapDescriptorFactory.fromBitmap(output)
+}
+
+/**
+ * Creates a default friend icon (green circle with person silhouette) as fallback
+ */
+private fun createDefaultFriendIcon(): BitmapDescriptor {
+    val size = 48 // Small marker size
+    val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+    val canvas = Canvas(bitmap)
+    val center = size / 2f
+    
+    // Draw green circular background
+    val bgPaint = Paint().apply {
+        isAntiAlias = true
+        color = android.graphics.Color.parseColor("#4CAF50")
+    }
+    canvas.drawCircle(center, center, center - 2f, bgPaint)
+    
+    // Draw white border
+    val borderPaint = Paint().apply {
+        isAntiAlias = true
+        style = Paint.Style.STROKE
+        strokeWidth = 2f
+        color = android.graphics.Color.WHITE
+    }
+    canvas.drawCircle(center, center, center - 3f, borderPaint)
+    
+    // Draw person icon (simplified silhouette)
+    val iconPaint = Paint().apply {
+        isAntiAlias = true
+        style = Paint.Style.FILL
+        color = android.graphics.Color.WHITE
+    }
+    
+    // Head
+    canvas.drawCircle(center, center - 5f, 6f, iconPaint)
+    
+    // Body (arc/semi-circle)
+    val bodyPath = android.graphics.Path().apply {
+        addRoundRect(
+            center - 8f, center + 2f, center + 8f, center + 14f,
+            4f, 4f,
+            android.graphics.Path.Direction.CW
+        )
+    }
+    canvas.drawPath(bodyPath, iconPaint)
     
     return BitmapDescriptorFactory.fromBitmap(bitmap)
 }
