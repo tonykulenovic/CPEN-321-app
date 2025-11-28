@@ -1,6 +1,5 @@
 import mongoose from 'mongoose';
 import axios from 'axios';
-import { pinModel } from '../models/pin.model';
 import logger from '../utils/logger.util';
 import { PinCategory, PinStatus, PinVisibility } from '../types/pins.types';
 
@@ -138,8 +137,8 @@ export async function seedRestaurants(): Promise<void> {
           }
         );
 
-        if (response.data && (response.data.places ?? response.data.results)) {
-          const regionRestaurants = response.data.places ?? response.data.results;
+        const regionRestaurants = response.data?.places ?? response.data?.results;
+        if (regionRestaurants) {
           if (regionRestaurants && regionRestaurants.length > 0) {
             allRestaurants.push(...regionRestaurants);
             logger.info(`    ✓ Found ${regionRestaurants.length} restaurants in ${region.name}`);

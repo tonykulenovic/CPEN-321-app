@@ -160,7 +160,7 @@ export class PinModel {
   async deleteAllByUser(userId: mongoose.Types.ObjectId): Promise<number> {
     try {
       const result = await this.pin.deleteMany({ createdBy: userId });
-      logger.info(`🗑️ Deleted ${result.deletedCount} pins for user ${userId}`);
+      logger.info(`🗑️ Deleted ${result.deletedCount} pins for user ${userId.toString()}`);
       return result.deletedCount;
     } catch (error) {
       logger.error('Error deleting user pins:', error);
@@ -220,7 +220,7 @@ export class PinModel {
 
       // DEFENSIVE: Clean up orphaned pins (pins with null/invalid createdBy)
       const orphanedPinIds = pins
-        .filter(pin => !pin.createdBy || !pin.createdBy._id)
+        .filter(pin => !pin.createdBy?._id)
         .map(pin => pin._id);
       
       if (orphanedPinIds.length > 0) {
@@ -230,12 +230,12 @@ export class PinModel {
           .then(result => {
             logger.info(`✅ Cleaned up ${result.deletedCount} orphaned pins`);
           })
-          .catch(error => {
+          .catch((error: unknown) => {
             logger.error('❌ Error cleaning up orphaned pins:', error);
           });
         
         // Filter out orphaned pins from results
-        pins = pins.filter(pin => pin.createdBy && pin.createdBy._id);
+        pins = pins.filter(pin => pin.createdBy?._id);
       }
 
       // Apply visibility filtering
@@ -256,7 +256,7 @@ export class PinModel {
             .map(f => {
               // DEFENSIVE: Skip friendships with null/invalid IDs
               if (!f.userId || !f.friendId) return null;
-              return (f.userId.toString() === filters.userId!.toString()) 
+              return (f.userId.toString() === filters.userId?.toString()) 
                 ? f.friendId.toString() 
                 : f.userId.toString();
             })
@@ -272,7 +272,7 @@ export class PinModel {
           }
           
           // User can always see their own pins
-          if (pin.createdBy._id.toString() === filters.userId!.toString()) {
+          if (pin.createdBy._id.toString() === filters.userId?.toString()) {
             return true;
           }
           
@@ -323,7 +323,10 @@ export class PinModel {
         
         // Create a Map for O(1) vote lookup
         const voteMap = new Map(
-          votes.map((vote: any) => [vote.pinId.toString(), vote.voteType])
+          votes.map((vote: unknown) => {
+            const v = vote as { pinId: { toString: () => string }; voteType: string };
+            return [v.pinId.toString(), v.voteType];
+          })
         );
         
         // Add userVote to each pin
@@ -432,7 +435,11 @@ export class PinModel {
   ): Promise<IPin[]> {
     try {
       // Create case-insensitive regex pattern for meal keywords
-      const keywordPattern = mealKeywords.join('|');
+      // Escape special regex characters to prevent injection
+      const escapedKeywords = mealKeywords.map(keyword => 
+        keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+      );
+      const keywordPattern = escapedKeywords.join('|');
       const regex = new RegExp(keywordPattern, 'i');
       
       // Find pins that match meal keywords and are within distance

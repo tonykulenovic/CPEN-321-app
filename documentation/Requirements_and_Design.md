@@ -4,6 +4,32 @@
 
 | **Change Date**                              | **Modified Sections**                         | **Rationale**                                                                                                                                                                                                                                                                        |
 | -------------------------------------------- | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 2025-11-28 ([4a47a25](../../commit/4a47a25)) | Documentation, Requirements Specification     | Updated section 4.1 Main Components to include both REST API endpoints and Java-style interfaces for consistency between sequence diagrams and component descriptions. Added Location and Media components to the main components list. |
+| 2025-11-28 ([18a822d](../../commit/18a822d)) | UI/UX, Social Features                         | Improved UI of friend location features to enhance user experience with location sharing. |
+| 2025-11-28 ([6b1048f](../../commit/6b1048f)) | Real-time Updates, Social Features            | Fixed friend location display so location appears when user starts sharing location. |
+| 2025-11-28 ([31eee2f](../../commit/31eee2f)) | Documentation, Testing                        | Specified physical device as Samsung A03s for testing documentation. |
+| 2025-11-28 ([190ba59](../../commit/190ba59)) | Documentation, Use Cases                      | Revised use case sequence diagrams in documentation to reflect current system behavior. |
+| 2025-11-28 ([8369485](../../commit/8369485)) | Documentation Assets                          | Added files via upload to update documentation assets. |
+| 2025-11-27 ([5f3242d](../../commit/5f3242d)) | Real-time Updates, Pin Management            | Fixed automatic updates so users see new pins from other users in real-time. |
+| 2025-11-27 ([ec0bbe0](../../commit/ec0bbe0)) | UI/UX, Map Features                           | Made friend map icon smaller to improve map readability and reduce visual clutter. |
+| 2025-11-27 ([400630e](../../commit/400630e)) | Real-time Updates, Bug Fixes                  | Fixed socket issues to resolve real-time communication problems (NOT FULLY TESTED). |
+| 2025-11-27 ([3ab5d0c](../../commit/3ab5d0c)) | Documentation                                 | Added reflections document for project evaluation. |
+| 2025-11-27 ([ca19792](../../commit/ca19792)) | Pin Management, Admin                         | Added defensive code to delete orphaned pins and implemented cascading delete for user pins when admin deletes user. |
+| 2025-11-27 ([35a14d2](../../commit/35a14d2)) | Backend Services, Development                 | Removed debug methods to clean up codebase and remove development utilities. |
+| 2025-11-27 ([fb029e5](../../commit/fb029e5)) | UI/UX                                         | Applied more UI tweaks to improve interface consistency and user experience. |
+| 2025-11-27 ([79bc250](../../commit/79bc250)) | UI/UX                                         | Applied additional UI tweaks to refine interface design. |
+| 2025-11-27 ([fee6390](../../commit/fee6390)) | UI/UX, Bug Fixes                              | Tweaked UI issues to resolve interface problems and improve user experience. |
+| 2025-11-26 ([2738548](../../commit/2738548)) | Pin Management, Map Features                  | Tweaked restaurant pin display to improve visual presentation. |
+| 2025-11-26 ([f805f23](../../commit/f805f23)) | UI/UX, Frontend                               | Fixed styling compatibility issues to ensure consistent appearance across devices. |
+| 2025-11-26 ([8d205e8](../../commit/8d205e8)) | Documentation, Use Cases                      | Updated use case and dependencies diagrams to reflect current system architecture. |
+| 2025-11-26 ([b96a46a](../../commit/b96a46a)) | Documentation Assets                          | Renamed High Level Design Diagram.jpg to High_Level_Design_Diagram.jpg for consistency. |
+| 2025-11-26 ([be490ea](../../commit/be490ea)) | Documentation Assets                          | Added files via upload to update documentation assets. |
+| 2025-11-26 ([fd206f9](../../commit/fd206f9)) | Documentation Assets                          | Added files via upload to update documentation assets. |
+| 2025-11-26 ([1060de2](../../commit/1060de2)) | Documentation                                 | Near-finalized Requirements_and_Design document and Final Report document. |
+| 2025-11-26 ([535315b](../../commit/535315b)) | Real-time Updates, Bug Fixes                  | Fixed socket issues to resolve real-time communication problems. |
+| 2025-11-26 ([569fb43](../../commit/569fb43)) | Recommendations, Bug Fixes                    | Fixed recommendations to ensure proper meal suggestion functionality. |
+| 2025-11-25 ([ad7e8b2](../../commit/ad7e8b2)) | Recommendations, Location                     | Fixed recommendations by extending recent location to last 2 hours (UNTESTED). |
+| 2025-11-25 ([2f10d39](../../commit/2f10d39)) | Push Notifications, Bug Fixes                 | Fixed notifications to ensure reliable push notification delivery (UNTESTED). |
 | 2025-11-23 ([16f79ff](../../commit/16f79ff)) | UI/UX, Map Presentation                        | Added a glow effect on selected pins so users can more easily recognize the active pitch/location on the map. |
 | 2025-11-23 ([7eeb820](../../commit/7eeb820)) | UI/UX, Map Presentation                        | Re-introduced 3D buildings to maintain spatial context when navigating the map. |
 | 2025-11-23 ([42eb198](../../commit/42eb198)) | Map Performance, Pin Rendering                 | Fixed the clustering logic so large pin concentrations remain legible and responsive under zoomed-out views. |
@@ -551,17 +577,20 @@ Target audience: university students who want an easy way to discover study spot
    - **Rationale**: Using Google OAuth avoids building a custom authentication system and leverages an external trusted identity provider.
    - **Interfaces**: 
      1. **Google OAuth Integration**
-        - `GoogleUserInfo authenticateUser(String googleIdToken)` - Validates Google ID token and returns user information
-        - `String generateJWT(String userId, String email)` - Creates JWT token for authenticated user
-        - `boolean validateJWT(String token)` - Validates JWT token and returns authentication status
+        - **REST**: `POST /api/auth/signin` - Authenticates user with Google ID token
+        - **Java**: `GoogleUserInfo authenticateUser(String googleIdToken)` - Validates Google ID token and returns user information
+        - **REST**: `POST /api/auth/signup` - Creates new user account with Google OAuth
+        - **Java**: `String generateJWT(String userId, String email)` - Creates JWT token for authenticated user
+        - **REST**: `POST /api/auth/check` - Checks if Google account exists in system
+        - **Java**: `boolean validateJWT(String token)` - Validates JWT token and returns authentication status
      2. **Credential Manager**
-        - `void storeCredentials(String userId, String refreshToken)` - Stores user credentials securely
-        - `String getRefreshToken(String userId)` - Retrieves stored refresh token for user
-        - `void clearCredentials(String userId)` - Removes stored credentials on logout
+        - **Java**: `void storeCredentials(String userId, String refreshToken)` - Stores user credentials securely
+        - **Java**: `String getRefreshToken(String userId)` - Retrieves stored refresh token for user
+        - **Java**: `void clearCredentials(String userId)` - Removes stored credentials on logout
      3. **JWT Token Service**
-        - `String createAccessToken(String userId, String email, String role)` - Generates access token with user claims
-        - `Claims verifyToken(String token)` - Verifies and decodes JWT token claims
-        - `boolean isTokenExpired(String token)` - Checks if token has expired
+        - **Java**: `String createAccessToken(String userId, String email, String role)` - Generates access token with user claims
+        - **Java**: `Claims verifyToken(String token)` - Verifies and decodes JWT token claims
+        - **Java**: `boolean isTokenExpired(String token)` - Checks if token has expired
 
 2. **Pins**
 
@@ -569,25 +598,38 @@ Target audience: university students who want an easy way to discover study spot
    - **Rationale**: Pins are the central content of the app, and isolating them in a component makes it easier to manage validation, reports, and updates.  
    - **Interfaces**: 
      1. **Pin CRUD Operations**
-        - `Pin createPin(CreatePinRequest request, String userId)` - Creates new pin with validation
-        - `Pin getPinById(String pinId)` - Retrieves pin details by ID
-        - `Pin updatePin(String pinId, UpdatePinRequest request, String userId)` - Updates existing pin
-        - `boolean deletePin(String pinId, String userId)` - Deletes pin (owner or admin only)
-        - `List<Pin> searchPins(SearchFilters filters)` - Searches pins with filtering and pagination
+        - **REST**: `POST /api/pins` - Creates new pin with validation
+        - **Java**: `Pin createPin(CreatePinRequest request, String userId)` - Creates new pin with validation
+        - **REST**: `GET /api/pins/:id` - Retrieves pin details by ID
+        - **Java**: `Pin getPinById(String pinId)` - Retrieves pin details by ID
+        - **REST**: `PUT /api/pins/:id` - Updates existing pin
+        - **Java**: `Pin updatePin(String pinId, UpdatePinRequest request, String userId)` - Updates existing pin
+        - **REST**: `DELETE /api/pins/:id` - Deletes pin (owner or admin only)
+        - **Java**: `boolean deletePin(String pinId, String userId)` - Deletes pin (owner or admin only)
+        - **REST**: `GET /api/pins/search` - Searches pins with filtering and pagination
+        - **Java**: `List<Pin> searchPins(SearchFilters filters)` - Searches pins with filtering and pagination
      2. **Voting System**
-        - `VoteResult votePin(String pinId, String userId, VoteType voteType)` - Records user vote (upvote/downvote)
-        - `boolean hasUserVoted(String pinId, String userId)` - Checks if user has already voted
-        - `PinRating getPinRating(String pinId)` - Gets current vote counts and rating
+        - **REST**: `POST /api/pins/:id/rate` - Records user vote (upvote/downvote)
+        - **Java**: `VoteResult votePin(String pinId, String userId, VoteType voteType)` - Records user vote (upvote/downvote)
+        - **REST**: `GET /api/pins/:id/vote` - Gets user's vote status for pin
+        - **Java**: `boolean hasUserVoted(String pinId, String userId)` - Checks if user has already voted
+        - **Java**: `PinRating getPinRating(String pinId)` - Gets current vote counts and rating
      3. **Reporting System**
-        - `boolean reportPin(String pinId, String userId, String reason)` - Reports pin for moderation
-        - `List<ReportedPin> getReportedPins()` - Gets all reported pins (admin only)
-        - `boolean moderatePin(String pinId, ModerationAction action)` - Takes moderation action (admin only)
-     4. **Category Filtering**
-        - `List<Pin> getPinsByCategory(PinCategory category)` - Filters pins by category
-        - `List<Pin> getPinsByCategories(List<PinCategory> categories)` - Filters by multiple categories
-     5. **Enhanced Metadata**
-        - `PinMetadata getPinMetadata(String pinId)` - Gets capacity, crowd level, opening hours
-        - `boolean updatePinMetadata(String pinId, PinMetadata metadata)` - Updates pin metadata
+        - **REST**: `POST /api/pins/:id/report` - Reports pin for moderation
+        - **Java**: `boolean reportPin(String pinId, String userId, String reason)` - Reports pin for moderation
+        - **REST**: `GET /api/pins/admin/reported` - Gets all reported pins (admin only)
+        - **Java**: `List<ReportedPin> getReportedPins()` - Gets all reported pins (admin only)
+        - **REST**: `PATCH /api/pins/admin/:id/clear-reports` - Clears reports on pin (admin only)
+        - **Java**: `boolean moderatePin(String pinId, ModerationAction action)` - Takes moderation action (admin only)
+     4. **Pin Visits**
+        - **REST**: `POST /api/pins/:id/visit` - Records user visit to pin location
+        - **Java**: `boolean recordPinVisit(String pinId, String userId)` - Records user visit to pin location
+     5. **Category Filtering**
+        - **Java**: `List<Pin> getPinsByCategory(PinCategory category)` - Filters pins by category
+        - **Java**: `List<Pin> getPinsByCategories(List<PinCategory> categories)` - Filters by multiple categories
+     6. **Enhanced Metadata**
+        - **Java**: `PinMetadata getPinMetadata(String pinId)` - Gets capacity, crowd level, opening hours
+        - **Java**: `boolean updatePinMetadata(String pinId, PinMetadata metadata)` - Updates pin metadata
 
 3. **User**
 
@@ -595,23 +637,36 @@ Target audience: university students who want an easy way to discover study spot
    - **Rationale**: Centralized user management ensures consistent privacy controls and profile management across the app.
    - **Interfaces**:
      1. **Profile Management**
-        - `User createUserProfile(GoogleUserInfo googleUser)` - Creates new user profile from Google OAuth
-        - `User getUserProfile(String userId)` - Retrieves user profile information
-        - `User updateUserProfile(String userId, UpdateProfileRequest request)` - Updates user profile
-        - `boolean deleteUserProfile(String userId)` - Deletes user account and all associated data
+        - **REST**: `GET /api/user/profile` - Retrieves current user's profile information
+        - **Java**: `User getUserProfile(String userId)` - Retrieves user profile information
+        - **REST**: `GET /api/user/:userId/profile` - Retrieves friend's profile information
+        - **Java**: `User createUserProfile(GoogleUserInfo googleUser)` - Creates new user profile from Google OAuth
+        - **REST**: `POST /api/user/profile` - Updates user profile
+        - **Java**: `User updateUserProfile(String userId, UpdateProfileRequest request)` - Updates user profile
+        - **REST**: `DELETE /api/user/profile` - Deletes user account and all associated data
+        - **Java**: `boolean deleteUserProfile(String userId)` - Deletes user account and all associated data
+        - **REST**: `GET /api/user/me` - Gets current authenticated user information
+        - **REST**: `GET /api/user/search` - Searches users by name or email
      2. **Privacy Settings**
-        - `PrivacySettings getPrivacySettings(String userId)` - Gets user's privacy preferences
-        - `boolean updatePrivacySettings(String userId, PrivacySettings settings)` - Updates privacy settings
-        - `boolean isProfileVisible(String userId, String requesterId)` - Checks if profile is visible to requester
-        - `LocationSharingLevel getLocationSharingLevel(String userId)` - Gets user's location sharing preferences
+        - **REST**: `PATCH /api/user/me/privacy` - Updates privacy settings
+        - **Java**: `PrivacySettings getPrivacySettings(String userId)` - Gets user's privacy preferences
+        - **Java**: `boolean updatePrivacySettings(String userId, PrivacySettings settings)` - Updates privacy settings
+        - **Java**: `boolean isProfileVisible(String userId, String requesterId)` - Checks if profile is visible to requester
+        - **Java**: `LocationSharingLevel getLocationSharingLevel(String userId)` - Gets user's location sharing preferences
      3. **FCM Token Management**
-        - `boolean updateFCMToken(String userId, String fcmToken)` - Registers/updates FCM token for notifications
-        - `boolean removeFCMToken(String userId)` - Removes FCM token on logout
-        - `String getFCMToken(String userId)` - Retrieves user's FCM token for notifications
-     4. **Account Operations**
-        - `boolean suspendUser(String userId, String reason)` - Suspends user account (admin only)
-        - `boolean unsuspendUser(String userId)` - Unsuspends user account (admin only)
-        - `boolean isUserSuspended(String userId)` - Checks if user account is suspended
+        - **REST**: `PUT /api/user/me/fcm-token` - Registers/updates FCM token for notifications
+        - **Java**: `boolean updateFCMToken(String userId, String fcmToken)` - Registers/updates FCM token for notifications
+        - **REST**: `DELETE /api/user/me/fcm-token` - Removes FCM token on logout
+        - **Java**: `boolean removeFCMToken(String userId)` - Removes FCM token on logout
+        - **Java**: `String getFCMToken(String userId)` - Retrieves user's FCM token for notifications
+     4. **Account Operations (Admin)**
+        - **REST**: `GET /api/user/admin/all` - Gets paginated list of all users (admin only)
+        - **REST**: `PATCH /api/user/admin/:id/suspend` - Suspends user account (admin only)
+        - **Java**: `boolean suspendUser(String userId, String reason)` - Suspends user account (admin only)
+        - **REST**: `PATCH /api/user/admin/:id/unsuspend` - Unsuspends user account (admin only)
+        - **Java**: `boolean unsuspendUser(String userId)` - Unsuspends user account (admin only)
+        - **REST**: `DELETE /api/user/admin/:id` - Deletes user account by admin (admin only)
+        - **Java**: `boolean isUserSuspended(String userId)` - Checks if user account is suspended
 
 4. **Notifications**
 
@@ -619,21 +674,21 @@ Target audience: university students who want an easy way to discover study spot
    - **Rationale**: Real-time notifications improve user engagement and keep users informed of important events.
    - **Interfaces**:
      1. **Firebase Integration**
-        - `boolean sendNotification(String fcmToken, String title, String body, Map<String, String> data)` - Sends push notification via FCM
-        - `boolean sendBulkNotifications(List<String> fcmTokens, String title, String body)` - Sends notification to multiple users
-        - `boolean sendNotificationToUser(String userId, String title, String body)` - Sends notification to specific user
+        - **Java**: `boolean sendNotification(String fcmToken, String title, String body, Map<String, String> data)` - Sends push notification via FCM
+        - **Java**: `boolean sendBulkNotifications(List<String> fcmTokens, String title, String body)` - Sends notification to multiple users
+        - **Java**: `boolean sendNotificationToUser(String userId, String title, String body)` - Sends notification to specific user
      2. **Notification Types**
-        - `boolean sendFriendRequestNotification(String recipientId, String senderName)` - Sends friend request notification
-        - `boolean sendPinUpdateNotification(String userId, String pinName, String updateType)` - Sends pin update notification
-        - `boolean sendSystemNotification(String userId, String message)` - Sends system message notification
+        - **Java**: `boolean sendFriendRequestNotification(String recipientId, String senderName)` - Sends friend request notification
+        - **Java**: `boolean sendPinUpdateNotification(String userId, String pinName, String updateType)` - Sends pin update notification
+        - **Java**: `boolean sendSystemNotification(String userId, String message)` - Sends system message notification
      3. **Token Management**
-        - `boolean registerFCMToken(String userId, String fcmToken)` - Registers FCM token for user
-        - `boolean unregisterFCMToken(String userId)` - Removes FCM token for user
-        - `List<String> getActiveFCMTokens(String userId)` - Gets all active FCM tokens for user
+        - **Java**: `boolean registerFCMToken(String userId, String fcmToken)` - Registers FCM token for user
+        - **Java**: `boolean unregisterFCMToken(String userId)` - Removes FCM token for user
+        - **Java**: `List<String> getActiveFCMTokens(String userId)` - Gets all active FCM tokens for user
      4. **Notification Preferences**
-        - `NotificationSettings getNotificationSettings(String userId)` - Gets user's notification preferences
-        - `boolean updateNotificationSettings(String userId, NotificationSettings settings)` - Updates notification preferences
-        - `boolean isNotificationEnabled(String userId, NotificationType type)` - Checks if specific notification type is enabled
+        - **Java**: `NotificationSettings getNotificationSettings(String userId)` - Gets user's notification preferences
+        - **Java**: `boolean updateNotificationSettings(String userId, NotificationSettings settings)` - Updates notification preferences
+        - **Java**: `boolean isNotificationEnabled(String userId, NotificationType type)` - Checks if specific notification type is enabled
 
 5. **Badges**
 
@@ -641,22 +696,28 @@ Target audience: university students who want an easy way to discover study spot
    - **Rationale**: A separate manager for badges allows us to implement custom logic and computations beyond simple CRUD, supporting gamification.  
    - **Interfaces**: 
      1. **Badge Assignment**
-        - `List<Badge> processUserActivity(String userId, ActivityType activityType, Map<String, Object> metadata)` - Processes user activity and assigns badges
-        - `boolean assignBadge(String userId, String badgeId)` - Manually assigns badge to user
-        - `List<Badge> getEarnedBadges(String userId)` - Gets all badges earned by user
-        - `boolean hasBadge(String userId, String badgeId)` - Checks if user has specific badge
+        - **REST**: `POST /api/badges/user/event` - Processes user activity and assigns badges
+        - **Java**: `List<Badge> processUserActivity(String userId, ActivityType activityType, Map<String, Object> metadata)` - Processes user activity and assigns badges
+        - **REST**: `GET /api/badges/user/earned` - Gets all badges earned by user
+        - **Java**: `List<Badge> getEarnedBadges(String userId)` - Gets all badges earned by user
+        - **Java**: `boolean assignBadge(String userId, String badgeId)` - Manually assigns badge to user
+        - **Java**: `boolean hasBadge(String userId, String badgeId)` - Checks if user has specific badge
      2. **Progress Tracking**
-        - `BadgeProgress getBadgeProgress(String userId, String badgeId)` - Gets progress toward specific badge
-        - `List<BadgeProgress> getAllBadgeProgress(String userId)` - Gets progress for all available badges
-        - `boolean updateProgress(String userId, String badgeId, int progressValue)` - Updates progress for badge
+        - **REST**: `GET /api/badges/user/progress` - Gets progress for all available badges
+        - **Java**: `List<BadgeProgress> getAllBadgeProgress(String userId)` - Gets progress for all available badges
+        - **Java**: `BadgeProgress getBadgeProgress(String userId, String badgeId)` - Gets progress toward specific badge
+        - **REST**: `GET /api/badges/user/stats` - Gets user's badge statistics
+        - **Java**: `boolean updateProgress(String userId, String badgeId, int progressValue)` - Updates progress for badge
      3. **Badge Display**
-        - `List<Badge> getAvailableBadges()` - Gets all available badges in system
-        - `Badge getBadgeById(String badgeId)` - Gets specific badge details
-        - `List<Badge> getBadgesByCategory(BadgeCategory category)` - Gets badges by category
+        - **REST**: `GET /api/badges` - Gets all available badges in system with optional filtering
+        - **Java**: `List<Badge> getAvailableBadges()` - Gets all available badges in system
+        - **REST**: `GET /api/badges/user/available` - Gets badges user hasn't earned yet
+        - **Java**: `Badge getBadgeById(String badgeId)` - Gets specific badge details
+        - **Java**: `List<Badge> getBadgesByCategory(BadgeCategory category)` - Gets badges by category
      4. **Admin Badge Management**
-        - `Badge createBadge(CreateBadgeRequest request)` - Creates new badge template (admin only)
-        - `Badge updateBadge(String badgeId, UpdateBadgeRequest request)` - Updates badge template (admin only)
-        - `boolean deleteBadge(String badgeId)` - Deletes badge template (admin only)
+        - **Java**: `Badge createBadge(CreateBadgeRequest request)` - Creates new badge template (admin only)
+        - **Java**: `Badge updateBadge(String badgeId, UpdateBadgeRequest request)` - Updates badge template (admin only)
+        - **Java**: `boolean deleteBadge(String badgeId)` - Deletes badge template (admin only)
 
 6. **Admin**
 
@@ -664,24 +725,31 @@ Target audience: university students who want an easy way to discover study spot
    - **Rationale**: Admin tools are essential for maintaining app quality and handling user reports.
    - **Interfaces**:
      1. **Content Moderation**
-        - `List<ReportedPin> getReportedPins()` - Gets all reported pins for review
-        - `boolean moderatePin(String pinId, ModerationAction action, String adminId)` - Takes moderation action on pin
-        - `boolean moderateUser(String userId, ModerationAction action, String adminId)` - Takes moderation action on user
-        - `List<ModerationLog> getModerationHistory(String adminId)` - Gets moderation history for admin
+        - **REST**: `GET /api/pins/admin/reported` - Gets all reported pins for review (admin only)
+        - **Java**: `List<ReportedPin> getReportedPins()` - Gets all reported pins for review
+        - **REST**: `PATCH /api/pins/admin/:id/clear-reports` - Clears reports on pin (admin only)
+        - **Java**: `boolean moderatePin(String pinId, ModerationAction action, String adminId)` - Takes moderation action on pin
+        - **Java**: `boolean moderateUser(String userId, ModerationAction action, String adminId)` - Takes moderation action on user
+        - **Java**: `List<ModerationLog> getModerationHistory(String adminId)` - Gets moderation history for admin
      2. **User Management**
-        - `List<User> getAllUsers(int page, int limit)` - Gets paginated list of all users
-        - `User getUserById(String userId)` - Gets specific user details
-        - `boolean suspendUser(String userId, String reason, String adminId)` - Suspends user account
-        - `boolean unsuspendUser(String userId, String adminId)` - Unsuspends user account
+        - **REST**: `GET /api/user/admin/all` - Gets paginated list of all users (admin only)
+        - **Java**: `List<User> getAllUsers(int page, int limit)` - Gets paginated list of all users
+        - **Java**: `User getUserById(String userId)` - Gets specific user details
+        - **REST**: `PATCH /api/user/admin/:id/suspend` - Suspends user account (admin only)
+        - **Java**: `boolean suspendUser(String userId, String reason, String adminId)` - Suspends user account
+        - **REST**: `PATCH /api/user/admin/:id/unsuspend` - Unsuspends user account (admin only)
+        - **Java**: `boolean unsuspendUser(String userId, String adminId)` - Unsuspends user account
+        - **REST**: `DELETE /api/user/admin/:id` - Deletes user account by admin (admin only)
      3. **Analytics Dashboard**
-        - `SystemStats getSystemStatistics()` - Gets overall system usage statistics
-        - `UserActivityStats getUserActivityStats(String userId)` - Gets activity stats for specific user
-        - `PinStatistics getPinStatistics()` - Gets pin creation and interaction statistics
-        - `List<AdminAlert> getSystemAlerts()` - Gets system alerts and warnings
+        - **Java**: `SystemStats getSystemStatistics()` - Gets overall system usage statistics
+        - **Java**: `UserActivityStats getUserActivityStats(String userId)` - Gets activity stats for specific user
+        - **Java**: `PinStatistics getPinStatistics()` - Gets pin creation and interaction statistics
+        - **Java**: `List<AdminAlert> getSystemAlerts()` - Gets system alerts and warnings
      4. **Report Management**
-        - `boolean createReport(String reporterId, String targetId, ReportType type, String reason)` - Creates new report
-        - `List<Report> getReportsByType(ReportType type)` - Gets reports by type
-        - `boolean resolveReport(String reportId, String adminId, String resolution)` - Resolves report
+        - **REST**: `POST /api/pins/:id/report` - Creates new report for pin
+        - **Java**: `boolean createReport(String reporterId, String targetId, ReportType type, String reason)` - Creates new report
+        - **Java**: `List<Report> getReportsByType(ReportType type)` - Gets reports by type
+        - **Java**: `boolean resolveReport(String reportId, String adminId, String resolution)` - Resolves report
 
 7. **Friends**
 
@@ -689,44 +757,76 @@ Target audience: university students who want an easy way to discover study spot
    - **Rationale**: Social features enhance user engagement and create a community aspect to the app.
    - **Interfaces**:
      1. **Friend Requests**
-        - `boolean sendFriendRequest(String senderId, String recipientId)` - Sends friend request to user
-        - `boolean acceptFriendRequest(String requestId, String userId)` - Accepts friend request
-        - `boolean declineFriendRequest(String requestId, String userId)` - Declines friend request
-        - `List<FriendRequest> getPendingRequests(String userId)` - Gets pending friend requests
+        - **REST**: `POST /api/friends/requests` - Sends friend request to user
+        - **Java**: `boolean sendFriendRequest(String senderId, String recipientId)` - Sends friend request to user
+        - **REST**: `GET /api/friends/requests` - Gets pending friend requests
+        - **Java**: `List<FriendRequest> getPendingRequests(String userId)` - Gets pending friend requests
+        - **REST**: `POST /api/friends/requests/:id/accept` - Accepts friend request
+        - **Java**: `boolean acceptFriendRequest(String requestId, String userId)` - Accepts friend request
+        - **REST**: `POST /api/friends/requests/:id/decline` - Declines friend request
+        - **Java**: `boolean declineFriendRequest(String requestId, String userId)` - Declines friend request
      2. **Friend List Management**
-        - `List<Friend> getFriendsList(String userId)` - Gets user's friends list
-        - `boolean removeFriend(String userId, String friendId)` - Removes friend from list
-        - `boolean isFriend(String userId, String friendId)` - Checks if users are friends
-        - `List<Friend> searchFriends(String userId, String searchQuery)` - Searches friends by name
+        - **REST**: `GET /api/friends` - Gets user's friends list
+        - **Java**: `List<Friend> getFriendsList(String userId)` - Gets user's friends list
+        - **REST**: `DELETE /api/friends/:friendId` - Removes friend from list
+        - **Java**: `boolean removeFriend(String userId, String friendId)` - Removes friend from list
+        - **REST**: `PATCH /api/friends/:friendId` - Updates friend relationship (e.g., block/unblock)
+        - **Java**: `boolean isFriend(String userId, String friendId)` - Checks if users are friends
+        - **Java**: `List<Friend> searchFriends(String userId, String searchQuery)` - Searches friends by name
      3. **Privacy Controls**
-        - `boolean canViewProfile(String viewerId, String targetId)` - Checks if viewer can see target's profile
-        - `boolean canViewLocation(String viewerId, String targetId)` - Checks if viewer can see target's location
-        - `PrivacyLevel getFriendPrivacyLevel(String userId, String friendId)` - Gets privacy level for friend
+        - **Java**: `boolean canViewProfile(String viewerId, String targetId)` - Checks if viewer can see target's profile
+        - **Java**: `boolean canViewLocation(String viewerId, String targetId)` - Checks if viewer can see target's location
+        - **Java**: `PrivacyLevel getFriendPrivacyLevel(String userId, String friendId)` - Gets privacy level for friend
      4. **Location Sharing**
-        - `boolean shareLocation(String userId, String friendId, LocationData location)` - Shares location with friend
-        - `LocationData getFriendLocation(String userId, String friendId)` - Gets friend's shared location
-        - `boolean stopLocationSharing(String userId, String friendId)` - Stops sharing location with friend
+        - **REST**: `GET /api/friends/locations` - Gets friends' shared locations
+        - **Java**: `LocationData getFriendLocation(String userId, String friendId)` - Gets friend's shared location
+        - **Java**: `boolean shareLocation(String userId, String friendId, LocationData location)` - Shares location with friend
+        - **Java**: `boolean stopLocationSharing(String userId, String friendId)` - Stops sharing location with friend
 
 8. **Recommendations**
    - **Purpose**: Fetches nearby food spots using Google Maps API and applies time-of-day rules.  
    - **Rationale**: Encapsulating recommendation logic separately allows us to combine external API data with custom filters (e.g., lunch vs. dinner).  
    - **Interfaces**: 
     1. **Google Maps Integration**
-       - `List<Place> searchNearbyPlaces(double latitude, double longitude, String type, int radius)` - Searches nearby places using Google Maps API
-        - `Place getPlaceDetails(String placeId)` - Gets detailed information about specific place
-        - `List<Place> getPlacesByType(String type, double latitude, double longitude)` - Gets places by specific type
+       - **Java**: `List<Place> searchNearbyPlaces(double latitude, double longitude, String type, int radius)` - Searches nearby places using Google Maps API
+       - **Java**: `Place getPlaceDetails(String placeId)` - Gets detailed information about specific place
+       - **Java**: `List<Place> getPlacesByType(String type, double latitude, double longitude)` - Gets places by specific type
      2. **Time-based Filtering**
-        - `List<Recommendation> getTimeBasedRecommendations(String userId, int hourOfDay)` - Gets recommendations based on time of day
-        - `List<Recommendation> getLunchRecommendations(String userId, double latitude, double longitude)` - Gets lunch recommendations
-        - `List<Recommendation> getDinnerRecommendations(String userId, double latitude, double longitude)` - Gets dinner recommendations
+       - **REST**: `GET /api/recommendations/:mealType` - Gets meal recommendations for current user (lunch/dinner)
+       - **Java**: `List<Recommendation> getTimeBasedRecommendations(String userId, int hourOfDay)` - Gets recommendations based on time of day
+       - **REST**: `POST /api/recommendations/notify/:mealType` - Sends recommendation notification to current user
+       - **Java**: `List<Recommendation> getLunchRecommendations(String userId, double latitude, double longitude)` - Gets lunch recommendations
+       - **Java**: `List<Recommendation> getDinnerRecommendations(String userId, double latitude, double longitude)` - Gets dinner recommendations
      3. **Personalized Recommendations**
-        - `List<Recommendation> getPersonalizedRecommendations(String userId, RecommendationType type)` - Gets personalized recommendations based on user preferences
-        - `boolean updateUserPreferences(String userId, UserPreferences preferences)` - Updates user's recommendation preferences
-        - `UserPreferences getUserPreferences(String userId)` - Gets user's recommendation preferences
+       - **Java**: `List<Recommendation> getPersonalizedRecommendations(String userId, RecommendationType type)` - Gets personalized recommendations based on user preferences
+       - **Java**: `boolean updateUserPreferences(String userId, UserPreferences preferences)` - Updates user's recommendation preferences
+       - **Java**: `UserPreferences getUserPreferences(String userId)` - Gets user's recommendation preferences
      4. **Location-based Suggestions**
-        - `List<Pin> getNearbyPins(String userId, double latitude, double longitude, int radius)` - Gets nearby pins for user
-        - `List<Recommendation> getLocationBasedRecommendations(String userId, double latitude, double longitude)` - Gets location-based recommendations
-        - `boolean trackUserInteraction(String userId, String pinId, InteractionType type)` - Tracks user interaction for better recommendations
+       - **Java**: `List<Pin> getNearbyPins(String userId, double latitude, double longitude, int radius)` - Gets nearby pins for user
+       - **Java**: `List<Recommendation> getLocationBasedRecommendations(String userId, double latitude, double longitude)` - Gets location-based recommendations
+       - **Java**: `boolean trackUserInteraction(String userId, String pinId, InteractionType type)` - Tracks user interaction for better recommendations
+
+9. **Location**
+
+   - **Purpose**: Manages user location updates and real-time location sharing.
+   - **Rationale**: Location services enable real-time friend tracking and location-based features.
+   - **Interfaces**:
+     1. **Location Updates**
+        - **REST**: `PUT /api/me/location` - Updates or creates user's current location
+        - **Java**: `boolean updateUserLocation(String userId, LocationData location)` - Updates user's current location
+        - **Java**: `LocationData getCurrentLocation(String userId)` - Gets user's current location
+        - **Java**: `List<LocationHistory> getLocationHistory(String userId, Date startDate, Date endDate)` - Gets location history for user
+
+10. **Media**
+
+    - **Purpose**: Handles image uploads and media management for user profiles and pins.
+    - **Rationale**: Centralized media management ensures consistent handling of file uploads and storage.
+    - **Interfaces**:
+      1. **Image Upload**
+         - **REST**: `POST /api/media/upload` - Uploads image file (profile picture or pin image)
+         - **Java**: `String uploadImage(File imageFile, String userId, MediaType type)` - Uploads image and returns file path
+         - **Java**: `boolean deleteImage(String imagePath)` - Deletes image file from storage
+         - **Java**: `String getImageUrl(String imagePath)` - Gets public URL for image file
 
 ---
 

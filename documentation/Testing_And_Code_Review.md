@@ -4,7 +4,96 @@
 
 | **Change Date**   | **Modified Sections** | **Rationale** |
 | ----------------- | --------------------- | ------------- |
-| _Nothing to show_ |
+| 2025-11-28 ([4a47a25](../../commit/4a47a25)) | Documentation, Requirements Specification | Updated final commit hash to reflect latest documentation changes including interface consistency updates in Requirements and Design document. |
+| 2025-11-28 ([7be769c](../../commit/7be769c)) | Code Quality, Testing | Merged PR #28 with additional Codacy fixes to improve code quality and maintainability. |
+| 2025-11-28 ([007f06f](../../commit/007f06f)) | Code Quality | Applied more Codacy fixes addressing code style and best practice issues. |
+| 2025-11-28 ([7cb0c6a](../../commit/7cb0c6a)) | Code Quality, Testing | Merged PR #27 with Codacy fixes to address static analysis warnings. |
+| 2025-11-28 ([96c8e09](../../commit/96c8e09)) | Code Quality | Applied additional Codacy fixes targeting code quality improvements. |
+| 2025-11-28 ([edfb2d8](../../commit/edfb2d8)) | Testing, User Management | Added user profile tests to improve coverage of user management functionality. |
+| 2025-11-28 ([380bcb0](../../commit/380bcb0)) | Testing | Applied minor test changes to improve test reliability and coverage. |
+| 2025-11-28 ([b37de8b](../../commit/b37de8b)) | Testing, User Management | Added user profile tests to validate user management endpoints. |
+| 2025-11-28 ([6ad22a2](../../commit/6ad22a2)) | Testing, Authentication | Added authentication service coverage tests to ensure comprehensive testing of auth endpoints. |
+| 2025-11-28 ([5af5372](../../commit/5af5372)) | Testing Documentation | Added clarifying notes in test documentation to improve test setup instructions. |
+| 2025-11-28 ([e6bf80d](../../commit/e6bf80d)) | Testing, Authentication | Added check auth endpoint tests to validate authentication verification functionality. |
+| 2025-11-28 ([18762ef](../../commit/18762ef)) | Testing, CI/CD | Merged test fixes branch to resolve failing test suites and improve CI pipeline stability. |
+| 2025-11-28 ([e25e0e8](../../commit/e25e0e8)) | Testing, Authentication | Added authentication tests to validate sign-in and sign-up flows. |
+| 2025-11-28 ([75d2cbe](../../commit/75d2cbe)) | Testing, Authentication | Added partial authentication tests to begin coverage of auth endpoints. |
+| 2025-11-28 ([edf4f65](../../commit/edf4f65)) | Testing, External APIs | Added Places service API tests to validate Google Maps API integration. |
+| 2025-11-27 ([0f4e06b](../../commit/0f4e06b)) | Testing, Recommendations | Added recommendation tests to validate meal recommendation functionality. |
+| 2025-11-27 ([0625528](../../commit/0625528)) | Testing, Pin Management | Improved pin test coverage to ensure comprehensive testing of pin operations. |
+| 2025-11-27 ([8610989](../../commit/8610989)) | Testing, Pin Management | Added pin tests to validate CRUD operations and pin interactions. |
+| 2025-11-27 ([d0765f8](../../commit/d0765f8)) | Testing, Media | Added media tests to validate image upload and media management functionality. |
+| 2025-11-27 ([2758ff4](../../commit/2758ff4)) | Testing, Location | Added location tests to validate location tracking and sharing features. |
+| 2025-11-27 ([74e66c6](../../commit/74e66c6)) | Testing, Social Features | Completed friends tests to ensure comprehensive coverage of friend management functionality. |
+| 2025-11-27 ([490996d](../../commit/490996d)) | Testing, Location | Added friend location unmocked tests to validate real-time location sharing. |
+| 2025-11-27 ([513edb2](../../commit/513edb2)) | Testing, Social Features | Added friends unmocked tests to validate friend request and management flows. |
+| 2025-11-27 ([6fc3e12](../../commit/6fc3e12)) | Testing, Gamification | Added mocked tests for badges, addressing test failures in badge functionality. |
+| 2025-11-27 ([b405796](../../commit/b405796)) | Testing, Gamification | Added badge unmocked tests to validate badge earning and progress tracking. |
+| 2025-11-27 ([352b4f9](../../commit/352b4f9)) | Testing, Gamification | Added unmocked tests for badges to validate badge system functionality. |
+| 2025-11-24 ([a5fdfdd](../../commit/a5fdfdd)) | Code Quality | Merged PR #24 with Codacy fixes to address code quality issues. |
+| 2025-11-24 ([96e4f8f](../../commit/96e4f8f)) | Code Quality | Applied more Codacy fixes to improve code maintainability and style. |
+| 2025-11-10 ([915eecd](../../commit/915eecd)) | CI/CD, Testing | Fixed GitHub Actions to ensure test pipeline runs successfully. |
+| 2025-11-10 ([1dd5482](../../commit/1dd5482)) | Testing Documentation | Added coverage screenshots to documentation for visual verification of test coverage. |
+| 2025-11-10 ([b2e9bfe](../../commit/b2e9bfe)) | Testing, E2E | Updated E2E finish flow artifacts to reflect stabilized UI state. |
+| 2025-11-10 ([30953f4](../../commit/30953f4)) | Testing, E2E | Revised post-E2E finish definitions after additional UI tweaks. |
+| 2025-11-10 ([e8dfd22](../../commit/e8dfd22)) | Testing, E2E | Continued refining end-to-end test coverage to pass reliably across environments. |
+| 2025-11-10 ([0d47a3a](../../commit/0d47a3a)) | Testing Documentation | Documented updated testing process for clarity after recent automation refinements. |
+| 2025-11-10 ([94de934](../../commit/94de934)) | Testing | Confirmed focused test suites were working after previous fix attempts. |
+| 2025-11-10 ([0f30110](../../commit/0f30110)) | Testing | Applied partial fixes to several failing tests to progress toward stability. |
+| 2025-11-10 ([c4efbb5](../../commit/c4efbb5)) | Testing, Real-time | Verified realtime gateway via dedicated unit tests after integration adjustments. |
+| 2025-11-10 ([682722b](../../commit/682722b)) | Code Quality | Merged PR #23 that bundled several Codacy fixes into the branch. |
+| 2025-11-10 ([fcf833a](../../commit/fcf833a)) | Code Quality | Added another set of Codacy cleanups targeting new warnings. |
+| 2025-11-10 ([9cd649b](../../commit/9cd649b)) | Code Quality | Merged PR #22 to fold in additional Codacy adjustments. |
+| 2025-11-10 ([803b63b](../../commit/803b63b)) | Code Quality | Applied the next wave of Codacy fixes within the codacy-fixes branch. |
+| 2025-11-10 ([83ea953](../../commit/83ea953)) | Code Quality | Merged PR #21 to add yet more Codacy remediation work. |
+| 2025-11-10 ([5cfef53](../../commit/5cfef53)) | Code Quality | Synced codacy-fixes with upstream branches to keep linting aligned. |
+| 2025-11-10 ([d05c99f](../../commit/d05c99f)) | Code Quality | Applied further Codacy fixes after reviewing persistent findings. |
+| 2025-11-10 ([c666bfb](../../commit/c666bfb)) | Code Quality | Merged PR #20 to fold in additional Codacy cleanups. |
+| 2025-11-10 ([554bdc1](../../commit/554bdc1)) | Code Quality | Merged the main branch into codacy-fixes so the branch reflected the latest baseline. |
+| 2025-11-10 ([fe5ff8b](../../commit/fe5ff8b)) | Code Quality, Tooling | Added even more Codacy fixes and committed the .codacy.yml config guiding the analysis. |
+| 2025-11-10 ([d733234](../../commit/d733234)) | Code Quality | Merged PR #19 that continued the Codacy cleanup cycle. |
+| 2025-11-10 ([3a202a8](../../commit/3a202a8)) | Code Quality | Added another wave of Codacy fixes for the Codacy branch. |
+| 2025-11-09 ([5573b8e](../../commit/5573b8e)) | Code Quality | Merged PR #17 with Codacy fixes to address static analysis issues. |
+| 2025-11-09 ([183ba1c](../../commit/183ba1c)) | Code Quality | Fixed Codacy errors including unbound methods, void return expected, forbidden non-null assertions, invalid ObjectId template, and TypeScript compilation errors. |
+| 2025-11-09 ([6dd06d7](../../commit/6dd06d7)) | Code Quality | Merged PR #16 with Codacy fixes to improve code quality. |
+| 2025-11-09 ([c730db8](../../commit/c730db8)) | Code Quality | Merged PR #15 with Codacy fixes to address code quality issues. |
+| 2025-11-09 ([243aed3](../../commit/243aed3)) | Code Quality | Applied Codacy quick fixes and corrected Codacy mistakes. |
+| 2025-11-08 ([702e648](../../commit/702e648)) | Testing, E2E | Added E2E use case test for ManageFriends to validate friend management flows. |
+| 2025-11-08 ([fa69bfe](../../commit/fa69bfe)) | Testing, E2E | Added E2E tests for ManageAccount to validate account management functionality. |
+| 2025-11-07 ([e648d11](../../commit/e648d11)) | Testing, Gamification | Achieved badge test coverage at 100% to ensure comprehensive testing of badge system. |
+| 2025-11-07 ([4dfefd9](../../commit/4dfefd9)) | Testing, User Management | Added user tests to validate user management endpoints and functionality. |
+| 2025-11-07 ([948c381](../../commit/948c381)) | Testing, Pin Management | Completed remaining coverage and fixed pin tests to ensure comprehensive pin testing. |
+| 2025-11-07 ([c15d894](../../commit/c15d894)) | Testing, Real-time | Added gateway tests to validate Socket.io real-time communication functionality. |
+| 2025-11-07 ([6b3a4a0](../../commit/6b3a4a0)) | Testing, Pin Management | Added comprehensive pin tests to validate all pin CRUD operations and interactions. |
+| 2025-11-07 ([06c4055](../../commit/06c4055)) | Testing, Media | Improved media coverage tests to validate image upload and management. |
+| 2025-11-07 ([181ba03](../../commit/181ba03)) | Testing, Debug | Added debug tests to validate debugging endpoints and utilities. |
+| 2025-11-07 ([e43c5b6](../../commit/e43c5b6)) | Testing, Coverage | Improved debug line coverage to ensure comprehensive test coverage reporting. |
+| 2025-11-07 ([951ae4c](../../commit/951ae4c)) | Testing, Recommendations | Added recommendation tests to validate meal recommendation functionality. |
+| 2025-11-07 ([0e8106d](../../commit/0e8106d)) | Testing, E2E | Fixed E2E tests for ManageFriends to ensure reliable friend management testing. |
+| 2025-11-06 ([22ed8c0](../../commit/22ed8c0)) | Testing | Added test files to expand test coverage across the application. |
+| 2025-11-06 ([dcc442d](../../commit/dcc442d)) | Testing, Recommendations | Added recommendation unit tests to validate recommendation service logic. |
+| 2025-11-06 ([a1ce8f6](../../commit/a1ce8f6)) | Testing, E2E | Added E2E tests for ManageFriends to validate friend request and management flows. |
+| 2025-11-06 ([33589cd](../../commit/33589cd)) | Testing, E2E | Added E2E tests for ManagePins to validate pin creation, editing, and deletion. |
+| 2025-11-06 ([6ee1202](../../commit/6ee1202)) | Testing, Coverage | Fixed coverage reports to ensure accurate test coverage reporting. |
+| 2025-11-06 ([412a756](../../commit/412a756)) | Testing, Security | Added security tests to validate authentication, authorization, and input validation. |
+| 2025-11-05 ([85806bf](../../commit/85806bf)) | Testing, Gamification | Added badge tests to validate badge earning and progress tracking functionality. |
+| 2025-11-05 ([d7c5a0d](../../commit/d7c5a0d)) | Testing, Security | Added Security Phase 2 Rank 1 tests to validate advanced security requirements. |
+| 2025-11-05 ([5a11205](../../commit/5a11205)) | Testing, Security | Added security tests phase 1 to validate basic security requirements. |
+| 2025-11-05 ([807f841](../../commit/807f841)) | Testing, Security | Added security tests to validate authentication and authorization mechanisms. |
+| 2025-11-05 ([4964356](../../commit/4964356)) | Testing, Performance | Added location performance testing and pins performance tests to validate response times. |
+| 2025-11-05 ([9493945](../../commit/9493945)) | Testing, Performance | Added performance testing to validate system performance under load. |
+| 2025-11-05 ([ef54b17](../../commit/ef54b17)) | Testing, Performance | Added performance tests for user endpoints to validate response time requirements. |
+| 2025-11-05 ([0d528aa](../../commit/0d528aa)) | Testing, Performance | Added performance testing for friends endpoints to validate scalability. |
+| 2025-11-03 ([e370009](../../commit/e370009)) | Testing, User Management | Fixed user tests that were failing to ensure reliable user management testing. |
+| 2025-11-03 ([befabf2](../../commit/befabf2)) | Testing, User Management | Added user unmocked tests to validate user management endpoints. |
+| 2025-11-03 ([6fa8cd7](../../commit/6fa8cd7)) | Testing, Location | Added unmocked tests for location to validate location tracking functionality. |
+| 2025-11-03 ([99c8178](../../commit/99c8178)) | Testing, Social Features | Added unmocked tests for friends to validate friend management functionality. |
+| 2025-11-03 ([b45af46](../../commit/b45af46)) | Testing, Configuration | Added Jest configuration to set up testing framework and test environment. |
+| 2025-10-31 ([cc1e9b4](../../commit/cc1e9b4)) | Testing, User Management | Added user service tests to validate user service layer functionality. |
+| 2025-10-31 ([dc4b749](../../commit/dc4b749)) | Testing, Coverage | Added additional coverage for friends and location features to improve test coverage. |
+| 2025-10-31 ([958281a](../../commit/958281a)) | Testing, Configuration | Merged PR #11 with Jest setup to establish testing infrastructure. |
+| 2025-10-31 ([38374e6](../../commit/38374e6)) | Testing, Configuration | Added Jest and testing setup for friends to begin comprehensive testing. |
+| 2025-10-29 ([160c630](../../commit/160c630)) | Code Quality | Uploaded M4 Codacy files to track code quality metrics and issues. |
 
 ---
 
@@ -904,13 +993,17 @@ In the same directory as above, you can find a document named `TEST_DATA_SETUP_I
 
 ### 5.2. Issues Breakdown by Category
 
-_Screenshot or copy of the "Issues breakdown" table from the "Overview" page on Codacy should be added here._
+There is a total of 250 issues remaining.
+
+![Issues breakdown table](images/issues_table.png)
 
 **Codacy Overview URL:** `https://app.codacy.com/gh/tonykulenovic/CPEN-321-app/dashboard`
 
 ### 5.3. Issues Breakdown by Code Pattern
 
-_Screenshot or copy of the "Issues" page from Codacy should be added here._
+![Issues breakdown page](images/issues_page.png)
+
+![Quality evolution](images/quality_evolution.png)
 
 **Codacy Issues URL:** `https://app.codacy.com/gh/tonykulenovic/CPEN-321-app/issues/current`
 

@@ -135,7 +135,7 @@ export class PinVoteModel {
       throw new Error('Failed to vote on pin');
     } finally {
       if (session) {
-        void session.endSession();
+        session.endSession().catch(() => {});
       }
     }
   }

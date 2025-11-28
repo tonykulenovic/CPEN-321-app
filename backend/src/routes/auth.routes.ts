@@ -2,7 +2,6 @@ import { Router } from 'express';
 
 import { AuthController } from '../controllers/auth.controller';
 import { 
-  SignUpUserRequest,
   authenticateUserSchema,
   signUpUserSchema 
 } from '../types/auth.types';
@@ -14,19 +13,25 @@ const authController = new AuthController();
 router.post(
   '/signin',
   validateBody(authenticateUserSchema),
-  (req, res, next) => void authController.signIn(req, res, next)
+  (req, res, next) => {
+    authController.signIn(req, res, next).catch(() => {});
+  }
 );
 
 router.post(
   '/signup',
   validateBody(signUpUserSchema),
-  (req, res, next) => void authController.signUp(req, res, next)
+  (req, res, next) => {
+    authController.signUp(req, res, next).catch(() => {});
+  }
 );
 
 router.post(
   '/check',
   validateBody(authenticateUserSchema),
-  (req, res, next) => void authController.checkGoogleAccount(req, res, next)
+  (req, res, next) => {
+    authController.checkGoogleAccount(req, res, next).catch(() => {});
+  }
 );
 
 export default router;

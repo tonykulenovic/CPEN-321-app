@@ -7,7 +7,6 @@ import {
   BadgeRequirementType,
   BadgeProgress,
   createBadgeSchema,
-  updateBadgeSchema,
   IBadge,
   IUserBadge,
 } from '../types/badge.types';
@@ -181,7 +180,7 @@ export class BadgeModel {
     try {
       // Get badge to get target for default progress
       const badge = await this.badge.findById(badgeId);
-      const defaultTarget = badge?.requirements?.target ?? 0;
+      const defaultTarget = badge?.requirements.target ?? 0;
 
       const userBadgeData: Record<string, unknown> = {
         userId,
@@ -229,7 +228,7 @@ export class BadgeModel {
       // After populate, badgeId can be null if the badge was deleted
       return userBadges.filter(ub => {
         const badge = ub.badgeId;
-        return badge != null;
+        return badge !== null && badge !== undefined;
       });
     } catch (error) {
       logger.error('Error getting user badges:', error);

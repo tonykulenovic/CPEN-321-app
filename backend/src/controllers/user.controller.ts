@@ -418,6 +418,7 @@ export class UserController {
    * GET /users/admin/all — Get all users (admin only).
    * @return 200 Users list
    */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async getAllUsers(req: Request, res: Response, _next: NextFunction): Promise<void> {
     try {
       // Check if user is admin
@@ -443,6 +444,7 @@ export class UserController {
    * @param id string - User ID to suspend
    * @return 200 Success
    */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async suspendUser(req: Request<{ id: string }>, res: Response, _next: NextFunction): Promise<void> {
     try {
       // Check if user is admin
@@ -481,6 +483,7 @@ export class UserController {
    * @param id string - User ID to unsuspend
    * @return 200 Success
    */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async unsuspendUser(req: Request<{ id: string }>, res: Response, _next: NextFunction): Promise<void> {
     try {
       // Check if user is admin
@@ -513,6 +516,7 @@ export class UserController {
    * @param id string - User ID to delete
    * @return 200 Success
    */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async deleteUserByAdmin(req: Request<{ id: string }>, res: Response, _next: NextFunction): Promise<void> {
     try {
       // Check if user is admin
@@ -534,7 +538,7 @@ export class UserController {
 
       // Delete user's pins (cascading delete)
       const deletedPinsCount = await pinModel.deleteAllByUser(userId);
-      logger.info(`🗑️ Cascading delete: Removed ${deletedPinsCount} pins for user ${userId}`);
+      logger.info(`🗑️ Cascading delete: Removed ${deletedPinsCount} pins for user ${userId.toString()}`);
 
       // Delete user
       await userModel.delete(userId);

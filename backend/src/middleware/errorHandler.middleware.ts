@@ -12,7 +12,8 @@ export const notFoundHandler = (req: Request, res: Response) => {
   });
 };
 
-export const errorHandler = (error: Error, req: Request, res: Response, next: NextFunction) => {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export const errorHandler = (error: Error, req: Request, res: Response, _next: NextFunction) => {
   logger.error('Error:', error);
 
   // Handle JSON syntax errors from express.json() middleware
