@@ -2,7 +2,6 @@ import { Router } from 'express';
 
 import { AuthController } from '../controllers/auth.controller';
 import { 
-  SignUpUserRequest,
   authenticateUserSchema,
   signUpUserSchema 
 } from '../types/auth.types';

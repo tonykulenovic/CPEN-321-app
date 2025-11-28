@@ -534,7 +534,7 @@ export class UserController {
 
       // Delete user's pins (cascading delete)
       const deletedPinsCount = await pinModel.deleteAllByUser(userId);
-      logger.info(`🗑️ Cascading delete: Removed ${deletedPinsCount} pins for user ${userId}`);
+      logger.info(`🗑️ Cascading delete: Removed ${deletedPinsCount} pins for user ${userId.toString()}`);
 
       // Delete user
       await userModel.delete(userId);

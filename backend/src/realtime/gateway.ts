@@ -55,7 +55,7 @@ export class LocationGateway {
         throw new Error('User not found');
       }
 
-      const locationPrivacy = user.privacy.location ?? { sharing: 'off', precisionMeters: 30 };
+      const locationPrivacy = user.privacy?.location ?? { sharing: 'off', precisionMeters: 30 };
       logger.info(`🔒 User ${userId.toString()} privacy settings: sharing=${locationPrivacy.sharing}`);
 
       // 2. ALWAYS check for nearby pins first (even if sharing is off)
@@ -156,7 +156,7 @@ export class LocationGateway {
         }
 
         // Handle both old and new privacy format
-        const locationSharing = friend.privacy.location?.sharing ?? 'off';
+        const locationSharing = friend.privacy?.location?.sharing ?? 'off';
         
         // Skip if location sharing is explicitly disabled
         // Handle legacy "on" value as "live"
@@ -387,8 +387,8 @@ export class LocationGateway {
           next(new Error('JWT_SECRET not configured'));
           return;
         }
-        const decoded = jwt.verify(token, secret) as { id: string } | undefined;
-        if (!decoded || !decoded.id) {
+        const decoded = jwt.verify(token, secret) as { id?: string } | undefined;
+        if (!decoded?.id) {
           next(new Error('Invalid token'));
           return;
         }
@@ -732,7 +732,7 @@ export class LocationGateway {
     
     const nsp = this.io.of('/realtime');
     nsp.emit('pin:created', {
-      pin: pin
+      pin
     });
     
     logger.info(`📍 Broadcasting pin created: ${(pin as { _id: { toString: () => string } })._id.toString()}`);
@@ -760,7 +760,7 @@ export class LocationGateway {
     
     const nsp = this.io.of('/realtime');
     nsp.emit('pin:deleted', {
-      pinId: pinId
+      pinId
     });
     
     logger.info(`📍 Broadcasting pin deleted: ${pinId}`);

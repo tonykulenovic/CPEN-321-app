@@ -1,24 +1,24 @@
 import dotenv from 'dotenv';
-dotenv.config();
-
-/* eslint-disable security/detect-console-log-non-literal */
 import express from 'express';
 import { createServer } from 'http';
+import path from 'path';
 import { connectDB } from './config/database';
 import {
   errorHandler,
   notFoundHandler,
 } from './middleware/errorHandler.middleware';
 import router from './routes/routes';
-import path from 'path';
 import { locationGateway } from './realtime/gateway';
 import { BadgeService } from './services/badge.service';
 import { seedLibraries } from './scripts/seedLibraries';
 import { seedCafes } from './scripts/seedCafes';
 import { seedRestaurants } from './scripts/seedRestaurants';
 import { firebaseService } from './config/firebase';
-import { recommendationScheduler } from './services/recommendationScheduler.service';
 import { startRecommendationScheduler } from './controllers/recommendations.controller';
+
+dotenv.config();
+
+/* eslint-disable security/detect-console-log-non-literal */
 
 
 
@@ -67,18 +67,18 @@ void connectDB().then(async () => {
     console.log('🎉 All system data initialized successfully!\n');
     
     // Final verification summary
-    const mongoose = require('mongoose');
-    const badgeCount = await mongoose.connection.collection('badges').countDocuments();
-    const libraryCount = await mongoose.connection.collection('pins').countDocuments({
+    const mongoose = await import('mongoose');
+    const badgeCount = await mongoose.default.connection.collection('badges').countDocuments();
+    const libraryCount = await mongoose.default.connection.collection('pins').countDocuments({
       isPreSeeded: true,
       category: 'study'
     });
-    const cafeCount = await mongoose.connection.collection('pins').countDocuments({
+    const cafeCount = await mongoose.default.connection.collection('pins').countDocuments({
       isPreSeeded: true,
       category: 'shops_services',
       'metadata.subtype': 'cafe'
     });
-    const restaurantCount = await mongoose.connection.collection('pins').countDocuments({
+    const restaurantCount = await mongoose.default.connection.collection('pins').countDocuments({
       isPreSeeded: true,
       category: 'shops_services',
       'metadata.subtype': 'restaurant'

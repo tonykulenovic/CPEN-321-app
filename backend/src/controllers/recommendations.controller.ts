@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { Types } from 'mongoose';
+import mongoose, { Types } from 'mongoose';
 import * as cron from 'node-cron';
 import { locationModel } from '../models/location.model';
 import { pinModel } from '../models/pin.model';
@@ -65,8 +65,8 @@ export async function getRecommendations(req: Request, res: Response): Promise<v
         pin.location.longitude
       );
       
-      const upvotes = pin.rating?.upvotes || 0;
-      const downvotes = pin.rating?.downvotes || 0;
+      const upvotes = pin.rating ? pin.rating.upvotes || 0 : 0;
+      const downvotes = pin.rating ? pin.rating.downvotes || 0 : 0;
       const totalVotes = upvotes + downvotes;
       const rating = totalVotes > 0 ? upvotes / totalVotes : 0.5;
       
@@ -154,7 +154,11 @@ function getMealKeywords(mealType: string): string[] {
     lunch: ['lunch', 'sandwich', 'bistro', 'deli', 'pizza', 'burger'],
     dinner: ['dinner', 'restaurant', 'bar', 'grill', 'steak']
   };
-  return keywords[mealType] || [];
+  // Validate mealType to prevent object injection
+  if (mealType in keywords) {
+    return keywords[mealType];
+  }
+  return [];
 }
 
 /**
@@ -315,7 +319,10 @@ export async function sendBatchRecommendations(mealType: 'breakfast' | 'lunch' |
   try {
     // Get users with FCM tokens who can receive notifications
     const users = await userModel.findAll();
-    const eligibleUsers = users.filter((user: any) => user.fcmToken && user.fcmToken.length > 0);
+    const eligibleUsers = users.filter((user: unknown) => {
+      const u = user as { fcmToken?: string };
+      return u.fcmToken && u.fcmToken.length > 0;
+    });
     
     if (eligibleUsers.length === 0) {
       logger.info(`📭 No eligible users found for ${mealType} recommendations`);
@@ -331,25 +338,26 @@ export async function sendBatchRecommendations(mealType: 'breakfast' | 'lunch' |
     for (let i = 0; i < eligibleUsers.length; i += 10) {
       const batch = eligibleUsers.slice(i, i + 10);
       
-      const batchPromises = batch.map(async (user: any) => {
+      const batchPromises = batch.map(async (user: unknown) => {
+        const u = user as { _id: mongoose.Types.ObjectId };
         try {
           // Check if user already received recommendation today
-          const canReceive = await userModel.canReceiveRecommendation(user._id, mealType);
+          const canReceive = await userModel.canReceiveRecommendation(u._id, mealType);
           if (!canReceive) {
             return; // Skip this user
           }
 
-          const sent = await sendMealRecommendationNotification(user._id, mealType);
+          const sent = await sendMealRecommendationNotification(u._id, mealType);
           
           if (sent) {
-            await userModel.markRecommendationSent(user._id, mealType);
+            await userModel.markRecommendationSent(u._id, mealType);
             successCount++;
           } else {
             failureCount++;
           }
         } catch (error) {
           failureCount++;
-          logger.error(`Error sending ${mealType} recommendation to user ${user._id}:`, error);
+          logger.error(`Error sending ${mealType} recommendation to user ${u._id}:`, error);
         }
       });
 
