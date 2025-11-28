@@ -55,19 +55,22 @@ class PinViewModel @Inject constructor(
                 android.util.Log.d("PinViewModel", "🎯 Received pin event: ${event.javaClass.simpleName}")
                 when (event) {
                     is PinEvent.PinCreated -> {
-                        android.util.Log.d("PinViewModel", "➕ Adding new pin to list: ${event.pin.name} (ID: ${event.pin.id})")
-                        android.util.Log.d("PinViewModel", "➕ Current pins count: ${_uiState.value.pins.size}")
+                        android.util.Log.d("PinViewModel", "🔔 Socket: New pin created: ${event.pin.name} (ID: ${event.pin.id})")
+                        android.util.Log.d("PinViewModel", "🔔 Current pins count: ${_uiState.value.pins.size}")
                         
-                        // Add new pin to the list
+                        // Add new pin to the list (only if not already added by optimistic update)
                         val currentPins = _uiState.value.pins.toMutableList()
-                        currentPins.add(event.pin)
-                        _uiState.value = _uiState.value.copy(
-                            pins = currentPins,
-                            totalPins = currentPins.size,
-                            lastLoadedTimestamp = System.currentTimeMillis()
-                        )
-                        
-                        android.util.Log.d("PinViewModel", "✅ Pin added! New pins count: ${_uiState.value.pins.size}")
+                        if (currentPins.none { it.id == event.pin.id }) {
+                            currentPins.add(0, event.pin) // Add at beginning (newest first)
+                            _uiState.value = _uiState.value.copy(
+                                pins = currentPins,
+                                totalPins = currentPins.size,
+                                lastLoadedTimestamp = System.currentTimeMillis()
+                            )
+                            android.util.Log.d("PinViewModel", "✅ Socket: Pin added! New pins count: ${currentPins.size}")
+                        } else {
+                            android.util.Log.d("PinViewModel", "⏭️ Socket: Pin already exists (optimistic update), skipping")
+                        }
                     }
                     is PinEvent.PinUpdated -> {
                         android.util.Log.d("PinViewModel", "✏️ Updating pin: ${event.pin.name} (ID: ${event.pin.id})")
@@ -176,11 +179,23 @@ class PinViewModel @Inject constructor(
             
             pinRepository.createPin(request)
                 .onSuccess { pin ->
+                    android.util.Log.d("PinViewModel", "✅ Pin created successfully: ${pin.name} (ID: ${pin.id})")
+                    
+                    // Optimistic update - add pin to list immediately for instant feedback
+                    val currentPins = _uiState.value.pins.toMutableList()
+                    // Only add if not already in list (socket might have already added it)
+                    if (currentPins.none { it.id == pin.id }) {
+                        currentPins.add(0, pin) // Add at beginning (newest first)
+                        android.util.Log.d("PinViewModel", "➕ Added new pin to list. Total pins: ${currentPins.size}")
+                    }
+                    
                     _uiState.value = _uiState.value.copy(
+                        pins = currentPins,
+                        totalPins = currentPins.size,
                         successMessage = "Pin created successfully!",
-                        isCreating = false
+                        isCreating = false,
+                        lastLoadedTimestamp = System.currentTimeMillis()
                     )
-                    loadPins(forceRefresh = true) // Force refresh to show new pin
                 }
                 .onFailure { error ->
                     _uiState.value = _uiState.value.copy(

@@ -188,6 +188,26 @@ fun MainScreen(
             friendsViewModel.loadFriends()
             friendsViewModel.loadFriendsLocations()
             
+            // Check socket connection and initialize if not connected
+            val socketConnected = locationTrackingService.isConnected()
+            android.util.Log.d("MainScreen", "🔌 Socket connection status: ${if (socketConnected) "CONNECTED ✅" else "DISCONNECTED ❌"}")
+            
+            // If socket is not connected, try to initialize it
+            if (!socketConnected) {
+                android.util.Log.d("MainScreen", "🔄 Socket disconnected - attempting to reconnect...")
+                val token = tokenManager.getTokenSync()
+                if (token != null) {
+                    android.util.Log.d("MainScreen", "🔧 Initializing socket with token for user: ${user._id}")
+                    locationTrackingService.initialize(token, user._id.toString())
+                    // Wait a bit for connection to establish
+                    kotlinx.coroutines.delay(500)
+                    val nowConnected = locationTrackingService.isConnected()
+                    android.util.Log.d("MainScreen", "🔌 Socket after reconnect: ${if (nowConnected) "CONNECTED ✅" else "STILL DISCONNECTED ❌"}")
+                } else {
+                    android.util.Log.e("MainScreen", "❌ Cannot initialize socket: no auth token available")
+                }
+            }
+            
             // Start tracking friends who share location (socket is already connected app-wide)
             val friendsWithLocation = friendsViewModel.uiState.value.friends.filter { it.shareLocation }
             android.util.Log.d("MainScreen", "👥 Found ${friendsWithLocation.size} friends with location sharing enabled")
@@ -246,6 +266,10 @@ fun MainScreen(
     DisposableEffect(Unit) {
         android.util.Log.d("MainScreen", "🗺️  Map screen ACTIVE - Starting map operations")
         mainViewModel.onMapScreenActive()
+        
+        // Refresh pins when returning to map screen to catch any new pins
+        android.util.Log.d("MainScreen", "🔄 Refreshing pins on map screen activation...")
+        pinViewModel.loadPins(forceRefresh = false) // Use cache but check for updates
         
         onDispose {
             android.util.Log.d("MainScreen", "🗺️  Map screen INACTIVE - Stopping map operations")
