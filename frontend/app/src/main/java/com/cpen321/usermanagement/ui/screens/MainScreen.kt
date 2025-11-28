@@ -243,13 +243,38 @@ fun MainScreen(
         }
     }
     
-    // Periodic refresh of location data from HTTP endpoint
+    // Periodic refresh of friends and location data from HTTP endpoint
     LaunchedEffect(Unit) {
+        // Initial immediate refresh when map screen is entered
+        if (profileUiState.user != null) {
+            friendsViewModel.loadFriends()
+            friendsViewModel.loadFriendsLocations()
+            android.util.Log.d("MainScreen", "🔄 Initial refresh: friends and locations loaded")
+        }
+        
         while (true) {
-            kotlinx.coroutines.delay(30000) // Refresh every 30 seconds
+            kotlinx.coroutines.delay(15000) // Refresh every 15 seconds (faster to detect new sharers)
             if (profileUiState.user != null) {
+                // Reload friends list to check for new friends sharing location
+                friendsViewModel.loadFriends()
                 friendsViewModel.loadFriendsLocations()
+                android.util.Log.d("MainScreen", "🔄 Periodic refresh: friends and locations reloaded")
             }
+        }
+    }
+    
+    // Reactive observer: automatically track new friends who start sharing location
+    // This triggers whenever the friends list changes
+    val friendsWithLocationSharing = remember(friendsUiState.friends) {
+        friendsUiState.friends.filter { it.shareLocation }
+    }
+    
+    LaunchedEffect(friendsWithLocationSharing) {
+        if (profileUiState.user != null && friendsWithLocationSharing.isNotEmpty()) {
+            friendsWithLocationSharing.forEach { friend ->
+                locationTrackingService.trackFriend(friend.userId)
+            }
+            android.util.Log.d("MainScreen", "👥 Auto-tracking ${friendsWithLocationSharing.size} friends with location sharing")
         }
     }
 

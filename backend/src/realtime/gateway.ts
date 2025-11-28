@@ -100,13 +100,20 @@ export class LocationGateway {
 
       // 5. Only broadcast to friends if location sharing is enabled
       if (willShareWithFriends) {
-        logger.info(`📡 Broadcasting location update for user ${userId.toString()} to subscribed friends`);
-        await this.broadcastLocationUpdate(userId, {
+        const locationData = {
           lat: finalLat,
           lng: finalLng,
           accuracyM: finalAccuracyM,
           ts: location.createdAt.toISOString(),
-        });
+        };
+        
+        logger.info(`📡 Broadcasting location update for user ${userId.toString()} to subscribed friends`);
+        await this.broadcastLocationUpdate(userId, locationData);
+        
+        // Also broadcast to ALL friends so they know this user is sharing
+        // (helps friends who haven't subscribed yet to see the location)
+        await this.broadcastFriendStartedSharing(userId, locationData);
+        
         logger.info(`✅ Location saved and shared with friends for user ${userId.toString()}`);
       } else {
         logger.info(`✅ Location saved (not shared with friends due to privacy settings) for user ${userId.toString()}`);
@@ -248,6 +255,47 @@ export class LocationGateway {
       if (trackers.size === 0) {
         locationTrackers.delete(friendIdStr);
       }
+    }
+  }
+
+  /**
+   * Broadcast that a friend started sharing their location
+   * This notifies ALL friends so they can start tracking
+   */
+  async broadcastFriendStartedSharing(
+    userId: mongoose.Types.ObjectId,
+    locationData: { lat: number; lng: number; accuracyM: number; ts: string }
+  ): Promise<void> {
+    if (!this.io) return;
+
+    try {
+      // Get all accepted friends of this user
+      const friendships = await friendshipModel.findUserFriendships(userId, 'accepted');
+      
+      if (friendships.length === 0) {
+        logger.debug(`No friends to notify for user ${userId.toString()}`);
+        return;
+      }
+
+      const nsp = this.io.of('/realtime');
+      const userIdStr = userId.toString();
+      
+      logger.info(`📡 Broadcasting friend:started:sharing to ${friendships.length} friends of user ${userIdStr}`);
+
+      for (const friendship of friendships) {
+        // Determine friend's ID
+        const friendId = friendship.userId.toString() === userIdStr 
+          ? friendship.friendId 
+          : friendship.userId;
+        
+        nsp.to(`user:${friendId.toString()}`).emit('friend:started:sharing', {
+          friendId: userIdStr,
+          ...locationData,
+        });
+        logger.debug(`📡 Notified ${friendId.toString()} that friend ${userIdStr} started sharing`);
+      }
+    } catch (error) {
+      logger.error('Error broadcasting friend started sharing:', error);
     }
   }
 
