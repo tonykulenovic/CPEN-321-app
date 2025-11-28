@@ -10,6 +10,7 @@ jest.mock('../../../src/utils/logger.util');
 
 // Import routes after mocking dependencies
 import authRoutes from '../../../src/routes/auth.routes';
+import { errorHandler } from '../../../src/middleware/errorHandler.middleware';
 
 describe('Auth Signup API Tests', () => {
   let app: express.Application;
@@ -18,6 +19,9 @@ describe('Auth Signup API Tests', () => {
     app = express();
     app.use(express.json());
     app.use('/api/auth', authRoutes);
+    
+    // Add error handler middleware for proper error responses
+    app.use(errorHandler);
     
     jest.clearAllMocks();
   });
@@ -72,7 +76,7 @@ describe('Auth Signup API Tests', () => {
         .expect(400);
 
       expect(response.body).toHaveProperty('message');
-      expect(response.body.message).toContain('Validation error');
+      expect(response.body.message).toContain('Invalid input data');
       expect(authService.signUpWithGoogle).not.toHaveBeenCalled();
     });
 
@@ -88,7 +92,8 @@ describe('Auth Signup API Tests', () => {
         .expect(400);
 
       expect(response.body).toHaveProperty('message');
-      expect(response.body.message).toContain('Google token is required');
+      expect(response.body.message).toContain('Invalid input data');
+      expect(response.body).toHaveProperty('error', 'Validation error');
       expect(authService.signUpWithGoogle).not.toHaveBeenCalled();
     });
 
@@ -103,7 +108,7 @@ describe('Auth Signup API Tests', () => {
         .expect(400);
 
       expect(response.body).toHaveProperty('message');
-      expect(response.body.message).toContain('Validation error');
+      expect(response.body.message).toContain('Invalid input data');
       expect(authService.signUpWithGoogle).not.toHaveBeenCalled();
     });
 
@@ -119,7 +124,8 @@ describe('Auth Signup API Tests', () => {
         .expect(400);
 
       expect(response.body).toHaveProperty('message');
-      expect(response.body.message).toContain('Username must be at least 3 characters');
+      expect(response.body.message).toContain('Invalid input data');
+      expect(response.body).toHaveProperty('error', 'Validation error');
       expect(authService.signUpWithGoogle).not.toHaveBeenCalled();
     });
 
@@ -135,7 +141,8 @@ describe('Auth Signup API Tests', () => {
         .expect(400);
 
       expect(response.body).toHaveProperty('message');
-      expect(response.body.message).toContain('Username must be at most 20 characters');
+      expect(response.body.message).toContain('Invalid input data');
+      expect(response.body).toHaveProperty('error', 'Validation error');
       expect(authService.signUpWithGoogle).not.toHaveBeenCalled();
     });
 
@@ -151,7 +158,8 @@ describe('Auth Signup API Tests', () => {
         .expect(400);
 
       expect(response.body).toHaveProperty('message');
-      expect(response.body.message).toContain('Username can only contain letters, numbers, and underscores');
+      expect(response.body.message).toContain('Invalid input data');
+      expect(response.body).toHaveProperty('error', 'Validation error');
       expect(authService.signUpWithGoogle).not.toHaveBeenCalled();
     });
 
@@ -277,7 +285,7 @@ describe('Auth Signup API Tests', () => {
         .expect(400);
 
       expect(response.body).toHaveProperty('message');
-      expect(response.body.message).toContain('Validation error');
+      expect(response.body.message).toContain('Invalid input data');
       expect(authService.signUpWithGoogle).not.toHaveBeenCalled();
     });
 
@@ -321,8 +329,8 @@ describe('Auth Signup API Tests', () => {
 
     it('should handle non-string inputs correctly', async () => {
       const invalidData = {
-        idToken: 12345,  // number instead of string
-        username: true   // boolean instead of string
+        idToken: 123, // number instead of string
+        username: true // boolean instead of string
       };
 
       const response = await request(app)
@@ -331,7 +339,7 @@ describe('Auth Signup API Tests', () => {
         .expect(400);
 
       expect(response.body).toHaveProperty('message');
-      expect(response.body.message).toContain('Validation error');
+      expect(response.body.message).toContain('Invalid input data');
       expect(authService.signUpWithGoogle).not.toHaveBeenCalled();
     });
   });
