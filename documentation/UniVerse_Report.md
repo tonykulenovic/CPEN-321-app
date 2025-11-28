@@ -1,6 +1,6 @@
 # PART II – Final Project Report
 
-1. **GitHub repository & final commit**: `https://github.com/tonykulenovic/CPEN-321-app` — final released version on `main` is `16f79ff Added glow effect on selected pins`.
+1. **GitHub repository & final commit**: `https://github.com/tonykulenovic/CPEN-321-app` — final released version on `main` is `4a47a25 Updated req and design`.
 
 2. **Test locations**:
    - **Front-end**: UI end-to-end tests live in `frontend/app/src/androidTest/java/com/cpen321/usermanagement/ui/` (see `TEST_DATA_SETUP_INSTRUCTIONS.md` for data setup). Key suites include `ManagePinsE2ETest.kt`, `ManageFriendsE2ETest.kt`, `DeclineFriendRequestE2ETest.kt`, `AdminManagePinsE2ETest.kt`, `AdminManageUsersE2ETest.kt`, and `ManageAccountE2ETest.kt`.
