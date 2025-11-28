@@ -4,6 +4,32 @@
 
 | **Change Date**                              | **Modified Sections**                         | **Rationale**                                                                                                                                                                                                                                                                        |
 | -------------------------------------------- | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 2025-11-28 ([4a47a25](../../commit/4a47a25)) | Documentation, Requirements Specification     | Updated section 4.1 Main Components to include both REST API endpoints and Java-style interfaces for consistency between sequence diagrams and component descriptions. Added Location and Media components to the main components list. |
+| 2025-11-28 ([18a822d](../../commit/18a822d)) | UI/UX, Social Features                         | Improved UI of friend location features to enhance user experience with location sharing. |
+| 2025-11-28 ([6b1048f](../../commit/6b1048f)) | Real-time Updates, Social Features            | Fixed friend location display so location appears when user starts sharing location. |
+| 2025-11-28 ([31eee2f](../../commit/31eee2f)) | Documentation, Testing                        | Specified physical device as Samsung A03s for testing documentation. |
+| 2025-11-28 ([190ba59](../../commit/190ba59)) | Documentation, Use Cases                      | Revised use case sequence diagrams in documentation to reflect current system behavior. |
+| 2025-11-28 ([8369485](../../commit/8369485)) | Documentation Assets                          | Added files via upload to update documentation assets. |
+| 2025-11-27 ([5f3242d](../../commit/5f3242d)) | Real-time Updates, Pin Management            | Fixed automatic updates so users see new pins from other users in real-time. |
+| 2025-11-27 ([ec0bbe0](../../commit/ec0bbe0)) | UI/UX, Map Features                           | Made friend map icon smaller to improve map readability and reduce visual clutter. |
+| 2025-11-27 ([400630e](../../commit/400630e)) | Real-time Updates, Bug Fixes                  | Fixed socket issues to resolve real-time communication problems (NOT FULLY TESTED). |
+| 2025-11-27 ([3ab5d0c](../../commit/3ab5d0c)) | Documentation                                 | Added reflections document for project evaluation. |
+| 2025-11-27 ([ca19792](../../commit/ca19792)) | Pin Management, Admin                         | Added defensive code to delete orphaned pins and implemented cascading delete for user pins when admin deletes user. |
+| 2025-11-27 ([35a14d2](../../commit/35a14d2)) | Backend Services, Development                 | Removed debug methods to clean up codebase and remove development utilities. |
+| 2025-11-27 ([fb029e5](../../commit/fb029e5)) | UI/UX                                         | Applied more UI tweaks to improve interface consistency and user experience. |
+| 2025-11-27 ([79bc250](../../commit/79bc250)) | UI/UX                                         | Applied additional UI tweaks to refine interface design. |
+| 2025-11-27 ([fee6390](../../commit/fee6390)) | UI/UX, Bug Fixes                              | Tweaked UI issues to resolve interface problems and improve user experience. |
+| 2025-11-26 ([2738548](../../commit/2738548)) | Pin Management, Map Features                  | Tweaked restaurant pin display to improve visual presentation. |
+| 2025-11-26 ([f805f23](../../commit/f805f23)) | UI/UX, Frontend                               | Fixed styling compatibility issues to ensure consistent appearance across devices. |
+| 2025-11-26 ([8d205e8](../../commit/8d205e8)) | Documentation, Use Cases                      | Updated use case and dependencies diagrams to reflect current system architecture. |
+| 2025-11-26 ([b96a46a](../../commit/b96a46a)) | Documentation Assets                          | Renamed High Level Design Diagram.jpg to High_Level_Design_Diagram.jpg for consistency. |
+| 2025-11-26 ([be490ea](../../commit/be490ea)) | Documentation Assets                          | Added files via upload to update documentation assets. |
+| 2025-11-26 ([fd206f9](../../commit/fd206f9)) | Documentation Assets                          | Added files via upload to update documentation assets. |
+| 2025-11-26 ([1060de2](../../commit/1060de2)) | Documentation                                 | Near-finalized Requirements_and_Design document and Final Report document. |
+| 2025-11-26 ([535315b](../../commit/535315b)) | Real-time Updates, Bug Fixes                  | Fixed socket issues to resolve real-time communication problems. |
+| 2025-11-26 ([569fb43](../../commit/569fb43)) | Recommendations, Bug Fixes                    | Fixed recommendations to ensure proper meal suggestion functionality. |
+| 2025-11-25 ([ad7e8b2](../../commit/ad7e8b2)) | Recommendations, Location                     | Fixed recommendations by extending recent location to last 2 hours (UNTESTED). |
+| 2025-11-25 ([2f10d39](../../commit/2f10d39)) | Push Notifications, Bug Fixes                 | Fixed notifications to ensure reliable push notification delivery (UNTESTED). |
 | 2025-11-23 ([16f79ff](../../commit/16f79ff)) | UI/UX, Map Presentation                        | Added a glow effect on selected pins so users can more easily recognize the active pitch/location on the map. |
 | 2025-11-23 ([7eeb820](../../commit/7eeb820)) | UI/UX, Map Presentation                        | Re-introduced 3D buildings to maintain spatial context when navigating the map. |
 | 2025-11-23 ([42eb198](../../commit/42eb198)) | Map Performance, Pin Rendering                 | Fixed the clustering logic so large pin concentrations remain legible and responsive under zoomed-out views. |
