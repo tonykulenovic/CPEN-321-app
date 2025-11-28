@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 
 import logger from '../utils/logger.util';
 
@@ -12,8 +12,16 @@ export const notFoundHandler = (req: Request, res: Response) => {
   });
 };
 
-export const errorHandler = (error: Error, req: Request, res: Response) => {
+export const errorHandler = (error: Error, req: Request, res: Response, next: NextFunction) => {
   logger.error('Error:', error);
+
+  // Handle JSON syntax errors from express.json() middleware
+  if (error instanceof SyntaxError && 'body' in error) {
+    return res.status(400).json({
+      error: 'Invalid JSON',
+      message: 'Request body contains invalid JSON',
+    });
+  }
 
   return res.status(500).json({
     message: 'Internal server error',
