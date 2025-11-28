@@ -14,6 +14,17 @@ jest.mock('../../../src/services/notification.service');
 // Mock auth middleware
 jest.mock('../../../src/middleware/auth.middleware', () => ({
   authenticateToken: (req: any, res: any, next: any) => {
+    const authHeader = req.headers.authorization;
+    const token = authHeader?.split(' ')[1];
+
+    if (!token) {
+      res.status(401).json({
+        error: 'Access denied',
+        message: 'No token provided',
+      });
+      return;
+    }
+
     req.user = {
       _id: new mongoose.Types.ObjectId('507f1f77bcf86cd799439011'),
       email: 'test@example.com',
@@ -44,7 +55,7 @@ describe('Recommendations API - Simplified Tests', () => {
         .get('/api/recommendations/breakfast')
         .expect(401);
 
-      expect(response.body.message).toBe('Unauthorized');
+      expect(response.body.message).toBe('No token provided');
     });
 
     it('should return 400 for invalid meal type', async () => {
