@@ -284,11 +284,19 @@ export class UserController {
           continue;
         }
 
-        // Apply privacy filtering based on user's profileVisibleTo setting
-        // Note: For friend discovery, we allow searching regardless of privacy settings
-        // Privacy controls profile visibility, not friend request ability
-        // Always allow for friend discovery (privacy controls profile visibility, not friend request ability)
-        logger.info(`🔒 Privacy check for ${user.username}: ${user.privacy.profileVisibleTo} -> ALLOWED (friend discovery)`);
+        // Apply privacy filtering using the helper method
+        const canView = await this.canViewUserProfile(
+          currentUserId, 
+          user._id, 
+          user.privacy.profileVisibleTo
+        );
+        
+        if (!canView) {
+          logger.info(`🔒 Privacy check for ${user.username}: ${user.privacy.profileVisibleTo} -> BLOCKED from search`);
+          continue;
+        }
+        
+        logger.info(`🔒 Privacy check for ${user.username}: ${user.privacy.profileVisibleTo} -> ALLOWED in search`);
         filteredUsers.push(user);
 
         // Stop once we have enough results

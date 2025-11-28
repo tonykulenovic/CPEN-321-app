@@ -29,6 +29,12 @@ jest.mock('../../../src/models/badge.model', () => ({
   },
 }));
 
+jest.mock('../../../src/models/pin.model', () => ({
+  pinModel: {
+    deleteAllByUser: jest.fn(),
+  },
+}));
+
 describe('User Routes - Profile API', () => {
   let app: express.Application;
   let mongoServer: MongoMemoryServer;
@@ -688,6 +694,365 @@ describe('User Routes - Profile API', () => {
       const response = await request(app)
         .get('/users/admin/all')
         .set('Authorization', 'Bearer admin-token'); // Admin token
+
+      expect(response.status).toBe(500);
+      expect(response.body.message).toBe('Internal server error');
+    });
+  });
+
+  describe('PATCH /admin/:id/suspend', () => {
+    it('should return 401 when user is not authenticated', async () => {
+      const response = await request(app)
+        .patch('/users/admin/507f1f77bcf86cd799439013/suspend');
+
+      expect(response.status).toBe(401);
+      expect(response.body.message).toBe('No token provided');
+    });
+
+    it('should return 403 when user is not admin', async () => {
+      const response = await request(app)
+        .patch('/users/admin/507f1f77bcf86cd799439013/suspend')
+        .set('Authorization', 'Bearer valid-token'); // Regular user token
+
+      expect(response.status).toBe(403);
+      expect(response.body.message).toBe('Unauthorized: Admin access required');
+    });
+
+    it('should return 400 when admin tries to suspend themselves', async () => {
+      const response = await request(app)
+        .patch('/users/admin/507f1f77bcf86cd799439012/suspend') // Admin's own ID
+        .set('Authorization', 'Bearer admin-token'); // Admin token
+
+      expect(response.status).toBe(400);
+      expect(response.body.message).toBe('Cannot suspend your own account');
+    });
+
+    it('should return 200 when user is suspended successfully', async () => {
+      const suspendedUser = {
+        _id: '507f1f77bcf86cd799439013',
+        username: 'targetuser',
+        email: 'target@example.com',
+        isSuspended: true,
+      };
+
+      userModel.updateSuspensionStatus = jest.fn().mockResolvedValue(suspendedUser);
+
+      const response = await request(app)
+        .patch('/users/admin/507f1f77bcf86cd799439013/suspend')
+        .set('Authorization', 'Bearer admin-token'); // Admin token
+
+      expect(response.status).toBe(200);
+      expect(response.body.message).toBe('User suspended successfully');
+      expect(response.body.data.user.isSuspended).toBe(true);
+      expect(userModel.updateSuspensionStatus).toHaveBeenCalledWith(
+        new mongoose.Types.ObjectId('507f1f77bcf86cd799439013'),
+        true
+      );
+    });
+
+    it('should return 404 when target user is not found', async () => {
+      userModel.updateSuspensionStatus = jest.fn().mockResolvedValue(null);
+
+      const response = await request(app)
+        .patch('/users/admin/507f1f77bcf86cd799439013/suspend')
+        .set('Authorization', 'Bearer admin-token'); // Admin token
+
+      expect(response.status).toBe(404);
+      expect(response.body.message).toBe('User not found');
+    });
+
+    it('should return 500 when database update fails', async () => {
+      userModel.updateSuspensionStatus = jest.fn().mockRejectedValue(new Error('Database error'));
+
+      const response = await request(app)
+        .patch('/users/admin/507f1f77bcf86cd799439013/suspend')
+        .set('Authorization', 'Bearer admin-token'); // Admin token
+
+      expect(response.status).toBe(500);
+      expect(response.body.message).toBe('Internal server error');
+    });
+  });
+
+  describe('PATCH /admin/:id/unsuspend', () => {
+    it('should return 401 when user is not authenticated', async () => {
+      const response = await request(app)
+        .patch('/users/admin/507f1f77bcf86cd799439013/unsuspend');
+
+      expect(response.status).toBe(401);
+      expect(response.body.message).toBe('No token provided');
+    });
+
+    it('should return 403 when user is not admin', async () => {
+      const response = await request(app)
+        .patch('/users/admin/507f1f77bcf86cd799439013/unsuspend')
+        .set('Authorization', 'Bearer valid-token'); // Regular user token
+
+      expect(response.status).toBe(403);
+      expect(response.body.message).toBe('Unauthorized: Admin access required');
+    });
+
+    it('should return 200 when user is unsuspended successfully', async () => {
+      const unsuspendedUser = {
+        _id: '507f1f77bcf86cd799439013',
+        username: 'targetuser',
+        email: 'target@example.com',
+        isSuspended: false,
+      };
+
+      userModel.updateSuspensionStatus = jest.fn().mockResolvedValue(unsuspendedUser);
+
+      const response = await request(app)
+        .patch('/users/admin/507f1f77bcf86cd799439013/unsuspend')
+        .set('Authorization', 'Bearer admin-token'); // Admin token
+
+      expect(response.status).toBe(200);
+      expect(response.body.message).toBe('User unsuspended successfully');
+      expect(response.body.data.user.isSuspended).toBe(false);
+      expect(userModel.updateSuspensionStatus).toHaveBeenCalledWith(
+        new mongoose.Types.ObjectId('507f1f77bcf86cd799439013'),
+        false
+      );
+    });
+
+    it('should return 404 when target user is not found', async () => {
+      userModel.updateSuspensionStatus = jest.fn().mockResolvedValue(null);
+
+      const response = await request(app)
+        .patch('/users/admin/507f1f77bcf86cd799439013/unsuspend')
+        .set('Authorization', 'Bearer admin-token'); // Admin token
+
+      expect(response.status).toBe(404);
+      expect(response.body.message).toBe('User not found');
+    });
+
+    it('should return 500 when database update fails', async () => {
+      userModel.updateSuspensionStatus = jest.fn().mockRejectedValue(new Error('Database error'));
+
+      const response = await request(app)
+        .patch('/users/admin/507f1f77bcf86cd799439013/unsuspend')
+        .set('Authorization', 'Bearer admin-token'); // Admin token
+
+      expect(response.status).toBe(500);
+      expect(response.body.message).toBe('Internal server error');
+    });
+  });
+
+  describe('DELETE /admin/:id', () => {
+    beforeEach(() => {
+      // Mock pinModel for these tests
+      jest.doMock('../../../src/models/pin.model', () => ({
+        pinModel: {
+          deleteAllByUser: jest.fn(),
+        },
+      }));
+    });
+
+    it('should return 401 when user is not authenticated', async () => {
+      const response = await request(app)
+        .delete('/users/admin/507f1f77bcf86cd799439013');
+
+      expect(response.status).toBe(401);
+      expect(response.body.message).toBe('No token provided');
+    });
+
+    it('should return 403 when user is not admin', async () => {
+      const response = await request(app)
+        .delete('/users/admin/507f1f77bcf86cd799439013')
+        .set('Authorization', 'Bearer valid-token'); // Regular user token
+
+      expect(response.status).toBe(403);
+      expect(response.body.message).toBe('Unauthorized: Admin access required');
+    });
+
+    it('should return 400 when admin tries to delete themselves', async () => {
+      const response = await request(app)
+        .delete('/users/admin/507f1f77bcf86cd799439012') // Admin's own ID
+        .set('Authorization', 'Bearer admin-token'); // Admin token
+
+      expect(response.status).toBe(400);
+      expect(response.body.message).toBe('Cannot delete your own account');
+    });
+
+    it('should return 200 when user is deleted successfully', async () => {
+      const { MediaService } = require('../../../src/services/media.service');
+      const { pinModel } = require('../../../src/models/pin.model');
+      
+      MediaService.deleteAllUserImages.mockResolvedValue(undefined);
+      pinModel.deleteAllByUser = jest.fn().mockResolvedValue(3); // 3 pins deleted
+      userModel.delete = jest.fn().mockResolvedValue(undefined);
+
+      const response = await request(app)
+        .delete('/users/admin/507f1f77bcf86cd799439013')
+        .set('Authorization', 'Bearer admin-token'); // Admin token
+
+      expect(response.status).toBe(200);
+      expect(response.body.message).toBe('User deleted successfully');
+      expect(response.body.deletedPins).toBe(3);
+      expect(MediaService.deleteAllUserImages).toHaveBeenCalledWith('507f1f77bcf86cd799439013');
+      expect(pinModel.deleteAllByUser).toHaveBeenCalledWith(
+        new mongoose.Types.ObjectId('507f1f77bcf86cd799439013')
+      );
+      expect(userModel.delete).toHaveBeenCalledWith(
+        new mongoose.Types.ObjectId('507f1f77bcf86cd799439013')
+      );
+    });
+
+    it('should return 500 when media deletion fails', async () => {
+      const { MediaService } = require('../../../src/services/media.service');
+      
+      MediaService.deleteAllUserImages.mockRejectedValue(new Error('Media service error'));
+
+      const response = await request(app)
+        .delete('/users/admin/507f1f77bcf86cd799439013')
+        .set('Authorization', 'Bearer admin-token'); // Admin token
+
+      expect(response.status).toBe(500);
+      expect(response.body.message).toBe('Internal server error');
+    });
+
+    it('should return 500 when user deletion fails', async () => {
+      const { MediaService } = require('../../../src/services/media.service');
+      const { pinModel } = require('../../../src/models/pin.model');
+      
+      MediaService.deleteAllUserImages.mockResolvedValue(undefined);
+      pinModel.deleteAllByUser = jest.fn().mockResolvedValue(2);
+      userModel.delete = jest.fn().mockRejectedValue(new Error('Database error'));
+
+      const response = await request(app)
+        .delete('/users/admin/507f1f77bcf86cd799439013')
+        .set('Authorization', 'Bearer admin-token'); // Admin token
+
+      expect(response.status).toBe(500);
+      expect(response.body.message).toBe('Internal server error');
+    });
+  });
+
+  describe('PUT /me/fcm-token', () => {
+    it('should return 401 when user is not authenticated', async () => {
+      const response = await request(app)
+        .put('/users/me/fcm-token')
+        .send({ fcmToken: 'test-token' });
+
+      expect(response.status).toBe(401);
+      expect(response.body.message).toBe('No token provided');
+    });
+
+    it('should return 400 when fcmToken is missing', async () => {
+      const response = await request(app)
+        .put('/users/me/fcm-token')
+        .set('Authorization', 'Bearer valid-token')
+        .send({});
+
+      expect(response.status).toBe(400);
+      expect(response.body.message).toBe('FCM token is required and must be a string');
+    });
+
+    it('should return 400 when fcmToken is not a string', async () => {
+      const response = await request(app)
+        .put('/users/me/fcm-token')
+        .set('Authorization', 'Bearer valid-token')
+        .send({ fcmToken: 123 });
+
+      expect(response.status).toBe(400);
+      expect(response.body.message).toBe('FCM token is required and must be a string');
+    });
+
+    it('should return 200 when FCM token is updated successfully', async () => {
+      const updatedUser = {
+        _id: '507f1f77bcf86cd799439011',
+        name: 'Test User',
+        fcmToken: 'test-fcm-token-12345',
+      };
+
+      userModel.updateFcmToken = jest.fn().mockResolvedValue(updatedUser);
+
+      const response = await request(app)
+        .put('/users/me/fcm-token')
+        .set('Authorization', 'Bearer valid-token')
+        .send({ fcmToken: '  test-fcm-token-12345  ' }); // Test trimming
+
+      expect(response.status).toBe(200);
+      expect(response.body.message).toBe('FCM token updated successfully');
+      expect(response.body.data.userId).toBe('507f1f77bcf86cd799439011');
+      expect(response.body.data.hasToken).toBe(true);
+      expect(userModel.updateFcmToken).toHaveBeenCalledWith(
+        new mongoose.Types.ObjectId('507f1f77bcf86cd799439011'),
+        'test-fcm-token-12345'
+      );
+    });
+
+    it('should return 404 when user is not found', async () => {
+      userModel.updateFcmToken = jest.fn().mockResolvedValue(null);
+
+      const response = await request(app)
+        .put('/users/me/fcm-token')
+        .set('Authorization', 'Bearer valid-token')
+        .send({ fcmToken: 'test-token' });
+
+      expect(response.status).toBe(404);
+      expect(response.body.message).toBe('User not found');
+    });
+
+    it('should return 500 when database update fails', async () => {
+      userModel.updateFcmToken = jest.fn().mockRejectedValue(new Error('Database error'));
+
+      const response = await request(app)
+        .put('/users/me/fcm-token')
+        .set('Authorization', 'Bearer valid-token')
+        .send({ fcmToken: 'test-token' });
+
+      expect(response.status).toBe(500);
+      expect(response.body.message).toBe('Internal server error');
+    });
+  });
+
+  describe('DELETE /me/fcm-token', () => {
+    it('should return 401 when user is not authenticated', async () => {
+      const response = await request(app)
+        .delete('/users/me/fcm-token');
+
+      expect(response.status).toBe(401);
+      expect(response.body.message).toBe('No token provided');
+    });
+
+    it('should remove FCM token successfully', async () => {
+      const updatedUser = {
+        _id: '507f1f77bcf86cd799439011',
+        name: 'Test User',
+      };
+
+      userModel.removeFcmToken = jest.fn().mockResolvedValue(updatedUser);
+
+      const response = await request(app)
+        .delete('/users/me/fcm-token')
+        .set('Authorization', 'Bearer valid-token');
+
+      expect(response.status).toBe(200);
+      expect(response.body.message).toBe('FCM token removed successfully');
+      expect(response.body.data.userId).toBe('507f1f77bcf86cd799439011');
+      expect(response.body.data.hasToken).toBe(false);
+      expect(userModel.removeFcmToken).toHaveBeenCalledWith(
+        new mongoose.Types.ObjectId('507f1f77bcf86cd799439011')
+      );
+    });
+
+    it('should return 404 when user is not found', async () => {
+      userModel.removeFcmToken = jest.fn().mockResolvedValue(null);
+
+      const response = await request(app)
+        .delete('/users/me/fcm-token')
+        .set('Authorization', 'Bearer valid-token');
+
+      expect(response.status).toBe(404);
+      expect(response.body.message).toBe('User not found');
+    });
+
+    it('should return 500 when database removal fails', async () => {
+      userModel.removeFcmToken = jest.fn().mockRejectedValue(new Error('Database error'));
+
+      const response = await request(app)
+        .delete('/users/me/fcm-token')
+        .set('Authorization', 'Bearer valid-token');
 
       expect(response.status).toBe(500);
       expect(response.body.message).toBe('Internal server error');
