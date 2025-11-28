@@ -154,6 +154,20 @@ export class PinModel {
     }
   }
 
+  /**
+   * Delete all pins created by a specific user (used when deleting user account)
+   */
+  async deleteAllByUser(userId: mongoose.Types.ObjectId): Promise<number> {
+    try {
+      const result = await this.pin.deleteMany({ createdBy: userId });
+      logger.info(`🗑️ Deleted ${result.deletedCount} pins for user ${userId}`);
+      return result.deletedCount;
+    } catch (error) {
+      logger.error('Error deleting user pins:', error);
+      throw new Error('Failed to delete user pins');
+    }
+  }
+
   async search(filters: {
     category?: PinCategory;
     latitude?: number;
@@ -204,6 +218,26 @@ export class PinModel {
       // OPTIMIZATION: Reduced logging for performance
       logger.debug(`Search pins: Found ${pins.length} pins`);
 
+      // DEFENSIVE: Clean up orphaned pins (pins with null/invalid createdBy)
+      const orphanedPinIds = pins
+        .filter(pin => !pin.createdBy || !pin.createdBy._id)
+        .map(pin => pin._id);
+      
+      if (orphanedPinIds.length > 0) {
+        logger.warn(`⚠️ Found ${orphanedPinIds.length} orphaned pins - deleting...`);
+        // Delete in background (don't await)
+        this.pin.deleteMany({ _id: { $in: orphanedPinIds } })
+          .then(result => {
+            logger.info(`✅ Cleaned up ${result.deletedCount} orphaned pins`);
+          })
+          .catch(error => {
+            logger.error('❌ Error cleaning up orphaned pins:', error);
+          });
+        
+        // Filter out orphaned pins from results
+        pins = pins.filter(pin => pin.createdBy && pin.createdBy._id);
+      }
+
       // Apply visibility filtering
       if (filters.userId) {
         const friendshipModel = mongoose.model('Friendship');
@@ -218,27 +252,27 @@ export class PinModel {
         
         // Create a Set of friend IDs for O(1) lookup
         const friendIds = new Set(
-          friendships.map(f => 
-            (f.userId && f.userId.toString() === filters.userId!.toString()) 
-              ? f.friendId.toString() 
-              : f.userId.toString()
-          )
+          friendships
+            .map(f => {
+              // DEFENSIVE: Skip friendships with null/invalid IDs
+              if (!f.userId || !f.friendId) return null;
+              return (f.userId.toString() === filters.userId!.toString()) 
+                ? f.friendId.toString() 
+                : f.userId.toString();
+            })
+            .filter((id): id is string => id !== null) // Filter out nulls with type guard
         );
         
         // Filter pins based on visibility (no async needed now)
+        // Note: Orphaned pins already filtered out earlier
         pins = pins.filter((pin) => {
           // Pre-seeded pins are always visible
           if (pin.isPreSeeded) {
             return true;
           }
           
-          // Check if createdBy is populated
-          if (pin.createdBy && !pin.createdBy._id) {
-            return false;
-          }
-          
           // User can always see their own pins
-          if (pin.createdBy._id.equals(filters.userId)) {
+          if (pin.createdBy._id.toString() === filters.userId!.toString()) {
             return true;
           }
           
@@ -404,5 +438,3 @@ export class PinModel {
 }
 
 export const pinModel = new PinModel();
-
-

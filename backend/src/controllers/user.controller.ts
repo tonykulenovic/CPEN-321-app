@@ -15,6 +15,7 @@ import { MediaService } from '../services/media.service';
 import { userModel } from '../models/user.model';
 import { friendshipModel } from '../models/friendship.model';
 import { badgeModel } from '../models/badge.model';
+import { pinModel } from '../models/pin.model';
 
 export class UserController {
   constructor() {
@@ -523,11 +524,16 @@ export class UserController {
       // Delete user's media
       await MediaService.deleteAllUserImages(userId.toString());
 
+      // Delete user's pins (cascading delete)
+      const deletedPinsCount = await pinModel.deleteAllByUser(userId);
+      logger.info(`🗑️ Cascading delete: Removed ${deletedPinsCount} pins for user ${userId}`);
+
       // Delete user
       await userModel.delete(userId);
 
       res.status(200).json({
         message: 'User deleted successfully',
+        deletedPins: deletedPinsCount,
       });
     } catch (error) {
       logger.error('Error in deleteUserByAdmin:', error);
