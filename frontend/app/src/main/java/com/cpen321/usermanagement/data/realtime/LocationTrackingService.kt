@@ -105,9 +105,10 @@ class LocationTrackingService @Inject constructor(
         
         Log.d(TAG, "🔧 Initializing socket for user: $userId (isInitialized=$isInitialized, connected=${socket?.connected()})")
         
-        // Only cleanup if we're changing users or socket is disconnected
-        if (currentUserId != userId || socket == null) {
-            Log.d(TAG, "🧹 Cleaning up previous connection")
+        // Always cleanup previous socket to ensure fresh listeners
+        // This fixes the issue where listeners get attached to wrong socket instance
+        if (socket != null) {
+            Log.d(TAG, "🧹 Cleaning up previous socket connection before creating new one")
             cleanup()
         }
         
@@ -122,7 +123,7 @@ class LocationTrackingService @Inject constructor(
                 reconnectionAttempts = 5
                 reconnectionDelay = 1000
                 reconnectionDelayMax = 5000
-                forceNew = false // Don't force new connection, reuse if possible
+                forceNew = true // Force new connection to ensure listeners are attached correctly
             }
             
             Log.d(TAG, "🌐 Socket server URL: $SOCKET_SERVER_URL/realtime")
