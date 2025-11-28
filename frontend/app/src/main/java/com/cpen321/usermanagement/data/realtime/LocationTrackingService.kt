@@ -105,9 +105,10 @@ class LocationTrackingService @Inject constructor(
         
         Log.d(TAG, "🔧 Initializing socket for user: $userId (isInitialized=$isInitialized, connected=${socket?.connected()})")
         
-        // Only cleanup if we're changing users or socket is disconnected
-        if (currentUserId != userId || socket == null) {
-            Log.d(TAG, "🧹 Cleaning up previous connection")
+        // Always cleanup previous socket to ensure fresh listeners
+        // This fixes the issue where listeners get attached to wrong socket instance
+        if (socket != null) {
+            Log.d(TAG, "🧹 Cleaning up previous socket connection before creating new one")
             cleanup()
         }
         
@@ -122,7 +123,7 @@ class LocationTrackingService @Inject constructor(
                 reconnectionAttempts = 5
                 reconnectionDelay = 1000
                 reconnectionDelayMax = 5000
-                forceNew = false // Don't force new connection, reuse if possible
+                forceNew = true // Force new connection to ensure listeners are attached correctly
             }
             
             Log.d(TAG, "🌐 Socket server URL: $SOCKET_SERVER_URL/realtime")
@@ -187,7 +188,7 @@ class LocationTrackingService @Inject constructor(
                 Log.w(TAG, "Socket reconnection error: ${args.firstOrNull()}")
             }
             
-            // Location update events from backend
+            // Location update events from backend (for friends we're tracking)
             socket.on("location:update") { args ->
                 try {
                     val data = args[0] as JSONObject
@@ -207,10 +208,40 @@ class LocationTrackingService @Inject constructor(
                     currentLocations[friendId] = userLocation
                     _friendLocations.value = currentLocations
                     
-                    Log.d(TAG, "Real-time location update received for friend $friendId at (${userLocation.lat}, ${userLocation.lng})")
+                    Log.d(TAG, "📍 Real-time location update received for friend $friendId at (${userLocation.lat}, ${userLocation.lng})")
                     
                 } catch (e: RuntimeException) {
                     Log.e(TAG, "Error parsing location:update", e)
+                }
+            }
+            
+            // Friend started sharing their location (notifies ALL friends)
+            socket.on("friend:started:sharing") { args ->
+                try {
+                    val data = args[0] as JSONObject
+                    val friendId = data.getString("friendId")
+                    val userLocation = UserLocation(
+                        userId = friendId,
+                        username = "Friend",
+                        name = "Friend User",
+                        lat = data.getDouble("lat"),
+                        lng = data.getDouble("lng"),
+                        timestamp = System.currentTimeMillis(),
+                        accuracyM = data.optDouble("accuracyM", 0.0)
+                    )
+                    
+                    // Update friend locations map
+                    val currentLocations = _friendLocations.value.toMutableMap()
+                    currentLocations[friendId] = userLocation
+                    _friendLocations.value = currentLocations
+                    
+                    // Start tracking this friend for future updates
+                    trackFriend(friendId)
+                    
+                    Log.d(TAG, "🆕 Friend $friendId started sharing location at (${userLocation.lat}, ${userLocation.lng})")
+                    
+                } catch (e: RuntimeException) {
+                    Log.e(TAG, "Error parsing friend:started:sharing", e)
                 }
             }
             

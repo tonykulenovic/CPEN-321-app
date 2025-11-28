@@ -6,7 +6,7 @@
    - **Front-end**: UI end-to-end tests live in `frontend/app/src/androidTest/java/com/cpen321/usermanagement/ui/` (see `TEST_DATA_SETUP_INSTRUCTIONS.md` for data setup). Key suites include `ManagePinsE2ETest.kt`, `ManageFriendsE2ETest.kt`, `DeclineFriendRequestE2ETest.kt`, `AdminManagePinsE2ETest.kt`, `AdminManageUsersE2ETest.kt`, and `ManageAccountE2ETest.kt`.
    - **Back-end**: Jest-based tests under `backend/tests/` (fixtures, mocked, performance, security, unmocked) and coverage reports in `backend/coverage/`.
 
-3. **Physical device**: Not documented in the repository. Please share the manufacturer/model of the Android device you used for manual testing (the README only references connecting a physical Android 13 device, but no concrete make/model is stored here).
+3. **Physical device**: Samsung A03s
 
 4. **Back-end public endpoint**: No public IP.
 

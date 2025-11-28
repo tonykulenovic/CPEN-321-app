@@ -2,6 +2,8 @@ package com.cpen321.usermanagement.ui.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import android.util.Log
+import com.cpen321.usermanagement.data.realtime.LocationTrackingService
 import com.cpen321.usermanagement.data.remote.dto.FriendRequestSummary
 import com.cpen321.usermanagement.data.remote.dto.FriendSummary
 import com.cpen321.usermanagement.data.remote.dto.FriendLocation
@@ -29,8 +31,13 @@ data class FriendsUiState(
 
 @HiltViewModel
 class FriendsViewModel @Inject constructor(
-    private val friendsRepository: FriendsRepository
+    private val friendsRepository: FriendsRepository,
+    private val locationTrackingService: LocationTrackingService
 ) : ViewModel() {
+    
+    companion object {
+        private const val TAG = "FriendsViewModel"
+    }
     
     private val _uiState = MutableStateFlow(FriendsUiState())
     val uiState: StateFlow<FriendsUiState> = _uiState.asStateFlow()
@@ -38,6 +45,48 @@ class FriendsViewModel @Inject constructor(
     init {
         loadFriends()
         loadFriendRequests()
+        observeRealtimeLocationUpdates()
+    }
+    
+    /**
+     * Observe real-time location updates from Socket.IO
+     * This supplements HTTP-based location fetching with live updates
+     */
+    private fun observeRealtimeLocationUpdates() {
+        viewModelScope.launch {
+            Log.d(TAG, "🎯 Starting to observe real-time friend location updates...")
+            locationTrackingService.friendLocations.collect { socketLocations ->
+                if (socketLocations.isNotEmpty()) {
+                    Log.d(TAG, "📍 Real-time location update received: ${socketLocations.size} friends")
+                    
+                    // Convert socket locations to FriendLocation DTOs and merge with existing
+                    val currentLocations = _uiState.value.friendLocations.toMutableList()
+                    
+                    socketLocations.forEach { (userId, userLocation) ->
+                        // Find and update existing location, or add new one
+                        val existingIndex = currentLocations.indexOfFirst { it.userId == userId }
+                        val newLocation = FriendLocation(
+                            userId = userId,
+                            lat = userLocation.lat,
+                            lng = userLocation.lng,
+                            accuracyM = userLocation.accuracyM,
+                            ts = java.time.Instant.ofEpochMilli(userLocation.timestamp).toString()
+                        )
+                        
+                        if (existingIndex >= 0) {
+                            currentLocations[existingIndex] = newLocation
+                            Log.d(TAG, "📍 Updated location for friend: $userId")
+                        } else {
+                            currentLocations.add(newLocation)
+                            Log.d(TAG, "📍 Added new location for friend: $userId")
+                        }
+                    }
+                    
+                    _uiState.value = _uiState.value.copy(friendLocations = currentLocations)
+                    Log.d(TAG, "✅ Friend locations updated. Total: ${currentLocations.size}")
+                }
+            }
+        }
     }
     
     fun loadFriends() {
