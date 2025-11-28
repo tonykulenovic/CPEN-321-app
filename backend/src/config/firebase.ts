@@ -142,7 +142,10 @@ class FirebaseService {
             if (response.failureCount > 0) {
                 response.responses.forEach((resp, idx) => {
                     if (!resp.success) {
-                        logger.warn(`Failed to send notification to token ${tokens[idx]}: ${resp.error}`);
+                        const tokenIndex = idx;
+                        if (tokenIndex >= 0 && tokenIndex < tokens.length) {
+                          logger.warn(`Failed to send notification to token ${tokens[tokenIndex]}: ${resp.error}`);
+                        }
                     }
                 });
             }
