@@ -1,7 +1,7 @@
 import * as cron from 'node-cron';
 import * as mongoose from 'mongoose';
 import { userModel } from '../models/user.model';
-import { recommendationService } from './recommendation.service';
+import { sendMealRecommendationNotification } from '../controllers/recommendations.controller';
 import logger from '../utils/logger.util';
 
 interface MealTimeConfig {
@@ -173,7 +173,7 @@ export class RecommendationSchedulerService {
               return; // Skip this user
             }
 
-            const sent = await recommendationService.sendRecommendationNotification(
+            const sent = await sendMealRecommendationNotification(
               userObj._id,
               mealTime.name
             );

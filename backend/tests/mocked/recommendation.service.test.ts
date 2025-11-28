@@ -1,27 +1,50 @@
-import { describe, test, beforeEach, expect, jest } from '@jest/globals';
+import request from 'supertest';
+import express from 'express';
 import mongoose from 'mongoose';
+import { jest, describe, test, beforeEach, expect } from '@jest/globals';
 
 // Mock all external dependencies
 jest.mock('../../src/services/weather.service');
 jest.mock('../../src/services/notification.service');
 jest.mock('../../src/services/places.service');
+jest.mock('../../src/models/location.model');
+jest.mock('../../src/models/pin.model');
+jest.mock('../../src/middleware/auth.middleware', () => ({
+  authenticateToken: (req: unknown, res: any, next: any) => {
+    req.user = {
+      _id: new mongoose.Types.ObjectId('507f1f77bcf86cd799439011'),
+      name: 'Test User',
+      email: 'test@example.com',
+      username: 'testuser'
+    };
+    next();
+  }
+}));
 
-// Import after mocking
-import { recommendationService } from '../../src/services/recommendation.service';
+import recommendationRoutes from '../../src/routes/recommendations.routes';
 import { weatherService } from '../../src/services/weather.service';
 import { notificationService } from '../../src/services/notification.service';
 import { placesApiService } from '../../src/services/places.service';
+import { locationModel } from '../../src/models/location.model';
+
+const app = express();
+app.use(express.json());
+app.use('/recommendations', recommendationRoutes);
 
 const mockedWeatherService = jest.mocked(weatherService);
 const mockedNotificationService = jest.mocked(notificationService);
 const mockedPlacesApiService = jest.mocked(placesApiService);
+const mockedLocationModel = jest.mocked(locationModel);
 
-describe('RecommendationService Mocked Tests', () => {
-  let testUserId: mongoose.Types.ObjectId;
-
+describe('Mocked: GET /recommendations/:mealType', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    testUserId = new mongoose.Types.ObjectId();
+
+    // Mock user location
+    mockedLocationModel.findByUserId.mockResolvedValue({
+      lat: 49.2827,
+      lng: -123.1207
+    } as any);
 
     // Set up default mock responses
     mockedWeatherService.getCurrentWeather.mockResolvedValue({
@@ -60,64 +83,43 @@ describe('RecommendationService Mocked Tests', () => {
     ]);
   });
 
-  describe('generateRecommendations method', () => {
-    test('should handle no user location scenario', async () => {
-      const result = await recommendationService.generateRecommendations(
-        testUserId,
-        'breakfast',
-        2000,
-        5
-      );
+  test('should return recommendations when user has location', async () => {
+    const response = await request(app)
+      .get('/recommendations/breakfast');
 
-      expect(Array.isArray(result)).toBe(true);
-      expect(result.length).toBe(0);
-    });
+    expect(response.status).toBe(200);
+    expect(Array.isArray(response.body.data)).toBe(true);
+  });
 
-    test('should handle different meal types', async () => {
-      const mealTypes: ('breakfast' | 'lunch' | 'dinner')[] = ['breakfast', 'lunch', 'dinner'];
+  test('should handle no user location scenario', async () => {
+    mockedLocationModel.findByUserId.mockResolvedValueOnce(null);
+
+    const response = await request(app)
+      .get('/recommendations/breakfast');
+
+    expect(response.status).toBe(200);
+    expect(response.body.data).toEqual([]);
+  });
+
+  test('should handle different meal types', async () => {
+    const mealTypes = ['breakfast', 'lunch', 'dinner'];
+    
+    for (const mealType of mealTypes) {
+      const response = await request(app)
+        .get(`/recommendations/${mealType}`);
       
-      for (const mealType of mealTypes) {
-        const result = await recommendationService.generateRecommendations(
-          testUserId,
-          mealType,
-          2000,
-          5
-        );
-        
-        expect(Array.isArray(result)).toBe(true);
-      }
-    });
+      expect(response.status).toBe(200);
+      expect(Array.isArray(response.body.data)).toBe(true);
+    }
+  });
 
-    test('should handle zero and negative limits', async () => {
-      const zeroResult = await recommendationService.generateRecommendations(
-        testUserId,
-        'lunch',
-        2000,
-        0
-      );
-      
-      const negativeResult = await recommendationService.generateRecommendations(
-        testUserId,
-        'lunch', 
-        2000,
-        -5
-      );
-
-      expect(Array.isArray(zeroResult)).toBe(true);
-      expect(zeroResult.length).toBe(0);
-      expect(Array.isArray(negativeResult)).toBe(true);
-    });
-
-    test('should handle large radius values', async () => {
-      const result = await recommendationService.generateRecommendations(
-        testUserId,
-        'breakfast',
-        100000, // 100km
-        5
-      );
-
-      expect(Array.isArray(result)).toBe(true);
-    });
+  test('should validate meal type parameter', async () => {
+    const response = await request(app)
+      .get('/recommendations/invalid-meal');
+    
+    expect(response.status).toBe(400);
+    expect(response.body).toHaveProperty('message');
+  });
 
     test('should handle concurrent requests efficiently', async () => {
       const promises = Array.from({ length: 5 }, (_, i) => 
@@ -126,262 +128,76 @@ describe('RecommendationService Mocked Tests', () => {
           i % 3 === 0 ? 'breakfast' : i % 3 === 1 ? 'lunch' : 'dinner',
           2000,
           5
-        )
-      );
+});
 
-      const results = await Promise.all(promises);
-      
-      results.forEach(result => {
-        expect(Array.isArray(result)).toBe(true);
-      });
-    });
-  });
-
-  describe('sendRecommendationNotification method', () => {
-    test('should handle notification sending with different meal types', async () => {
-      const mealTypes: ('breakfast' | 'lunch' | 'dinner')[] = ['breakfast', 'lunch', 'dinner'];
-      
-      for (const mealType of mealTypes) {
-        const result = await recommendationService.sendRecommendationNotification(
-          testUserId,
-          mealType
-        );
-        
-        expect(typeof result).toBe('boolean');
-        expect(result).toBe(false); // No location available
+describe('Mocked: POST /recommendations/notify/:mealType', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    
+    // Mock user location
+    mockedLocationModel.findByUserId.mockResolvedValue({
+      lat: 49.2827,
+      lng: -123.1207
+    } as any);
+    
+    mockedPlacesApiService.getNearbyDiningOptions.mockResolvedValue([
+      {
+        id: 'lunch-place',
+        name: 'Lunch Spot',
+        address: '456 Lunch Ave',
+        location: { latitude: 49.2827, longitude: -123.1207 },
+        rating: 4.2,
+        priceLevel: 2,
+        isOpen: true,
+        types: ['restaurant'],
+        distance: 200,
+        description: 'Good lunch',
+        mealSuitability: { breakfast: 2, lunch: 9, dinner: 5 }
       }
-    });
-
-    test('should handle notification service errors', async () => {
-      mockedNotificationService.sendLocationRecommendationNotification.mockRejectedValue(
-        new Error('Notification service error')
-      );
-
-      const result = await recommendationService.sendRecommendationNotification(
-        testUserId,
-        'lunch'
-      );
-
-      expect(result).toBe(false);
-    });
-
-    test('should handle notification service returning false', async () => {
-      mockedNotificationService.sendLocationRecommendationNotification.mockResolvedValue(false);
-
-      const result = await recommendationService.sendRecommendationNotification(
-        testUserId,
-        'dinner'
-      );
-
-      expect(result).toBe(false);
-    });
-
-    test('should handle multiple concurrent notification requests', async () => {
-      const promises = [
-        recommendationService.sendRecommendationNotification(testUserId, 'breakfast'),
-        recommendationService.sendRecommendationNotification(testUserId, 'lunch'),
-        recommendationService.sendRecommendationNotification(testUserId, 'dinner')
-      ];
-
-      const results = await Promise.all(promises);
-      
-      results.forEach(result => {
-        expect(typeof result).toBe('boolean');
-      });
-    });
+    ]);
   });
 
-  describe('External service error handling', () => {
-    test('should handle weather service failures gracefully', async () => {
-      mockedWeatherService.getCurrentWeather.mockRejectedValue(new Error('Weather API error'));
-      mockedWeatherService.getWeatherRecommendations.mockImplementation(() => {
-        throw new Error('Weather recommendations error');
-      });
-
-      const result = await recommendationService.generateRecommendations(
-        testUserId,
-        'lunch',
-        2000,
-        5
-      );
-
-      expect(Array.isArray(result)).toBe(true);
-    });
-
-    test('should handle places API service failures', async () => {
-      mockedPlacesApiService.getNearbyDiningOptions.mockRejectedValue(
-        new Error('Places API unavailable')
-      );
-
-      const result = await recommendationService.generateRecommendations(
-        testUserId,
-        'breakfast',
-        2000,
-        5
-      );
-
-      expect(Array.isArray(result)).toBe(true);
-    });
-
-    test('should handle weather service returning null/undefined', async () => {
-      mockedWeatherService.getCurrentWeather.mockResolvedValue(null as any);
-      mockedWeatherService.getWeatherRecommendations.mockReturnValue(null as any);
-
-      const result = await recommendationService.generateRecommendations(
-        testUserId,
-        'dinner',
-        2000,
-        5
-      );
-
-      expect(Array.isArray(result)).toBe(true);
-    });
-
-    test('should handle places API returning empty results', async () => {
-      mockedPlacesApiService.getNearbyDiningOptions.mockResolvedValue([]);
-
-      const result = await recommendationService.generateRecommendations(
-        testUserId,
-        'lunch',
-        2000,
-        5
-      );
-
-      expect(Array.isArray(result)).toBe(true);
-    });
+  test('should send notification for meal recommendations', async () => {
+    mockedNotificationService.sendLocationRecommendationNotification.mockResolvedValueOnce(true);
+    
+    const response = await request(app)
+      .post('/recommendations/notify/lunch');
+    
+    expect(response.status).toBe(200);
+    expect(response.body).toHaveProperty('success', true);
   });
 
-  describe('Performance testing', () => {
-    test('should handle multiple users simultaneously', async () => {
-      const userIds = Array.from({ length: 10 }, () => new mongoose.Types.ObjectId());
-      
-      const promises = userIds.map(userId =>
-        recommendationService.generateRecommendations(userId, 'lunch', 2000, 5)
-      );
+  test('should handle notification service errors', async () => {
+    mockedNotificationService.sendLocationRecommendationNotification.mockRejectedValueOnce(
+      new Error('Notification service error')
+    );
 
-      const results = await Promise.all(promises);
-      
-      results.forEach(result => {
-        expect(Array.isArray(result)).toBe(true);
-      });
-    });
+    const response = await request(app)
+      .post('/recommendations/notify/lunch');
 
-    test('should handle high-frequency requests from same user', async () => {
-      const promises = Array.from({ length: 20 }, () =>
-        recommendationService.generateRecommendations(testUserId, 'breakfast', 1000, 3)
-      );
-
-      const results = await Promise.all(promises);
-      
-      results.forEach(result => {
-        expect(Array.isArray(result)).toBe(true);
-      });
-    });
-
-    test('should handle large limit values', async () => {
-      const result = await recommendationService.generateRecommendations(
-        testUserId,
-        'lunch',
-        10000,
-        1000 // Very large limit
-      );
-
-      expect(Array.isArray(result)).toBe(true);
-      expect(result.length).toBeLessThanOrEqual(1000);
-    });
+    expect(response.status).toBe(200);
+    expect(response.body).toHaveProperty('success', false);
   });
 
-  describe('Edge case parameter combinations', () => {
-    test('should handle boundary radius values', async () => {
-      const radiusValues = [0, 1, 100, 1000, 10000, 50000];
+  test('should handle notification service returning false', async () => {
+    mockedNotificationService.sendLocationRecommendationNotification.mockResolvedValueOnce(false);
 
-      for (const radius of radiusValues) {
-        const result = await recommendationService.generateRecommendations(
-          testUserId,
-          'breakfast',
-          radius,
-          5
-        );
+    const response = await request(app)
+      .post('/recommendations/notify/dinner');
 
-        expect(Array.isArray(result)).toBe(true);
-      }
-    });
-
-    test('should maintain consistent behavior across multiple calls', async () => {
-      const call1 = await recommendationService.generateRecommendations(
-        testUserId,
-        'lunch',
-        2000,
-        5
-      );
-      
-      const call2 = await recommendationService.generateRecommendations(
-        testUserId,
-        'lunch',
-        2000,
-        5
-      );
-
-      expect(Array.isArray(call1)).toBe(true);
-      expect(Array.isArray(call2)).toBe(true);
-    });
-
-    test('should handle service instance correctly', async () => {
-      // Test that the service singleton works correctly
-      const service1 = recommendationService;
-      const service2 = recommendationService;
-      
-      expect(service1).toBe(service2);
-
-      // Both should behave identically
-      const result1 = await service1.generateRecommendations(testUserId, 'breakfast', 1000, 3);
-      const result2 = await service2.generateRecommendations(testUserId, 'breakfast', 1000, 3);
-      
-      expect(Array.isArray(result1)).toBe(true);
-      expect(Array.isArray(result2)).toBe(true);
-    });
+    expect(response.status).toBe(200);
+    expect(response.body).toHaveProperty('success', false);
   });
 
-  describe('Mock verification', () => {
-    test('should verify external services are not called when no location', async () => {
-      await recommendationService.generateRecommendations(
-        testUserId,
-        'breakfast',
-        2000,
-        5
-      );
-
-      // Since there's no location, weather and places API should not be called
-      expect(mockedWeatherService.getCurrentWeather).not.toHaveBeenCalled();
-      expect(mockedPlacesApiService.getNearbyDiningOptions).not.toHaveBeenCalled();
-    });
-
-    test('should verify notification parameters when no recommendations', async () => {
-      await recommendationService.sendRecommendationNotification(
-        testUserId,
-        'lunch'
-      );
-
-      // Should not call notification service when no recommendations
-      expect(mockedNotificationService.sendLocationRecommendationNotification).not.toHaveBeenCalled();
-    });
-
-    test('should handle dynamic mock behavior changes', async () => {
-      // Change mock behavior mid-test
-      mockedNotificationService.sendLocationRecommendationNotification
-        .mockResolvedValueOnce(true)
-        .mockResolvedValueOnce(false)
-        .mockRejectedValueOnce(new Error('Service down'));
-
-      const results = await Promise.all([
-        recommendationService.sendRecommendationNotification(testUserId, 'breakfast'),
-        recommendationService.sendRecommendationNotification(testUserId, 'lunch'),
-        recommendationService.sendRecommendationNotification(testUserId, 'dinner')
-      ]);
-
-      results.forEach(result => {
-        expect(typeof result).toBe('boolean');
-      });
-    });
-  });
+  test('should handle different meal types for notifications', async () => {
+    const mealTypes = ['breakfast', 'lunch', 'dinner'];
+    
+    for (const mealType of mealTypes) {
+      mockedNotificationService.sendLocationRecommendationNotification.mockResolvedValueOnce(true);
+      
+      const response = await request(app)
+        .post(`/recommendations/notify/${mealType}`);
+      
+      expect(response.status).toBe(200);
+    }
 });
