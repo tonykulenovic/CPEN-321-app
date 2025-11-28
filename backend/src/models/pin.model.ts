@@ -464,7 +464,7 @@ export class PinModel {
         .filter(pin => pin.distance <= maxDistance)
         .sort((a, b) => a.distance - b.distance)
         .slice(0, limit)
-        .map(({ distance: _distance, ...pin }) => pin); // Remove distance field from result
+        .map(({ distance, ...pin }) => pin); // Remove distance field from result
 
       logger.info(`Found ${nearbyPins.length} nearby pins for meal keywords: ${mealKeywords.join(', ')}`);
       return nearbyPins as IPin[];

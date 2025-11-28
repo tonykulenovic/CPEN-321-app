@@ -9,18 +9,34 @@ const router = Router();
 router.use(authenticateToken);
 
 // Friend request routes
-router.post('/requests', (req, res) => void friendsController.sendFriendRequest(req, res));
-router.get('/requests', (req, res) => void friendsController.listFriendRequests(req, res));
+router.post('/requests', (req, res) => {
+  friendsController.sendFriendRequest(req, res).catch(() => {});
+});
+router.get('/requests', (req, res) => {
+  friendsController.listFriendRequests(req, res).catch(() => {});
+});
 
-router.post('/requests/:id/accept', (req, res) => void friendsController.acceptFriendRequest(req, res));
-router.post('/requests/:id/decline', (req, res) => void friendsController.declineFriendRequest(req, res));
+router.post('/requests/:id/accept', (req, res) => {
+  friendsController.acceptFriendRequest(req, res).catch(() => {});
+});
+router.post('/requests/:id/decline', (req, res) => {
+  friendsController.declineFriendRequest(req, res).catch(() => {});
+});
 
 // Friends management routes
-router.get('/', (req, res) => void friendsController.listFriends(req, res));
-router.patch('/:friendId', (req, res) => void friendsController.updateFriend(req, res));
-router.delete('/:friendId', (req, res) => void friendsController.removeFriend(req, res));
+router.get('/', (req, res) => {
+  friendsController.listFriends(req, res).catch(() => {});
+});
+router.patch('/:friendId', (req, res) => {
+  friendsController.updateFriend(req, res).catch(() => {});
+});
+router.delete('/:friendId', (req, res) => {
+  friendsController.removeFriend(req, res).catch(() => {});
+});
 
 // Location routes
-router.get('/locations', (req, res) => void locationController.getFriendsLocations(req, res));
+router.get('/locations', (req, res) => {
+  locationController.getFriendsLocations(req, res).catch(() => {});
+});
 
 export default router;

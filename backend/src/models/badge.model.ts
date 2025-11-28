@@ -7,7 +7,6 @@ import {
   BadgeRequirementType,
   BadgeProgress,
   createBadgeSchema,
-  updateBadgeSchema,
   IBadge,
   IUserBadge,
 } from '../types/badge.types';

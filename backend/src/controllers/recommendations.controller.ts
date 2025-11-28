@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import mongoose, { Types } from 'mongoose';
+import mongoose from 'mongoose';
 import * as cron from 'node-cron';
 import { locationModel } from '../models/location.model';
 import { pinModel } from '../models/pin.model';
@@ -277,7 +277,7 @@ export function startRecommendationScheduler(): void {
 
   mealSchedules.forEach(schedule => {
     const job = cron.schedule(schedule.cron, () => {
-      void sendBatchRecommendations(schedule.name);
+      sendBatchRecommendations(schedule.name).catch(() => {});
     }, { timezone: 'America/Vancouver' });
     
     scheduledJobs.set(schedule.name, job);

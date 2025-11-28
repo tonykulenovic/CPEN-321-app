@@ -302,6 +302,7 @@ export class BadgeService {
   /**
    * Check if a user qualifies for a specific badge
    */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   private static async checkBadgeQualification(
     userId: mongoose.Types.ObjectId,
     badge: IBadge,

@@ -1,6 +1,5 @@
 import mongoose from 'mongoose';
 import axios from 'axios';
-import { pinModel } from '../models/pin.model';
 import logger from '../utils/logger.util';
 import { PinCategory, PinStatus, PinVisibility } from '../types/pins.types';
 
