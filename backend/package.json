@@ -15,12 +15,12 @@
     "format": "prettier --check \"src/**/*.{ts,js,json}\"",
     "format:fix": "prettier --write \"src/**/*.{ts,js,json}\"",
     "test": "jest",
-    "test:mocked": "jest --roots=\"<rootDir>/tests/mocked\"",
-    "test:unmocked": "jest --roots=\"<rootDir>/tests/unmocked\"",
-    "test:mocked:watch": "jest --watch --roots=\"<rootDir>/tests/mocked\"",
-    "test:unmocked:watch": "jest --watch --roots=\"<rootDir>/tests/unmocked\"",
-    "test:mocked:coverage": "jest --coverage --roots=\"<rootDir>/tests/mocked\"",
-    "test:unmocked:coverage": "jest --coverage --roots=\"<rootDir>/tests/unmocked\""
+    "test:mocked": "jest --roots=\"<rootDir>/test/mocked\"",
+    "test:unmocked": "jest --roots=\"<rootDir>/test/unmocked\"",
+    "test:mocked:watch": "jest --watch --roots=\"<rootDir>/test/mocked\"",
+    "test:unmocked:watch": "jest --watch --roots=\"<rootDir>/test/unmocked\"",
+    "test:mocked:coverage": "jest --coverage --roots=\"<rootDir>/test/mocked\"",
+    "test:unmocked:coverage": "jest --coverage --roots=\"<rootDir>/test/unmocked\""
   },
   "author": "",
   "license": "ISC",
