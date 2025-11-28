@@ -11,12 +11,16 @@ import { validateBody } from '../middleware/validation.middleware';
 const router = Router();
 const authController = new AuthController();
 
-git p
-
 router.post(
   '/signin',
   validateBody(authenticateUserSchema),
   (req, res, next) => void authController.signIn(req, res, next)
+);
+
+router.post(
+  '/signup',
+  validateBody(signUpUserSchema),
+  (req, res, next) => void authController.signUp(req, res, next)
 );
 
 router.post(

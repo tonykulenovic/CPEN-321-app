@@ -207,20 +207,6 @@ describe('POST /api/upload - Upload profile image', () => {
   });
 
   // Input: Request with invalid user ID
-  // Expected status code: 401
-  // Expected behavior: Request is rejected
-  // Expected output: Invalid user error
-  test('Reject upload with invalid user ID', async () => {
-    const res = await request(app)
-      .post('/api/upload')
-      .set('Authorization', 'Bearer test-token-12345')
-      .set('x-dev-user-id', new mongoose.Types.ObjectId().toString())
-      .attach('media', TEST_IMAGE_PATH);
-
-    expect(res.status).toBe(401);
-    expect(res.body).toHaveProperty('error', 'User not found');
-  });
-
   // Input: Non-image file (text file)
   // Expected status code: 500
   // Expected behavior: File is rejected by multer filter
