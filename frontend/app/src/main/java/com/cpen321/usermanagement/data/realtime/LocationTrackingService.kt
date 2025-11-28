@@ -58,7 +58,11 @@ class LocationTrackingService @Inject constructor(
     
     companion object {
         private const val TAG = "LocationTrackingService"
-        private const val SOCKET_SERVER_URL = "http://10.0.2.2:3000" // Android emulator localhost
+        // Use the same base URL as the REST API (remove /api/ suffix for socket connection)
+        private val SOCKET_SERVER_URL: String
+            get() = com.cpen321.usermanagement.BuildConfig.API_BASE_URL
+                .removeSuffix("/api/")
+                .removeSuffix("/api")
     }
     
     private var socket: Socket? = null
@@ -121,6 +125,7 @@ class LocationTrackingService @Inject constructor(
                 forceNew = false // Don't force new connection, reuse if possible
             }
             
+            Log.d(TAG, "🌐 Socket server URL: $SOCKET_SERVER_URL/realtime")
             socket = IO.socket("$SOCKET_SERVER_URL/realtime", options)
             setupSocketListeners()
             

@@ -188,6 +188,26 @@ fun MainScreen(
             friendsViewModel.loadFriends()
             friendsViewModel.loadFriendsLocations()
             
+            // Check socket connection and initialize if not connected
+            val socketConnected = locationTrackingService.isConnected()
+            android.util.Log.d("MainScreen", "🔌 Socket connection status: ${if (socketConnected) "CONNECTED ✅" else "DISCONNECTED ❌"}")
+            
+            // If socket is not connected, try to initialize it
+            if (!socketConnected) {
+                android.util.Log.d("MainScreen", "🔄 Socket disconnected - attempting to reconnect...")
+                val token = tokenManager.getTokenSync()
+                if (token != null) {
+                    android.util.Log.d("MainScreen", "🔧 Initializing socket with token for user: ${user._id}")
+                    locationTrackingService.initialize(token, user._id.toString())
+                    // Wait a bit for connection to establish
+                    kotlinx.coroutines.delay(500)
+                    val nowConnected = locationTrackingService.isConnected()
+                    android.util.Log.d("MainScreen", "🔌 Socket after reconnect: ${if (nowConnected) "CONNECTED ✅" else "STILL DISCONNECTED ❌"}")
+                } else {
+                    android.util.Log.e("MainScreen", "❌ Cannot initialize socket: no auth token available")
+                }
+            }
+            
             // Start tracking friends who share location (socket is already connected app-wide)
             val friendsWithLocation = friendsViewModel.uiState.value.friends.filter { it.shareLocation }
             android.util.Log.d("MainScreen", "👥 Found ${friendsWithLocation.size} friends with location sharing enabled")
@@ -246,6 +266,10 @@ fun MainScreen(
     DisposableEffect(Unit) {
         android.util.Log.d("MainScreen", "🗺️  Map screen ACTIVE - Starting map operations")
         mainViewModel.onMapScreenActive()
+        
+        // Refresh pins when returning to map screen to catch any new pins
+        android.util.Log.d("MainScreen", "🔄 Refreshing pins on map screen activation...")
+        pinViewModel.loadPins(forceRefresh = false) // Use cache but check for updates
         
         onDispose {
             android.util.Log.d("MainScreen", "🗺️  Map screen INACTIVE - Stopping map operations")
@@ -523,7 +547,7 @@ private fun MainTopBar(
     modifier: Modifier = Modifier
 ) {
     TopAppBar(
-        modifier = modifier.height(98.dp),
+        modifier = modifier,
         title = {
             Row(
                 modifier = Modifier
@@ -675,7 +699,7 @@ private fun MapContent(
                 // Animate camera to pin location
                 val pinLocation = LatLng(selectedPin.location.latitude, selectedPin.location.longitude)
                 cameraPositionState.animate(
-                    CameraUpdateFactory.newLatLngZoom(pinLocation, 17f),
+                    CameraUpdateFactory.newLatLngZoom(pinLocation, 19f),
                     durationMs = 1000
                 )
                 
@@ -874,7 +898,7 @@ private fun MapContent(
                                 val pinLocation = LatLng(pin.location.latitude, pin.location.longitude)
                                 coroutineScope.launch {
                                     cameraPositionState.animate(
-                                        CameraUpdateFactory.newLatLngZoom(pinLocation, 17f),
+                                        CameraUpdateFactory.newLatLngZoom(pinLocation, 19f),
                                         durationMs = 1000
                                     )
                                 }
@@ -1638,7 +1662,7 @@ private fun calculateDistance(lat1: Double, lon1: Double, lat2: Double, lon2: Do
  * Create a cluster marker icon with count badge
  */
 private fun Context.createClusterIcon(count: Int): BitmapDescriptor {
-    val size = 100
+    val size = 70 // Reduced from 100 to 70 for smaller cluster icons
     val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
     val canvas = Canvas(bitmap)
     
@@ -1656,25 +1680,25 @@ private fun Context.createClusterIcon(count: Int): BitmapDescriptor {
     }
     
     // Draw shadow
-    canvas.drawCircle(size / 2f, size / 2f + 2f, size / 2f - 10f, shadowPaint)
+    canvas.drawCircle(size / 2f, size / 2f + 2f, size / 2f - 7f, shadowPaint)
     
     // Draw cluster circle
-    canvas.drawCircle(size / 2f, size / 2f, size / 2f - 10f, clusterPaint)
+    canvas.drawCircle(size / 2f, size / 2f, size / 2f - 7f, clusterPaint)
     
     // Draw white border
     val borderPaint = android.graphics.Paint().apply {
         isAntiAlias = true
         color = android.graphics.Color.WHITE
         style = android.graphics.Paint.Style.STROKE
-        strokeWidth = 4f
+        strokeWidth = 3f // Reduced from 4f to 3f for smaller size
     }
-    canvas.drawCircle(size / 2f, size / 2f, size / 2f - 10f, borderPaint)
+    canvas.drawCircle(size / 2f, size / 2f, size / 2f - 7f, borderPaint)
     
     // Draw count text
     val textPaint = android.graphics.Paint().apply {
         isAntiAlias = true
         color = android.graphics.Color.WHITE
-        textSize = if (count > 99) 24f else 28f
+        textSize = if (count > 99) 16f else 20f // Reduced text size proportionally
         textAlign = android.graphics.Paint.Align.CENTER
         typeface = android.graphics.Typeface.DEFAULT_BOLD
     }

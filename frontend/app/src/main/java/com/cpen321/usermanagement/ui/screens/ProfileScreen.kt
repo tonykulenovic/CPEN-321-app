@@ -334,7 +334,7 @@ private fun ProfileTopBar(
     modifier: Modifier = Modifier
 ) {
     TopAppBar(
-        modifier = modifier.height(98.dp),
+        modifier = modifier,
         title = {
             Text(
                 text = stringResource(R.string.profile),

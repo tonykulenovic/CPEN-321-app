@@ -174,6 +174,7 @@ private fun SearchTopBar(
         modifier = Modifier
             .fillMaxWidth()
             .background(Color(0xFF1A1A2E))
+            .windowInsetsPadding(WindowInsets.statusBars)
             .padding(16.dp)
     ) {
         Text(

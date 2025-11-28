@@ -64,7 +64,7 @@ fun FriendProfileScreen(
         containerColor = Color(0xFF0F1419),
         topBar = {
             TopAppBar(
-                modifier = Modifier.height(98.dp),
+                modifier = Modifier,
                 title = {
                     Text(
                         text = "Friend Profile",
