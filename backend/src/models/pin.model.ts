@@ -423,6 +423,50 @@ export class PinModel {
     }
   }
 
+  async findNearbyForMeal(
+    lat: number,
+    lng: number,
+    maxDistance: number,
+    mealKeywords: string[],
+    limit: number
+  ): Promise<IPin[]> {
+    try {
+      // Create case-insensitive regex pattern for meal keywords
+      const keywordPattern = mealKeywords.join('|');
+      const regex = new RegExp(keywordPattern, 'i');
+      
+      // Find pins that match meal keywords and are within distance
+      const pins = await this.pin.find({
+        status: PinStatus.ACTIVE,
+        visibility: PinVisibility.PUBLIC,
+        $or: [
+          { name: { $regex: regex } },
+          { description: { $regex: regex } },
+          { category: PinCategory.SHOPS_SERVICES } // Include general food establishments
+        ]
+      })
+      .populate('createdBy', 'name profilePicture')
+      .lean();
+
+      // Filter by distance and return closest ones
+      const nearbyPins = pins
+        .map(pin => ({
+          ...pin,
+          distance: this.calculateDistance(lat, lng, pin.location.latitude, pin.location.longitude)
+        }))
+        .filter(pin => pin.distance <= maxDistance)
+        .sort((a, b) => a.distance - b.distance)
+        .slice(0, limit)
+        .map(({ distance, ...pin }) => pin); // Remove distance field from result
+
+      logger.info(`Found ${nearbyPins.length} nearby pins for meal keywords: ${mealKeywords.join(', ')}`);
+      return nearbyPins as IPin[];
+    } catch (error) {
+      logger.error('Error finding nearby pins for meal:', error);
+      throw new Error('Failed to find nearby pins for meal');
+    }
+  }
+
   private calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
     const R = 6371000; // Earth's radius in meters (not kilometers!)
     const dLat = this.toRad(lat2 - lat1);

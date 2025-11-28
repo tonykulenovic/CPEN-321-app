@@ -9,7 +9,6 @@ import friendsRoutes from '../routes/friends.routes';
 import locationRoutes from '../routes/location.routes';
 import pinsRoutes from '../routes/pins.routes';
 import recommendationsRoutes from '../routes/recommendations.routes';
-import debugRoutes from '../routes/debug.routes';
 
 
 
@@ -41,8 +40,5 @@ router.use('/badges', authenticateToken, badgeRoutes);
 router.use('/pins', pinsRoutes);
 
 router.use('/recommendations', recommendationsRoutes);
-
-// Debug endpoints (consider removing in production)
-router.use('/debug', debugRoutes);
 
 export default router;

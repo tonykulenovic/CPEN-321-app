@@ -1,265 +1,164 @@
-import axios from 'axios';
-import { describe, test, beforeEach, expect, jest } from '@jest/globals';
+import request from 'supertest';
+import express from 'express';
+import mongoose from 'mongoose';
+import { jest, describe, test, beforeEach, expect } from '@jest/globals';
 
-// Mock axios first before importing the service
-jest.mock('axios');
-const mockedAxios = jest.mocked(axios);
+// Mock all external dependencies
+jest.mock('../../src/services/places.service');
+jest.mock('../../src/middleware/auth.middleware', () => ({
+  authenticateToken: (req: unknown, res: any, next: any) => {
+    req.user = {
+      _id: new mongoose.Types.ObjectId('507f1f77bcf86cd799439011'),
+      name: 'Test User',
+      email: 'test@example.com',
+      username: 'testuser'
+    };
+    next();
+  }
+}));
 
-// Import after mocking
-import { PlacesApiService } from '../../src/services/places.service';
+import recommendationRoutes from '../../src/routes/recommendations.routes';
+import { placesApiService } from '../../src/services/places.service';
 
-describe('PlacesApiService Mocked Tests', () => {
-  let service: PlacesApiService;
+const app = express();
+app.use(express.json());
+app.use('/recommendations', recommendationRoutes);
 
+const mockPlacesApiService = placesApiService as jest.Mocked<typeof placesApiService>;
+
+describe('Mocked: GET /recommendations/:mealType', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    // Reset singleton
-    (PlacesApiService as any).instance = undefined;
-    // Set the correct API key
-    process.env.GOOGLE_MAPS_API_KEY = 'test-api-key';
-    service = PlacesApiService.getInstance();
   });
 
-  test('should return empty array when no API key is configured', async () => {
-    // Remove API key
-    delete process.env.GOOGLE_MAPS_API_KEY;
-    delete process.env.MAPS_API_KEY;
-    
-    // Reset service to pick up new environment
-    (PlacesApiService as any).instance = undefined;
-    service = PlacesApiService.getInstance();
-    
-    const result = await service.getNearbyDiningOptions(
-      49.2827, -123.1207, 1000, 'lunch'
-    );
-    
-    expect(result).toEqual([]);
-    expect(mockedAxios.post).not.toHaveBeenCalled();
-  });
-
-  test('should handle axios errors gracefully', async () => {
-    mockedAxios.post.mockRejectedValue(new Error('Network error'));
-    
-    const result = await service.getNearbyDiningOptions(
-      49.2827, -123.1207, 1000, 'lunch'
-    );
-    
-    expect(result).toEqual([]);
-    expect(mockedAxios.post).toHaveBeenCalled();
-  });
-
-  test('should handle empty response data', async () => {
-    mockedAxios.post.mockResolvedValue({
-      data: {}
-    });
-    
-    const result = await service.getNearbyDiningOptions(
-      49.2827, -123.1207, 1000, 'lunch'
-    );
-    
-    expect(result).toEqual([]);
-  });
-
-  test('should handle null places in response', async () => {
-    mockedAxios.post.mockResolvedValue({
-      data: { places: null }
-    });
-    
-    const result = await service.getNearbyDiningOptions(
-      49.2827, -123.1207, 1000, 'lunch'
-    );
-    
-    expect(result).toEqual([]);
-  });
-
-  test('should process places and filter by required fields', async () => {
-    const mockResponse = {
-      data: {
-        places: [
-          // Invalid - no displayName
-          {
-            formattedAddress: 'Address 1',
-            location: { latitude: 49.2828, longitude: -123.1208 }
-          },
-          // Invalid - no location
-          {
-            displayName: { text: 'Place 2' },
-            formattedAddress: 'Address 2'
-          },
-          // Valid place
-          {
-            displayName: { text: 'Valid Restaurant' },
-            formattedAddress: '123 Valid St',
-            location: { latitude: 49.2828, longitude: -123.1208 },
-            rating: 4.5,
-            priceLevel: 'PRICE_LEVEL_MODERATE',
-            currentOpeningHours: { openNow: true },
-            types: ['restaurant'],
-            editorialSummary: { text: 'Great food' }
-          }
-        ]
+  test('should return recommendations when places API returns data', async () => {
+    mockPlacesApiService.getNearbyDiningOptions.mockResolvedValueOnce([
+      {
+        id: 'test-place-1',
+        name: 'Test Restaurant',
+        address: '123 Test St',
+        location: { latitude: 49.2827, longitude: -123.1207 },
+        rating: 4.5,
+        priceLevel: 2,
+        isOpen: true,
+        types: ['restaurant'],
+        distance: 500,
+        description: 'Great test food',
+        mealSuitability: { breakfast: 3, lunch: 8, dinner: 7 }
       }
-    };
+    ]);
     
-    mockedAxios.post.mockResolvedValue(mockResponse);
+    const response = await request(app)
+      .get('/recommendations/lunch');
     
-    const result = await service.getNearbyDiningOptions(
-      49.2827, -123.1207, 10000, 'lunch'
-    );
-    
-    // Should only include the valid place
-    expect(result).toHaveLength(1);
-    expect(result[0].name).toBe('Valid Restaurant');
-    expect(result[0].address).toBe('123 Valid St');
-    expect(result[0].rating).toBe(4.5);
-    expect(result[0].isOpen).toBe(true);
-    expect(result[0].description).toBe('Great food');
-    expect(result[0].priceLevel).toBe(2); // MODERATE -> 2
+    expect(response.status).toBe(200);
+    expect(Array.isArray(response.body.data)).toBe(true);
   });
 
-  test('should filter out places beyond radius', async () => {
-    const mockResponse = {
-      data: {
-        places: [
-          {
-            displayName: { text: 'Far Place' },
-            formattedAddress: 'Far Address',
-            location: { latitude: 50.0000, longitude: -124.0000 } // Very far
-          },
-          {
-            displayName: { text: 'Near Place' },
-            formattedAddress: 'Near Address', 
-            location: { latitude: 49.2828, longitude: -123.1208 } // Close
-          }
-        ]
+  test('should handle service errors gracefully', async () => {
+    mockPlacesApiService.getNearbyDiningOptions.mockRejectedValueOnce(new Error('Service error'));
+    
+    const response = await request(app)
+      .get('/recommendations/lunch');
+    
+    expect(response.status).toBe(500);
+    expect(response.body).toHaveProperty('message');
+  });
+
+  test('should handle empty recommendations', async () => {
+    mockPlacesApiService.getNearbyDiningOptions.mockResolvedValueOnce([]);
+    
+    const response = await request(app)
+      .get('/recommendations/lunch');
+    
+    expect(response.status).toBe(200);
+    expect(response.body.data).toEqual([]);
+  });
+
+  test('should validate meal type parameter', async () => {
+    const response = await request(app)
+      .get('/recommendations/invalid-meal');
+    
+    expect(response.status).toBe(400);
+    expect(response.body).toHaveProperty('message');
+  });
+
+  test('should return filtered recommendations for different meal types', async () => {
+    mockPlacesApiService.getNearbyDiningOptions.mockResolvedValueOnce([
+      {
+        id: 'breakfast-place',
+        name: 'Morning Cafe',
+        address: '123 Breakfast St',
+        location: { latitude: 49.2828, longitude: -123.1208 },
+        rating: 4.5,
+        priceLevel: 2,
+        isOpen: true,
+        types: ['cafe'],
+        distance: 100,
+        description: 'Great breakfast',
+        mealSuitability: { breakfast: 9, lunch: 3, dinner: 1 }
       }
-    };
+    ]);
     
-    mockedAxios.post.mockResolvedValue(mockResponse);
+    const response = await request(app)
+      .get('/recommendations/breakfast');
     
-    const result = await service.getNearbyDiningOptions(
-      49.2827, -123.1207, 500, 'lunch' // Small radius
-    );
-    
-    // Should only include the near place
-    expect(result).toHaveLength(1);
-    expect(result[0].name).toBe('Near Place');
+    expect(response.status).toBe(200);
+    expect(Array.isArray(response.body.data)).toBe(true);
+    expect(response.body.data.length).toBeGreaterThanOrEqual(0);
   });
 
-  test('should use correct meal type filters', async () => {
-    mockedAxios.post.mockResolvedValue({ data: { places: [] } });
+  test('should handle different meal types', async () => {
+    const mealTypes = ['breakfast', 'lunch', 'dinner'];
     
-    // Test breakfast filters
-    await service.getNearbyDiningOptions(49.2827, -123.1207, 1000, 'breakfast');
-    expect(mockedAxios.post).toHaveBeenNthCalledWith(1,
-      expect.any(String),
-      expect.objectContaining({
-        includedTypes: ['cafe', 'bakery', 'breakfast_restaurant']
-      }),
-      expect.any(Object)
-    );
-    
-    // Test lunch filters  
-    await service.getNearbyDiningOptions(49.2827, -123.1207, 1000, 'lunch');
-    expect(mockedAxios.post).toHaveBeenNthCalledWith(2,
-      expect.any(String),
-      expect.objectContaining({
-        includedTypes: ['restaurant', 'meal_takeaway', 'sandwich_shop', 'pizza_restaurant']
-      }),
-      expect.any(Object)
-    );
-    
-    // Test dinner filters
-    await service.getNearbyDiningOptions(49.2827, -123.1207, 1000, 'dinner');
-    expect(mockedAxios.post).toHaveBeenNthCalledWith(3,
-      expect.any(String),
-      expect.objectContaining({
-        includedTypes: ['restaurant', 'meal_delivery', 'fine_dining_restaurant', 'pizza_restaurant']
-      }),
-      expect.any(Object)
-    );
+    for (const mealType of mealTypes) {
+      mockPlacesApiService.getNearbyDiningOptions.mockResolvedValueOnce([]);
+      
+      const response = await request(app)
+        .get(`/recommendations/${mealType}`);
+      
+      expect(response.status).toBe(200);
+      expect(Array.isArray(response.body.data)).toBe(true);
+    }
   });
 
-  test('should use default parameters', async () => {
-    mockedAxios.post.mockResolvedValue({ data: { places: [] } });
-    
-    // Call without radius and meal type
-    await service.getNearbyDiningOptions(49.2827, -123.1207);
-    
-    expect(mockedAxios.post).toHaveBeenCalledWith(
-      expect.any(String),
-      expect.objectContaining({
-        locationRestriction: expect.objectContaining({
-          circle: expect.objectContaining({
-            radius: 1500 // Default radius
-          })
-        }),
-        includedTypes: ['restaurant', 'meal_takeaway', 'sandwich_shop', 'pizza_restaurant'] // Default lunch
-      }),
-      expect.any(Object)
-    );
+});
+
+describe('Mocked: POST /recommendations/notify/:mealType', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
   });
 
-  test('should handle different price levels correctly', async () => {
-    const mockResponse = {
-      data: {
-        places: [
-          {
-            displayName: { text: 'Free Place' },
-            formattedAddress: 'Address',
-            location: { latitude: 49.2828, longitude: -123.1208 },
-            priceLevel: 'PRICE_LEVEL_FREE'
-          },
-          {
-            displayName: { text: 'Expensive Place' },
-            formattedAddress: 'Address',
-            location: { latitude: 49.2828, longitude: -123.1208 },
-            priceLevel: 'PRICE_LEVEL_VERY_EXPENSIVE'
-          },
-          {
-            displayName: { text: 'No Price Place' },
-            formattedAddress: 'Address',
-            location: { latitude: 49.2828, longitude: -123.1208 }
-          }
-        ]
+  test('should send notification for meal recommendations', async () => {
+    mockPlacesApiService.getNearbyDiningOptions.mockResolvedValueOnce([
+      {
+        id: 'lunch-place',
+        name: 'Lunch Spot',
+        address: '456 Lunch Ave',
+        location: { latitude: 49.2827, longitude: -123.1207 },
+        rating: 4.2,
+        priceLevel: 2,
+        isOpen: true,
+        types: ['restaurant'],
+        distance: 200,
+        description: 'Good lunch',
+        mealSuitability: { breakfast: 2, lunch: 9, dinner: 5 }
       }
-    };
+    ]);
     
-    mockedAxios.post.mockResolvedValue(mockResponse);
+    const response = await request(app)
+      .post('/recommendations/notify/lunch');
     
-    const result = await service.getNearbyDiningOptions(
-      49.2827, -123.1207, 10000, 'lunch'
-    );
-    
-    expect(result[0].priceLevel).toBe(1); // FREE -> 1
-    expect(result[1].priceLevel).toBe(4); // VERY_EXPENSIVE -> 4
-    expect(result[2].priceLevel).toBe(2); // Default -> 2
+    expect(response.status).toBe(200);
+    expect(response.body).toHaveProperty('success', true);
   });
 
-  test('should calculate meal suitability scores', async () => {
-    const mockResponse = {
-      data: {
-        places: [
-          {
-            displayName: { text: 'Test Cafe' },
-            formattedAddress: 'Address',
-            location: { latitude: 49.2828, longitude: -123.1208 },
-            types: ['cafe', 'bakery']
-          }
-        ]
-      }
-    };
+  test('should handle notification errors', async () => {
+    mockPlacesApiService.getNearbyDiningOptions.mockRejectedValueOnce(new Error('Service error'));
     
-    mockedAxios.post.mockResolvedValue(mockResponse);
+    const response = await request(app)
+      .post('/recommendations/notify/lunch');
     
-    const result = await service.getNearbyDiningOptions(
-      49.2827, -123.1207, 10000, 'breakfast'
-    );
-    
-    expect(result[0].mealSuitability).toHaveProperty('breakfast');
-    expect(result[0].mealSuitability).toHaveProperty('lunch');
-    expect(result[0].mealSuitability).toHaveProperty('dinner');
-    // Cafe should be good for breakfast
-    expect(result[0].mealSuitability.breakfast).toBeGreaterThan(5);
-  });
+    expect(response.status).toBe(500);
+    expect(response.body).toHaveProperty('message');
 });

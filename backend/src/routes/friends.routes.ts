@@ -11,6 +11,7 @@ router.use(authenticateToken);
 // Friend request routes
 router.post('/requests', (req, res) => void friendsController.sendFriendRequest(req, res));
 router.get('/requests', (req, res) => void friendsController.listFriendRequests(req, res));
+
 router.post('/requests/:id/accept', (req, res) => void friendsController.acceptFriendRequest(req, res));
 router.post('/requests/:id/decline', (req, res) => void friendsController.declineFriendRequest(req, res));
 

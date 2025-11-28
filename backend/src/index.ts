@@ -18,6 +18,8 @@ import { seedCafes } from './scripts/seedCafes';
 import { seedRestaurants } from './scripts/seedRestaurants';
 import { firebaseService } from './config/firebase';
 import { recommendationScheduler } from './services/recommendationScheduler.service';
+import { startRecommendationScheduler } from './controllers/recommendations.controller';
+
 
 
 const app = express();
@@ -97,9 +99,8 @@ void connectDB().then(async () => {
 httpServer.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`📡 Socket.io enabled for real-time location updates`);
-  
-  // Start recommendation scheduler
-  recommendationScheduler.startScheduler();
+  // Start simplified recommendation scheduler
+  startRecommendationScheduler();
   console.log(`⏰ Recommendation scheduler started`);
 });
 

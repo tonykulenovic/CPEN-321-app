@@ -1,8 +1,9 @@
 import request from 'supertest';
 import express from 'express';
-import { describe, test, expect, beforeEach } from '@jest/globals';
+import { describe, test, expect, beforeEach, afterEach } from '@jest/globals';
 
 import badgeRoutes from '../../../src/routes/badge.routes';
+import { badgeModel } from '../../../src/models/badge.model';
 import { BadgeService } from '../../../src/services/badge.service';
 import { BadgeCategory } from '../../../src/types/badge.types';
 
@@ -132,5 +133,50 @@ describe('Unmocked: GET /api/badges', () => {
     expect(Array.isArray(res.body.data.badges)).toBe(true);
     // Should return empty array since no badges match this category
     expect(res.body.data.badges.length).toBe(0);
+  });
+
+  // Input: database error during badge fetch
+  // Expected status code: 500
+  // Expected behavior: handles database error gracefully
+  // Expected output: error message in response
+  test('Handle database error when fetching badges', async () => {
+    // Save original method
+    const originalFindAll = badgeModel.findAll;
+    
+    // Mock findAll to throw an error
+    badgeModel.findAll = async () => {
+      throw new Error('Database connection error');
+    };
+
+    const res = await request(app)
+      .get('/api/badges')
+      .expect(500);
+
+    expect(res.body.message).toBe('Database connection error');
+
+    // Restore original method
+    badgeModel.findAll = originalFindAll;
+  });
+
+  // Input: non-Error exception during badge fetch
+  // Expected status code: 500 (handled by Express error middleware)
+  // Expected behavior: calls next(error) for non-Error exceptions
+  // Expected output: Express handles the error
+  test('Handle non-Error exception when fetching badges', async () => {
+    // Save original method
+    const originalFindAll = badgeModel.findAll;
+    
+    // Mock findAll to throw a non-Error object
+    badgeModel.findAll = async () => {
+      throw 'String error'; // Non-Error exception
+    };
+
+    // This will be handled by Express error middleware (next(error))
+    await request(app)
+      .get('/api/badges')
+      .expect(500);
+
+    // Restore original method
+    badgeModel.findAll = originalFindAll;
   });
 });

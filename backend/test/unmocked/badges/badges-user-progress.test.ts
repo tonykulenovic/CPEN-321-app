@@ -277,6 +277,27 @@ describe('Unmocked: GET /api/badges/user/progress', () => {
     expect(res.body.message).toBe('Authentication required');
   });
 
+  // Input: request where req.user is undefined (middleware populates user but returns undefined)
+  // Expected status code: 401
+  // Expected behavior: controller checks for req.user and rejects
+  // Expected output: Unauthorized message
+  test('Reject request when req.user is undefined', async () => {
+    // Create app without user population
+    const appNoUser = express();
+    appNoUser.use(express.json());
+    appNoUser.use((req: any, _res: any, next: any) => {
+      req.user = undefined; // Explicitly set to undefined
+      next();
+    });
+    appNoUser.use('/api/badges', badgeRoutes);
+
+    const res = await request(appNoUser)
+      .get('/api/badges/user/progress')
+      .expect(401);
+
+    expect(res.body.message).toBe('Unauthorized');
+  });
+
   // Input: request with invalid user ID
   // Expected status code: 401
   // Expected behavior: rejects request with non-existent user
@@ -367,5 +388,50 @@ describe('Unmocked: GET /api/badges/user/progress', () => {
         expect(typeof entry.progress.percentage).toBe('number');
       }
     });
+  });
+
+  // Input: database error during progress fetch
+  // Expected status code: 500
+  // Expected behavior: handles database error gracefully
+  // Expected output: error message in response
+  test('Handle database error when fetching badge progress', async () => {
+    // Save original method
+    const originalGetUserBadgeProgress = BadgeService.getUserBadgeProgress;
+    
+    // Mock getUserBadgeProgress to throw an error
+    BadgeService.getUserBadgeProgress = async () => {
+      throw new Error('Database connection error');
+    };
+
+    const res = await withAuth(testUser1)(
+      request(app).get('/api/badges/user/progress')
+    ).expect(500);
+
+    expect(res.body.message).toBe('Database connection error');
+
+    // Restore original method
+    BadgeService.getUserBadgeProgress = originalGetUserBadgeProgress;
+  });
+
+  // Input: non-Error exception during progress fetch
+  // Expected status code: 500 (handled by Express error middleware)
+  // Expected behavior: calls next(error) for non-Error exceptions
+  // Expected output: Express handles the error
+  test('Handle non-Error exception when fetching badge progress', async () => {
+    // Save original method
+    const originalGetUserBadgeProgress = BadgeService.getUserBadgeProgress;
+    
+    // Mock getUserBadgeProgress to throw a non-Error object
+    BadgeService.getUserBadgeProgress = async () => {
+      throw 'String error'; // Non-Error exception
+    };
+
+    // This will be handled by Express error middleware (next(error))
+    await withAuth(testUser1)(
+      request(app).get('/api/badges/user/progress')
+    ).expect(500);
+
+    // Restore original method
+    BadgeService.getUserBadgeProgress = originalGetUserBadgeProgress;
   });
 });
