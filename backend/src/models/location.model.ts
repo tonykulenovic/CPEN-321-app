@@ -34,7 +34,6 @@ const locationSchema = new Schema<ILocation>(
     expiresAt: {
       type: Date,
       required: true,
-      index: true,
     },
   },
   {

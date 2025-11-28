@@ -46,7 +46,7 @@ const pinSchema = new Schema<IPin>(
     status: { type: String, enum: Object.values(PinStatus), default: PinStatus.ACTIVE, index: true },
     visibility: { type: String, enum: Object.values(PinVisibility), default: PinVisibility.PUBLIC, index: true },
     isPreSeeded: { type: Boolean, default: false },
-    expiresAt: { type: Date, index: true },
+    expiresAt: { type: Date },
     imageUrl: { type: String, trim: true },
   },
   { timestamps: true }
