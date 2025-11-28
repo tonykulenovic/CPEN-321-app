@@ -328,6 +328,8 @@ PASS  tests/performance/pins.test.ts
 
 `frontend/app/src/androidTest/java/com/cpen321/usermanagement/ui/`
 
+In the same directory as above, you can find a document named `TEST_DATA_SETUP_INSTRUCTIONS.md`, with instructions on how to run the following tests and setup necessary testing data.
+
 ### 4.2. Tests
 
 - **Use Case: Add Pin (ManagePinsE2ETest)**
