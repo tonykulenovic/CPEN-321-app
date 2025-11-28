@@ -82,6 +82,19 @@ describe('Pins Controller - Admin Endpoints (Mocked)', () => {
         message: 'Database error',
       });
     });
+
+    it('should call next for non-Error exceptions in getReportedPins', async () => {
+      mockRequest.user = { _id: new mongoose.Types.ObjectId(), isAdmin: true };
+      (pinModel.getReportedPins as jest.Mock).mockRejectedValue('String error');
+
+      await pinsController.getReportedPins(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext
+      );
+
+      expect(mockNext).toHaveBeenCalledWith('String error');
+    });
   });
 
   describe('clearPinReports', () => {
@@ -161,6 +174,20 @@ describe('Pins Controller - Admin Endpoints (Mocked)', () => {
       expect(mockResponse.json).toHaveBeenCalledWith({
         message: 'Database error',
       });
+    });
+
+    it('should call next for non-Error exceptions in clearPinReports', async () => {
+      mockRequest.user = { _id: new mongoose.Types.ObjectId(), isAdmin: true };
+      mockRequest.params = { id: new mongoose.Types.ObjectId().toString() };
+      (pinModel.clearReports as jest.Mock).mockRejectedValue('String error');
+
+      await pinsController.clearPinReports(
+        mockRequest as Request<{ id: string }>,
+        mockResponse as Response,
+        mockNext
+      );
+
+      expect(mockNext).toHaveBeenCalledWith('String error');
     });
   });
 });

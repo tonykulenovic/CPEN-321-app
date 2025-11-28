@@ -115,6 +115,40 @@ describe('Pins Controller - Edge Cases (Mocked)', () => {
       });
     });
 
+    it('should log message when user earns badges from creating pin', async () => {
+      const userId = new mongoose.Types.ObjectId();
+      const mockPin = {
+        _id: new mongoose.Types.ObjectId(),
+        name: 'Test Pin',
+        category: 'study',
+      };
+      const mockBadges = [{ _id: 'badge1', name: 'First Pin' }];
+
+      mockRequest.user = { _id: userId };
+      mockRequest.body = { name: 'Test', category: 'study', description: 'Test desc', location: { latitude: 0, longitude: 0 } };
+
+      const mockUserModel = {
+        findByIdAndUpdate: jest.fn().mockResolvedValue({}),
+      };
+      (mongoose.model as jest.Mock).mockReturnValue(mockUserModel);
+      (pinModel.create as jest.Mock).mockResolvedValue(mockPin);
+      (BadgeService.processBadgeEvent as jest.Mock).mockResolvedValue(mockBadges);
+      (locationGateway.broadcastPinCreated as jest.Mock).mockResolvedValue(undefined);
+
+      await pinsController.createPin(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext
+      );
+
+      // createPin doesn't return badges in response, just logs
+      expect(mockResponse.status).toHaveBeenCalledWith(201);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        message: 'Pin created successfully',
+        data: { pin: mockPin },
+      });
+    });
+
     it('should handle generic error with next function', async () => {
       const userId = new mongoose.Types.ObjectId();
       mockRequest.user = { _id: userId };
@@ -129,6 +163,25 @@ describe('Pins Controller - Edge Cases (Mocked)', () => {
       );
 
       expect(mockNext).toHaveBeenCalledWith('Not an Error object');
+    });
+
+    it('should return 400 with error message when Error instance thrown', async () => {
+      const userId = new mongoose.Types.ObjectId();
+      const error = new Error('Validation failed');
+      
+      mockRequest.user = { _id: userId };
+      mockRequest.body = {};
+
+      (pinModel.create as jest.Mock).mockRejectedValue(error);
+
+      await pinsController.createPin(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext
+      );
+
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(mockResponse.json).toHaveBeenCalledWith({ message: 'Validation failed' });
     });
   });
 
@@ -233,6 +286,22 @@ describe('Pins Controller - Edge Cases (Mocked)', () => {
       expect(mockResponse.status).toHaveBeenCalledWith(500);
       expect(mockResponse.json).toHaveBeenCalledWith({ message: 'Update failed' });
     });
+
+    it('should call next for non-Error exceptions in updatePin', async () => {
+      mockRequest.user = { _id: new mongoose.Types.ObjectId() };
+      mockRequest.params = { id: new mongoose.Types.ObjectId().toString() };
+      mockRequest.body = {};
+
+      (pinModel.update as jest.Mock).mockRejectedValue('String error');
+
+      await pinsController.updatePin(
+        mockRequest as Request<{ id: string }>,
+        mockResponse as Response,
+        mockNext
+      );
+
+      expect(mockNext).toHaveBeenCalledWith('String error');
+    });
   });
 
   describe('deletePin - Error Handlers', () => {
@@ -282,6 +351,21 @@ describe('Pins Controller - Edge Cases (Mocked)', () => {
       expect(mockResponse.status).toHaveBeenCalledWith(500);
       expect(mockResponse.json).toHaveBeenCalledWith({ message: 'Delete failed' });
     });
+
+    it('should call next for non-Error exceptions in deletePin', async () => {
+      mockRequest.user = { _id: new mongoose.Types.ObjectId(), isAdmin: false };
+      mockRequest.params = { id: new mongoose.Types.ObjectId().toString() };
+
+      (pinModel.delete as jest.Mock).mockRejectedValue('String error');
+
+      await pinsController.deletePin(
+        mockRequest as Request<{ id: string }>,
+        mockResponse as Response,
+        mockNext
+      );
+
+      expect(mockNext).toHaveBeenCalledWith('String error');
+    });
   });
 
   describe('ratePin - Error Handlers', () => {
@@ -317,6 +401,22 @@ describe('Pins Controller - Edge Cases (Mocked)', () => {
       expect(mockResponse.status).toHaveBeenCalledWith(500);
       expect(mockResponse.json).toHaveBeenCalledWith({ message: 'Vote failed' });
     });
+
+    it('should call next for non-Error exceptions in ratePin', async () => {
+      mockRequest.user = { _id: new mongoose.Types.ObjectId() };
+      mockRequest.params = { id: new mongoose.Types.ObjectId().toString() };
+      mockRequest.body = { voteType: 'upvote' };
+
+      (pinVoteModel.vote as jest.Mock).mockRejectedValue('String error');
+
+      await pinsController.ratePin(
+        mockRequest as Request<{ id: string }>,
+        mockResponse as Response,
+        mockNext
+      );
+
+      expect(mockNext).toHaveBeenCalledWith('String error');
+    });
   });
 
   describe('getUserVote - Error Handlers', () => {
@@ -349,6 +449,21 @@ describe('Pins Controller - Edge Cases (Mocked)', () => {
 
       expect(mockResponse.status).toHaveBeenCalledWith(500);
       expect(mockResponse.json).toHaveBeenCalledWith({ message: 'Fetch vote failed' });
+    });
+
+    it('should call next for non-Error exceptions in getUserVote', async () => {
+      mockRequest.user = { _id: new mongoose.Types.ObjectId() };
+      mockRequest.params = { id: new mongoose.Types.ObjectId().toString() };
+
+      (pinVoteModel.getUserVote as jest.Mock).mockRejectedValue('String error');
+
+      await pinsController.getUserVote(
+        mockRequest as Request<{ id: string }>,
+        mockResponse as Response,
+        mockNext
+      );
+
+      expect(mockNext).toHaveBeenCalledWith('String error');
     });
   });
 
@@ -461,12 +576,83 @@ describe('Pins Controller - Edge Cases (Mocked)', () => {
         data: { firstReport: true },
       });
     });
+
+    it('should return earned badges when user earns badges from reporting pin', async () => {
+      const userId = new mongoose.Types.ObjectId();
+      const pinId = new mongoose.Types.ObjectId();
+      const mockBadges = [{ _id: 'badge1', name: 'Vigilant Reporter' }];
+      
+      mockRequest.user = { _id: userId };
+      mockRequest.params = { id: pinId.toString() };
+      mockRequest.body = { reason: 'Test reason' };
+
+      const mockUser = {
+        reportedPins: [],
+        stats: { reportsMade: 0 },
+      };
+
+      const mockUserModel = {
+        findById: jest.fn().mockReturnValue({
+          select: jest.fn().mockResolvedValue(mockUser),
+        }),
+        findByIdAndUpdate: jest.fn().mockResolvedValue({}),
+      };
+      (mongoose.model as jest.Mock).mockReturnValue(mockUserModel);
+      (pinModel.reportPin as jest.Mock).mockResolvedValue(undefined);
+      (BadgeService.processBadgeEvent as jest.Mock).mockResolvedValue(mockBadges);
+
+      await pinsController.reportPin(
+        mockRequest as Request<{ id: string }>,
+        mockResponse as Response,
+        mockNext
+      );
+
+      expect(mockResponse.status).toHaveBeenCalledWith(200);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        message: 'Pin reported successfully',
+        data: { earnedBadges: mockBadges, firstReport: true },
+      });
+    });
+
+    it('should handle reportPin errors with Error instance', async () => {
+      const error = new Error('Report failed');
+      mockRequest.user = { _id: new mongoose.Types.ObjectId() };
+      mockRequest.params = { id: new mongoose.Types.ObjectId().toString() };
+      mockRequest.body = { reason: 'spam' };
+
+      (pinModel.reportPin as jest.Mock).mockRejectedValue(error);
+
+      await pinsController.reportPin(
+        mockRequest as Request<{ id: string }>,
+        mockResponse as Response,
+        mockNext
+      );
+
+      expect(mockResponse.status).toHaveBeenCalledWith(500);
+      expect(mockResponse.json).toHaveBeenCalledWith({ message: 'Report failed' });
+    });
+
+    it('should call next for non-Error exceptions in reportPin', async () => {
+      mockRequest.user = { _id: new mongoose.Types.ObjectId() };
+      mockRequest.params = { id: new mongoose.Types.ObjectId().toString() };
+      mockRequest.body = { reason: 'spam' };
+
+      (pinModel.reportPin as jest.Mock).mockRejectedValue('String error');
+
+      await pinsController.reportPin(
+        mockRequest as Request<{ id: string }>,
+        mockResponse as Response,
+        mockNext
+      );
+
+      expect(mockNext).toHaveBeenCalledWith('String error');
+    });
   });
 
   describe('searchPins - Error Handlers', () => {
     it('should handle search errors', async () => {
       const error = new Error('Search failed');
-      mockRequest.query = {};
+      mockRequest.query = { keyword: 'test' };
       mockRequest.user = { _id: new mongoose.Types.ObjectId() };
 
       (pinModel.search as jest.Mock).mockRejectedValue(error);
@@ -479,6 +665,21 @@ describe('Pins Controller - Edge Cases (Mocked)', () => {
 
       expect(mockResponse.status).toHaveBeenCalledWith(500);
       expect(mockResponse.json).toHaveBeenCalledWith({ message: 'Search failed' });
+    });
+
+    it('should call next for non-Error exceptions in searchPins', async () => {
+      mockRequest.query = { keyword: 'test' };
+      mockRequest.user = { _id: new mongoose.Types.ObjectId() };
+
+      (pinModel.search as jest.Mock).mockRejectedValue('String error');
+
+      await pinsController.searchPins(
+        mockRequest as Request,
+        mockResponse as Response,
+        mockNext
+      );
+
+      expect(mockNext).toHaveBeenCalledWith('String error');
     });
   });
 
@@ -619,14 +820,13 @@ describe('Pins Controller - Edge Cases (Mocked)', () => {
 
       expect(mockUserModel.findByIdAndUpdate).toHaveBeenCalledWith(
         userId,
-        expect.objectContaining({
-          $addToSet: { visitedPins: pinId },
+        {
+          $push: { visitedPins: pinId },
           $inc: {
             'stats.pinsVisited': 1,
             'stats.librariesVisited': 1,
           },
-        }),
-        { new: true }
+        }
       );
       expect(mockResponse.status).toHaveBeenCalledWith(200);
     });
@@ -668,14 +868,13 @@ describe('Pins Controller - Edge Cases (Mocked)', () => {
 
       expect(mockUserModel.findByIdAndUpdate).toHaveBeenCalledWith(
         userId,
-        expect.objectContaining({
-          $addToSet: { visitedPins: pinId },
+        {
+          $push: { visitedPins: pinId },
           $inc: {
             'stats.pinsVisited': 1,
             'stats.cafesVisited': 1,
           },
-        }),
-        { new: true }
+        }
       );
       expect(mockResponse.status).toHaveBeenCalledWith(200);
     });
@@ -717,14 +916,60 @@ describe('Pins Controller - Edge Cases (Mocked)', () => {
 
       expect(mockUserModel.findByIdAndUpdate).toHaveBeenCalledWith(
         userId,
-        expect.objectContaining({
-          $addToSet: { visitedPins: pinId },
+        {
+          $push: { visitedPins: pinId },
           $inc: {
             'stats.pinsVisited': 1,
             'stats.restaurantsVisited': 1,
           },
+        }
+      );
+      expect(mockResponse.status).toHaveBeenCalledWith(200);
+    });
+
+    it('should warn for SHOPS_SERVICES pin with unknown subtype', async () => {
+      const userId = new mongoose.Types.ObjectId();
+      const pinId = new mongoose.Types.ObjectId();
+      const mockPin = {
+        _id: pinId,
+        name: 'Test Shop',
+        category: 'shops_services',
+        isPreSeeded: true,
+        metadata: { subtype: 'unknown_type' },
+      };
+
+      mockRequest.user = { _id: userId };
+      mockRequest.params = { id: pinId.toString() };
+
+      const mockUser = {
+        visitedPins: [],
+      };
+
+      (pinModel.findById as jest.Mock).mockResolvedValue(mockPin);
+
+      const mockUserModel = {
+        findById: jest.fn().mockReturnValue({
+          select: jest.fn().mockResolvedValue(mockUser),
         }),
-        { new: true }
+        findByIdAndUpdate: jest.fn().mockResolvedValue({}),
+      };
+      (mongoose.model as jest.Mock).mockReturnValue(mockUserModel);
+      (BadgeService.processBadgeEvent as jest.Mock).mockResolvedValue([]);
+
+      await pinsController.visitPin(
+        mockRequest as Request<{ id: string }>,
+        mockResponse as Response,
+        mockNext
+      );
+
+      expect(mockUserModel.findByIdAndUpdate).toHaveBeenCalledWith(
+        userId,
+        {
+          $push: { visitedPins: pinId },
+          $inc: {
+            'stats.pinsVisited': 1,
+          },
+        }
       );
       expect(mockResponse.status).toHaveBeenCalledWith(200);
     });
@@ -770,6 +1015,48 @@ describe('Pins Controller - Edge Cases (Mocked)', () => {
       });
     });
 
+    it('should return earned badges when user earns badges from visiting pin', async () => {
+      const userId = new mongoose.Types.ObjectId();
+      const pinId = new mongoose.Types.ObjectId();
+      const mockPin = {
+        _id: pinId,
+        name: 'Test Pin',
+        category: 'study',
+        isPreSeeded: false,
+      };
+      const mockBadges = [{ _id: 'badge1', name: 'Explorer' }];
+
+      mockRequest.user = { _id: userId };
+      mockRequest.params = { id: pinId.toString() };
+
+      const mockUser = {
+        visitedPins: [],
+      };
+
+      (pinModel.findById as jest.Mock).mockResolvedValue(mockPin);
+
+      const mockUserModel = {
+        findById: jest.fn().mockReturnValue({
+          select: jest.fn().mockResolvedValue(mockUser),
+        }),
+        findByIdAndUpdate: jest.fn().mockResolvedValue({}),
+      };
+      (mongoose.model as jest.Mock).mockReturnValue(mockUserModel);
+      (BadgeService.processBadgeEvent as jest.Mock).mockResolvedValue(mockBadges);
+
+      await pinsController.visitPin(
+        mockRequest as Request<{ id: string }>,
+        mockResponse as Response,
+        mockNext
+      );
+
+      expect(mockResponse.status).toHaveBeenCalledWith(200);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        message: 'Pin visited successfully',
+        data: { earnedBadges: mockBadges, alreadyVisited: false },
+      });
+    });
+
     it('should handle visit errors', async () => {
       const error = new Error('Visit failed');
       mockRequest.user = { _id: new mongoose.Types.ObjectId() };
@@ -785,6 +1072,21 @@ describe('Pins Controller - Edge Cases (Mocked)', () => {
 
       expect(mockResponse.status).toHaveBeenCalledWith(500);
       expect(mockResponse.json).toHaveBeenCalledWith({ message: 'Visit failed' });
+    });
+
+    it('should call next for non-Error exceptions in visitPin', async () => {
+      mockRequest.user = { _id: new mongoose.Types.ObjectId() };
+      mockRequest.params = { id: new mongoose.Types.ObjectId().toString() };
+
+      (pinModel.findById as jest.Mock).mockRejectedValue('String error');
+
+      await pinsController.visitPin(
+        mockRequest as Request<{ id: string }>,
+        mockResponse as Response,
+        mockNext
+      );
+
+      expect(mockNext).toHaveBeenCalledWith('String error');
     });
   });
 });
