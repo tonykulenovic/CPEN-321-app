@@ -937,40 +937,41 @@ private fun MapContent(
                 // Create custom friend icon with user avatar style
             val friendIcon = remember {
                 try {
-                    val size = 120
+                    val size = 60  // Reduced from 120 to match pin sizes
                     val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
                     val canvas = android.graphics.Canvas(bitmap)
                     val center = size / 2f
+                    val scale = 0.5f  // Scale factor for internal elements
 
                     // Draw outer glow/shadow
                     val shadowPaint = android.graphics.Paint().apply {
                         isAntiAlias = true
                         color = android.graphics.Color.parseColor("#33000000")
                     }
-                    canvas.drawCircle(center, center + 2f, center - 2f, shadowPaint)
+                    canvas.drawCircle(center, center + 1f, center - 1f, shadowPaint)
 
                     // Draw main circular background (gradient-like effect)
                     val bgPaint = android.graphics.Paint().apply {
                         isAntiAlias = true
                         color = android.graphics.Color.parseColor("#4CAF50")
                     }
-                    canvas.drawCircle(center, center, center - 4f, bgPaint)
+                    canvas.drawCircle(center, center, center - 2f, bgPaint)
 
                     // Draw inner highlight
                     val highlightPaint = android.graphics.Paint().apply {
                         isAntiAlias = true
                         color = android.graphics.Color.parseColor("#66FFFFFF")
                     }
-                    canvas.drawCircle(center, center - 8f, center - 20f, highlightPaint)
+                    canvas.drawCircle(center, center - 4f, center - 10f, highlightPaint)
 
                     // Draw white border
                     val borderPaint = android.graphics.Paint().apply {
                         isAntiAlias = true
                         style = android.graphics.Paint.Style.STROKE
-                        strokeWidth = 6f
+                        strokeWidth = 3f
                         color = android.graphics.Color.WHITE
                     }
-                    canvas.drawCircle(center, center, center - 7f, borderPaint)
+                    canvas.drawCircle(center, center, center - 3.5f, borderPaint)
 
                     // Draw user icon (more detailed person silhouette)
                     val iconPaint = android.graphics.Paint().apply {
@@ -979,33 +980,20 @@ private fun MapContent(
                         color = android.graphics.Color.WHITE
                     }
 
-                    // Head (circle)
-                    canvas.drawCircle(center, center - 15f, 18f, iconPaint)
+                    // Head (circle) - scaled
+                    canvas.drawCircle(center, center - 7.5f, 9f, iconPaint)
 
-                    // Body (rounded rectangle path)
+                    // Body (rounded rectangle path) - scaled
                     val bodyPath = android.graphics.Path().apply {
                         addRoundRect(
-                            center - 22f, center + 3f, center + 22f, center + 35f,
-                            12f, 12f,
+                            center - 11f, center + 1.5f, center + 11f, center + 17.5f,
+                            6f, 6f,
                             android.graphics.Path.Direction.CW
                         )
                     }
                     canvas.drawPath(bodyPath, iconPaint)
 
-                    // Add small location pin indicator
-                    val pinPaint = android.graphics.Paint().apply {
-                        isAntiAlias = true
-                        color = android.graphics.Color.parseColor("#FF5722")
-                    }
-                    canvas.drawCircle(center + 25f, center - 25f, 8f, pinPaint)
-
-                    val pinIconPaint = android.graphics.Paint().apply {
-                        isAntiAlias = true
-                        color = android.graphics.Color.WHITE
-                        textSize = 10f
-                        textAlign = android.graphics.Paint.Align.CENTER
-                    }
-                    canvas.drawText("📍", center + 25f, center - 20f, pinIconPaint)
+                    // Small location pin indicator removed for cleaner look at smaller size
 
                     BitmapDescriptorFactory.fromBitmap(bitmap)
                 } catch (e: RuntimeException) {
