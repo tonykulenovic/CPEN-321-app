@@ -12,7 +12,7 @@ interface PlaceResult {
   formattedAddress?: string;
   location?: PlaceLocation;
   rating?: number;
-  priceLevel?: 'PRICE_LEVEL_FREE' | 'PRICE_LEVEL_INEXPENSIVE' | 'PRICE_LEVEL_MODERATE' | 'PRICE_LEVEL_EXPENSIVE' | 'PRICE_LEVEL_VERY_EXPENSIVE';
+  priceLevel?: string; // Simplified - now just used for RNG seed
   currentOpeningHours?: {
     openNow?: boolean;
     weekdayDescriptions?: string[];
@@ -115,10 +115,10 @@ export class PlacesApiService {
         .map(place => this.transformToRecommendationPlace(place, lat, lng, mealType))
         .filter(place => place.distance <= radius); // Ensure within radius
 
-      logger.info(`✅ [PLACES] Found ${places.length} dining options for ${mealType}`);
+      logger.info(`[PLACES] Found ${places.length} dining options for ${mealType}`);
       return places;
     } catch (error) {
-      logger.error('❌ [PLACES] Error fetching nearby places:', error);
+      logger.error(`[PLACES] Error fetching nearby places: ${error}`);
       return [];
     }
   }
@@ -216,11 +216,8 @@ export class PlacesApiService {
     if (/\b(dinner|fine.dining|steakhouse|sushi|italian|french|indian|thai|chinese)\b/.test(text) ||
         /\b(restaurant|fine_dining_restaurant|meal_delivery)\b/.test(typeStr)) {
       scores.dinner = 8;
-    } else if (/\b(pizza|burger|bar|grill)\b/.test(text) ||
-             /\b(pizza_restaurant|meal_takeaway)\b/.test(typeStr)) {
-      scores.dinner = 7;
-    } else if (/\b(cafe)\b/.test(typeStr)) {
-      scores.dinner = 2; // Most cafes don't serve dinner
+    } else {
+      scores.dinner = 5; // Generic restaurant
     }
 
     // Boost score for current meal type
@@ -230,24 +227,11 @@ export class PlacesApiService {
   }
 
   /**
-   * Map Google Places price level to 1-4 scale
+   * Generate random price level on 1-4 scale
    */
   private mapPriceLevel(priceLevel?: string): number {
-    if (!priceLevel) return 2; // Default moderate pricing
-    
-    switch (priceLevel) {
-      case 'PRICE_LEVEL_FREE':
-      case 'PRICE_LEVEL_INEXPENSIVE':
-        return 1;
-      case 'PRICE_LEVEL_MODERATE':
-        return 2;
-      case 'PRICE_LEVEL_EXPENSIVE':
-        return 3;
-      case 'PRICE_LEVEL_VERY_EXPENSIVE':
-        return 4;
-      default:
-        return 2;
-    }
+    // RNG-based pricing from 1-4
+    return Math.floor(Math.random() * 4) + 1;
   }
 
   /**
