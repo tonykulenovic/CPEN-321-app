@@ -273,7 +273,7 @@ export function startRecommendationScheduler(): void {
 
   mealSchedules.forEach(schedule => {
     const job = cron.schedule(schedule.cron, () => {
-      sendBatchRecommendations(schedule.name);
+      void sendBatchRecommendations(schedule.name);
     }, { timezone: 'America/Vancouver' });
     
     scheduledJobs.set(schedule.name, job);
@@ -309,7 +309,7 @@ export function stopRecommendationScheduler(): void {
 /**
  * Send batch recommendations to all eligible users
  */
-async function sendBatchRecommendations(mealType: 'breakfast' | 'lunch' | 'dinner'): Promise<void> {
+export async function sendBatchRecommendations(mealType: 'breakfast' | 'lunch' | 'dinner'): Promise<void> {
   logger.info(`📨 Sending ${mealType} recommendations to all users...`);
   
   try {
