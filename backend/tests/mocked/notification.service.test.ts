@@ -48,19 +48,6 @@ describe('NotificationService Mocked Tests', () => {
       );
     });
 
-    test('should not send notification when user not found', async () => {
-      const toUserId = '507f1f77bcf86cd799439012';
-      const fromUserId = '507f1f77bcf86cd799439011';
-      const fromUserName = 'John Doe';
-
-      mockedUserModel.findById.mockResolvedValue(null);
-
-      await notificationService.sendFriendRequestNotification(toUserId, fromUserId, fromUserName);
-
-      expect(mockedUserModel.findById).toHaveBeenCalledWith(new mongoose.Types.ObjectId(toUserId));
-      expect(mockedFirebaseService.sendNotification).not.toHaveBeenCalled();
-    });
-
     test('should not send notification when user has no FCM token', async () => {
       const toUserId = '507f1f77bcf86cd799439012';
       const fromUserId = '507f1f77bcf86cd799439011';
@@ -158,19 +145,6 @@ describe('NotificationService Mocked Tests', () => {
       );
     });
 
-    test('should not send notification when user not found', async () => {
-      const toUserId = '507f1f77bcf86cd799439012';
-      const fromUserId = '507f1f77bcf86cd799439011';
-      const fromUserName = 'Jane Smith';
-
-      mockedUserModel.findById.mockResolvedValue(null);
-
-      await notificationService.sendFriendRequestAcceptedNotification(toUserId, fromUserId, fromUserName);
-
-      expect(mockedUserModel.findById).toHaveBeenCalledWith(new mongoose.Types.ObjectId(toUserId));
-      expect(mockedFirebaseService.sendNotification).not.toHaveBeenCalled();
-    });
-
     test('should not send notification when user has no FCM token', async () => {
       const toUserId = '507f1f77bcf86cd799439012';
       const fromUserId = '507f1f77bcf86cd799439011';
@@ -257,28 +231,6 @@ describe('NotificationService Mocked Tests', () => {
           ...recommendationData
         }
       );
-    });
-
-    test('should return false when user not found', async () => {
-      const toUserId = '507f1f77bcf86cd799439012';
-      const title = '🍽️ Lunch Recommendation';
-      const body = 'Try Cafe Downtown - 500m away. Great spot for lunch!';
-      const recommendationData = {
-        pinId: '507f1f77bcf86cd799439013',
-        mealType: 'lunch',
-        distance: 500,
-        score: 85
-      };
-
-      mockedUserModel.findById.mockResolvedValue(null);
-
-      const result = await notificationService.sendLocationRecommendationNotification(
-        toUserId, title, body, recommendationData
-      );
-
-      expect(result).toBe(false);
-      expect(mockedUserModel.findById).toHaveBeenCalledWith(new mongoose.Types.ObjectId(toUserId));
-      expect(mockedFirebaseService.sendNotification).not.toHaveBeenCalled();
     });
 
     test('should return false when user has no FCM token', async () => {

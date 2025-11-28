@@ -23,28 +23,14 @@ export class NotificationService {
         fromUserId: string,
         fromUserName: string
     ): Promise<void> {
-        try {
-            logger.info(`🔔 [NOTIFY] Friend request notification: ${fromUserName} → user ${toUserId}`);
-            
+        try {            
             const toUser = await userModel.findById(new mongoose.Types.ObjectId(toUserId));
-            if (!toUser) {
-                logger.warn(`❌ [NOTIFY] Recipient user ${toUserId} not found`);
-                return;
-            }
-            
-            logger.info(`📍 [NOTIFY] Recipient user found: ${toUser.name} (${toUser.email})`);
-            
-            if (!toUser.fcmToken) {
-                logger.info(`🚫 [NOTIFY] No FCM token for user ${toUser.name}, skipping notification`);
-                return;
-            }
-
-            logger.info(`✅ [NOTIFY] FCM token available for ${toUser.name}`);
+         
             const title = 'New Friend Request';
             const body = `${fromUserName} sent you a friend request`;
 
             const sent = await firebaseService.sendNotification(
-                toUser.fcmToken,
+                toUser?.fcmToken,
                 title,
                 body,
                 {
@@ -54,11 +40,6 @@ export class NotificationService {
                 }
             );
 
-            if (sent) {
-                logger.info(`📲 [NOTIFY] Successfully sent friend request notification to ${toUser.name}`);
-            } else {
-                logger.error(`💥 [NOTIFY] Failed to send friend request notification to ${toUser.name}`);
-            }
         } catch (error) {
             logger.error('💥 [NOTIFY] Error sending friend request notification:', error);
         }
@@ -75,8 +56,7 @@ export class NotificationService {
         try {
             const toUser = await userModel.findById(new mongoose.Types.ObjectId(toUserId));
             if (!toUser?.fcmToken) {
-                logger.info(`No FCM token for user ${toUserId}, skipping notification`);
-                return;
+               return;
             }
 
             const title = 'Friend Request Accepted';
@@ -92,10 +72,6 @@ export class NotificationService {
                     fromUserName
                 }
             );
-
-            if (sent) {
-                logger.info(`📲 Sent friend request accepted notification to ${toUser.name}`);
-            }
         } catch (error) {
             logger.error('Error sending friend request accepted notification:', error);
         }
@@ -119,18 +95,9 @@ export class NotificationService {
             logger.info(`🔔 [NOTIFY] Location recommendation: ${title} → user ${toUserId}`);
             
             const toUser = await userModel.findById(new mongoose.Types.ObjectId(toUserId));
-            if (!toUser) {
-                logger.warn(`❌ [NOTIFY] Recipient user ${toUserId} not found`);
-                return false;
-            }
-            
-            if (!toUser.fcmToken) {
-                logger.info(`🚫 [NOTIFY] No FCM token for user ${toUser.name}, skipping notification`);
-                return false;
-            }
 
             const sent = await firebaseService.sendNotification(
-                toUser.fcmToken,
+                toUser?.fcmToken,
                 title,
                 body,
                 {
@@ -141,12 +108,6 @@ export class NotificationService {
                     score: recommendationData.score.toString(),
                 }
             );
-
-            if (sent) {
-                logger.info(`📲 [NOTIFY] Successfully sent location recommendation to ${toUser.name}`);
-            } else {
-                logger.error(`💥 [NOTIFY] Failed to send location recommendation to ${toUser.name}`);
-            }
 
             return sent;
         } catch (error) {
