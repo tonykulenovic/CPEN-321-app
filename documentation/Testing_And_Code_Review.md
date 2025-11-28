@@ -993,13 +993,17 @@ In the same directory as above, you can find a document named `TEST_DATA_SETUP_I
 
 ### 5.2. Issues Breakdown by Category
 
-_Screenshot or copy of the "Issues breakdown" table from the "Overview" page on Codacy should be added here._
+There is a total of 250 issues remaining.
+
+![Issues breakdown table](images/issues_table.png)
 
 **Codacy Overview URL:** `https://app.codacy.com/gh/tonykulenovic/CPEN-321-app/dashboard`
 
 ### 5.3. Issues Breakdown by Code Pattern
 
-_Screenshot or copy of the "Issues" page from Codacy should be added here._
+![Issues breakdown page](images/issues_page.png)
+
+![Quality evolution](images/quality_evolution.png)
 
 **Codacy Issues URL:** `https://app.codacy.com/gh/tonykulenovic/CPEN-321-app/issues/current`
 
