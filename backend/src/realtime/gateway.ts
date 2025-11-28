@@ -230,7 +230,7 @@ export class LocationGateway {
 
       // 5. Auto-unsubscribe after duration
       setTimeout(() => {
-        void this.untrackFriendLocation(viewerId, friendId);
+        this.untrackFriendLocation(viewerId, friendId).catch(() => {});
       }, durationSec * 1000);
 
     } catch (error) {
@@ -419,14 +419,14 @@ export class LocationGateway {
 
       // Set up heartbeat to update lastActiveAt every 5 minutes
       const heartbeatInterval = setInterval(() => {
-        void (async () => {
+        (async () => {
           try {
             await userModel.updateLastActiveAt(userId);
             logger.debug(`💓 Heartbeat: Updated lastActiveAt for user ${userId.toString()}`);
           } catch (error) {
             logger.error('Error in heartbeat update:', error);
           }
-        })();
+        })().catch(() => {});
       }, 5 * 60 * 1000); // 5 minutes
 
       userHeartbeats.set(userIdStr, heartbeatInterval);

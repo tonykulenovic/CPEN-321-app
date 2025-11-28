@@ -180,7 +180,7 @@ class LocationSimulator {
     const maxUpdates = SIMULATION_DURATION / UPDATE_INTERVAL;
 
     this.intervalId = setInterval(() => {
-      void (async () => {
+      (async () => {
         updateCount++;
         console.log(`\n🔄 Update ${updateCount}/${maxUpdates}`);
 
@@ -196,13 +196,13 @@ class LocationSimulator {
         if (updateCount >= maxUpdates) {
           await this.stopSimulation();
         }
-      })();
+      })().catch(() => {});
     }, UPDATE_INTERVAL);
 
     // Auto-stop after simulation duration
     setTimeout(() => {
       if (this.isRunning) {
-        void this.stopSimulation();
+        this.stopSimulation().catch(() => {});
       }
     }, SIMULATION_DURATION);
   }
@@ -327,11 +327,11 @@ async function main() {
 
     // Cleanup on exit
     process.on('SIGINT', () => {
-      void (async () => {
+      (async () => {
         console.log('\n🛑 Received interrupt signal');
         await simulator.stopSimulation();
         process.exit(0);
-      })();
+      })().catch(() => {});
     });
 
   } catch (error) {
@@ -342,7 +342,7 @@ async function main() {
 
 // Run if called directly
 if (require.main === module) {
-  void main();
+  main().catch(() => {});
 }
 
 export { LocationSimulator };

@@ -106,7 +106,6 @@ export async function seedLibraries() {
   try {
     logger.info('🏛️  Checking library seeding...');
     
-    const pinModel = new PinModel();
     const User = mongoose.model('User');
     
     // Check if any libraries exist (just for logging)
