@@ -64,8 +64,23 @@ describe('User Routes - Profile API', () => {
           name: 'Test User',
           isAdmin: false,
         };
+        next();
+      } else if (authHeader === 'Bearer admin-token') {
+        req.user = {
+          _id: new mongoose.Types.ObjectId('507f1f77bcf86cd799439012'),
+          username: 'adminuser',
+          email: 'admin@example.com',
+          name: 'Admin User',
+          isAdmin: true,
+        };
+        next();
+      } else {
+        // No valid token found - simulate auth middleware behavior
+        return res.status(401).json({ 
+          error: 'Access denied',
+          message: 'No token provided' 
+        });
       }
-      next();
     });
     
     app.use('/users', userRoutes);
@@ -89,7 +104,7 @@ describe('User Routes - Profile API', () => {
         .get('/users/profile');
 
       expect(response.status).toBe(401);
-      expect(response.body.message).toBe('Unauthorized');
+      expect(response.body.message).toBe('No token provided');
     });
 
     it('should return 200 with user profile when authenticated', async () => {
@@ -116,7 +131,7 @@ describe('User Routes - Profile API', () => {
         .send({ name: 'Updated Name' });
 
       expect(response.status).toBe(401);
-      expect(response.body.message).toBe('Unauthorized');
+      expect(response.body.message).toBe('No token provided');
     });
 
     it('should return 400 when validation fails', async () => {
@@ -187,7 +202,7 @@ describe('User Routes - Profile API', () => {
         .delete('/users/profile');
 
       expect(response.status).toBe(401);
-      expect(response.body.message).toBe('Unauthorized');
+      expect(response.body.message).toBe('No token provided');
     });
 
     it('should return 200 when profile is deleted successfully', async () => {
@@ -254,7 +269,7 @@ describe('User Routes - Profile API', () => {
         .get('/users/507f1f77bcf86cd799439012/profile');
 
       expect(response.status).toBe(401);
-      expect(response.body.message).toBe('Unauthorized');
+      expect(response.body.message).toBe('No token provided');
     });
 
     it('should return 400 when userId format is invalid', async () => {
@@ -411,7 +426,7 @@ describe('User Routes - Profile API', () => {
         .get('/users/search?q=test');
 
       expect(response.status).toBe(401);
-      expect(response.body.message).toBe('Unauthorized');
+      expect(response.body.message).toBe('No token provided');
     });
 
     it('should return 400 when query parameter is missing', async () => {
@@ -521,7 +536,7 @@ describe('User Routes - Profile API', () => {
         .get('/users/me');
 
       expect(response.status).toBe(401);
-      expect(response.body.message).toBe('Unauthorized');
+      expect(response.body.message).toBe('No token provided');
     });
 
     it('should return 200 with current user profile when authenticated', async () => {
@@ -538,6 +553,144 @@ describe('User Routes - Profile API', () => {
         name: 'Test User',
         isAdmin: false,
       });
+    });
+  });
+
+  describe('PATCH /me/privacy', () => {
+    it('should return 401 when user is not authenticated', async () => {
+      const response = await request(app)
+        .patch('/users/me/privacy')
+        .send({ profileVisibleTo: 'friends' });
+
+      expect(response.status).toBe(401);
+      expect(response.body.message).toBe('No token provided');
+    });
+
+    it('should return 400 when request body is invalid', async () => {
+      const response = await request(app)
+        .patch('/users/me/privacy')
+        .set('Authorization', 'Bearer valid-token')
+        .send({ profileVisibleTo: 'invalid_value' });
+
+      expect(response.status).toBe(400);
+      expect(response.body.message).toBe('Invalid request body');
+      expect(response.body.errors).toBeDefined();
+    });
+
+    it('should return 400 when no privacy settings are provided', async () => {
+      const response = await request(app)
+        .patch('/users/me/privacy')
+        .set('Authorization', 'Bearer valid-token')
+        .send({});
+
+      expect(response.status).toBe(400);
+      expect(response.body.message).toBe('At least one privacy setting must be provided');
+    });
+
+    it('should return 200 when privacy settings are updated successfully', async () => {
+      const updatedUser = {
+        _id: '507f1f77bcf86cd799439011',
+        username: 'testuser',
+        privacy: {
+          profileVisibleTo: 'friends',
+          location: { sharing: 'live', precisionMeters: 50 },
+        },
+      };
+
+      userModel.updatePrivacy = jest.fn().mockResolvedValue(updatedUser);
+
+      const response = await request(app)
+        .patch('/users/me/privacy')
+        .set('Authorization', 'Bearer valid-token')
+        .send({
+          profileVisibleTo: 'friends',
+          location: { sharing: 'live', precisionMeters: 50 },
+        });
+
+      expect(response.status).toBe(200);
+      expect(response.body.message).toBe('Privacy settings updated successfully');
+      expect(response.body.data.user.privacy.profileVisibleTo).toBe('friends');
+      expect(response.body.data.user.privacy.location.sharing).toBe('live');
+      expect(userModel.updatePrivacy).toHaveBeenCalledWith(
+        new mongoose.Types.ObjectId('507f1f77bcf86cd799439011'),
+        {
+          profileVisibleTo: 'friends',
+          location: { sharing: 'live', precisionMeters: 50 },
+        }
+      );
+    });
+
+    it('should return 404 when user is not found', async () => {
+      userModel.updatePrivacy = jest.fn().mockResolvedValue(null);
+
+      const response = await request(app)
+        .patch('/users/me/privacy')
+        .set('Authorization', 'Bearer valid-token')
+        .send({ profileVisibleTo: 'friends' });
+
+      expect(response.status).toBe(404);
+      expect(response.body.message).toBe('User not found');
+    });
+
+    it('should return 500 when database update fails', async () => {
+      userModel.updatePrivacy = jest.fn().mockRejectedValue(new Error('Database error'));
+
+      const response = await request(app)
+        .patch('/users/me/privacy')
+        .set('Authorization', 'Bearer valid-token')
+        .send({ profileVisibleTo: 'friends' });
+
+      expect(response.status).toBe(500);
+      expect(response.body.message).toBe('Internal server error');
+    });
+  });
+
+  describe('GET /admin/all', () => {
+    it('should return 401 when user is not authenticated', async () => {
+      const response = await request(app)
+        .get('/users/admin/all');
+
+      expect(response.status).toBe(401);
+      expect(response.body.message).toBe('No token provided');
+    });
+
+    it('should return 403 when user is not admin', async () => {
+      const response = await request(app)
+        .get('/users/admin/all')
+        .set('Authorization', 'Bearer valid-token'); // Regular user token
+
+      expect(response.status).toBe(403);
+      expect(response.body.message).toBe('Unauthorized: Admin access required');
+    });
+
+    it('should return 200 with all users when user is admin', async () => {
+      const allUsers = [
+        { _id: '507f1f77bcf86cd799439011', username: 'user1', email: 'user1@example.com' },
+        { _id: '507f1f77bcf86cd799439012', username: 'user2', email: 'user2@example.com' },
+      ];
+
+      userModel.findAllWithAllFields = jest.fn().mockResolvedValue(allUsers);
+
+      const response = await request(app)
+        .get('/users/admin/all')
+        .set('Authorization', 'Bearer admin-token'); // Admin token
+
+      expect(response.status).toBe(200);
+      expect(response.body.message).toBe('Users fetched successfully');
+      expect(response.body.data.users).toEqual(allUsers);
+      expect(response.body.data.total).toBe(2);
+      expect(userModel.findAllWithAllFields).toHaveBeenCalled();
+    });
+
+    it('should return 500 when database query fails', async () => {
+      userModel.findAllWithAllFields = jest.fn().mockRejectedValue(new Error('Database error'));
+
+      const response = await request(app)
+        .get('/users/admin/all')
+        .set('Authorization', 'Bearer admin-token'); // Admin token
+
+      expect(response.status).toBe(500);
+      expect(response.body.message).toBe('Internal server error');
     });
   });
 });
