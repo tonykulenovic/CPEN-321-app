@@ -11,7 +11,7 @@
 | 3  | Created Final Project Report | Tony | 4 hours |
 | 4  | Fixed more Codacy issues with our code | Tony | 3 hours |
 | 5  | Filmed Git Actions and Codacy video | Tony | 2 hours |
-| ... | ... | ... | ... |
+| 6  | Created slides and recorded part of the presentation | Tony | 3 hours |
 
 
 ---
@@ -20,7 +20,7 @@
 
 | Team Member | Time Spent on the Assignment (hours) | AI Reliance for the assignment (0-100%) (Estimate) |
 |-------------|--------------------------------------|-----------------------------------------------------|
-| Tony | 14 | 80-85% |
+| Tony | 17 | 80-85% |
 | Team Member 2 Name | [X] | [X]% |
 | Team Member 3 Name | [X] | [X]% |
 | Team Member 4 Name | [X] | [X]% |
