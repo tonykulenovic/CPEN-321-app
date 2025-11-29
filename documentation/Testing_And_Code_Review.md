@@ -1025,7 +1025,7 @@ Any remaining issues should be documented here with proper justifications.
 
 # 5.4. Justifications for Unfixed Issues
 
-As of commit `4a47a25ffec0b86b493e79994e5a43f3eac7cc8b`, 214 Codacy issues remain across the codebase.  
+As of commit `4a47a25ffec0b86b493e79994e5a43f3eac7cc8b`, 250 Codacy issues remain across the codebase.  
 All remaining items have been reviewed and categorized.  
 Each issue below is justified with specific technical rationale and, where applicable, references to established best practices.
 
