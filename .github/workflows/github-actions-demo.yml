@@ -49,50 +49,25 @@ jobs:
           mongodb-replica-set: test-rs
           mongodb-port: 27017
 
-      - name: Run unmocked tests
+      - name: Run all tests
         working-directory: backend
-        run: npm run test:unmocked -- --ci --runInBand
+        run: npm test -- --ci --runInBand --forceExit
 
-      - name: Run mocked tests
+      - name: Run tests with coverage
         working-directory: backend
-        run: npm run test:mocked -- --ci --runInBand
+        run: npm test -- --coverage --ci --runInBand --forceExit
 
-      - name: Run unmocked coverage
-        working-directory: backend
-        run: npm run test:unmocked:coverage -- --ci --runInBand --coverageDirectory=coverage-unmocked
-
-      - name: Run mocked coverage
-        working-directory: backend
-        run: npm run test:mocked:coverage -- --ci --runInBand --coverageDirectory=coverage-mocked
-
-      - name: Upload unmocked coverage artifact
+      - name: Upload coverage artifact
         uses: actions/upload-artifact@v4
         with:
-          name: coverage-unmocked
-          path: backend/coverage-unmocked
+          name: coverage
+          path: backend/coverage
 
-      - name: Upload mocked coverage artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage-mocked
-          path: backend/coverage-mocked
-
-      - name: Upload unmocked coverage to Codecov
+      - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
         continue-on-error: true
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          directory: backend/coverage-unmocked
-          flags: unmocked
-          fail_ci_if_error: false
-          verbose: true
-
-      - name: Upload mocked coverage to Codecov
-        uses: codecov/codecov-action@v4
-        continue-on-error: true
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          directory: backend/coverage-mocked
-          flags: mocked
+          directory: backend/coverage
           fail_ci_if_error: false
           verbose: true
