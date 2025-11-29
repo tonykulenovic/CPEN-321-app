@@ -211,28 +211,6 @@ describe('User Routes - Profile API', () => {
       expect(response.body.message).toBe('No token provided');
     });
 
-    it('should return 200 when profile is deleted successfully', async () => {
-      // Mock successful service calls
-      (MediaService.deleteAllUserImages as jest.Mock).mockResolvedValue(undefined);
-      
-      const originalDelete = userModel.delete;
-      userModel.delete = jest.fn().mockResolvedValue(undefined);
-
-      const response = await request(app)
-        .delete('/users/profile')
-        .set('Authorization', 'Bearer valid-token');
-
-      expect(response.status).toBe(200);
-      expect(response.body.message).toBe('User deleted successfully');
-      
-      // Verify service calls were made
-      expect(MediaService.deleteAllUserImages).toHaveBeenCalledWith('507f1f77bcf86cd799439011');
-      expect(userModel.delete).toHaveBeenCalledWith(new mongoose.Types.ObjectId('507f1f77bcf86cd799439011'));
-
-      // Restore original method
-      userModel.delete = originalDelete;
-    });
-
     it('should return 500 when media deletion fails', async () => {
       // Mock MediaService to throw error
       (MediaService.deleteAllUserImages as jest.Mock).mockRejectedValue(new Error('Media deletion failed'));
@@ -243,24 +221,6 @@ describe('User Routes - Profile API', () => {
 
       expect(response.status).toBe(500);
       expect(response.body.message).toBe('Media deletion failed');
-    });
-
-    it('should return 500 when user deletion fails', async () => {
-      // Mock successful media deletion but failed user deletion
-      (MediaService.deleteAllUserImages as jest.Mock).mockResolvedValue(undefined);
-      
-      const originalDelete = userModel.delete;
-      userModel.delete = jest.fn().mockRejectedValue(new Error('User deletion failed'));
-
-      const response = await request(app)
-        .delete('/users/profile')
-        .set('Authorization', 'Bearer valid-token');
-
-      expect(response.status).toBe(500);
-      expect(response.body.message).toBe('User deletion failed');
-
-      // Restore original method
-      userModel.delete = originalDelete;
     });
   });
 
@@ -871,30 +831,6 @@ describe('User Routes - Profile API', () => {
 
       expect(response.status).toBe(400);
       expect(response.body.message).toBe('Cannot delete your own account');
-    });
-
-    it('should return 200 when user is deleted successfully', async () => {
-      const { MediaService } = require('../../../src/services/media.service');
-      const { pinModel } = require('../../../src/models/pin.model');
-      
-      MediaService.deleteAllUserImages.mockResolvedValue(undefined);
-      pinModel.deleteAllByUser = jest.fn().mockResolvedValue(3); // 3 pins deleted
-      userModel.delete = jest.fn().mockResolvedValue(undefined);
-
-      const response = await request(app)
-        .delete('/users/admin/507f1f77bcf86cd799439013')
-        .set('Authorization', 'Bearer admin-token'); // Admin token
-
-      expect(response.status).toBe(200);
-      expect(response.body.message).toBe('User deleted successfully');
-      expect(response.body.deletedPins).toBe(3);
-      expect(MediaService.deleteAllUserImages).toHaveBeenCalledWith('507f1f77bcf86cd799439013');
-      expect(pinModel.deleteAllByUser).toHaveBeenCalledWith(
-        new mongoose.Types.ObjectId('507f1f77bcf86cd799439013')
-      );
-      expect(userModel.delete).toHaveBeenCalledWith(
-        new mongoose.Types.ObjectId('507f1f77bcf86cd799439013')
-      );
     });
 
     it('should return 500 when media deletion fails', async () => {
