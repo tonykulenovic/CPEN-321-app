@@ -2,98 +2,98 @@
 
 ## 1. Change History
 
-| **Change Date**   | **Modified Sections** | **Rationale** |
-| ----------------- | --------------------- | ------------- |
-| 2025-11-28 ([4a47a25](../../commit/4a47a25)) | Documentation, Requirements Specification | Updated final commit hash to reflect latest documentation changes including interface consistency updates in Requirements and Design document. |
-| 2025-11-28 ([7be769c](../../commit/7be769c)) | Code Quality, Testing | Merged PR #28 with additional Codacy fixes to improve code quality and maintainability. |
-| 2025-11-28 ([007f06f](../../commit/007f06f)) | Code Quality | Applied more Codacy fixes addressing code style and best practice issues. |
-| 2025-11-28 ([7cb0c6a](../../commit/7cb0c6a)) | Code Quality, Testing | Merged PR #27 with Codacy fixes to address static analysis warnings. |
-| 2025-11-28 ([96c8e09](../../commit/96c8e09)) | Code Quality | Applied additional Codacy fixes targeting code quality improvements. |
-| 2025-11-28 ([edfb2d8](../../commit/edfb2d8)) | Testing, User Management | Added user profile tests to improve coverage of user management functionality. |
-| 2025-11-28 ([380bcb0](../../commit/380bcb0)) | Testing | Applied minor test changes to improve test reliability and coverage. |
-| 2025-11-28 ([b37de8b](../../commit/b37de8b)) | Testing, User Management | Added user profile tests to validate user management endpoints. |
-| 2025-11-28 ([6ad22a2](../../commit/6ad22a2)) | Testing, Authentication | Added authentication service coverage tests to ensure comprehensive testing of auth endpoints. |
-| 2025-11-28 ([5af5372](../../commit/5af5372)) | Testing Documentation | Added clarifying notes in test documentation to improve test setup instructions. |
-| 2025-11-28 ([e6bf80d](../../commit/e6bf80d)) | Testing, Authentication | Added check auth endpoint tests to validate authentication verification functionality. |
-| 2025-11-28 ([18762ef](../../commit/18762ef)) | Testing, CI/CD | Merged test fixes branch to resolve failing test suites and improve CI pipeline stability. |
-| 2025-11-28 ([e25e0e8](../../commit/e25e0e8)) | Testing, Authentication | Added authentication tests to validate sign-in and sign-up flows. |
-| 2025-11-28 ([75d2cbe](../../commit/75d2cbe)) | Testing, Authentication | Added partial authentication tests to begin coverage of auth endpoints. |
-| 2025-11-28 ([edf4f65](../../commit/edf4f65)) | Testing, External APIs | Added Places service API tests to validate Google Maps API integration. |
-| 2025-11-27 ([0f4e06b](../../commit/0f4e06b)) | Testing, Recommendations | Added recommendation tests to validate meal recommendation functionality. |
-| 2025-11-27 ([0625528](../../commit/0625528)) | Testing, Pin Management | Improved pin test coverage to ensure comprehensive testing of pin operations. |
-| 2025-11-27 ([8610989](../../commit/8610989)) | Testing, Pin Management | Added pin tests to validate CRUD operations and pin interactions. |
-| 2025-11-27 ([d0765f8](../../commit/d0765f8)) | Testing, Media | Added media tests to validate image upload and media management functionality. |
-| 2025-11-27 ([2758ff4](../../commit/2758ff4)) | Testing, Location | Added location tests to validate location tracking and sharing features. |
-| 2025-11-27 ([74e66c6](../../commit/74e66c6)) | Testing, Social Features | Completed friends tests to ensure comprehensive coverage of friend management functionality. |
-| 2025-11-27 ([490996d](../../commit/490996d)) | Testing, Location | Added friend location unmocked tests to validate real-time location sharing. |
-| 2025-11-27 ([513edb2](../../commit/513edb2)) | Testing, Social Features | Added friends unmocked tests to validate friend request and management flows. |
-| 2025-11-27 ([6fc3e12](../../commit/6fc3e12)) | Testing, Gamification | Added mocked tests for badges, addressing test failures in badge functionality. |
-| 2025-11-27 ([b405796](../../commit/b405796)) | Testing, Gamification | Added badge unmocked tests to validate badge earning and progress tracking. |
-| 2025-11-27 ([352b4f9](../../commit/352b4f9)) | Testing, Gamification | Added unmocked tests for badges to validate badge system functionality. |
-| 2025-11-24 ([a5fdfdd](../../commit/a5fdfdd)) | Code Quality | Merged PR #24 with Codacy fixes to address code quality issues. |
-| 2025-11-24 ([96e4f8f](../../commit/96e4f8f)) | Code Quality | Applied more Codacy fixes to improve code maintainability and style. |
-| 2025-11-10 ([915eecd](../../commit/915eecd)) | CI/CD, Testing | Fixed GitHub Actions to ensure test pipeline runs successfully. |
-| 2025-11-10 ([1dd5482](../../commit/1dd5482)) | Testing Documentation | Added coverage screenshots to documentation for visual verification of test coverage. |
-| 2025-11-10 ([b2e9bfe](../../commit/b2e9bfe)) | Testing, E2E | Updated E2E finish flow artifacts to reflect stabilized UI state. |
-| 2025-11-10 ([30953f4](../../commit/30953f4)) | Testing, E2E | Revised post-E2E finish definitions after additional UI tweaks. |
-| 2025-11-10 ([e8dfd22](../../commit/e8dfd22)) | Testing, E2E | Continued refining end-to-end test coverage to pass reliably across environments. |
-| 2025-11-10 ([0d47a3a](../../commit/0d47a3a)) | Testing Documentation | Documented updated testing process for clarity after recent automation refinements. |
-| 2025-11-10 ([94de934](../../commit/94de934)) | Testing | Confirmed focused test suites were working after previous fix attempts. |
-| 2025-11-10 ([0f30110](../../commit/0f30110)) | Testing | Applied partial fixes to several failing tests to progress toward stability. |
-| 2025-11-10 ([c4efbb5](../../commit/c4efbb5)) | Testing, Real-time | Verified realtime gateway via dedicated unit tests after integration adjustments. |
-| 2025-11-10 ([682722b](../../commit/682722b)) | Code Quality | Merged PR #23 that bundled several Codacy fixes into the branch. |
-| 2025-11-10 ([fcf833a](../../commit/fcf833a)) | Code Quality | Added another set of Codacy cleanups targeting new warnings. |
-| 2025-11-10 ([9cd649b](../../commit/9cd649b)) | Code Quality | Merged PR #22 to fold in additional Codacy adjustments. |
-| 2025-11-10 ([803b63b](../../commit/803b63b)) | Code Quality | Applied the next wave of Codacy fixes within the codacy-fixes branch. |
-| 2025-11-10 ([83ea953](../../commit/83ea953)) | Code Quality | Merged PR #21 to add yet more Codacy remediation work. |
-| 2025-11-10 ([5cfef53](../../commit/5cfef53)) | Code Quality | Synced codacy-fixes with upstream branches to keep linting aligned. |
-| 2025-11-10 ([d05c99f](../../commit/d05c99f)) | Code Quality | Applied further Codacy fixes after reviewing persistent findings. |
-| 2025-11-10 ([c666bfb](../../commit/c666bfb)) | Code Quality | Merged PR #20 to fold in additional Codacy cleanups. |
-| 2025-11-10 ([554bdc1](../../commit/554bdc1)) | Code Quality | Merged the main branch into codacy-fixes so the branch reflected the latest baseline. |
-| 2025-11-10 ([fe5ff8b](../../commit/fe5ff8b)) | Code Quality, Tooling | Added even more Codacy fixes and committed the .codacy.yml config guiding the analysis. |
-| 2025-11-10 ([d733234](../../commit/d733234)) | Code Quality | Merged PR #19 that continued the Codacy cleanup cycle. |
-| 2025-11-10 ([3a202a8](../../commit/3a202a8)) | Code Quality | Added another wave of Codacy fixes for the Codacy branch. |
-| 2025-11-09 ([5573b8e](../../commit/5573b8e)) | Code Quality | Merged PR #17 with Codacy fixes to address static analysis issues. |
-| 2025-11-09 ([183ba1c](../../commit/183ba1c)) | Code Quality | Fixed Codacy errors including unbound methods, void return expected, forbidden non-null assertions, invalid ObjectId template, and TypeScript compilation errors. |
-| 2025-11-09 ([6dd06d7](../../commit/6dd06d7)) | Code Quality | Merged PR #16 with Codacy fixes to improve code quality. |
-| 2025-11-09 ([c730db8](../../commit/c730db8)) | Code Quality | Merged PR #15 with Codacy fixes to address code quality issues. |
-| 2025-11-09 ([243aed3](../../commit/243aed3)) | Code Quality | Applied Codacy quick fixes and corrected Codacy mistakes. |
-| 2025-11-08 ([702e648](../../commit/702e648)) | Testing, E2E | Added E2E use case test for ManageFriends to validate friend management flows. |
-| 2025-11-08 ([fa69bfe](../../commit/fa69bfe)) | Testing, E2E | Added E2E tests for ManageAccount to validate account management functionality. |
-| 2025-11-07 ([e648d11](../../commit/e648d11)) | Testing, Gamification | Achieved badge test coverage at 100% to ensure comprehensive testing of badge system. |
-| 2025-11-07 ([4dfefd9](../../commit/4dfefd9)) | Testing, User Management | Added user tests to validate user management endpoints and functionality. |
-| 2025-11-07 ([948c381](../../commit/948c381)) | Testing, Pin Management | Completed remaining coverage and fixed pin tests to ensure comprehensive pin testing. |
-| 2025-11-07 ([c15d894](../../commit/c15d894)) | Testing, Real-time | Added gateway tests to validate Socket.io real-time communication functionality. |
-| 2025-11-07 ([6b3a4a0](../../commit/6b3a4a0)) | Testing, Pin Management | Added comprehensive pin tests to validate all pin CRUD operations and interactions. |
-| 2025-11-07 ([06c4055](../../commit/06c4055)) | Testing, Media | Improved media coverage tests to validate image upload and management. |
-| 2025-11-07 ([181ba03](../../commit/181ba03)) | Testing, Debug | Added debug tests to validate debugging endpoints and utilities. |
-| 2025-11-07 ([e43c5b6](../../commit/e43c5b6)) | Testing, Coverage | Improved debug line coverage to ensure comprehensive test coverage reporting. |
-| 2025-11-07 ([951ae4c](../../commit/951ae4c)) | Testing, Recommendations | Added recommendation tests to validate meal recommendation functionality. |
-| 2025-11-07 ([0e8106d](../../commit/0e8106d)) | Testing, E2E | Fixed E2E tests for ManageFriends to ensure reliable friend management testing. |
-| 2025-11-06 ([22ed8c0](../../commit/22ed8c0)) | Testing | Added test files to expand test coverage across the application. |
-| 2025-11-06 ([dcc442d](../../commit/dcc442d)) | Testing, Recommendations | Added recommendation unit tests to validate recommendation service logic. |
-| 2025-11-06 ([a1ce8f6](../../commit/a1ce8f6)) | Testing, E2E | Added E2E tests for ManageFriends to validate friend request and management flows. |
-| 2025-11-06 ([33589cd](../../commit/33589cd)) | Testing, E2E | Added E2E tests for ManagePins to validate pin creation, editing, and deletion. |
-| 2025-11-06 ([6ee1202](../../commit/6ee1202)) | Testing, Coverage | Fixed coverage reports to ensure accurate test coverage reporting. |
-| 2025-11-06 ([412a756](../../commit/412a756)) | Testing, Security | Added security tests to validate authentication, authorization, and input validation. |
-| 2025-11-05 ([85806bf](../../commit/85806bf)) | Testing, Gamification | Added badge tests to validate badge earning and progress tracking functionality. |
-| 2025-11-05 ([d7c5a0d](../../commit/d7c5a0d)) | Testing, Security | Added Security Phase 2 Rank 1 tests to validate advanced security requirements. |
-| 2025-11-05 ([5a11205](../../commit/5a11205)) | Testing, Security | Added security tests phase 1 to validate basic security requirements. |
-| 2025-11-05 ([807f841](../../commit/807f841)) | Testing, Security | Added security tests to validate authentication and authorization mechanisms. |
-| 2025-11-05 ([4964356](../../commit/4964356)) | Testing, Performance | Added location performance testing and pins performance tests to validate response times. |
-| 2025-11-05 ([9493945](../../commit/9493945)) | Testing, Performance | Added performance testing to validate system performance under load. |
-| 2025-11-05 ([ef54b17](../../commit/ef54b17)) | Testing, Performance | Added performance tests for user endpoints to validate response time requirements. |
-| 2025-11-05 ([0d528aa](../../commit/0d528aa)) | Testing, Performance | Added performance testing for friends endpoints to validate scalability. |
-| 2025-11-03 ([e370009](../../commit/e370009)) | Testing, User Management | Fixed user tests that were failing to ensure reliable user management testing. |
-| 2025-11-03 ([befabf2](../../commit/befabf2)) | Testing, User Management | Added user unmocked tests to validate user management endpoints. |
-| 2025-11-03 ([6fa8cd7](../../commit/6fa8cd7)) | Testing, Location | Added unmocked tests for location to validate location tracking functionality. |
-| 2025-11-03 ([99c8178](../../commit/99c8178)) | Testing, Social Features | Added unmocked tests for friends to validate friend management functionality. |
-| 2025-11-03 ([b45af46](../../commit/b45af46)) | Testing, Configuration | Added Jest configuration to set up testing framework and test environment. |
-| 2025-10-31 ([cc1e9b4](../../commit/cc1e9b4)) | Testing, User Management | Added user service tests to validate user service layer functionality. |
-| 2025-10-31 ([dc4b749](../../commit/dc4b749)) | Testing, Coverage | Added additional coverage for friends and location features to improve test coverage. |
-| 2025-10-31 ([958281a](../../commit/958281a)) | Testing, Configuration | Merged PR #11 with Jest setup to establish testing infrastructure. |
-| 2025-10-31 ([38374e6](../../commit/38374e6)) | Testing, Configuration | Added Jest and testing setup for friends to begin comprehensive testing. |
-| 2025-10-29 ([160c630](../../commit/160c630)) | Code Quality | Uploaded M4 Codacy files to track code quality metrics and issues. |
+| **Change Date**                              | **Modified Sections**                     | **Rationale**                                                                                                                                                     |
+| -------------------------------------------- | ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2025-11-28 ([4a47a25](../../commit/4a47a25)) | Documentation, Requirements Specification | Updated final commit hash to reflect latest documentation changes including interface consistency updates in Requirements and Design document.                    |
+| 2025-11-28 ([7be769c](../../commit/7be769c)) | Code Quality, Testing                     | Merged PR #28 with additional Codacy fixes to improve code quality and maintainability.                                                                           |
+| 2025-11-28 ([007f06f](../../commit/007f06f)) | Code Quality                              | Applied more Codacy fixes addressing code style and best practice issues.                                                                                         |
+| 2025-11-28 ([7cb0c6a](../../commit/7cb0c6a)) | Code Quality, Testing                     | Merged PR #27 with Codacy fixes to address static analysis warnings.                                                                                              |
+| 2025-11-28 ([96c8e09](../../commit/96c8e09)) | Code Quality                              | Applied additional Codacy fixes targeting code quality improvements.                                                                                              |
+| 2025-11-28 ([edfb2d8](../../commit/edfb2d8)) | Testing, User Management                  | Added user profile tests to improve coverage of user management functionality.                                                                                    |
+| 2025-11-28 ([380bcb0](../../commit/380bcb0)) | Testing                                   | Applied minor test changes to improve test reliability and coverage.                                                                                              |
+| 2025-11-28 ([b37de8b](../../commit/b37de8b)) | Testing, User Management                  | Added user profile tests to validate user management endpoints.                                                                                                   |
+| 2025-11-28 ([6ad22a2](../../commit/6ad22a2)) | Testing, Authentication                   | Added authentication service coverage tests to ensure comprehensive testing of auth endpoints.                                                                    |
+| 2025-11-28 ([5af5372](../../commit/5af5372)) | Testing Documentation                     | Added clarifying notes in test documentation to improve test setup instructions.                                                                                  |
+| 2025-11-28 ([e6bf80d](../../commit/e6bf80d)) | Testing, Authentication                   | Added check auth endpoint tests to validate authentication verification functionality.                                                                            |
+| 2025-11-28 ([18762ef](../../commit/18762ef)) | Testing, CI/CD                            | Merged test fixes branch to resolve failing test suites and improve CI pipeline stability.                                                                        |
+| 2025-11-28 ([e25e0e8](../../commit/e25e0e8)) | Testing, Authentication                   | Added authentication tests to validate sign-in and sign-up flows.                                                                                                 |
+| 2025-11-28 ([75d2cbe](../../commit/75d2cbe)) | Testing, Authentication                   | Added partial authentication tests to begin coverage of auth endpoints.                                                                                           |
+| 2025-11-28 ([edf4f65](../../commit/edf4f65)) | Testing, External APIs                    | Added Places service API tests to validate Google Maps API integration.                                                                                           |
+| 2025-11-27 ([0f4e06b](../../commit/0f4e06b)) | Testing, Recommendations                  | Added recommendation tests to validate meal recommendation functionality.                                                                                         |
+| 2025-11-27 ([0625528](../../commit/0625528)) | Testing, Pin Management                   | Improved pin test coverage to ensure comprehensive testing of pin operations.                                                                                     |
+| 2025-11-27 ([8610989](../../commit/8610989)) | Testing, Pin Management                   | Added pin tests to validate CRUD operations and pin interactions.                                                                                                 |
+| 2025-11-27 ([d0765f8](../../commit/d0765f8)) | Testing, Media                            | Added media tests to validate image upload and media management functionality.                                                                                    |
+| 2025-11-27 ([2758ff4](../../commit/2758ff4)) | Testing, Location                         | Added location tests to validate location tracking and sharing features.                                                                                          |
+| 2025-11-27 ([74e66c6](../../commit/74e66c6)) | Testing, Social Features                  | Completed friends tests to ensure comprehensive coverage of friend management functionality.                                                                      |
+| 2025-11-27 ([490996d](../../commit/490996d)) | Testing, Location                         | Added friend location unmocked tests to validate real-time location sharing.                                                                                      |
+| 2025-11-27 ([513edb2](../../commit/513edb2)) | Testing, Social Features                  | Added friends unmocked tests to validate friend request and management flows.                                                                                     |
+| 2025-11-27 ([6fc3e12](../../commit/6fc3e12)) | Testing, Gamification                     | Added mocked tests for badges, addressing test failures in badge functionality.                                                                                   |
+| 2025-11-27 ([b405796](../../commit/b405796)) | Testing, Gamification                     | Added badge unmocked tests to validate badge earning and progress tracking.                                                                                       |
+| 2025-11-27 ([352b4f9](../../commit/352b4f9)) | Testing, Gamification                     | Added unmocked tests for badges to validate badge system functionality.                                                                                           |
+| 2025-11-24 ([a5fdfdd](../../commit/a5fdfdd)) | Code Quality                              | Merged PR #24 with Codacy fixes to address code quality issues.                                                                                                   |
+| 2025-11-24 ([96e4f8f](../../commit/96e4f8f)) | Code Quality                              | Applied more Codacy fixes to improve code maintainability and style.                                                                                              |
+| 2025-11-10 ([915eecd](../../commit/915eecd)) | CI/CD, Testing                            | Fixed GitHub Actions to ensure test pipeline runs successfully.                                                                                                   |
+| 2025-11-10 ([1dd5482](../../commit/1dd5482)) | Testing Documentation                     | Added coverage screenshots to documentation for visual verification of test coverage.                                                                             |
+| 2025-11-10 ([b2e9bfe](../../commit/b2e9bfe)) | Testing, E2E                              | Updated E2E finish flow artifacts to reflect stabilized UI state.                                                                                                 |
+| 2025-11-10 ([30953f4](../../commit/30953f4)) | Testing, E2E                              | Revised post-E2E finish definitions after additional UI tweaks.                                                                                                   |
+| 2025-11-10 ([e8dfd22](../../commit/e8dfd22)) | Testing, E2E                              | Continued refining end-to-end test coverage to pass reliably across environments.                                                                                 |
+| 2025-11-10 ([0d47a3a](../../commit/0d47a3a)) | Testing Documentation                     | Documented updated testing process for clarity after recent automation refinements.                                                                               |
+| 2025-11-10 ([94de934](../../commit/94de934)) | Testing                                   | Confirmed focused test suites were working after previous fix attempts.                                                                                           |
+| 2025-11-10 ([0f30110](../../commit/0f30110)) | Testing                                   | Applied partial fixes to several failing tests to progress toward stability.                                                                                      |
+| 2025-11-10 ([c4efbb5](../../commit/c4efbb5)) | Testing, Real-time                        | Verified realtime gateway via dedicated unit tests after integration adjustments.                                                                                 |
+| 2025-11-10 ([682722b](../../commit/682722b)) | Code Quality                              | Merged PR #23 that bundled several Codacy fixes into the branch.                                                                                                  |
+| 2025-11-10 ([fcf833a](../../commit/fcf833a)) | Code Quality                              | Added another set of Codacy cleanups targeting new warnings.                                                                                                      |
+| 2025-11-10 ([9cd649b](../../commit/9cd649b)) | Code Quality                              | Merged PR #22 to fold in additional Codacy adjustments.                                                                                                           |
+| 2025-11-10 ([803b63b](../../commit/803b63b)) | Code Quality                              | Applied the next wave of Codacy fixes within the codacy-fixes branch.                                                                                             |
+| 2025-11-10 ([83ea953](../../commit/83ea953)) | Code Quality                              | Merged PR #21 to add yet more Codacy remediation work.                                                                                                            |
+| 2025-11-10 ([5cfef53](../../commit/5cfef53)) | Code Quality                              | Synced codacy-fixes with upstream branches to keep linting aligned.                                                                                               |
+| 2025-11-10 ([d05c99f](../../commit/d05c99f)) | Code Quality                              | Applied further Codacy fixes after reviewing persistent findings.                                                                                                 |
+| 2025-11-10 ([c666bfb](../../commit/c666bfb)) | Code Quality                              | Merged PR #20 to fold in additional Codacy cleanups.                                                                                                              |
+| 2025-11-10 ([554bdc1](../../commit/554bdc1)) | Code Quality                              | Merged the main branch into codacy-fixes so the branch reflected the latest baseline.                                                                             |
+| 2025-11-10 ([fe5ff8b](../../commit/fe5ff8b)) | Code Quality, Tooling                     | Added even more Codacy fixes and committed the .codacy.yml config guiding the analysis.                                                                           |
+| 2025-11-10 ([d733234](../../commit/d733234)) | Code Quality                              | Merged PR #19 that continued the Codacy cleanup cycle.                                                                                                            |
+| 2025-11-10 ([3a202a8](../../commit/3a202a8)) | Code Quality                              | Added another wave of Codacy fixes for the Codacy branch.                                                                                                         |
+| 2025-11-09 ([5573b8e](../../commit/5573b8e)) | Code Quality                              | Merged PR #17 with Codacy fixes to address static analysis issues.                                                                                                |
+| 2025-11-09 ([183ba1c](../../commit/183ba1c)) | Code Quality                              | Fixed Codacy errors including unbound methods, void return expected, forbidden non-null assertions, invalid ObjectId template, and TypeScript compilation errors. |
+| 2025-11-09 ([6dd06d7](../../commit/6dd06d7)) | Code Quality                              | Merged PR #16 with Codacy fixes to improve code quality.                                                                                                          |
+| 2025-11-09 ([c730db8](../../commit/c730db8)) | Code Quality                              | Merged PR #15 with Codacy fixes to address code quality issues.                                                                                                   |
+| 2025-11-09 ([243aed3](../../commit/243aed3)) | Code Quality                              | Applied Codacy quick fixes and corrected Codacy mistakes.                                                                                                         |
+| 2025-11-08 ([702e648](../../commit/702e648)) | Testing, E2E                              | Added E2E use case test for ManageFriends to validate friend management flows.                                                                                    |
+| 2025-11-08 ([fa69bfe](../../commit/fa69bfe)) | Testing, E2E                              | Added E2E tests for ManageAccount to validate account management functionality.                                                                                   |
+| 2025-11-07 ([e648d11](../../commit/e648d11)) | Testing, Gamification                     | Achieved badge test coverage at 100% to ensure comprehensive testing of badge system.                                                                             |
+| 2025-11-07 ([4dfefd9](../../commit/4dfefd9)) | Testing, User Management                  | Added user tests to validate user management endpoints and functionality.                                                                                         |
+| 2025-11-07 ([948c381](../../commit/948c381)) | Testing, Pin Management                   | Completed remaining coverage and fixed pin tests to ensure comprehensive pin testing.                                                                             |
+| 2025-11-07 ([c15d894](../../commit/c15d894)) | Testing, Real-time                        | Added gateway tests to validate Socket.io real-time communication functionality.                                                                                  |
+| 2025-11-07 ([6b3a4a0](../../commit/6b3a4a0)) | Testing, Pin Management                   | Added comprehensive pin tests to validate all pin CRUD operations and interactions.                                                                               |
+| 2025-11-07 ([06c4055](../../commit/06c4055)) | Testing, Media                            | Improved media coverage tests to validate image upload and management.                                                                                            |
+| 2025-11-07 ([181ba03](../../commit/181ba03)) | Testing, Debug                            | Added debug tests to validate debugging endpoints and utilities.                                                                                                  |
+| 2025-11-07 ([e43c5b6](../../commit/e43c5b6)) | Testing, Coverage                         | Improved debug line coverage to ensure comprehensive test coverage reporting.                                                                                     |
+| 2025-11-07 ([951ae4c](../../commit/951ae4c)) | Testing, Recommendations                  | Added recommendation tests to validate meal recommendation functionality.                                                                                         |
+| 2025-11-07 ([0e8106d](../../commit/0e8106d)) | Testing, E2E                              | Fixed E2E tests for ManageFriends to ensure reliable friend management testing.                                                                                   |
+| 2025-11-06 ([22ed8c0](../../commit/22ed8c0)) | Testing                                   | Added test files to expand test coverage across the application.                                                                                                  |
+| 2025-11-06 ([dcc442d](../../commit/dcc442d)) | Testing, Recommendations                  | Added recommendation unit tests to validate recommendation service logic.                                                                                         |
+| 2025-11-06 ([a1ce8f6](../../commit/a1ce8f6)) | Testing, E2E                              | Added E2E tests for ManageFriends to validate friend request and management flows.                                                                                |
+| 2025-11-06 ([33589cd](../../commit/33589cd)) | Testing, E2E                              | Added E2E tests for ManagePins to validate pin creation, editing, and deletion.                                                                                   |
+| 2025-11-06 ([6ee1202](../../commit/6ee1202)) | Testing, Coverage                         | Fixed coverage reports to ensure accurate test coverage reporting.                                                                                                |
+| 2025-11-06 ([412a756](../../commit/412a756)) | Testing, Security                         | Added security tests to validate authentication, authorization, and input validation.                                                                             |
+| 2025-11-05 ([85806bf](../../commit/85806bf)) | Testing, Gamification                     | Added badge tests to validate badge earning and progress tracking functionality.                                                                                  |
+| 2025-11-05 ([d7c5a0d](../../commit/d7c5a0d)) | Testing, Security                         | Added Security Phase 2 Rank 1 tests to validate advanced security requirements.                                                                                   |
+| 2025-11-05 ([5a11205](../../commit/5a11205)) | Testing, Security                         | Added security tests phase 1 to validate basic security requirements.                                                                                             |
+| 2025-11-05 ([807f841](../../commit/807f841)) | Testing, Security                         | Added security tests to validate authentication and authorization mechanisms.                                                                                     |
+| 2025-11-05 ([4964356](../../commit/4964356)) | Testing, Performance                      | Added location performance testing and pins performance tests to validate response times.                                                                         |
+| 2025-11-05 ([9493945](../../commit/9493945)) | Testing, Performance                      | Added performance testing to validate system performance under load.                                                                                              |
+| 2025-11-05 ([ef54b17](../../commit/ef54b17)) | Testing, Performance                      | Added performance tests for user endpoints to validate response time requirements.                                                                                |
+| 2025-11-05 ([0d528aa](../../commit/0d528aa)) | Testing, Performance                      | Added performance testing for friends endpoints to validate scalability.                                                                                          |
+| 2025-11-03 ([e370009](../../commit/e370009)) | Testing, User Management                  | Fixed user tests that were failing to ensure reliable user management testing.                                                                                    |
+| 2025-11-03 ([befabf2](../../commit/befabf2)) | Testing, User Management                  | Added user unmocked tests to validate user management endpoints.                                                                                                  |
+| 2025-11-03 ([6fa8cd7](../../commit/6fa8cd7)) | Testing, Location                         | Added unmocked tests for location to validate location tracking functionality.                                                                                    |
+| 2025-11-03 ([99c8178](../../commit/99c8178)) | Testing, Social Features                  | Added unmocked tests for friends to validate friend management functionality.                                                                                     |
+| 2025-11-03 ([b45af46](../../commit/b45af46)) | Testing, Configuration                    | Added Jest configuration to set up testing framework and test environment.                                                                                        |
+| 2025-10-31 ([cc1e9b4](../../commit/cc1e9b4)) | Testing, User Management                  | Added user service tests to validate user service layer functionality.                                                                                            |
+| 2025-10-31 ([dc4b749](../../commit/dc4b749)) | Testing, Coverage                         | Added additional coverage for friends and location features to improve test coverage.                                                                             |
+| 2025-10-31 ([958281a](../../commit/958281a)) | Testing, Configuration                    | Merged PR #11 with Jest setup to establish testing infrastructure.                                                                                                |
+| 2025-10-31 ([38374e6](../../commit/38374e6)) | Testing, Configuration                    | Added Jest and testing setup for friends to begin comprehensive testing.                                                                                          |
+| 2025-10-29 ([160c630](../../commit/160c630)) | Code Quality                              | Uploaded M4 Codacy files to track code quality metrics and issues.                                                                                                |
 
 ---
 
@@ -103,65 +103,62 @@
 
 #### 2.1.1. API Test Coverage Table
 
-| Interface                                 | Describe Group Location, No Mocks                          | Describe Group Location, With Mocks                | Mocked Components                                                     |
-| ----------------------------------------- | ---------------------------------------------------------- | -------------------------------------------------- | --------------------------------------------------------------------- |
-| `GET /health`                             | N/A (No dedicated test)                                    | N/A                                                | N/A                                                                   |
-| `POST /auth/signup`                       | `backend/tests/unmocked/auth.integration.test.ts#L4`       | N/A                                                | N/A                                                                   |
-| `POST /auth/signin`                       | `backend/tests/unmocked/auth.integration.test.ts#L4`       | N/A                                                | N/A                                                                   |
-| `POST /auth/check`                        | `backend/tests/unmocked/auth.integration.test.ts#L4`       | N/A                                                | N/A                                                                   |
-| `GET /badges`                             | `backend/tests/unmocked/badge.integration.test.ts#L112`    | `backend/tests/mocked/badge.test.ts#L41`           | `badgeModel`, `BadgeService`                                          |
-| `GET /badges/user/earned`                 | `backend/tests/unmocked/badge.integration.test.ts#L208`    | `backend/tests/mocked/badge.test.ts#L180`          | `badgeModel`, `BadgeService`                                          |
-| `GET /badges/user/available`              | `backend/tests/unmocked/badge.integration.test.ts#L269`    | `backend/tests/mocked/badge.test.ts#L269`          | `badgeModel`, `BadgeService`                                          |
-| `GET /badges/user/progress`               | `backend/tests/unmocked/badge.integration.test.ts#L321`    | `backend/tests/mocked/badge.test.ts#L347`          | `badgeModel`, `BadgeService`                                          |
-| `GET /badges/user/stats`                  | `backend/tests/unmocked/badge.integration.test.ts#L374`    | `backend/tests/mocked/badge.test.ts#L435`          | `badgeModel`, `BadgeService`                                          |
-| `POST /badges/user/event`                 | `backend/tests/unmocked/badge.integration.test.ts#L419`    | `backend/tests/mocked/badge.test.ts#L522`          | `badgeModel`, `BadgeService`                                          |
-| `GET /users/profile`                      | `backend/tests/unmocked/user.integration.test.ts#L157`     | `backend/tests/mocked/user.test.ts#L51`            | `userModel`, `friendshipModel`, `badgeModel`, `MediaService`          |
-| `POST /users/profile`                     | `backend/tests/unmocked/user.integration.test.ts#L157`     | `backend/tests/mocked/user.test.ts#L171`           | `userModel`, `friendshipModel`, `badgeModel`, `MediaService`          |
-| `DELETE /users/profile`                   | `backend/tests/unmocked/user.integration.test.ts#L537`     | `backend/tests/mocked/user.test.ts#L201`           | `userModel`, `friendshipModel`, `badgeModel`, `MediaService`          |
-| `GET /users/search`                       | `backend/tests/unmocked/user.integration.test.ts#L314`     | `backend/tests/mocked/user.test.ts#L243`           | `userModel`, `friendshipModel`, `badgeModel`, `MediaService`          |
-| `GET /users/me`                           | `backend/tests/unmocked/user.integration.test.ts#L157`     | `backend/tests/mocked/user.test.ts#L316`           | `userModel`, `friendshipModel`, `badgeModel`, `MediaService`          |
-| `PATCH /users/me/privacy`                 | `backend/tests/unmocked/user.integration.test.ts#L384`     | `backend/tests/mocked/user.test.ts#L467`           | `userModel`, `friendshipModel`, `badgeModel`, `MediaService`          |
-| `PUT /users/me/fcm-token`                 | `backend/tests/unmocked/user.integration.test.ts#L454`     | `backend/tests/mocked/user.test.ts#L525`           | `userModel`, `friendshipModel`, `badgeModel`, `MediaService`          |
-| `DELETE /users/me/fcm-token`              | `backend/tests/unmocked/user.integration.test.ts#L454`     | `backend/tests/mocked/user.test.ts#L593`           | `userModel`, `friendshipModel`, `badgeModel`, `MediaService`          |
-| `GET /users/:userId/profile`              | `backend/tests/unmocked/user.integration.test.ts#L229`     | `backend/tests/mocked/user.test.ts#L73`            | `userModel`, `friendshipModel`, `badgeModel`, `MediaService`          |
-| `GET /users/admin/all`                    | `backend/tests/unmocked/user.integration.test.ts#L101`     | `backend/tests/mocked/user.test.ts#L356`           | `userModel`, `friendshipModel`, `badgeModel`, `MediaService`          |
-| `PATCH /users/admin/:id/suspend`          | `backend/tests/unmocked/user.integration.test.ts#L101`     | `backend/tests/mocked/user.test.ts#L388`           | `userModel`, `friendshipModel`, `badgeModel`, `MediaService`          |
-| `PATCH /users/admin/:id/unsuspend`        | `backend/tests/unmocked/user.integration.test.ts#L101`     | `backend/tests/mocked/user.test.ts#L388`           | `userModel`, `friendshipModel`, `badgeModel`, `MediaService`          |
-| `DELETE /users/admin/:id`                 | `backend/tests/unmocked/user.integration.test.ts#L101`     | `backend/tests/mocked/user.test.ts#L294`           | `userModel`, `friendshipModel`, `badgeModel`, `MediaService`          |
-| `POST /friends/requests`                  | `backend/tests/unmocked/friends.integration.test.ts#L66`   | `backend/tests/mocked/friends.test.ts#L38`         | `friendshipModel`, `userModel`, `notificationService`, `BadgeService` |
-| `GET /friends/requests`                   | `backend/tests/unmocked/friends.integration.test.ts#L157`  | `backend/tests/mocked/friends.test.ts#L156`        | `friendshipModel`, `userModel`, `notificationService`, `BadgeService` |
-| `POST /friends/requests/:id/accept`       | `backend/tests/unmocked/friends.integration.test.ts#L213`  | `backend/tests/mocked/friends.test.ts#L238`        | `friendshipModel`, `userModel`, `notificationService`, `BadgeService` |
-| `POST /friends/requests/:id/decline`      | `backend/tests/unmocked/friends.integration.test.ts#L213`  | `backend/tests/mocked/friends.test.ts#L406`        | `friendshipModel`, `userModel`, `notificationService`, `BadgeService` |
-| `GET /friends`                            | `backend/tests/unmocked/friends.integration.test.ts#L294`  | `backend/tests/mocked/friends.test.ts#L473`        | `friendshipModel`, `userModel`, `notificationService`, `BadgeService` |
-| `PATCH /friends/:friendId`                | `backend/tests/unmocked/friends.integration.test.ts#L30`   | `backend/tests/mocked/friends.test.ts#L547`        | `friendshipModel`, `userModel`, `notificationService`, `BadgeService` |
-| `DELETE /friends/:friendId`               | `backend/tests/unmocked/friends.integration.test.ts#L30`   | `backend/tests/mocked/friends.test.ts#L651`        | `friendshipModel`, `userModel`, `notificationService`, `BadgeService` |
-| `GET /friends/locations`                  | `backend/tests/unmocked/location.integration.test.ts#L267` | `backend/tests/mocked/location.test.ts#L116`       | `locationGateway`                                                     |
-| `PUT /location`                           | `backend/tests/unmocked/location.integration.test.ts#L90`  | `backend/tests/mocked/location.test.ts#L31`        | `locationGateway`                                                     |
-| `POST /pins`                              | `backend/tests/unmocked/pins.integration.test.ts#L92`      | `backend/tests/mocked/pins.test.ts#L38`            | `pinModel`, `pinVoteModel`, `userModel`, `BadgeService`               |
-| `GET /pins/search`                        | `backend/tests/unmocked/pins.integration.test.ts#L184`     | `backend/tests/mocked/pins.test.ts#L164`           | `pinModel`, `pinVoteModel`, `userModel`, `BadgeService`               |
-| `GET /pins/:id`                           | `backend/tests/unmocked/pins.integration.test.ts#L287`     | `backend/tests/mocked/pins.test.ts#L240`           | `pinModel`, `pinVoteModel`, `userModel`, `BadgeService`               |
-| `GET /pins/:id/vote`                      | `backend/tests/unmocked/pins.integration.test.ts#L667`     | `backend/tests/mocked/pins.test.ts#L589`           | `pinModel`, `pinVoteModel`, `userModel`, `BadgeService`               |
-| `PUT /pins/:id`                           | `backend/tests/unmocked/pins.integration.test.ts#L330`     | `backend/tests/mocked/pins.test.ts#L294`           | `pinModel`, `pinVoteModel`, `userModel`, `BadgeService`               |
-| `DELETE /pins/:id`                        | `backend/tests/unmocked/pins.integration.test.ts#L399`     | `backend/tests/mocked/pins.test.ts#L345`           | `pinModel`, `pinVoteModel`, `userModel`, `BadgeService`               |
-| `POST /pins/:id/rate`                     | `backend/tests/unmocked/pins.integration.test.ts#L447`     | `backend/tests/mocked/pins.test.ts#L382`           | `pinModel`, `pinVoteModel`, `userModel`, `BadgeService`               |
-| `POST /pins/:id/report`                   | `backend/tests/unmocked/pins.integration.test.ts#L529`     | `backend/tests/mocked/pins.test.ts#L475`           | `pinModel`, `pinVoteModel`, `userModel`, `BadgeService`               |
-| `POST /pins/:id/visit`                    | `backend/tests/unmocked/pins.integration.test.ts#L600`     | `backend/tests/mocked/pins.test.ts#L533`           | `pinModel`, `pinVoteModel`, `userModel`, `BadgeService`               |
-| `GET /pins/admin/reported`                | `backend/tests/unmocked/pins.integration.test.ts#L39`      | `backend/tests/mocked/pins.test.ts#L38`            | `pinModel`, `pinVoteModel`, `userModel`, `BadgeService`               |
-| `PATCH /pins/admin/:id/clear-reports`     | `backend/tests/unmocked/pins.integration.test.ts#L39`      | `backend/tests/mocked/pins.test.ts#L38`            | `pinModel`, `pinVoteModel`, `userModel`, `BadgeService`               |
-| `POST /media/upload`                      | `backend/tests/unmocked/media.service.test.ts#L7`          | `backend/tests/mocked/media.test.ts#L34`           | `MediaService`, `userModel`                                           |
-| `GET /recommendations/:mealType`          | `backend/tests/unmocked/recommendation.test.ts#L385`       | `backend/tests/mocked/recommendations.test.ts#L33` | `weatherService`, `notificationService`, `placesApiService`           |
-| `POST /recommendations/notify/:mealType`  | `backend/tests/unmocked/recommendation.test.ts#L415`       | `backend/tests/mocked/recommendations.test.ts#L90` | `weatherService`, `notificationService`, `placesApiService`           |
-| `POST /debug/notification/test`           | `backend/tests/unmocked/debug.integration.test.ts#L89`     | `backend/tests/mocked/debug.test.ts#L40`           | `userModel`, `notificationService`, `firebaseService`                 |
-| `POST /debug/notification/friend-request` | `backend/tests/unmocked/debug.integration.test.ts#L203`    | `backend/tests/mocked/debug.test.ts#L172`          | `userModel`, `notificationService`, `firebaseService`                 |
-| `GET /debug/users/tokens`                 | `backend/tests/unmocked/debug.integration.test.ts#L273`    | `backend/tests/mocked/debug.test.ts#L259`          | `userModel`, `notificationService`, `firebaseService`                 |
+| Interface                                | Describe Group Location, No Mocks                                       | Describe Group Location, With Mocks                                       | Mocked Components                                       |
+| ---------------------------------------- | ----------------------------------------------------------------------- | ------------------------------------------------------------------------- | ------------------------------------------------------- |
+| `GET /health`                            | N/A (No dedicated test)                                                 | N/A                                                                       | N/A                                                     |
+| `POST /auth/signup`                      | N/A (No unmocked test)                                                  | `backend/test/mocked/auth/auth-signup-api.test.ts#L29`                    | `authService`                                           |
+| `POST /auth/signin`                      | N/A (No unmocked test)                                                  | `backend/test/mocked/auth/auth-signin-api.test.ts#L85`                    | `authService`                                           |
+| `POST /auth/check`                       | N/A (No unmocked test)                                                  | `backend/test/mocked/auth/auth-check-api.test.ts#L83`                     | `authService`                                           |
+| `GET /badges`                            | `backend/test/unmocked/badges/badges.test.ts#L19`                       | `backend/test/mocked/badges/badge-qualification-coverage.test.ts#L5`      | `badgeModel`, `BadgeService`                            |
+| `GET /badges/user/earned`                | `backend/test/unmocked/badges/badges-user-earned.test.ts#L101`          | `backend/test/mocked/badges/badge-qualification-coverage.test.ts#L5`      | `badgeModel`, `BadgeService`                            |
+| `GET /badges/user/available`             | `backend/test/unmocked/badges/badges-user-available.test.ts#L101`       | `backend/test/mocked/badges/badge-qualification-coverage.test.ts#L5`      | `badgeModel`, `BadgeService`                            |
+| `GET /badges/user/progress`              | `backend/test/unmocked/badges/badges-user-progress.test.ts#L101`        | `backend/test/mocked/badges/badge-qualification-coverage.test.ts#L5`      | `badgeModel`, `BadgeService`                            |
+| `GET /badges/user/stats`                 | `backend/test/unmocked/badges/badges-user-stats.test.ts#L101`           | `backend/test/mocked/badges/badge-qualification-coverage.test.ts#L5`      | `badgeModel`, `BadgeService`                            |
+| `POST /badges/user/event`                | `backend/test/unmocked/badges/badges-user-event.test.ts#L77`            | `backend/test/mocked/badges/badge-qualification-coverage.test.ts#L5`      | `badgeModel`, `BadgeService`                            |
+| `GET /user/profile` or `/users/profile`  | N/A (No dedicated unmocked test)                                        | `backend/test/mocked/user/user-profile-api.test.ts#L107`                  | `userModel`, `friendshipModel`, `badgeModel`            |
+| `POST /user/profile` or `/users/profile` | N/A (No dedicated unmocked test)                                        | `backend/test/mocked/user/user-profile-api.test.ts#L133`                  | `userModel`, `friendshipModel`, `badgeModel`            |
+| `DELETE /user/profile`                   | N/A (No dedicated unmocked test)                                        | `backend/test/mocked/user/user-profile-api.test.ts#L200`                  | `userModel`, `friendshipModel`, `badgeModel`            |
+| `GET /users/search`                      | N/A (No dedicated unmocked test)                                        | `backend/test/mocked/user/user-profile-api.test.ts#L424`                  | `userModel`, `friendshipModel`, `badgeModel`            |
+| `GET /user/me` or `/users/me`            | N/A (No dedicated unmocked test)                                        | `backend/test/mocked/user/user-profile-api.test.ts#L539`                  | `userModel`, `friendshipModel`, `badgeModel`            |
+| `PATCH /user/me/privacy`                 | N/A (No dedicated unmocked test)                                        | `backend/test/mocked/user/user-profile-api.test.ts#L565`                  | `userModel`, `friendshipModel`, `badgeModel`            |
+| `PUT /user/me/fcm-token`                 | N/A (No dedicated unmocked test)                                        | `backend/test/mocked/user/user-profile-api.test.ts#L930`                  | `userModel`, `friendshipModel`, `badgeModel`            |
+| `DELETE /user/me/fcm-token`              | N/A (No dedicated unmocked test)                                        | `backend/test/mocked/user/user-profile-api.test.ts#L1009`                 | `userModel`, `friendshipModel`, `badgeModel`            |
+| `GET /users/:userId/profile`             | N/A (No dedicated unmocked test)                                        | `backend/test/mocked/user/user-profile-api.test.ts#L267`                  | `userModel`, `friendshipModel`, `badgeModel`            |
+| `GET /user/admin/all`                    | N/A (No dedicated unmocked test)                                        | `backend/test/mocked/user/user-profile-api.test.ts#L654`                  | `userModel`, `friendshipModel`, `badgeModel`            |
+| `PATCH /user/admin/:id/suspend`          | N/A (No dedicated unmocked test)                                        | `backend/test/mocked/user/user-profile-api.test.ts#L703`                  | `userModel`, `friendshipModel`, `badgeModel`            |
+| `PATCH /user/admin/:id/unsuspend`        | N/A (No dedicated unmocked test)                                        | `backend/test/mocked/user/user-profile-api.test.ts#L776`                  | `userModel`, `friendshipModel`, `badgeModel`            |
+| `DELETE /user/admin/:id`                 | N/A (No dedicated unmocked test)                                        | `backend/test/mocked/user/user-profile-api.test.ts#L840`                  | `userModel`, `friendshipModel`, `badgeModel`            |
+| `POST /friends/requests`                 | `backend/test/unmocked/friends/friends-send-request.test.ts#L61`        | `backend/test/mocked/friends/friends-edge-cases.test.ts#L12`              | `friendshipModel`, `userModel`, `notificationService`   |
+| `GET /friends/requests`                  | `backend/test/unmocked/friends/friends-send-request.test.ts#L468`       | `backend/test/mocked/friends/friends-edge-cases.test.ts#L12`              | `friendshipModel`, `userModel`, `notificationService`   |
+| `POST /friends/requests/:id/accept`      | `backend/test/unmocked/friends/friends-accept-decline.test.ts#L24`      | `backend/test/mocked/friends/friends-edge-cases.test.ts#L12`              | `friendshipModel`, `userModel`, `notificationService`   |
+| `POST /friends/requests/:id/decline`     | `backend/test/unmocked/friends/friends-accept-decline.test.ts#L214`     | `backend/test/mocked/friends/friends-edge-cases.test.ts#L12`              | `friendshipModel`, `userModel`, `notificationService`   |
+| `GET /friends`                           | `backend/test/unmocked/friends/friends-management.test.ts#L24`          | `backend/test/mocked/friends/friends-edge-cases.test.ts#L12`              | `friendshipModel`, `userModel`, `notificationService`   |
+| `PATCH /friends/:friendId`               | `backend/test/unmocked/friends/friends-management.test.ts#L240`         | `backend/test/mocked/friends/friends-edge-cases.test.ts#L12`              | `friendshipModel`, `userModel`, `notificationService`   |
+| `DELETE /friends/:friendId`              | `backend/test/unmocked/friends/friends-management.test.ts#L438`         | `backend/test/mocked/friends/friends-edge-cases.test.ts#L12`              | `friendshipModel`, `userModel`, `notificationService`   |
+| `GET /friends/locations`                 | `backend/test/unmocked/friends/friends-locations.test.ts#L25`           | `backend/test/mocked/location/location-edge-cases.test.ts#L10`            | `locationGateway`, `friendshipModel`                    |
+| `PUT /me/location`                       | `backend/test/unmocked/location/location-upsert.test.ts#L61`            | `backend/test/mocked/location/location-edge-cases.test.ts#L10`            | `locationGateway`, `badgeService`                       |
+| `POST /pins`                             | `backend/test/unmocked/pins/pins-crud.test.ts#L85`                      | `backend/test/mocked/pins/pins-edge-cases.test.ts#L39`                    | `pinModel`, `pinVoteModel`, `userModel`, `BadgeService` |
+| `GET /pins/search`                       | `backend/test/unmocked/pins/pins-features.test.ts#L363`                 | `backend/test/mocked/pins/pins-edge-cases.test.ts#L652`                   | `pinModel`, `pinVoteModel`, `userModel`, `BadgeService` |
+| `GET /pins/:id`                          | `backend/test/unmocked/pins/pins-crud.test.ts#L265`                     | `backend/test/mocked/pins/pins-edge-cases.test.ts#L188`                   | `pinModel`, `pinVoteModel`, `userModel`, `BadgeService` |
+| `GET /pins/:id/vote`                     | `backend/test/unmocked/pins/pins-features.test.ts#L207`                 | `backend/test/mocked/pins/pins-edge-cases.test.ts#L422`                   | `pinModel`, `pinVoteModel`, `userModel`, `BadgeService` |
+| `PUT /pins/:id`                          | `backend/test/unmocked/pins/pins-crud.test.ts#L328`                     | `backend/test/mocked/pins/pins-edge-cases.test.ts#L239`                   | `pinModel`, `pinVoteModel`, `userModel`, `BadgeService` |
+| `DELETE /pins/:id`                       | `backend/test/unmocked/pins/pins-crud.test.ts#L403`                     | `backend/test/mocked/pins/pins-edge-cases.test.ts#L307`                   | `pinModel`, `pinVoteModel`, `userModel`, `BadgeService` |
+| `POST /pins/:id/rate`                    | `backend/test/unmocked/pins/pins-features.test.ts#L94`                  | `backend/test/mocked/pins/pins-edge-cases.test.ts#L371`                   | `pinModel`, `pinVoteModel`, `userModel`, `BadgeService` |
+| `POST /pins/:id/report`                  | `backend/test/unmocked/pins/pins-features.test.ts#L282`                 | `backend/test/mocked/pins/pins-edge-cases.test.ts#L470`                   | `pinModel`, `pinVoteModel`, `userModel`, `BadgeService` |
+| `POST /pins/:id/visit`                   | `backend/test/unmocked/pins/pins-features.test.ts#L411`                 | `backend/test/mocked/pins/pins-edge-cases.test.ts#L686`                   | `pinModel`, `pinVoteModel`, `userModel`, `BadgeService` |
+| `GET /pins/admin/reported`               | N/A (No dedicated unmocked test)                                        | `backend/test/mocked/pins/pins-admin.test.ts#L26`                         | `pinModel`, `pinVoteModel`, `userModel`, `BadgeService` |
+| `PATCH /pins/admin/:id/clear-reports`    | N/A (No dedicated unmocked test)                                        | `backend/test/mocked/pins/pins-admin.test.ts#L100`                        | `pinModel`, `pinVoteModel`, `userModel`, `BadgeService` |
+| `POST /media/upload`                     | `backend/test/unmocked/media/media-upload.test.ts#L66`                  | `backend/test/mocked/media/media-edge-cases.test.ts#L15`                  | `MediaService`, `userModel`                             |
+| `GET /recommendations/:mealType`         | `backend/test/unmocked/recommendations/recommendations-api.test.ts#L24` | `backend/test/mocked/recommendations/recommendations-simple.test.ts#L51`  | `pinModel`, `locationGateway`, `notificationService`    |
+| `POST /recommendations/notify/:mealType` | `backend/test/unmocked/recommendations/recommendations-api.test.ts#L53` | `backend/test/mocked/recommendations/recommendations-simple.test.ts#L124` | `pinModel`, `locationGateway`, `notificationService`    |
 
 #### 2.1.2. Commit Hash
 
 The hash of the commit on the main branch where tests run:
 
-**Commit Hash:** `3e4b0fe` (full hash: `3e4b0fe...` - latest commit on main branch as of document generation)
+**Commit Hash:** `a52becd` (full hash: `a52becd...` - latest commit on main branch as of November 28, 2025)
 
-**Note:** This commit represents the latest state of the main branch where all backend tests are configured to run. The commit includes comprehensive test coverage improvements, authentication fixes, and error handling enhancements.
+**Note:** This commit represents the latest state of the main branch where all backend tests are configured to run. The test suite includes comprehensive API coverage with unmocked integration tests, mocked API tests, security tests, and performance tests organized by feature domain.
 
 #### 2.1.3. Instructions on How to Run the Tests
 
@@ -182,14 +179,14 @@ npm test
 
 ```bash
 cd backend
-npm test -- tests/unmocked
+npm test -- test/unmocked
 ```
 
 **Running Tests With Mocks:**
 
 ```bash
 cd backend
-npm test -- tests/mocked
+npm test -- test/mocked
 ```
 
 **Running Tests with Coverage:**
@@ -203,31 +200,25 @@ npm run test:coverage
 
 ```bash
 cd backend
-npm test -- tests/unmocked/badge.integration.test.ts
-npm test -- tests/mocked/badge.test.ts
+npm test -- test/unmocked/badges/badges.test.ts
+npm test -- test/mocked/badges/badge-qualification-coverage.test.ts
 ```
 
 **Test Environment:**
 
 - Tests use MongoDB Memory Server for database isolation
 - Tests automatically set up and tear down test data
-- Authentication is handled via `x-dev-user-id` header and `Authorization` header in integration tests
-- Mocked tests use Jest mocks for external dependencies
+- Authentication is handled via dev token bypass (`x-dev-user-id` header and `Authorization: Bearer dev-{userId}` header)
+- Unmocked tests validate end-to-end functionality with real database operations
+- Mocked tests use Jest mocks for external dependencies to test edge cases and error handling
+- Security tests validate authentication, authorization, input validation, and privacy controls
+- Performance tests measure response times to ensure NFR compliance (1-2 second requirements)
 
-**Note:** Significant testing improvements have been implemented including:
+**Prerequisites:**
 
-- ✅ Recommendation service comprehensive test coverage (72% service coverage achieved)
-- ✅ Friends controller functionality fixes (decline request behavior corrected)
-- ✅ Badge integration tests with unknown requirement type handling
-- ✅ Performance tests with proper authentication expectations
-- ✅ Error handling for weather and places API failures
-- ✅ Mongoose schema registration fixes for PinVote model
-
-All critical functionality tests are now passing. Remaining test failures are being systematically addressed.
-
-1. MongoDB Memory Server can be downloaded (requires internet connection on first run)
-2. All environment variables are set (tests use default values if not set)
-3. Port 3000 is not in use (if running integration tests that start a server)
+1. MongoDB Memory Server is automatically downloaded on first test run (requires internet connection)
+2. All environment variables have default fallback values for testing
+3. Tests can run in parallel without port conflicts (each test suite uses isolated environments)
 
 #### 2.1.4. API-Level vs Model/Service-Level Tests
 
@@ -235,40 +226,98 @@ All critical functionality tests are now passing. Remaining test failures are be
 
 The following test files test backend APIs that are exposed to the frontend through HTTP endpoints:
 
-- `backend/tests/unmocked/auth.integration.test.ts` - Tests `/auth/signup`, `/auth/signin`, `/auth/check`
-- `backend/tests/unmocked/badge.integration.test.ts` - Tests `/badges/*` endpoints
-- `backend/tests/unmocked/user.integration.test.ts` - Tests `/users/*` endpoints
-- `backend/tests/unmocked/friends.integration.test.ts` - Tests `/friends/*` endpoints
-- `backend/tests/unmocked/location.integration.test.ts` - Tests `/location` and `/friends/locations` endpoints
-- `backend/tests/unmocked/pins.integration.test.ts` - Tests `/pins/*` endpoints
-- `backend/tests/unmocked/debug.integration.test.ts` - Tests `/debug/*` endpoints
-- `backend/tests/unmocked/recommendation.test.ts` - Tests `/recommendations/*` endpoints
-- `backend/tests/unmocked/gateway.test.ts` - Tests Socket.io real-time endpoints
-- `backend/tests/mocked/*.test.ts` - Mocked versions of API tests
+**Unmocked API Tests:**
+
+- `backend/test/unmocked/badges/*.test.ts` - Tests `/badges/*` endpoints (6 test files covering all badge operations)
+- `backend/test/unmocked/friends/*.test.ts` - Tests `/friends/*` endpoints (4 test files: send requests, accept/decline, management, locations)
+- `backend/test/unmocked/location/location-upsert.test.ts` - Tests `/me/location` endpoint
+- `backend/test/unmocked/pins/*.test.ts` - Tests `/pins/*` endpoints (2 test files: CRUD operations and features like rating, reporting, visiting)
+- `backend/test/unmocked/media/media-upload.test.ts` - Tests `/media/upload` endpoint
+- `backend/test/unmocked/recommendations/recommendations-api.test.ts` - Tests `/recommendations/*` endpoints
+
+**Mocked API Tests:**
+
+- `backend/test/mocked/auth/*.test.ts` - Tests `/auth/*` endpoints (3 test files: signup, signin, check)
+- `backend/test/mocked/badges/badge-qualification-coverage.test.ts` - Tests badge qualification through various API endpoints
+- `backend/test/mocked/user/*.test.ts` - Tests `/user/*` and `/users/*` endpoints (2 test files covering all user operations)
+- `backend/test/mocked/friends/*.test.ts` - Tests `/friends/*` endpoints with mocked dependencies (4 test files covering edge cases)
+- `backend/test/mocked/location/location-edge-cases.test.ts` - Tests location endpoints with error scenarios
+- `backend/test/mocked/pins/*.test.ts` - Tests `/pins/*` endpoints (2 test files: admin operations and edge cases)
+- `backend/test/mocked/media/media-edge-cases.test.ts` - Tests `/media/*` endpoints with error handling
+- `backend/test/mocked/recommendations/*.test.ts` - Tests `/recommendations/*` endpoints (2 test files: simple API tests and scheduler tests)
 
 **Model/Service-Level Tests (Testing Internal Components, Not APIs):**
 
 The following test files test internal components (models, services) rather than API endpoints:
 
-- `backend/tests/unmocked/badge.model.error.test.ts` - Tests `BadgeModel` error handling (model-level)
-- `backend/tests/unmocked/user.model.test.ts` - Tests `UserModel` methods (model-level)
-- `backend/tests/unmocked/weather.service.test.ts` - Tests `WeatherService` (service-level)
-- `backend/tests/unmocked/media.service.test.ts` - Tests `MediaService` (service-level)
-- `backend/tests/unmocked/places.coverage.test.ts` - Tests `PlacesService` (service-level)
-- `backend/tests/unmocked/places.fixed.test.ts` - Tests `PlacesService` fixes (service-level)
-- `backend/tests/mocked/notification.service.test.ts` - Tests `NotificationService` (service-level)
-- `backend/tests/mocked/recommendation.service.test.ts` - Tests `RecommendationService` (service-level)
-- `backend/tests/mocked/places.service.test.ts` - Tests `PlacesService` (service-level)
+- `backend/test/mocked/notification-coverage.test.ts` - Tests `NotificationService` (service-level)
+- `backend/test/mocked/auth/auth-signup-integration.test.ts` - Tests `AuthService.signUpWithGoogle` method (service-level)
+- `backend/test/mocked/user/user-privacy-search-api.test.ts` - Tests `canViewUserProfile` method (service-level)
+- `backend/test/mocked/recommendations/recommendations-scheduler.test.ts` - Tests recommendation scheduler functions (service-level)
 
 **Justification for Model/Service-Level Tests:**
 
 Model and service-level tests are included to ensure comprehensive coverage of internal components that are used by API endpoints. These tests:
-1. Validate error handling and edge cases in models and services
-2. Test business logic that may not be fully exercised through API integration tests
-3. Provide faster feedback during development by testing components in isolation
-4. Ensure that model methods and service functions work correctly before they are used by API endpoints
+
+1. **Validate error handling and edge cases** in models and services that may not be easily triggered through API calls
+2. **Test business logic** in isolation, ensuring complex service methods work correctly before integration
+3. **Provide faster feedback** during development by testing components without full HTTP request overhead
+4. **Cover internal methods** like privacy checking, notification sending, and scheduled tasks that aren't directly exposed as APIs
+5. **Ensure service reliability** for components used by multiple endpoints (e.g., NotificationService, AuthService)
 
 While the primary focus is on API-level testing (as APIs are what the frontend uses), model and service-level tests provide additional confidence in the internal components and help identify issues early in the development cycle.
+
+#### 2.1.5. Real-time Gateway Testing Exclusion
+
+**Component:** `backend/src/realtime/gateway.ts` (715 lines)
+
+**Rationale for Exclusion:**
+
+The real-time gateway is excluded from automated testing due to its WebSocket architecture complexity:
+
+1. **Socket.io Testing Complexity:** Requires complex infrastructure for WebSocket connections, bidirectional events, and real-time broadcasts. Mock implementations don't reliably represent production behavior.
+
+2. **Stateful Connection Management:** Maintains in-memory maps (`locationTrackers`, `socketToUser`, `userHeartbeats`) that are difficult to test in isolation. Connection lifecycle events (connect, disconnect, reconnect) and race conditions are hard to reproduce reliably.
+
+3. **Event-Driven Architecture:** Handles multiple socket events (`location:track`, `location:untrack`, `location:ping`, `disconnect`) with complex business logic. Testing requires mocking Socket.io's emit/broadcast mechanisms across multiple simultaneous connections.
+
+4. **Extensive Integration Points:** Integrates with JWT auth, multiple database models, BadgeService, privacy controls, pin visit detection, and heartbeat timers. Comprehensive mocking would reduce test value.
+
+**Alternative Validation:**
+
+The core location functionality is validated through HTTP endpoint tests that share the same business logic:
+
+- `backend/test/unmocked/location/location-upsert.test.ts` - Tests `PUT /me/location` (uses same `reportLocation` method)
+- `backend/test/unmocked/friends/friends-locations.test.ts` - Tests `GET /friends/locations`
+- `backend/test/mocked/location/location-edge-cases.test.ts` - Tests error handling
+
+Additionally validated via manual testing with frontend applications, code reviews, and production monitoring.
+
+#### 2.1.6. Badge Service Partial Testing
+
+**Component:** `backend/src/services/badge.service.ts` (661 lines)
+
+**Rationale for Partial Coverage:**
+
+The BadgeService is partially tested due to its complex gamification logic and extensive dependency on user activity tracking:
+
+1. **Complex Qualification Logic:** Contains 10 different badge requirement types (LOGIN_STREAK, PINS_CREATED, PINS_VISITED, FRIENDS_ADDED, REPORTS_MADE, TIME_SPENT, LOCATIONS_EXPLORED, LIBRARIES_VISITED, CAFES_VISITED, RESTAURANTS_VISITED), each with unique qualification checking methods. Comprehensive testing would require simulating extensive user activity data across all badge types.
+
+2. **Dependency on User Statistics:** Badge qualification checks query cumulative user statistics (`stats.pinsCreated`, `stats.pinsVisited`, `stats.reportsMade`, `loginTracking.currentStreak`, `friendsCount`, `visitedPins`) that require complex database state setup. Testing all badge types would need creating realistic user activity histories.
+
+3. **Template-Based Badge System:** Defines 15 predefined badge templates with specific targets and rarities. Testing all badge templates individually is time-prohibitive, and template definitions are static configuration rather than runtime logic.
+
+4. **Integration with Multiple Models:** Badge qualification methods query User model statistics, populated visitedPins with Pin model data, and check pre-seeded pin categories. Full testing requires coordinating state across multiple database models.
+
+**Testing Coverage:**
+
+Badge functionality is tested through:
+
+- `backend/test/unmocked/badges/*.test.ts` - Tests badge API endpoints (6 test files covering badge retrieval, earned badges, progress tracking, stats, and events)
+- `backend/test/mocked/badges/badge-qualification-coverage.test.ts` - Tests badge qualification through API interactions
+- API-level tests validate badge earning workflows without testing every internal qualification method
+
+The badge system's core functionality (badge retrieval, assignment, progress calculation, user stats) is validated through API tests, while individual qualification methods for less-common badge types remain partially tested.
 
 ### 2.2. GitHub Actions Configuration
 
@@ -279,6 +328,7 @@ The GitHub Actions workflow file is located at `.github/workflows/github-actions
 **Workflow Configuration:**
 
 The workflow file (`.github/workflows/github-actions-demo.yml`) includes:
+
 - Automatic test execution on push to `main` branch
 - Automatic test execution on pull requests to `main` branch
 - Node.js 20.x environment setup
@@ -311,21 +361,40 @@ jobs:
 
 ### 2.3. Recent Testing Achievements
 
-**Major Test Coverage Improvements (November 10, 2025):**
+**Comprehensive Test Suite Reorganization (November 2025):**
 
-1. **Recommendation Service Coverage:** Achieved 72% service coverage by consolidating redundant test files and fixing service integration issues
-2. **Friends Controller Fixes:** Corrected decline friend request functionality to match actual implementation (returns 'deleted' status)
-3. **Badge Integration Tests:** Fixed unknown requirement type handling using direct MongoDB collection operations
-4. **Performance Test Authentication:** Updated user profile tests to properly handle 401 responses
-5. **Error Handling Improvements:** Added graceful error handling for weather service and places API failures
-6. **Schema Registration:** Fixed PinVote model schema registration for proper test execution
+The backend test suite has been reorganized into a modular, maintainable structure with the following improvements:
 
-**Current Test Status:**
+1. **Test Organization by Feature:** Tests are now organized by feature domain (badges, friends, pins, etc.) rather than large monolithic test files, making it easier to locate and maintain tests.
 
-- ✅ 32+ test suites passing
-- ✅ 600+ individual tests passing
-- ✅ Major functionality fully tested
-- 🔄 Remaining edge cases being addressed systematically
+2. **Clear Separation of Concerns:** Tests are split into:
+
+   - **Unmocked tests**: Integration tests that validate end-to-end functionality with real database interactions
+   - **Mocked tests**: Unit tests that validate edge cases and error handling with controlled dependencies
+   - **Security tests**: Dedicated tests for authentication, authorization, and security vulnerabilities
+   - **Performance tests**: NFR validation ensuring response times meet requirements
+
+3. **Comprehensive API Coverage:** All backend APIs are tested at multiple levels:
+
+   - API endpoint testing (unmocked and mocked)
+   - Service-level testing for business logic
+   - Edge case and error handling coverage
+   - Security and performance validation
+
+4. **Test File Structure:**
+   - 15 unmocked integration test files organized by feature
+   - 18 mocked unit test files covering edge cases
+   - 4 security test files with progressive complexity (Phase 1-2, Rank 1-3)
+   - 4 performance test files validating NFR requirements
+   - Total: 40+ test files with 600+ individual test cases
+
+**Test Quality Improvements:**
+
+- ✅ All API endpoints documented with corresponding test file locations
+- ✅ Clear mocking strategies documented for each test suite
+- ✅ Security tests organized by complexity ranking (Phase 1-2, Rank 1-3)
+- ✅ Performance tests validate specific NFR requirements (1-2 second response times)
+- ✅ Consistent test patterns across feature domains
 
 ### 2.4. Jest Coverage Reports (Without Mocking)
 
@@ -376,39 +445,77 @@ npm test --coverage
 
 **Expected Coverage:** High coverage. If coverage is lower than 100%, well-formed reasons for not achieving 100% coverage must be provided below.
 
+**Coverage:**
+
+Our test suite achieves high coverage of critical business logic, API endpoints, and user-facing functionality, but does not target 100% coverage.
+
+**Why Not 100% Coverage:**
+
+1. **Defensive Error Handling:** The codebase contains extensive defensive programming with try-catch blocks, null checks, and graceful degradation for edge cases. Testing every possible error path would require:
+
+   - Simulating rare failure scenarios (network timeouts, database connection drops, external API failures)
+   - Mocking internal library failures that don't occur in normal operation
+   - Creating artificial error conditions that reduce test maintainability
+   - Extensive mocking infrastructure that obscures actual system behavior
+
+2. **Diminishing Returns:** Achieving the last 10-20% of coverage required disproportionate effort:
+
+   - Testing trivial code paths (logging statements, default fallbacks, type guards)
+   - Complex test setup for rarely-executed error handlers
+   - Brittle tests that break when implementation details change
+   - Time better spent on integration testing and manual QA
+
+3. **Focus on Critical Paths:** We prioritize comprehensive testing of:
+
+   - All API endpoints (authenticated and unauthenticated paths)
+   - Core business logic (badge earning, friend management, pin operations, location tracking)
+   - Security controls (authentication, authorization, input validation, privacy)
+   - Performance requirements (NFR compliance for response times)
+   - User-facing features that directly impact application functionality
+
+4. **Integration Over Unit Coverage:** Our test strategy emphasizes integration tests that validate end-to-end workflows rather than achieving 100% line coverage through isolated unit tests. This approach catches integration issues, validates real database interactions, and ensures the system works as users experience it.
+
 **Coverage Gaps and Justifications:**
 
 The following files and code paths have less than 100% coverage, with detailed justifications:
 
-1. **Configuration Files (`src/config/**`):**
+1. **Configuration Files (`src/config/**`):\*\*
+
    - **Files:** `database.ts`, `firebase.ts`
    - **Coverage:** Excluded from coverage collection
    - **Justification:** Configuration files contain initialization code and environment setup that is difficult to test in isolation. These files are tested indirectly through integration tests that verify the application starts correctly and connects to services. Testing configuration directly would require extensive mocking of external services (MongoDB, Firebase) which is not practical. The configuration is validated at application startup, and failures are caught during deployment.
 
-2. **Script Files (`src/scripts/**`):**
+2. **Script Files (`src/scripts/**`):\*\*
+
    - **Files:** `migratePinVisibility.ts`, `seedCafes.ts`, `seedLibraries.ts`, `seedRestaurants.ts`, `simulateMovingUsers.ts`
    - **Coverage:** Excluded from coverage collection
    - **Justification:** Script files are one-time migration and seeding utilities that are run manually or during deployment setup. These are not part of the runtime application code and are tested separately through manual execution and verification. They do not affect the core application functionality and are excluded to focus coverage on production code paths.
 
 3. **Entry Point (`src/index.ts`):**
+
    - **Coverage:** Excluded from coverage collection
    - **Justification:** The entry point file contains server initialization and startup code that is difficult to test in isolation. The application startup is verified through integration tests and manual testing. The core logic (routes, controllers, services) is thoroughly tested, and the entry point primarily orchestrates these components.
 
 4. **Error Handling Paths:**
+
    - **Coverage:** Partial coverage
    - **Justification:** Some error conditions (e.g., database connection failures, network timeouts, external API failures) are difficult to simulate in tests without extensive mocking infrastructure. These error paths are tested where feasible through integration tests that simulate failure conditions. Critical error paths (authentication failures, validation errors) are fully covered.
 
 5. **Edge Cases in External Dependencies:**
+
    - **Coverage:** Partial coverage
    - **Justification:** Some edge cases in third-party libraries (Mongoose, Socket.io, Firebase) may not be fully covered as they require specific failure conditions that are difficult to reproduce in a test environment. The application's use of these libraries is tested through integration tests, and critical integration points are fully covered.
 
-6. **Type Definition Files (`src/**/*.d.ts`):**
+6. **Type Definition Files (`src/**/\*.d.ts`):\*\*
    - **Coverage:** Excluded from coverage collection
    - **Justification:** Type definition files contain only TypeScript type information and do not contain executable code. They are validated by the TypeScript compiler and do not require runtime testing.
 
 **Note on Auth Files:** The Jest configuration explicitly includes `auth.controller.ts`, `auth.service.ts`, and `auth.types.ts` in coverage collection. These files are tested through:
-- `backend/tests/unmocked/auth.integration.test.ts` - Integration tests for auth endpoints
-- `backend/tests/mocked/auth.test.ts` - Mocked unit tests for auth service
+
+- `backend/test/mocked/auth/auth-signup-api.test.ts` - Signup endpoint API tests
+- `backend/test/mocked/auth/auth-signin-api.test.ts` - Signin endpoint API tests
+- `backend/test/mocked/auth/auth-check-api.test.ts` - Token validation API tests
+- `backend/test/mocked/auth/auth-signup-integration.test.ts` - AuthService integration tests
 
 All auth-related functionality is covered by these test suites.
 
@@ -420,17 +527,17 @@ All auth-related functionality is covered by these test suites.
 
 **Security Requirements Tests:**
 
-- Location: `backend/tests/security/authentication-authorization.test.ts`
-- Location: `backend/tests/security/advanced-jwt-authorization.test.ts`
-- Location: `backend/tests/security/advanced-privacy-session-security.test.ts`
-- Location: `backend/tests/security/complex-security-scenarios.test.ts`
+- Location: `backend/test/security/authentication-authorization.test.ts`
+- Location: `backend/test/security/advanced-jwt-authorization.test.ts`
+- Location: `backend/test/security/advanced-privacy-session-security.test.ts`
+- Location: `backend/test/security/complex-security-scenarios.test.ts`
 
 **Performance Requirements Tests:**
 
-- Location: `backend/tests/performance/pins.test.ts`
-- Location: `backend/tests/performance/users.test.ts`
-- Location: `backend/tests/performance/locations.test.ts`
-- Location: `backend/tests/performance/friends.test.ts`
+- Location: `backend/test/performance/pins.test.ts`
+- Location: `backend/test/performance/users.test.ts`
+- Location: `backend/test/performance/locations.test.ts`
+- Location: `backend/test/performance/friends.test.ts`
 
 ### 3.2. Requirement Verification
 
@@ -450,7 +557,7 @@ The system implements comprehensive security controls through multiple layers:
 **Verification Logs:**
 
 ```
-PASS  tests/security/authentication-authorization.test.ts
+PASS  test/security/authentication-authorization.test.ts
   Security NFR Tests - Phase 1 (Rank 1 - Simplest)
     Authentication Basics (Rank 1)
       ✓ Missing JWT tokens should be rejected with 401
@@ -480,7 +587,7 @@ Performance tests measure response times for all critical endpoints:
 **Verification Logs:**
 
 ```
-PASS  tests/performance/pins.test.ts
+PASS  test/performance/pins.test.ts
   Pins Performance Tests - Complete NFR Suite
     Rank 1 - Basic Operations (2-second requirement)
       ✓ GET /pins/search should complete within 2 seconds (145.23ms)
@@ -513,7 +620,7 @@ In the same directory as above, you can find a document named `TEST_DATA_SETUP_I
     | 1. User navigates to Home screen.                             | Open the app and wait for authentication.<br>Navigate to Home tab using bottom navigation.                                                                             |
     | 2. User clicks on the "Add Pin" button.                       | Check that the floating action button with content description "Add Pin" is present on screen.<br>Click the "Add Pin" button.                                          |
     | 3. The "Create Pin" screen opens with empty input fields.     | Check that text fields for "Pin Name", "Description", "Category", and "Visibility" are present.<br>Check that the "Create Pin" button is present.                      |
-    | 4. User enters pin details (name, description, category).     | Input "Test Pin 001" in the pin name field.<br>Input "This is a test pin created by E2E tests" in the description field.<br>Select "Study" from the category dropdown. | 
+    | 4. User enters pin details (name, description, category).     | Input "Test Pin 001" in the pin name field.<br>Input "This is a test pin created by E2E tests" in the description field.<br>Select "Study" from the category dropdown. |
     | 5. User selects location on the map.                          | Verify that the map is displayed.<br>Click on a location on the map to set pin coordinates.                                                                            |
     | 6. User sets visibility to Public.                            | Select "Public" from the visibility dropdown.                                                                                                                          |
     | 7. User clicks "Create Pin" button.                           | Check that the "Create Pin" button is enabled.<br>Click the "Create Pin" button.                                                                                       |
@@ -521,14 +628,14 @@ In the same directory as above, you can find a document named `TEST_DATA_SETUP_I
 
   - **Failure Scenarios:**
 
-    | **Failure Scenario** | **Expected Behavior** | **Test Case Steps** |
-    | -------------------- | --------------------- | ------------------- |
-    | User clicks "Create Pin" without filling Pin name | Pin creation should fail with validation error | Click "Create Pin" button without entering pin name.<br>Check that an error message is displayed indicating "Pin name is required".<br>Check that the pin is not created and user remains on Create Pin screen. |
-    | User clicks "Create Pin" without filling Description | Pin creation should fail with validation error | Click "Create Pin" button without entering description.<br>Check that an error message is displayed indicating "Description is required".<br>Check that the pin is not created. |
-    | User clicks "Create Pin" with description shorter than minimum length | Pin creation should fail with validation error | Enter description shorter than minimum required length.<br>Click "Create Pin" button.<br>Check that an error message is displayed indicating description is too short.<br>Check that the pin is not created. |
-    | User clicks "Create Pin" without selecting location on map | Pin creation should fail with validation error | Fill in pin name and description but do not click on map to set location.<br>Click "Create Pin" button.<br>Check that an error message is displayed indicating "Location is required".<br>Check that the pin is not created. |
-    | User clicks "Create Pin" without selecting category | Pin creation should fail with validation error | Fill in pin name, description, and location but do not select category.<br>Click "Create Pin" button.<br>Check that an error message is displayed indicating "Category is required".<br>Check that the pin is not created. |
-    | Network error during pin creation | Pin creation should fail gracefully | Simulate network disconnection.<br>Fill in all required fields and click "Create Pin".<br>Check that an error message is displayed indicating network error.<br>Check that the pin is not created and user can retry. |
+    | **Failure Scenario**                                                  | **Expected Behavior**                          | **Test Case Steps**                                                                                                                                                                                                          |
+    | --------------------------------------------------------------------- | ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+    | User clicks "Create Pin" without filling Pin name                     | Pin creation should fail with validation error | Click "Create Pin" button without entering pin name.<br>Check that an error message is displayed indicating "Pin name is required".<br>Check that the pin is not created and user remains on Create Pin screen.              |
+    | User clicks "Create Pin" without filling Description                  | Pin creation should fail with validation error | Click "Create Pin" button without entering description.<br>Check that an error message is displayed indicating "Description is required".<br>Check that the pin is not created.                                              |
+    | User clicks "Create Pin" with description shorter than minimum length | Pin creation should fail with validation error | Enter description shorter than minimum required length.<br>Click "Create Pin" button.<br>Check that an error message is displayed indicating description is too short.<br>Check that the pin is not created.                 |
+    | User clicks "Create Pin" without selecting location on map            | Pin creation should fail with validation error | Fill in pin name and description but do not click on map to set location.<br>Click "Create Pin" button.<br>Check that an error message is displayed indicating "Location is required".<br>Check that the pin is not created. |
+    | User clicks "Create Pin" without selecting category                   | Pin creation should fail with validation error | Fill in pin name, description, and location but do not select category.<br>Click "Create Pin" button.<br>Check that an error message is displayed indicating "Category is required".<br>Check that the pin is not created.   |
+    | Network error during pin creation                                     | Pin creation should fail gracefully            | Simulate network disconnection.<br>Fill in all required fields and click "Create Pin".<br>Check that an error message is displayed indicating network error.<br>Check that the pin is not created and user can retry.        |
 
   - **Test Logs:**
 
@@ -661,24 +768,24 @@ In the same directory as above, you can find a document named `TEST_DATA_SETUP_I
 
   - **Expected Behaviors (Success Scenario):**
 
-    | **Scenario Steps**                                        | **Test Case Steps**                                                                                                                                       |
-    | --------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-    | 1. User opens the Friends tab.                            | Navigate to Friends tab.                                                                                                                                  |
-    | 2. User clicks on the friend requests indicator.          | Click the button with content description "View Friend Requests".                                                                                         |
-    | 3. A bottom sheet appears showing pending requests.       | Check that a bottom sheet is displayed.<br>Check that at least one friend request card is present.                                                        |
-    | 4. User clicks "Accept" on a pending request.             | Click the button with test tag starting with "accept_request_button".                                                                                     |
-    | 5. A confirmation dialog appears.                         | Check that a dialog is displayed with text "Accept friend request?".                                                                                      |
-    | 6. User confirms acceptance.                              | Click the "Accept" button in the dialog.                                                                                                                  |
+    | **Scenario Steps**                                        | **Test Case Steps**                                                                                                                                                                                        |
+    | --------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+    | 1. User opens the Friends tab.                            | Navigate to Friends tab.                                                                                                                                                                                   |
+    | 2. User clicks on the friend requests indicator.          | Click the button with content description "View Friend Requests".                                                                                                                                          |
+    | 3. A bottom sheet appears showing pending requests.       | Check that a bottom sheet is displayed.<br>Check that at least one friend request card is present.                                                                                                         |
+    | 4. User clicks "Accept" on a pending request.             | Click the button with test tag starting with "accept_request_button".                                                                                                                                      |
+    | 5. A confirmation dialog appears.                         | Check that a dialog is displayed with text "Accept friend request?".                                                                                                                                       |
+    | 6. User confirms acceptance.                              | Click the "Accept" button in the dialog.                                                                                                                                                                   |
     | 7. The request is accepted and removed from pending list. | Wait for acceptance to complete (3s).<br>Assert that the request is no longer in the pending list.<br>Assert that the user now appears in the friends list.<br>Assert that a success message is displayed. |
 
   - **Failure Scenarios:**
 
-    | **Failure Scenario** | **Expected Behavior** | **Test Case Steps** |
-    | -------------------- | --------------------- | ------------------- |
-    | User tries to accept a request that was already accepted | Request acceptance should fail with appropriate error | Attempt to accept a friend request that was already processed.<br>Assert that an error message is displayed indicating the request is no longer valid.<br>Assert that the request is removed from the pending list. |
-    | User tries to accept a request that was declined | Request acceptance should fail with appropriate error | Attempt to accept a friend request that was previously declined.<br>Assert that an error message is displayed indicating the request is no longer valid. |
-    | Network error during acceptance | Request acceptance should fail gracefully | Simulate network disconnection.<br>Click "Accept" on a friend request.<br>Assert that an error message is displayed indicating network error.<br>Assert that the request remains in the pending list and can be retried. |
-    | User tries to accept their own friend request | Request acceptance should fail with validation error | Attempt to accept a friend request sent by the current user to themselves (if such a request exists).<br>Assert that an error message is displayed indicating invalid operation. |
+    | **Failure Scenario**                                     | **Expected Behavior**                                 | **Test Case Steps**                                                                                                                                                                                                      |
+    | -------------------------------------------------------- | ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+    | User tries to accept a request that was already accepted | Request acceptance should fail with appropriate error | Attempt to accept a friend request that was already processed.<br>Assert that an error message is displayed indicating the request is no longer valid.<br>Assert that the request is removed from the pending list.      |
+    | User tries to accept a request that was declined         | Request acceptance should fail with appropriate error | Attempt to accept a friend request that was previously declined.<br>Assert that an error message is displayed indicating the request is no longer valid.                                                                 |
+    | Network error during acceptance                          | Request acceptance should fail gracefully             | Simulate network disconnection.<br>Click "Accept" on a friend request.<br>Assert that an error message is displayed indicating network error.<br>Assert that the request remains in the pending list and can be retried. |
+    | User tries to accept their own friend request            | Request acceptance should fail with validation error  | Attempt to accept a friend request sent by the current user to themselves (if such a request exists).<br>Assert that an error message is displayed indicating invalid operation.                                         |
 
   - **Test Logs:**
 
@@ -1102,22 +1209,24 @@ In the same directory as above, you can find a document named `TEST_DATA_SETUP_I
 
 **Breakdown by Category:**
 
-| Category | Number of Issues | Percentage |
-|----------|------------------|------------|
-| Code Style | 105 | 42% |
-| Error Prone | 89 | 35.6% |
-| Security | 34 | 13.6% |
-| Unused Code | 12 | 4.8% |
-| Performance | 8 | 3.2% |
-| Compatibility | 2 | 0.8% |
+| Category      | Number of Issues | Percentage |
+| ------------- | ---------------- | ---------- |
+| Code Style    | 105              | 42%        |
+| Error Prone   | 89               | 35.6%      |
+| Security      | 34               | 13.6%      |
+| Unused Code   | 12               | 4.8%       |
+| Performance   | 8                | 3.2%       |
+| Compatibility | 2                | 0.8%       |
 
 **Detailed Category Breakdown:**
 
 1. **Code Style (105 issues):**
+
    - Disallow Empty Functions: 55 issues
    - Avoid Long Methods: 50 issues
 
 2. **Error Prone (89 issues):**
+
    - Detect CRLF Injection in Logs: 34 issues
    - Avoid Catching Too Generic Exceptions: 18 issues
    - Disallow Unnecessary Conditions: 16 issues
@@ -1135,12 +1244,15 @@ In the same directory as above, you can find a document named `TEST_DATA_SETUP_I
    - Others: 12 issues
 
 3. **Security (34 issues):**
+
    - All CRLF Injection warnings (covered in Error Prone section above)
 
 4. **Unused Code (12 issues):**
+
    - Covered in "Others" category above
 
 5. **Performance (8 issues):**
+
    - Covered in various categories above
 
 6. **Compatibility (2 issues):**
@@ -1156,27 +1268,28 @@ In the same directory as above, you can find a document named `TEST_DATA_SETUP_I
 
 **Total Issues by Pattern:**
 
-| Code Pattern | Number of Issues | Pattern ID |
-|--------------|------------------|------------|
-| Disallow Empty Functions | 55 | `empty-function` |
-| Avoid Long Methods | 50 | `long-method` |
-| Detect CRLF Injection in Logs | 34 | `crlf-injection` |
-| Avoid Catching Too Generic Exceptions | 18 | `generic-exception` |
-| Disallow Unnecessary Conditions | 16 | `unnecessary-condition` |
-| Disallow async functions without await | 11 | `async-without-await` |
-| Avoid Comments for Private Functions | 9 | `comment-private-function` |
-| Disallow Unnecessary Semicolons | 3 | `unnecessary-semicolon` |
-| Disallow Redundant Type Constructors | 3 | `redundant-type-constructor` |
-| Disallow Unused Variables | 3 | `unused-variable` |
-| Disallow Unsafe Argument Usage | 3 | `unsafe-argument` |
-| Detect Object Injection | 3 | `object-injection` |
-| Enforce newlines between operators | 2 | `operator-newline` |
-| Disallow Unnecessary Type Assertions | 2 | `unnecessary-type-assertion` |
-| Disallow Extraneous Classes | 2 | `extraneous-class` |
-| Simplify Complex Conditions | 2 | `complex-condition` |
-| Other Patterns | 12 | Various |
+| Code Pattern                           | Number of Issues | Pattern ID                   |
+| -------------------------------------- | ---------------- | ---------------------------- |
+| Disallow Empty Functions               | 55               | `empty-function`             |
+| Avoid Long Methods                     | 50               | `long-method`                |
+| Detect CRLF Injection in Logs          | 34               | `crlf-injection`             |
+| Avoid Catching Too Generic Exceptions  | 18               | `generic-exception`          |
+| Disallow Unnecessary Conditions        | 16               | `unnecessary-condition`      |
+| Disallow async functions without await | 11               | `async-without-await`        |
+| Avoid Comments for Private Functions   | 9                | `comment-private-function`   |
+| Disallow Unnecessary Semicolons        | 3                | `unnecessary-semicolon`      |
+| Disallow Redundant Type Constructors   | 3                | `redundant-type-constructor` |
+| Disallow Unused Variables              | 3                | `unused-variable`            |
+| Disallow Unsafe Argument Usage         | 3                | `unsafe-argument`            |
+| Detect Object Injection                | 3                | `object-injection`           |
+| Enforce newlines between operators     | 2                | `operator-newline`           |
+| Disallow Unnecessary Type Assertions   | 2                | `unnecessary-type-assertion` |
+| Disallow Extraneous Classes            | 2                | `extraneous-class`           |
+| Simplify Complex Conditions            | 2                | `complex-condition`          |
+| Other Patterns                         | 12               | Various                      |
 
 **Top 5 Most Common Patterns:**
+
 1. Disallow Empty Functions (55 issues) - 22%
 2. Avoid Long Methods (50 issues) - 20%
 3. Detect CRLF Injection in Logs (34 issues) - 13.6%
@@ -1556,6 +1669,7 @@ The backend test suite has been reviewed by peer groups and the following feedba
 1. **Test Completeness:** All APIs exposed to the frontend are tested through integration tests. Three main features (Pin Management, Friend Management, User Management) are comprehensively tested with both success and failure scenarios.
 
 2. **Error and Edge Case Testing:** Error handling and edge cases are thoroughly tested:
+
    - Authentication failures (missing tokens, invalid tokens, expired tokens)
    - Validation errors (missing fields, invalid types, oversized inputs)
    - Authorization failures (unauthorized access attempts)
@@ -1564,6 +1678,7 @@ The backend test suite has been reviewed by peer groups and the following feedba
    - External API failures (Weather API, Places API)
 
 3. **Test Assertions:** All tests use correct assertions:
+
    - HTTP status code assertions (e.g., `expect(response.status).toBe(200)`)
    - Response body assertions (e.g., `expect(response.body).toHaveProperty('id')`)
    - Database state assertions (e.g., verifying records are created/deleted)
@@ -1600,6 +1715,7 @@ The automated code review using Codacy has been thoroughly analyzed:
 1. **Codacy Setup:** Codacy is properly configured and running with the provided ESLint and Detekt config files. The analysis runs automatically on every commit and provides comprehensive code quality metrics.
 
 2. **Fixed Issues:** All major code quality issues have been addressed:
+
    - Unbound methods in route handlers (fixed by wrapping in arrow functions)
    - Promise returned where void expected (fixed by adding void operator)
    - Forbidden non-null assertions (fixed by adding proper null checks)
@@ -1628,19 +1744,23 @@ The automated code review using Codacy has been thoroughly analyzed:
 
 **Faults Identified and Addressed:**
 
-1. **Jest Coverage Configuration:** 
+1. **Jest Coverage Configuration:**
+
    - **Fault:** Auth files (auth.controller.ts, auth.service.ts, auth.types.ts) were incorrectly excluded from coverage collection.
    - **Resolution:** Updated Jest configuration to explicitly include auth files in coverage collection. Added note in section 2.5 documenting that auth files are included and tested.
 
 2. **GitHub Actions Workflow:**
+
    - **Fault:** Security tests were not running in GitHub Actions workflow.
    - **Resolution:** Added security test step to `.github/workflows/github-actions-demo.yml` to run security tests automatically on every push and pull request.
 
 3. **Test Documentation:**
+
    - **Fault:** Missing documentation distinguishing API-level tests from model/service-level tests.
    - **Resolution:** Added section 2.1.4 documenting which tests are API-level vs model/service-level, with justifications for including model/service-level tests.
 
 4. **Frontend Test Descriptions:**
+
    - **Fault:** Frontend test descriptions were missing failure scenarios.
    - **Resolution:** Added comprehensive failure scenario tables to all frontend test descriptions in section 4.2, including expected behaviors and test case steps for each failure scenario.
 
@@ -1651,6 +1771,7 @@ The automated code review using Codacy has been thoroughly analyzed:
 **Remaining Issues:**
 
 All major faults have been addressed. Remaining items are minor improvements:
+
 - Continue working toward 100% test coverage where feasible
 - Optimize test execution time
 - Continue reducing Codacy issues where possible without compromising code quality
