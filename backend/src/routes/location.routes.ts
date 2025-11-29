@@ -8,6 +8,8 @@ const router = Router();
 router.use(authenticateToken);
 
 // Location management routes
-router.put('/location', (req, res) => void locationController.upsertMyLocation(req, res));
+router.put('/location', (req, res) => {
+  locationController.upsertMyLocation(req, res).catch(() => {});
+});
 
 export default router;

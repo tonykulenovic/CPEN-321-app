@@ -284,11 +284,19 @@ export class UserController {
           continue;
         }
 
-        // Apply privacy filtering based on user's profileVisibleTo setting
-        // Note: For friend discovery, we allow searching regardless of privacy settings
-        // Privacy controls profile visibility, not friend request ability
-        // Always allow for friend discovery (privacy controls profile visibility, not friend request ability)
-        logger.info(`🔒 Privacy check for ${user.username}: ${user.privacy.profileVisibleTo} -> ALLOWED (friend discovery)`);
+        // Apply privacy filtering using the helper method
+        const canView = await this.canViewUserProfile(
+          currentUserId, 
+          user._id, 
+          user.privacy.profileVisibleTo
+        );
+        
+        if (!canView) {
+          logger.info(`🔒 Privacy check for ${user.username}: ${user.privacy.profileVisibleTo} -> BLOCKED from search`);
+          continue;
+        }
+        
+        logger.info(`🔒 Privacy check for ${user.username}: ${user.privacy.profileVisibleTo} -> ALLOWED in search`);
         filteredUsers.push(user);
 
         // Stop once we have enough results
@@ -410,6 +418,7 @@ export class UserController {
    * GET /users/admin/all — Get all users (admin only).
    * @return 200 Users list
    */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async getAllUsers(req: Request, res: Response, _next: NextFunction): Promise<void> {
     try {
       // Check if user is admin
@@ -435,6 +444,7 @@ export class UserController {
    * @param id string - User ID to suspend
    * @return 200 Success
    */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async suspendUser(req: Request<{ id: string }>, res: Response, _next: NextFunction): Promise<void> {
     try {
       // Check if user is admin
@@ -473,6 +483,7 @@ export class UserController {
    * @param id string - User ID to unsuspend
    * @return 200 Success
    */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async unsuspendUser(req: Request<{ id: string }>, res: Response, _next: NextFunction): Promise<void> {
     try {
       // Check if user is admin
@@ -505,6 +516,7 @@ export class UserController {
    * @param id string - User ID to delete
    * @return 200 Success
    */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async deleteUserByAdmin(req: Request<{ id: string }>, res: Response, _next: NextFunction): Promise<void> {
     try {
       // Check if user is admin
@@ -526,7 +538,7 @@ export class UserController {
 
       // Delete user's pins (cascading delete)
       const deletedPinsCount = await pinModel.deleteAllByUser(userId);
-      logger.info(`🗑️ Cascading delete: Removed ${deletedPinsCount} pins for user ${userId}`);
+      logger.info(`🗑️ Cascading delete: Removed ${deletedPinsCount} pins for user ${userId.toString()}`);
 
       // Delete user
       await userModel.delete(userId);

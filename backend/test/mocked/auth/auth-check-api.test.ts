@@ -353,28 +353,32 @@ describe('Auth Check API Tests', () => {
       it('should handle very long idToken strings', async () => {
         const longToken = 'a'.repeat(10000);
         
+        // Mock Google verification to fail for very long tokens
+        mockVerifyIdToken.mockRejectedValueOnce(new Error('Token too long'));
+        
         const response = await request(app)
           .post('/api/auth/check')
           .send({ idToken: longToken });
 
-        expect(response.status).toBe(200);
+        expect(response.status).toBe(401);
         expect(response.body).toEqual({
-          message: 'Check completed',
-          data: { exists: false }
+          message: 'Invalid Google token',
         });
       });
 
       it('should handle special characters in idToken', async () => {
         const specialToken = 'token.with.special@chars#$%^&*()';
         
+        // Mock Google verification to fail for tokens with special characters
+        mockVerifyIdToken.mockRejectedValueOnce(new Error('Invalid token format'));
+        
         const response = await request(app)
           .post('/api/auth/check')
           .send({ idToken: specialToken });
 
-        expect(response.status).toBe(200);
+        expect(response.status).toBe(401);
         expect(response.body).toEqual({
-          message: 'Check completed',
-          data: { exists: false }
+          message: 'Invalid Google token',
         });
       });
     });

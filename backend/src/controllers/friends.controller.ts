@@ -117,7 +117,7 @@ export async function sendFriendRequest(req: Request, res: Response): Promise<vo
         if (field instanceof mongoose.Types.ObjectId) {
           return field.toString();
         }
-        return (field)._id.toString();
+        return field._id.toString();
       };
       
       const fromUserFriendIds = new Set(
@@ -333,7 +333,7 @@ export async function acceptFriendRequest(req: Request, res: Response): Promise<
       if (field instanceof mongoose.Types.ObjectId) {
         return field;
       }
-      return (field as IUser)._id;
+      return field._id;
     };
 
     // 4. Verify user is the recipient (friendId) and request is still pending
@@ -493,7 +493,7 @@ export async function declineFriendRequest(req: Request, res: Response): Promise
       if (field instanceof mongoose.Types.ObjectId) {
         return field;
       }
-      return (field as IUser)._id;
+      return field._id;
     };
 
     // 4. Verify user is the recipient (friendId) and request is still pending

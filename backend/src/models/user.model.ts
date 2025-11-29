@@ -585,7 +585,10 @@ export class UserModel {
       }
 
       // Check if already received recommendation for this meal type today
-      const alreadyReceived = user.recommendations[mealType];
+      const recommendations = user.recommendations;
+      const alreadyReceived = mealType === 'breakfast' ? recommendations.breakfast :
+                             mealType === 'lunch' ? recommendations.lunch :
+                             mealType === 'dinner' ? recommendations.dinner : false;
       if (alreadyReceived) {
         logger.debug(`⏭️ [RECOMMENDATIONS] User ${userId.toString()} already received ${mealType} recommendation today`);
         return false;
