@@ -246,6 +246,25 @@ export class FriendshipModel {
       throw new Error('Failed to get friendship records');
     }
   }
+
+  /**
+   * Delete all friendships for a user (cascading delete when user is deleted)
+   */
+  async deleteAllByUser(userId: mongoose.Types.ObjectId): Promise<number> {
+    try {
+      const result = await this.friendship.deleteMany({
+        $or: [
+          { userId: userId },
+          { friendId: userId }
+        ]
+      });
+      logger.info(`🗑️ Deleted ${result.deletedCount} friendships for user ${userId.toString()}`);
+      return result.deletedCount;
+    } catch (error) {
+      logger.error('Error deleting friendships by user:', error);
+      throw new Error('Failed to delete friendships');
+    }
+  }
 }
 
 export const friendshipModel = new FriendshipModel();

@@ -213,8 +213,18 @@ export class UserController {
         return res.status(401).json({ message: 'Unauthorized' });
       }
 
+      // Delete user's media
       await MediaService.deleteAllUserImages(user._id.toString());
 
+      // Delete user's pins (cascading delete)
+      const deletedPinsCount = await pinModel.deleteAllByUser(user._id);
+      logger.info(`🗑️ Cascading delete: Removed ${deletedPinsCount} pins for user ${user._id.toString()}`);
+
+      // Delete user's friendships (cascading delete)
+      const deletedFriendshipsCount = await friendshipModel.deleteAllByUser(user._id);
+      logger.info(`🗑️ Cascading delete: Removed ${deletedFriendshipsCount} friendships for user ${user._id.toString()}`);
+
+      // Delete user
       await userModel.delete(user._id);
 
       res.status(200).json({
@@ -540,12 +550,17 @@ export class UserController {
       const deletedPinsCount = await pinModel.deleteAllByUser(userId);
       logger.info(`🗑️ Cascading delete: Removed ${deletedPinsCount} pins for user ${userId.toString()}`);
 
+      // Delete user's friendships (cascading delete)
+      const deletedFriendshipsCount = await friendshipModel.deleteAllByUser(userId);
+      logger.info(`🗑️ Cascading delete: Removed ${deletedFriendshipsCount} friendships for user ${userId.toString()}`);
+
       // Delete user
       await userModel.delete(userId);
 
       res.status(200).json({
         message: 'User deleted successfully',
         deletedPins: deletedPinsCount,
+        deletedFriendships: deletedFriendshipsCount,
       });
     } catch (error) {
       logger.error('Error in deleteUserByAdmin:', error);

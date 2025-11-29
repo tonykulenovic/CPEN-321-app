@@ -569,7 +569,8 @@ export async function listFriends(req: Request, res: Response): Promise<void> {
     );
 
     // Helper to extract user ID from populated or unpopulated field
-    const getFriendUserId = (field: mongoose.Types.ObjectId | IUser): mongoose.Types.ObjectId => {
+    const getFriendUserId = (field: mongoose.Types.ObjectId | IUser | null): mongoose.Types.ObjectId | null => {
+      if (!field) return null;
       if (field instanceof mongoose.Types.ObjectId) {
         return field;
       }
@@ -577,27 +578,55 @@ export async function listFriends(req: Request, res: Response): Promise<void> {
     };
 
     // Helper to extract user data from populated or unpopulated field
-    const getFriendData = (field: mongoose.Types.ObjectId | IUser): IUser | null => {
+    const getFriendData = (field: mongoose.Types.ObjectId | IUser | null): IUser | null => {
+      if (!field) return null;
       if (field instanceof mongoose.Types.ObjectId) {
         return null; // Not populated
       }
       return field;
     };
 
-    // 4. Get online status for all friends (based on recent location activity)
-    const friendUserIds = acceptedFriendships.map(friendship => 
-      getFriendUserId(friendship.friendId)
+    // Find and delete orphaned friendships (where friendId is null due to deleted users)
+    const orphanedFriendshipIds = acceptedFriendships
+      .filter(friendship => !getFriendUserId(friendship.friendId))
+      .map(friendship => friendship._id);
+
+    if (orphanedFriendshipIds.length > 0) {
+      logger.warn(`⚠️ Found ${orphanedFriendshipIds.length} orphaned friendships for user ${currentUserId.toString()} - deleting...`);
+      // Delete orphaned friendships asynchronously (don't block the response)
+      Promise.all(orphanedFriendshipIds.map(id => friendshipModel.deleteById(id)))
+        .then(() => {
+          logger.info(`✅ Cleaned up ${orphanedFriendshipIds.length} orphaned friendships`);
+        })
+        .catch(error => {
+          logger.error('❌ Error cleaning up orphaned friendships:', error);
+        });
+    }
+
+    const validFriendships = acceptedFriendships.filter(friendship => 
+      getFriendUserId(friendship.friendId) !== null
     );
+
+    // 4. Get online status for all friends (based on recent location activity)
+    const friendUserIds = validFriendships
+      .map(friendship => getFriendUserId(friendship.friendId))
+      .filter((id): id is mongoose.Types.ObjectId => id !== null);
     
     const onlineStatusMap = await userModel.getOnlineStatus(friendUserIds, 10); // 10 minutes threshold
 
     // 5. Format friend summary data with online status
-    const formattedFriends = acceptedFriendships.map((friendship) => {
+    const formattedFriends = validFriendships.map((friendship) => {
       const friend = getFriendData(friendship.friendId);
+      const friendId = getFriendUserId(friendship.friendId);
+      
+      // Skip if friendId is null (shouldn't happen after filtering, but be safe)
+      if (!friendId) {
+        return null;
+      }
+      
       if (!friend) {
         // If friend data is not populated, we can't return full info
         // This shouldn't happen if populate is working correctly
-        const friendId = getFriendUserId(friendship.friendId);
         return {
           userId: friendId.toString(),
           displayName: '',
@@ -618,7 +647,7 @@ export async function listFriends(req: Request, res: Response): Promise<void> {
         shareLocation: friendship.shareLocation,
         isOnline
       };
-    });
+    }).filter((friend): friend is NonNullable<typeof friend> => friend !== null);
 
     // 6. Return results
     const response: FriendsListResponse = {
