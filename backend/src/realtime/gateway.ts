@@ -136,7 +136,33 @@ export class LocationGateway {
     try {
       // 1. Get accepted friends with location sharing enabled
       const friendships = await friendshipModel.findUserFriendships(userId, 'accepted');
-      const friendsWithLocationSharing = friendships.filter(f => f.shareLocation);
+      
+      // Find and delete orphaned friendships (where friendId is null due to deleted users)
+      const orphanedFriendshipIds = friendships
+        .filter(f => {
+          const friendData = f.friendId as { _id?: mongoose.Types.ObjectId } | null;
+          return !friendData || !friendData._id;
+        })
+        .map(f => f._id);
+
+      if (orphanedFriendshipIds.length > 0) {
+        logger.warn(`⚠️ Found ${orphanedFriendshipIds.length} orphaned friendships for user ${userId.toString()} - deleting...`);
+        // Delete orphaned friendships asynchronously (don't block the response)
+        Promise.all(orphanedFriendshipIds.map(id => friendshipModel.deleteById(id)))
+          .then(() => {
+            logger.info(`✅ Cleaned up ${orphanedFriendshipIds.length} orphaned friendships`);
+          })
+          .catch(error => {
+            logger.error('❌ Error cleaning up orphaned friendships:', error);
+          });
+      }
+
+      const validFriendships = friendships.filter(f => {
+        const friendData = f.friendId as { _id?: mongoose.Types.ObjectId } | null;
+        return friendData && friendData._id;
+      });
+      
+      const friendsWithLocationSharing = validFriendships.filter(f => f.shareLocation);
 
       // 2. Get fresh locations for those friends (within last 5 minutes)
       const friendIds = friendsWithLocationSharing.map(f => 
