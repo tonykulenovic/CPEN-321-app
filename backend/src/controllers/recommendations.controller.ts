@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { Types } from 'mongoose';
+import mongoose from 'mongoose';
 import * as cron from 'node-cron';
 import { locationModel } from '../models/location.model';
 import { pinModel } from '../models/pin.model';

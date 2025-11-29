@@ -17,7 +17,6 @@ import { seedLibraries } from './scripts/seedLibraries';
 import { seedCafes } from './scripts/seedCafes';
 import { seedRestaurants } from './scripts/seedRestaurants';
 import { firebaseService } from './config/firebase';
-import { recommendationScheduler } from './services/recommendationScheduler.service';
 import { startRecommendationScheduler } from './controllers/recommendations.controller';
 
 

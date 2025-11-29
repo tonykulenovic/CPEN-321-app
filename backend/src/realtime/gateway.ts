@@ -101,12 +101,12 @@ export class LocationGateway {
       // 5. Only broadcast to friends if location sharing is enabled
       if (willShareWithFriends) {
         const locationData = {
-          lat: finalLat,
-          lng: finalLng,
-          accuracyM: finalAccuracyM,
-          ts: location.createdAt.toISOString(),
+        lat: finalLat,
+        lng: finalLng,
+        accuracyM: finalAccuracyM,
+        ts: location.createdAt.toISOString(),
         };
-        
+
         logger.info(`📡 Broadcasting location update for user ${userId.toString()} to subscribed friends`);
         await this.broadcastLocationUpdate(userId, locationData);
         
