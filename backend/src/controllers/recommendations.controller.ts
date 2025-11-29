@@ -1,11 +1,20 @@
 import { Request, Response } from 'express';
 import mongoose from 'mongoose';
 import * as cron from 'node-cron';
+import axios from 'axios';
 import { locationModel } from '../models/location.model';
 import { pinModel } from '../models/pin.model';
 import { userModel } from '../models/user.model';
 import { notificationService } from '../services/notification.service';
 import logger from '../utils/logger.util';
+
+// OpenWeather API configuration
+const OPENWEATHER_API_KEY = process.env.OPENWEATHER_API_KEY || '';
+const OPENWEATHER_BASE_URL = 'https://api.openweathermap.org/data/2.5/weather';
+
+// Google Places API configuration
+const GOOGLE_MAPS_API_KEY = process.env.GOOGLE_MAPS_API_KEY || '';
+const GOOGLE_PLACES_BASE_URL = 'https://maps.googleapis.com/maps/api/place/nearbysearch/json';
 
 /**
  * GET /recommendations/:mealType - Get meal recommendations for current user
@@ -47,17 +56,28 @@ export async function getRecommendations(req: Request, res: Response): Promise<v
     // Get meal-relevant keywords
     const mealKeywords = getMealKeywords(mealType);
     
-    // Find nearby pins that match meal type
+    // Fetch weather data for scoring
+    const weatherScore = await getWeatherScore(userLocation.lat, userLocation.lng);
+    
+    // Find nearby pins from database
     const nearbyPins = await pinModel.findNearbyForMeal(
       userLocation.lat, 
       userLocation.lng, 
       parseInt(maxDistance as string),
       mealKeywords,
-      parseInt(limit as string) * 2 // Get more candidates for better scoring
+      parseInt(limit as string) * 2
     );
 
-    // Simple scoring: distance + rating
-    const recommendations = nearbyPins.map(pin => {
+    // Find nearby places from Google Places API
+    const nearbyPlaces = await getNearbyPlacesFromGoogle(
+      userLocation.lat,
+      userLocation.lng,
+      parseInt(maxDistance as string),
+      mealType
+    );
+
+    // Score database pins
+    const pinRecommendations = nearbyPins.map(pin => {
       const distance = calculateDistance(
         userLocation.lat, 
         userLocation.lng, 
@@ -70,10 +90,11 @@ export async function getRecommendations(req: Request, res: Response): Promise<v
       const totalVotes = upvotes + downvotes;
       const rating = totalVotes > 0 ? upvotes / totalVotes : 0.5;
       
-      // Score: max 100 points from distance (closer = better) + max 20 points from rating
-      const distanceScore = Math.max(0, 100 - (distance / 20));
+      // Score: proximity (40) + rating (20) + weather (15) + popularity (10)
+      const proximityScore = Math.max(0, 40 - (distance / 50));
       const ratingScore = rating * 20;
-      const score = distanceScore + ratingScore;
+      const popularityScore = Math.min(totalVotes / 2, 10);
+      const score = proximityScore + ratingScore + weatherScore + popularityScore;
       
       return {
         pin,
@@ -82,16 +103,36 @@ export async function getRecommendations(req: Request, res: Response): Promise<v
         reason: `${Math.round(distance)}m away${totalVotes > 0 ? `, ${Math.round(rating * 100)}% rating` : ''}`,
         source: 'database' as const
       };
-    })
-    .sort((a, b) => b.score - a.score)
-    .slice(0, parseInt(limit as string));
+    });
+
+    // Score Google Places results
+    const placesRecommendations = nearbyPlaces.map(place => {
+      // Score: proximity (40) + rating (20) + weather (15) + open status (10)
+      const proximityScore = Math.max(0, 40 - (place.distance / 50));
+      const ratingScore = (place.rating / 5) * 20;
+      const openScore = place.isOpen ? 10 : 0;
+      const score = proximityScore + ratingScore + weatherScore + openScore;
+      
+      return {
+        place,
+        score: Math.round(score),
+        distance: place.distance,
+        reason: `${place.distance}m away, ${place.rating.toFixed(1)}⭐${place.isOpen ? ', open now' : ''}`,
+        source: 'google_places' as const
+      };
+    });
+
+    // Combine and sort all recommendations
+    const allRecommendations = [...pinRecommendations, ...placesRecommendations]
+      .sort((a, b) => b.score - a.score)
+      .slice(0, parseInt(limit as string));
 
     res.status(200).json({
       message: `${mealType} recommendations retrieved successfully`,
       data: {
         mealType,
-        recommendations,
-        count: recommendations.length
+        recommendations: allRecommendations,
+        count: allRecommendations.length
       },
     });
   } catch (error) {
@@ -177,6 +218,108 @@ function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
 
 function toRad(degrees: number): number {
   return degrees * (Math.PI / 180);
+}
+
+/**
+ * Get weather score from OpenWeather API
+ */
+async function getWeatherScore(lat: number, lng: number): Promise<number> {
+  try {
+    if (!OPENWEATHER_API_KEY) {
+      logger.warn('OpenWeather API key not configured, using default weather score');
+      return 8; // Default neutral score
+    }
+
+    const response = await axios.get(OPENWEATHER_BASE_URL, {
+      params: {
+        lat,
+        lon: lng,
+        appid: OPENWEATHER_API_KEY,
+        units: 'metric'
+      },
+      timeout: 3000
+    });
+
+    const temp = response.data.main?.temp || 20;
+    const weatherMain = response.data.weather?.[0]?.main || 'Clear';
+
+    // Simple weather scoring (0-15 points)
+    let score = 10; // Default
+    
+    // Good weather bonus
+    if (weatherMain === 'Clear' && temp >= 15 && temp <= 25) {
+      score = 15; // Perfect outdoor weather
+    } else if (weatherMain === 'Rain' || weatherMain === 'Snow' || temp < 5) {
+      score = 12; // Indoor dining preferred
+    }
+
+    logger.info(`Weather: ${weatherMain}, ${temp}°C → score: ${score}`);
+    return score;
+  } catch (error) {
+    logger.warn('Failed to fetch weather data, using default score:', error);
+    return 8;
+  }
+}
+
+/**
+ * Get nearby places from Google Places API
+ */
+async function getNearbyPlacesFromGoogle(
+  lat: number,
+  lng: number,
+  radius: number,
+  mealType: string
+): Promise<Array<{ name: string; distance: number; rating: number; isOpen: boolean; address: string }>> {
+  try {
+    if (!GOOGLE_MAPS_API_KEY) {
+      logger.warn('Google Places API key not configured, skipping external recommendations');
+      return [];
+    }
+
+    // Map meal type to place types
+    const placeType = mealType === 'breakfast' ? 'cafe' : 'restaurant';
+
+    const response = await axios.get(GOOGLE_PLACES_BASE_URL, {
+      params: {
+        location: `${lat},${lng}`,
+        radius: Math.min(radius, 2000), // Max 2km
+        type: placeType,
+        key: GOOGLE_MAPS_API_KEY
+      },
+      timeout: 5000
+    });
+
+    const results = response.data.results || [];
+    
+    const places = results.slice(0, 5).map((place: {
+      name: string;
+      geometry: { location: { lat: number; lng: number } };
+      rating?: number;
+      opening_hours?: { open_now?: boolean };
+      vicinity?: string;
+    }) => {
+      const distance = Math.round(calculateDistance(
+        lat,
+        lng,
+        place.geometry.location.lat,
+        place.geometry.location.lng
+      ));
+
+      return {
+        name: place.name,
+        distance,
+        rating: place.rating || 3.5,
+        isOpen: place.opening_hours?.open_now ?? true,
+        address: place.vicinity || 'Address not available'
+      };
+    });
+
+    logger.info(`Google Places: Found ${places.length} nearby ${placeType}s`);
+    return places;
+  } catch (error) {
+    logger.warn('Failed to fetch Google Places data:', error);
+    return [];
+  }
 }
 
 /**
